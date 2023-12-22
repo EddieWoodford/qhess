@@ -1,0 +1,98 @@
+body {
+    position: absolute;
+    text-align: center;
+	width: 100%;
+    /* top: 50%; */
+    /* left: 50%; */
+    /* transform: translate(-50%, -50%); */
+    padding: 0;
+	margin: 0;
+    box-shadow: black 0 0 10px;
+}
+h1 {
+    color: red;
+}
+.grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+	grid-template-rows: 1fr 1fr 1fr 1fr;
+    /* grid-gap: 20px; */
+	align-items: top;
+	border-top: 1px solid;
+}
+.move-history {
+	grid-column-start: 1;
+	grid-column-end: 2;
+	grid-row-start: 1;
+	grid-row-end: 5;
+	text-align: left;
+}
+.play-area {
+	grid-column-start: 2;
+	grid-column-end: 3;
+	grid-row-start: 1;
+	grid-row-end: 5;
+	/* border-top: 1px solid; */
+}
+.captured-pieces {
+	grid-column-start: 3;
+	grid-column-end: 4;
+	grid-row-start: 1;
+	grid-row-end: 3;
+	border-top: 1px solid;
+	display:flex;
+}
+.buttons {
+	grid-column-start: 3;
+	grid-column-end: 4;
+	grid-row-start: 3;
+	grid-row-end: 4;
+	border-top: 1px solid;
+}
+.highlight-pieces {
+	grid-column-start: 3;
+	grid-column-end: 4;
+	grid-row-start: 4;
+	grid-row-end: 5;
+	border-top: 1px solid;
+}
+
+
+/* .row { */
+	/* display: flex; */
+/* } */
+.column {
+	flex: 50%;
+}
+
+
+.whitesquare {
+	color: white;
+    width: 5em;
+    height: 5em;
+    float: left;
+    border: black solid 1px;
+    cursor: pointer;
+	white-space: normal;
+}
+.blacksquare {
+	color: white;
+    width: 5em;
+    height: 5em;
+    float: left;
+    border: black solid 1px;
+    cursor: pointer;
+	white-space: normal;
+}
+.sidebutton {
+	color: white;
+	background: grey;
+    width: 10em;
+    height: 5em;
+    border: black solid 1px;
+    cursor: pointer;
+}
+.sidebutton:hover {
+    background-color: orange;
+    color: white;
+}
