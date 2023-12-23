@@ -74,21 +74,30 @@ h1 {
     float: left;
     border: black solid 1px;
     cursor: pointer;
-	white-space: normal;
+	/* white-space: normal; */
+	white-space: nowrap;
 	font-family: Monotype;
-	font-size: 15px;
-	line-height: 2;
+	font-size: 18px;
+	line-height: 1;
 	text-align: center;
+	padding: 0px;
 }
-.highlightsquare {
-	font-size: 50px;
+.findpieces {
+	font-size: 40px;
 	color: white;
-	width: 1em;
-	height: 1em;
+	width: 60px;
+	height: 60px;
 	float: center;
     border: black solid 1px;
     cursor: pointer;
 	white-space: normal;
+	justify-content: center; /* center the content horizontally */
+    align-items: center; /* center the content vertically */
+	padding: 0px;
+	background-color: black;
+}
+.findpieces:hover {
+	background-color: orange;
 }
 .sidebutton {
 	color: white;
@@ -97,6 +106,7 @@ h1 {
     height: 5em;
     border: black solid 1px;
     cursor: pointer;
+	vertical-align:top;
 }
 .sidebutton:hover {
     background-color: orange;

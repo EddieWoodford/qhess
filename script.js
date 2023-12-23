@@ -152,6 +152,23 @@ function sideButton1Click() {
 	}
 }
 
+function findPiecesHover(wave) {
+	let pieces;
+	if (TURNCOLOR == "w") {
+		pieces = WHITEPIECES;
+	} else {
+		pieces = BLACKPIECES;
+	}
+	
+	for (let i=0; i<16; i++) {
+		if (pieces[i].captured==0) {
+			if (pieces[i].waves().includes(wave)) {
+				BOARD[pieces[i].r][pieces[i].c].button.style.backgroundColor = "orange";
+			}
+		}
+	}
+}
+
 function highlightPotentialMoves(buttonID) {
 	// Highlight potential moves temporarily while mouse is over square
 	let coords = buttonID2coords(buttonID);
@@ -732,6 +749,25 @@ function setState(state) {
 	capturedLabel.innerHTML = whitecaptured;
 	capturedLabel = document.getElementById("blackcaptured");
 	capturedLabel.innerHTML = blackcaptured;
+	
+	// Update the findpiece buttons to display the correct piece for this color
+	if (TURNCOLOR == "w") {
+		document.getElementById("findK").innerHTML = WK;
+		document.getElementById("findQ").innerHTML = WQ;
+		document.getElementById("findK").innerHTML = WK;
+		document.getElementById("findR").innerHTML = WR;
+		document.getElementById("findN").innerHTML = WN;
+		document.getElementById("findB").innerHTML = WB;
+		document.getElementById("findP").innerHTML = WP;
+	} else {
+		document.getElementById("findK").innerHTML = BK;
+		document.getElementById("findQ").innerHTML = BQ;
+		document.getElementById("findK").innerHTML = BK;
+		document.getElementById("findR").innerHTML = BR;
+		document.getElementById("findN").innerHTML = BN;
+		document.getElementById("findB").innerHTML = BB;
+		document.getElementById("findP").innerHTML = BP;
+	}
 }
 
 

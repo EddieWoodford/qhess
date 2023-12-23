@@ -3,12 +3,10 @@
 <head>
 	<script src="script.js"></script>
     <meta charset="UTF-8">
-    <title>Qhess</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <h1>Qhess</h1>
 	<div class="grid-container">
 		<div class="move-history">
 			<label id="movehistory">Move History:</label>
@@ -95,13 +93,14 @@
 			<button class="sidebutton" id="sideButton1" onclick="sideButton1Click()"></button>
 			<button class="sidebutton" id="sideButton2" onclick="sideButton2Click()"></button>
 		</div>
-		<div class="highlight-pieces">
-			<button class="highlightsquare" id="highlightK"></button>
-			<button class="highlightsquare" id="highlightQ"></button>
-			<button class="highlightsquare" id="highlightB"></button>
-			<button class="highlightsquare" id="highlightN"></button>
-			<button class="highlightsquare" id="highlightR"></button>
-			<button class="highlightsquare" id="highlightP"></button>
+		<div class="find-pieces">
+			Find Pieces<br>
+			<button class="findpieces" id="findK" onmouseenter="findPiecesHover('K')" onmouseleave="setState('clear')"></button>
+			<button class="findpieces" id="findQ" onmouseenter="findPiecesHover('Q')" onmouseleave="setState('clear')"></button>
+			<button class="findpieces" id="findB" onmouseenter="findPiecesHover('B')" onmouseleave="setState('clear')"></button>
+			<button class="findpieces" id="findN" onmouseenter="findPiecesHover('N')" onmouseleave="setState('clear')"></button>
+			<button class="findpieces" id="findR" onmouseenter="findPiecesHover('R')" onmouseleave="setState('clear')"></button>
+			<button class="findpieces" id="findP" onmouseenter="findPiecesHover('P')" onmouseleave="setState('clear')"></button>
 		</div>
 		
 	</div>
