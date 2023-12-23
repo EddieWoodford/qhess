@@ -816,18 +816,18 @@ function setup() {
 // startingLocations[7][6] = "w_P"
 // startingLocations[7][7] = "w_P"
 
-const WK = "<span style='color:hsl(52, 100%, 61%)'>&#9812;</span>";
-const WQ = "<span style='color:hsl(293, 100%, 61%)'>&#9813;</span>";
-const WR = "<span style='color:hsl(246, 100%, 61%)'>&#9814;</span>";
-const WB = "<span style='color:hsl(0, 100%, 61%)'>&#9815;</span>";
-const WN = "<span style='color:hsl(33, 100%, 61%)'>&#9816;</span>";
-const WP = "<span style='color:hsl(117, 100%, 61%)'>&#9817;</span>";
-const BK = "<span style='color:hsl(52, 100%, 44%)'>&#9818;</span>";
-const BQ = "<span style='color:hsl(293, 100%, 44%)'>&#9819;</span>";
-const BR = "<span style='color:hsl(246, 100%, 44%)'>&#9820;</span>";
-const BB = "<span style='color:hsl(0, 100%, 44%)'>&#9821;</span>";
-const BN = "<span style='color:hsl(33, 100%, 44%)'>&#9822;</span>";
-const BP = "<span style='color:hsl(117, 100%, 44%)'>&#9823;</span>";
+const WK = "<span style='color:#FCE94F'>&#9812;</span>";
+const WQ = "<span style='color:#AD7FA8'>&#9813;</span>";
+const WR = "<span style='color:#729FCF'>&#9814;</span>";
+const WB = "<span style='color:#EF2929'>&#9815;</span>";
+const WN = "<span style='color:#FF6600'>&#9816;</span>";
+const WP = "<span style='color:#8AE234'>&#9817;</span>";
+const BK = "<span style='color:#FCE94F'>&#9818;</span>";
+const BQ = "<span style='color:#AD7FA8'>&#9819;</span>";
+const BR = "<span style='color:#729FCF'>&#9820;</span>";
+const BB = "<span style='color:#EF2929'>&#9821;</span>";
+const BN = "<span style='color:#FF6600'>&#9822;</span>";
+const BP = "<span style='color:#8AE234'>&#9823;</span>";
 
 let TURNNUMBER = 1;
 let TURNCOLOR = "w";
