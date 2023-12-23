@@ -50,9 +50,9 @@ class Square {
 			let allwaves = "KQRBNP";
 			for (let i=0; i<6; i++) {
 				if (waves.includes(allwaves[i])) {
-					wavetext = wavetext + allwaves[i] + "";
+					wavetext = wavetext + allwaves[i];
 				} else {
-					wavetext = wavetext + ".";
+					wavetext = wavetext + "empty";
 				}
 				if (i==2) {wavetext = wavetext + "<br>"};
 			}
@@ -64,6 +64,7 @@ class Square {
 				wavetext = wavetext.replace("B",WB);
 				wavetext = wavetext.replace("N",WN);
 				wavetext = wavetext.replace("P",WP);
+				wavetext = wavetext.replaceAll("empty","&#9725;");
 			} else {
 				wavetext = wavetext.replace("K",BK);
 				wavetext = wavetext.replace("Q",BQ);
@@ -71,6 +72,7 @@ class Square {
 				wavetext = wavetext.replace("B",BB);
 				wavetext = wavetext.replace("N",BN);
 				wavetext = wavetext.replace("P",BP);
+				wavetext = wavetext.replaceAll("empty","&#9726;");
 			}
 		}
 		this.button.innerHTML = wavetext;
@@ -166,9 +168,16 @@ function findPiecesHover(wave) {
 	for (let i=0; i<16; i++) {
 		if (pieces[i].captured==0) {
 			if (pieces[i].waves().includes(wave)) {
-				BOARD[pieces[i].r][pieces[i].c].button.style.backgroundColor = "orange";
+				BOARD[pieces[i].r][pieces[i].c].highlighted = 1;
 			}
 		}
+	}
+	setState("findPieces");
+}
+
+function clearFindPieces() {
+	if (getState() == "findPieces") {
+		setState("clear");
 	}
 }
 
