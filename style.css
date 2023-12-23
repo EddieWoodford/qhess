@@ -55,6 +55,7 @@ h1 {
 	grid-row-start: 4;
 	grid-row-end: 5;
 	border-top: 1px solid;
+	align-items: center;
 }
 
 
@@ -66,20 +67,25 @@ h1 {
 }
 
 
-.whitesquare {
+.boardsquare {
 	color: white;
-    width: 5em;
-    height: 5em;
+    width: 60px;
+    height: 60px;
     float: left;
     border: black solid 1px;
     cursor: pointer;
 	white-space: normal;
+	font-family: Monotype;
+	font-size: 15px;
+	line-height: 2;
+	text-align: center;
 }
-.blacksquare {
+.highlightsquare {
+	font-size: 50px;
 	color: white;
-    width: 5em;
-    height: 5em;
-    float: left;
+	width: 1em;
+	height: 1em;
+	float: center;
     border: black solid 1px;
     cursor: pointer;
 	white-space: normal;

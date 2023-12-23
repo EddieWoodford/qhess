@@ -39,16 +39,41 @@ class Square {
 		// this.button.addEventListener("mouseout",this.clear(buttonID))
     }
 	setWavetext() {
+		let wavetext;
+		let waves;
 		if (this.piece == "") {
-			this.button.innerText = "";
+			wavetext = "";
 		} else {
-			this.button.innerText = this.piece.waves();
+			
+			wavetext = "";
+			waves = this.piece.waves();
+			let allwaves = "KQRBNP";
+			for (let i=0; i<6; i++) {
+				if (waves.includes(allwaves[i])) {
+					wavetext = wavetext + allwaves[i] + "";
+				} else {
+					wavetext = wavetext + ".";
+				}
+				if (i==2) {wavetext = wavetext + "<br>"};
+			}
+			
 			if (this.piece.color == "w") {
-				this.button.style.color = "white";
+				wavetext = wavetext.replace("K",WK);
+				wavetext = wavetext.replace("Q",WQ);
+				wavetext = wavetext.replace("R",WR);
+				wavetext = wavetext.replace("B",WB);
+				wavetext = wavetext.replace("N",WN);
+				wavetext = wavetext.replace("P",WP);
 			} else {
-				this.button.style.color = "yellow";
+				wavetext = wavetext.replace("K",BK);
+				wavetext = wavetext.replace("Q",BQ);
+				wavetext = wavetext.replace("R",BR);
+				wavetext = wavetext.replace("B",BB);
+				wavetext = wavetext.replace("N",BN);
+				wavetext = wavetext.replace("P",BP);
 			}
 		}
+		this.button.innerHTML = wavetext;
 	}
     reset() {
         this.button.innerText = "";
@@ -251,39 +276,79 @@ function updateOptionsFromEntanglement() {
 	// Update options of all pieces based on entanglement
 	// First, get the options matrix OM
 	// OM is a 16 x 16 matrix, with each row being the piece.options vector from the pieces.
+	
 	if (TURNCOLOR == "w" ) {
 		let pieces = WHITEPIECES;
 	} else {
 		let pieces = BLACKPIECES;
 	}
 	
+	let OM = getOM(pieces);
+	if (isValidOM(OM) == 0) {
+		return;
+	}
+	
+	// Loop through all elements
+	let pieceIdx=-1;
+	let optionIdx=-1;
+	let sum1;
+	let sum2;
+	let OM2;
+	let idxs;
+	let ogValid;
+	while (pieceIdx<8) {
+		pieceIdx = pieceIdx + 1;
+		while (optionIdx<8) {
+			optionIdx = optionIdx + 1;
+			// remove ith column:
+			OM2 = OM.map(function(val) {
+				return val.toSpliced(optionIdx,1);
+			})
+			// remove ith row:
+			OM2.splice(rowIdx,1);
+			
+			// Sort 1's into bottom-right corner
+			sum1 = OM2.reduce((pieceIdx, a) => pieceIdx.map((b, i) => a[i] + b));
+			sum2 = OM2.map(y => y.reduce((a, b) => a+b));
+			idxs = Array.from(sum1.keys()).sort((a,b) => sum1[a]-sum1[b])
+			for (let i=0; i<8; i++) {
+				OM2[i] = idxs.map(j => OM2[i][j])
+			}
+			idxs = Array.from(sum2.keys()).sort((a,b) => sum2[a]-sum2[b])
+			OM2 = idxs.map(j => OM2[j])
+			
+			if (isValidOM(OM2)==0) {
+				OM[pieceIdx][optionIdx] = 0;
+				pieces[pieceIdx][optionIdx] = 0;
+				pieceIdx = -1;
+				optionIdx = -1;
+				break;
+			} else {
+				optionIdx = optionIdx+1;	
+			}
+		}
+		optionIdx = -1;
+	}
+	
+	
+	
+}
+
+function getOM(pieces) {
 	let OM = [];
 	for (let i=0; i<16; i++) {
 		OM.push(pieces[i].options);
 		// colsum = Math.sum(OM,1);
 	}
-	let sum1 = OM.reduce((r, a) => r.map((b, i) => a[i] + b));
-	let sum2 = OM.map(y => y.reduce((a, b) => a+b));
-	
-	let idxs = Array.from(sum1.keys()).sort((a,b) => sum1[a]-sum1[b])
-	for (let i=0; i<8; i++) {
-		OM[i] = idxs.map(j => OM[i][j])
-	}
-	
-	idxs = Array.from(sum2.keys()).sort((a,b) => sum2[a]-sum2[b])
-	OM = idxs.map(j => OM[j])
-	
-	let ogValid = isValidOM(OM);
-	console.log(ogValid)
+	return OM;
 }
-
 
 function isValidOM(OM) {
 	// Check if an options matrix is valid - ie it contains no options which, if fufilled, would result in an impossible state 
 	if (OM.length == 1) {
 		return OM == 1
 	}
-	sum1 = OM.reduce((r, a) => r.map((b, i) => a[i] + b));
+	sum1 = OM.reduce((pieceIdx, a) => r.map((b, i) => a[i] + b));
 	if (sum1.includes(0)) {
 		return 0;
 	}
@@ -714,6 +779,19 @@ function setup() {
 // startingLocations[7][5] = "b_P"
 // startingLocations[7][6] = "w_P"
 // startingLocations[7][7] = "w_P"
+
+const WK = "<span style='color:hsl(52, 100%, 61%)'>&#9812;</span>";
+const WQ = "<span style='color:hsl(293, 100%, 61%)'>&#9813;</span>";
+const WR = "<span style='color:hsl(246, 100%, 61%)'>&#9814;</span>";
+const WB = "<span style='color:hsl(0, 100%, 61%)'>&#9815;</span>";
+const WN = "<span style='color:hsl(33, 100%, 61%)'>&#9816;</span>";
+const WP = "<span style='color:hsl(117, 100%, 61%)'>&#9817;</span>";
+const BK = "<span style='color:hsl(52, 100%, 44%)'>&#9818;</span>";
+const BQ = "<span style='color:hsl(293, 100%, 44%)'>&#9819;</span>";
+const BR = "<span style='color:hsl(246, 100%, 44%)'>&#9820;</span>";
+const BB = "<span style='color:hsl(0, 100%, 44%)'>&#9821;</span>";
+const BN = "<span style='color:hsl(33, 100%, 44%)'>&#9822;</span>";
+const BP = "<span style='color:hsl(117, 100%, 44%)'>&#9823;</span>";
 
 let TURNNUMBER = 1;
 let TURNCOLOR = "w";
