@@ -153,6 +153,9 @@ function sideButton1Click() {
 }
 
 function findPiecesHover(wave) {
+	if (getState() != "clear") {
+		return;
+	}
 	let pieces;
 	if (TURNCOLOR == "w") {
 		pieces = WHITEPIECES;
