@@ -66,7 +66,7 @@ class Square {
 				wavetext = wavetext.replace("B",WB);
 				wavetext = wavetext.replace("N",WN);
 				wavetext = wavetext.replace("P",WP);
-				wavetext = wavetext.replaceAll("empty","&#9725;");
+				wavetext = wavetext.replaceAll("empty","&nbsp;");
 			} else {
                                 wavetext = wavetext.replace (/^/, '<div class="blackpiece">');
                                 wavetext = wavetext.replace (/$/, '</div>');
@@ -76,7 +76,7 @@ class Square {
 				wavetext = wavetext.replace("B",BB);
 				wavetext = wavetext.replace("N",BN);
 				wavetext = wavetext.replace("P",BP);
-				wavetext = wavetext.replaceAll("empty","&#9726;");
+				wavetext = wavetext.replaceAll("empty","&nbsp;");
 			}
 		}
 		this.button.innerHTML = wavetext;
