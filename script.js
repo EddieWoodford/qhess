@@ -771,9 +771,9 @@ function setState(state) {
 			sqr.button.style.borderColor = "black"; 
 			
 			if (sqr.color=='w') {
-				sqr.button.style.background = "grey" // default white square colour
+				sqr.button.style.background = "silver" // default white square colour
 			} else {
-				sqr.button.style.background = "black" // default black square colour
+				sqr.button.style.background = "grey" // default black square colour
 			}
 			
 			if (r==4 && c==0) {
@@ -801,8 +801,8 @@ function setState(state) {
 		}
 	}
 	
-	let whitecaptured = "White Captured<br>";
-	let blackcaptured = "Black Captured<br>";
+	let whitecaptured = "<strong>White Captured</strong><br>";
+	let blackcaptured = "<strong>Black Captured</strong><br>";
 	for (let i=0; i<16; i++) {
 		if (WHITEPIECES[i].captured==1) {
 			whitecaptured = whitecaptured + WHITEPIECES[i].waves() + "<br>";
