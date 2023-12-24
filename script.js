@@ -58,21 +58,25 @@ class Square {
 			}
 			
 			if (this.piece.color == "w") {
+                                wavetext = wavetext.replace (/^/, '<div class="whitepiece">');
+                                wavetext = wavetext.replace (/$/, '</div>');
 				wavetext = wavetext.replace("K",WK);
 				wavetext = wavetext.replace("Q",WQ);
 				wavetext = wavetext.replace("R",WR);
 				wavetext = wavetext.replace("B",WB);
 				wavetext = wavetext.replace("N",WN);
 				wavetext = wavetext.replace("P",WP);
-				wavetext = wavetext.replaceAll("empty","&#9725;");
+				wavetext = wavetext.replaceAll("empty","&nbsp;");
 			} else {
+                                wavetext = wavetext.replace (/^/, '<div class="blackpiece">');
+                                wavetext = wavetext.replace (/$/, '</div>');
 				wavetext = wavetext.replace("K",BK);
 				wavetext = wavetext.replace("Q",BQ);
 				wavetext = wavetext.replace("R",BR);
 				wavetext = wavetext.replace("B",BB);
 				wavetext = wavetext.replace("N",BN);
 				wavetext = wavetext.replace("P",BP);
-				wavetext = wavetext.replaceAll("empty","&#9726;");
+				wavetext = wavetext.replaceAll("empty","&nbsp;");
 			}
 		}
 		this.button.innerHTML = wavetext;
@@ -771,9 +775,9 @@ function setState(state) {
 			sqr.button.style.borderColor = "black"; 
 			
 			if (sqr.color=='w') {
-				sqr.button.style.background = "grey" // default white square colour
+				sqr.button.style.background = "silver" // default white square colour
 			} else {
-				sqr.button.style.background = "black" // default black square colour
+				sqr.button.style.background = "grey" // default black square colour
 			}
 			
 			if (r==4 && c==0) {
@@ -801,8 +805,8 @@ function setState(state) {
 		}
 	}
 	
-	let whitecaptured = "White Captured<br>";
-	let blackcaptured = "Black Captured<br>";
+	let whitecaptured = "<strong>White Captured</strong><br>";
+	let blackcaptured = "<strong>Black Captured</strong><br>";
 	for (let i=0; i<16; i++) {
 		if (WHITEPIECES[i].captured==1) {
 			whitecaptured = whitecaptured + WHITEPIECES[i].waves() + "<br>";
@@ -895,12 +899,15 @@ function setup() {
 // startingLocations[7][6] = "w_P"
 // startingLocations[7][7] = "w_P"
 
-const WK = "<span style='color:#FCE94F'>&#9812;</span>";
-const WQ = "<span style='color:#AD7FA8'>&#9813;</span>";
-const WR = "<span style='color:#729FCF'>&#9814;</span>";
-const WB = "<span style='color:#EF2929'>&#9815;</span>";
-const WN = "<span style='color:#FF6600'>&#9816;</span>";
-const WP = "<span style='color:#8AE234'>&#9817;</span>";
+// note: none of these 'color' definitions can have the 'B' character in them,
+// either in RGB or named or whatever. B is special because Bishop and this
+// exists:  wavetext = wavetext.replace("B",WB);
+const WK = "<span style='color:#7E7427'>&#9812;</span>";
+const WQ = "<span style='color:#563F54'>&#9813;</span>";
+const WR = "<span style='color:#394F67'>&#9814;</span>";
+const WB = "<span style='color:#771515'>&#9815;</span>";
+const WN = "<span style='color:#803300'>&#9816;</span>";
+const WP = "<span style='color:#45711A'>&#9817;</span>";
 const BK = "<span style='color:#FCE94F'>&#9818;</span>";
 const BQ = "<span style='color:#AD7FA8'>&#9819;</span>";
 const BR = "<span style='color:#729FCF'>&#9820;</span>";
