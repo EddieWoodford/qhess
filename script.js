@@ -140,9 +140,9 @@ function sideButton1Click() {
 		}
 			
 		// Update move history label:
-		MOVEHISTORY = MOVEHISTORY + TURNNUMBER.toString() + ". " + THISMOVE + "<br>";
-		historyLabel = document.getElementById("movehistory");
-		historyLabel.innerHTML = MOVEHISTORY;
+		MOVEHISTORY = MOVEHISTORY + TURNNUMBER.toString() + ". " + THISMOVE + "\r\n";
+		historyArea = document.getElementById("movehistory");
+		historyArea.value = MOVEHISTORY;
 			
 		TAKENPIECE.captured = 1;
 		TAKENPIECE = "";
@@ -173,6 +173,35 @@ function findPiecesHover(wave) {
 		}
 	}
 	setState("findPieces");
+}
+
+function restoreGameHistory() {
+	// Restore a game from whatever history is in the move history textbox
+	let historyArea = document.getElementById("movehistory");
+	let historyText = historyArea.value;
+	let lines = historyText.split("\n");
+	let moveText;
+	let r;
+	let c;
+	setup();
+	for (i in lines) {
+		moveText = lines[i];
+		if (moveText != "") {
+			moveText = moveText.split(")");
+			moveText = moveText[1].split("(");
+			moveText = moveText[0].replace("x","");
+			// Now moveText should be 4 chars long, such as h2h3, indicating the from-to coordinates
+			c = moveText[0].charCodeAt()-97;
+			r = 8-moveText[1];
+			let startButtonID = coords2buttonID([r,c]);
+			c = moveText[2].charCodeAt()-97;
+			r = 8-moveText[3];
+			let endButtonID = coords2buttonID([r,c]);
+			showPartialMove(startButtonID);
+			showCompleteMove(endButtonID);
+			sideButton1Click();
+		}
+	}
 }
 
 function clearFindPieces() {
@@ -219,10 +248,10 @@ function showCompleteMove(buttonID) {
 	let validDestinations = getPotentialMoves(startCoords);
 	let endCoords = buttonID2coords(buttonID)
 	if (ismember(endCoords,validDestinations)) {
-		// Calculate collpases based on movement:
 		movingPiece = BOARD[startCoords[0]][startCoords[1]].piece;
-		currentWaves = movingPiece.waves();
 		
+		// Remove the options from this piece based on movement:
+		currentWaves = movingPiece.waves();
 		for (let wi=0; wi < currentWaves.length; wi++) {
 			let waveDestinations = getPotentialMoves(startCoords,currentWaves[wi]);
 			if (!ismember(endCoords,waveDestinations)) {
@@ -258,107 +287,127 @@ function showCompleteMove(buttonID) {
 
 
 
-function updateOptionsFromFullCollapse() {
+function updateOptionsFromFullCollapse(colors) {
 	// Loop through the pieces. Continue until the set isn't changed after a pass.
 	// If a piece only has one waveform, assign it to a specific option, and remove that option from all other pieces
-	let pieces = WHITEPIECES;
-	if (TURNCOLOR == "b" ) {
-		pieces = BLACKPIECES;
-	}
-	let i = 0;
+	let pieces;
+	let i;
 	let piece;
-	while (i < 16) {
-		piece = pieces[i];
-		if (piece.fullcollapsed == 1) {
-			i = i+1;
-			continue;
-		}
-		// If a piece only has one waveform, assign it to a specific option, 
-		// and remove that option from all other pieces:
-		let waves = piece.waves();
-		if (waves.length == 1) {
-			let optidxs = wave2optidxs(waves);
-			for (oi = 0; oi < optidxs.length; oi++) {
-				if (piece.options[optidxs[oi]] == 1) {
-					break;
-				}
-			}
-			// Now optidxs[oi] is the option index to set for this piece and remove for all others
-			// Loop through other pieces:
-			for (j = 0; j < 16; j++) {
-				if (j==i) {
-					pieces[j].options = Array(16).fill(0);
-					pieces[j].options[optidxs[oi]] = 1;	
-				} else {
-					pieces[j].options[optidxs[oi]] = 0;
-				}
-			}
-			piece.fullcollapsed = 1;
-			i = 0; // start the loop again
+	if (colors == undefined) {
+		colors = ["w","b"];
+	}
+	for (color of colors) {	
+		if (color == "w" ) {
+			pieces = WHITEPIECES;
 		} else {
-			i = i+1;
+			pieces = BLACKPIECES;
+		}
+		i = 0;
+		while (i < 16) {
+			piece = pieces[i];
+			if (piece.fullcollapsed == 1) {
+				i = i+1;
+				continue;
+			}
+			// If a piece only has one waveform, assign it to a specific option, 
+			// and remove that option from all other pieces:
+			let waves = piece.waves();
+			if (waves.length == 1) {
+				let optidxs = wave2optidxs(waves);
+				for (oi = 0; oi < optidxs.length; oi++) {
+					if (piece.options[optidxs[oi]] == 1) {
+						break;
+					}
+				}
+				// Now optidxs[oi] is the option index to set for this piece and remove for all others
+				// Loop through other pieces:
+				for (j = 0; j < 16; j++) {
+					if (j==i) {
+						pieces[j].options = Array(16).fill(0);
+						pieces[j].options[optidxs[oi]] = 1;	
+					} else {
+						pieces[j].options[optidxs[oi]] = 0;
+					}
+				}
+				piece.fullcollapsed = 1;
+				i = 0; // start the loop again
+			} else {
+				i = i+1;
+			}
 		}
 	}
 }
 
-function updateOptionsFromEntanglement() {
+function updateOptionsFromEntanglement(colors) {
 	// Update options of all pieces based on entanglement
 	// First, get the options matrix OM
 	// OM is a 16 x 16 matrix, with each row being the piece.options vector from the pieces.
 	
-	if (TURNCOLOR == "w" ) {
-		let pieces = WHITEPIECES;
-	} else {
-		let pieces = BLACKPIECES;
-	}
-	
-	let OM = getOM(pieces);
-	if (isValidOM(OM) == 0) {
-		return;
-	}
-	
-	// Loop through all elements
-	let pieceIdx=-1;
-	let optionIdx=-1;
+	let pieceIdx = 0;
+	let optionIdx = 0;
 	let sum1;
 	let sum2;
+	let OM;
 	let OM2;
 	let idxs;
 	let ogValid;
-	while (pieceIdx<8) {
-		pieceIdx = pieceIdx + 1;
-		while (optionIdx<8) {
-			optionIdx = optionIdx + 1;
-			// remove ith column:
-			OM2 = OM.map(function(val) {
-				return val.toSpliced(optionIdx,1);
-			})
-			// remove ith row:
-			OM2.splice(rowIdx,1);
-			
-			// Sort 1's into bottom-right corner
-			sum1 = OM2.reduce((pieceIdx, a) => pieceIdx.map((b, i) => a[i] + b));
-			sum2 = OM2.map(y => y.reduce((a, b) => a+b));
-			idxs = Array.from(sum1.keys()).sort((a,b) => sum1[a]-sum1[b])
-			for (let i=0; i<8; i++) {
-				OM2[i] = idxs.map(j => OM2[i][j])
-			}
-			idxs = Array.from(sum2.keys()).sort((a,b) => sum2[a]-sum2[b])
-			OM2 = idxs.map(j => OM2[j])
-			
-			if (isValidOM(OM2)==0) {
-				OM[pieceIdx][optionIdx] = 0;
-				pieces[pieceIdx][optionIdx] = 0;
-				pieceIdx = -1;
-				optionIdx = -1;
-				break;
-			} else {
-				optionIdx = optionIdx+1;	
-			}
-		}
-		optionIdx = -1;
+	let pieces;
+	if (colors == undefined) {
+		colors = ["w","b"];
 	}
 	
+	
+	for (color of colors) {	
+		// Loop through current valid options, and for each, check if after moving it the Option Matrix is still valid.
+		// If it isn't then the option that was removed is invalid and needs to be removed. This ensures that if the 
+		// player takes any given option, they will stay ni a valid state.
+		
+		while (pieceIdx<16) {
+			// Need to reset the pieces and OM variables here in case these loops have been reset after removing an option
+			if (color == "w" ) {
+				pieces = WHITEPIECES;
+			} else {
+				pieces = BLACKPIECES;
+			}
+			OM = getOM(pieces);
+			if (isValidOM(OM) == 0) {
+				setState("ERROR-invalidOM");
+				return;
+			}
+			
+			while (optionIdx<16) {
+				if (OM[pieceIdx][optionIdx] == 1) {
+					// remove ith column:
+					OM2 = OM.map(function(val) {
+						return val.toSpliced(optionIdx,1);
+					})
+					// remove ith row:
+					OM2.splice(pieceIdx,1);
+					
+					// Sort 1's into bottom-right corner. This makes isValidOM() much faster
+					sum1 = OM2.reduce((pieceIdx, a) => pieceIdx.map((b, i) => a[i] + b));
+					sum2 = OM2.map(y => y.reduce((a, b) => a+b));
+					idxs = Array.from(sum1.keys()).sort((a,b) => sum1[a]-sum1[b])
+					for (let i=0; i<8; i++) {
+						OM2[i] = idxs.map(j => OM2[i][j])
+					}
+					idxs = Array.from(sum2.keys()).sort((a,b) => sum2[a]-sum2[b])
+					OM2 = idxs.map(j => OM2[j])
+					
+					// See if any options result in an invalid matrix, and if so remove them and start again
+					if (isValidOM(OM2)==0) {
+						pieces[pieceIdx][optionIdx] = 0;
+						updateOptionsFromFullCollapse(color);
+						pieceIdx = -1;
+						break;
+					}
+				}
+				optionIdx = optionIdx + 1;
+			}
+			pieceIdx = pieceIdx + 1;
+			optionIdx = 0;
+		}
+	}
 	
 	
 }
@@ -374,10 +423,17 @@ function getOM(pieces) {
 
 function isValidOM(OM) {
 	// Check if an options matrix is valid - ie it contains no options which, if fufilled, would result in an impossible state 
+	// A valid OM is on that can be rearranged by row swaps to have 1's on its leading diagonal. That is equivalent to saying that
+	// there is an arrangement of the current pieces' options that gives a full chess demographic.
+	
 	if (OM.length == 1) {
-		return OM == 1
+		if (OM==1) {
+			return 1;
+		} else {
+			return 0;
+		}
 	}
-	sum1 = OM.reduce((pieceIdx, a) => r.map((b, i) => a[i] + b));
+	sum1 = OM.reduce((pieceIdx, a) => pieceIdx.map((b, i) => a[i] + b));
 	if (sum1.includes(0)) {
 		return 0;
 	}
@@ -751,7 +807,6 @@ function setState(state) {
 		if (WHITEPIECES[i].captured==1) {
 			whitecaptured = whitecaptured + WHITEPIECES[i].waves() + "<br>";
 		}
-		console.log(i)
 		if (BLACKPIECES[i].captured==1) {
 			blackcaptured = blackcaptured + BLACKPIECES[i].waves() + "<br>";
 		}
@@ -784,6 +839,18 @@ function setState(state) {
 
 
 function setup() {
+	TURNNUMBER = 1;
+	TURNCOLOR = "w";
+	TAKENPIECE = "";
+	BOARD = []; // 8 x 8 array of Square objects
+	PREVPIECES = []; // for remembering previous state
+	STARTID = "";
+	DESTID = "";
+	WHITEPIECES = [];
+	BLACKPIECES = [];
+	MOVEHISTORY = "";
+	THISMOVE = "";
+	
     let squareButtons = document.querySelectorAll('[id^="square"]');
 	for (let r = 0; r <= 7; r++) {
 		let thisrow = [];
@@ -841,17 +908,17 @@ const BB = "<span style='color:#EF2929'>&#9821;</span>";
 const BN = "<span style='color:#FF6600'>&#9822;</span>";
 const BP = "<span style='color:#8AE234'>&#9823;</span>";
 
-let TURNNUMBER = 1;
-let TURNCOLOR = "w";
-let TAKENPIECE = "";
-let BOARD = []; // 8 x 8 array of Square objects
-let PREVPIECES = []; // for remembering previous state
-let STARTID = "";
-let DESTID = "";
-let WHITEPIECES = [];
-let BLACKPIECES = [];
-let MOVEHISTORY = "Move History:<br>";
-let THISMOVE = "";
+let TURNNUMBER;
+let TURNCOLOR;
+let TAKENPIECE;
+let BOARD; // 8 x 8 array of Square objects
+let PREVPIECES; // for remembering previous state
+let STARTID;
+let DESTID;
+let WHITEPIECES;
+let BLACKPIECES;
+let MOVEHISTORY;
+let THISMOVE;
 
 window.onload = setup
 

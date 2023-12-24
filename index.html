@@ -9,7 +9,8 @@
 <body>
 	<div class="grid-container">
 		<div class="move-history">
-			<label id="movehistory">Move History:</label>
+			<button class='restoreButton' id='restorehistory' onclick="restoreGameHistory()">Restore History</button>
+			<textarea id="movehistory" rows=32></textarea>
 		</div>
 		<div id="play-area" class="play-area">
 			<button class="boardsquare" id="square00"></button>
