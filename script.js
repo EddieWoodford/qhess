@@ -58,8 +58,8 @@ class Square {
 			}
 			
 			if (this.piece.color == "w") {
-                                wavetext = wavetext.replace (/^/, '<div class="whitepiece">');
-                                wavetext = wavetext.replace (/$/, '</div>');
+				wavetext = wavetext.replace (/^/, '<div class="whitepiece">');
+				wavetext = wavetext.replace (/$/, '</div>');
 				wavetext = wavetext.replace("K",WK);
 				wavetext = wavetext.replace("Q",WQ);
 				wavetext = wavetext.replace("R",WR);
@@ -68,8 +68,8 @@ class Square {
 				wavetext = wavetext.replace("P",WP);
 				wavetext = wavetext.replaceAll("empty","&nbsp;");
 			} else {
-                                wavetext = wavetext.replace (/^/, '<div class="blackpiece">');
-                                wavetext = wavetext.replace (/$/, '</div>');
+				wavetext = wavetext.replace (/^/, '<div class="blackpiece">');
+				wavetext = wavetext.replace (/$/, '</div>');
 				wavetext = wavetext.replace("K",BK);
 				wavetext = wavetext.replace("Q",BQ);
 				wavetext = wavetext.replace("R",BR);
@@ -108,11 +108,13 @@ class Piece {
 			this.options[13] = 0;
 		}
 	}
-	removewave(wave) {
+	removewaves(waves) {
 		// Remove a wave from the options array
-		let optidxs = wave2optidxs(wave);
-		for (let oi = 0; oi < optidxs.length; oi++) {
-			this.options[optidxs[oi]] = 0;
+		for (let wi in waves) {
+			let optidxs = wave2optidxs(waves[wi]);
+			for (let oi = 0; oi < optidxs.length; oi++) {
+				this.options[optidxs[oi]] = 0;
+			}
 		}
 	}
 	waves() {
@@ -141,6 +143,10 @@ function sideButton1Click() {
 			TURNCOLOR =	"b";
 		} else {
 			TURNCOLOR = "w";
+		}
+		if (TURNCOLOR == EPCOLOR) {
+			EPCOLOR = "";
+			EPCOORDS = [];
 		}
 			
 		// Update move history label:
@@ -187,10 +193,12 @@ function restoreGameHistory() {
 	let moveText;
 	let r;
 	let c;
+	let doEP;
 	setup();
 	for (i in lines) {
 		moveText = lines[i];
 		if (moveText != "") {
+			doEP = (moveText.includes('e.p.'));
 			moveText = moveText.split(")");
 			moveText = moveText[1].split("(");
 			moveText = moveText[0].replace("x","");
@@ -202,7 +210,7 @@ function restoreGameHistory() {
 			r = 8-moveText[3];
 			let endButtonID = coords2buttonID([r,c]);
 			showPartialMove(startButtonID);
-			showCompleteMove(endButtonID);
+			showCompleteMove(endButtonID,doEP);
 			sideButton1Click();
 		}
 	}
@@ -246,7 +254,9 @@ function showPartialMove(buttonID) {
 	}
 }
 
-function showCompleteMove(buttonID) {
+function showCompleteMove(buttonID,doEP) {
+	// Input doEP (do en passant) is optional and typically empty, except for when restoring a move history
+	
 	// After clicking on destination:
 	let startCoords = buttonID2coords(STARTID);
 	let validDestinations = getPotentialMoves(startCoords);
@@ -259,7 +269,7 @@ function showCompleteMove(buttonID) {
 		for (let wi=0; wi < currentWaves.length; wi++) {
 			let waveDestinations = getPotentialMoves(startCoords,currentWaves[wi]);
 			if (!ismember(endCoords,waveDestinations)) {
-				movingPiece.removewave(currentWaves[wi]);
+				movingPiece.removewaves(currentWaves[wi]);
 			}
 		}
 		movingPiece.hasmoved = 1;
@@ -271,17 +281,63 @@ function showCompleteMove(buttonID) {
 		TAKENPIECE = BOARD[endCoords[0]][endCoords[1]].piece;
 		if (TAKENPIECE != "") {
 			TAKENPIECE.captured = 1;
-			TAKENPIECE.removewave('K');
+			TAKENPIECE.removewaves('K');
 			THISMOVE = THISMOVE + "x";
 		}
 		BOARD[endCoords[0]][endCoords[1]].piece = movingPiece;
 		BOARD[startCoords[0]][startCoords[1]].piece = "";
-		THISMOVE = THISMOVE + BOARD[endCoords[0]][endCoords[1]].chesscoords + "(" + movingPiece.waves() + ")"
 		
+
 		updateOptionsFromFullCollapse();
 		updateOptionsFromEntanglement();
 		
-		setState("showCompleteMove")
+		// If en passant has happened, then it collapses the defending piece to a pawn too
+		let direction  = -1;
+		if (movingPiece.color == "w") {
+			direction = 1;
+		}
+		
+		if (isEqual(endCoords,EPCOORDS) && movingPiece.waves().includes("P")) {
+			if (movingPiece.waves().length > 1) {
+				if (doEP == undefined) {
+				// In this case the attacker needs to decide if they meant to do an en passant. If they do it collapses their piece to a pawn.
+					doEP = confirm("En passant?");
+				}
+			} else {
+				doEP = true;
+			}
+			if (doEP) {
+				THISMOVE = THISMOVE + "x";
+				movingPiece.removewaves("KQNRB");
+				TAKENPIECE = BOARD[endCoords[0]+direction][endCoords[1]].piece;
+				TAKENPIECE.captured = 1;
+				TAKENPIECE.removewaves("KQNRB");
+				BOARD[endCoords[0]+direction][endCoords[1]].piece = "";
+				// update all the collpases again!
+				updateOptionsFromFullCollapse();
+				updateOptionsFromEntanglement();
+			} else {
+				movingPiece.removewaves("P");
+				updateOptionsFromFullCollapse();
+				updateOptionsFromEntanglement();
+			}
+		} else {
+			doEP = false;
+		}
+		THISMOVE = THISMOVE + BOARD[endCoords[0]][endCoords[1]].chesscoords + "(" + movingPiece.waves() + ")"
+		if (doEP) {
+			THISMOVE = THISMOVE + " e.p."
+		}
+		
+		// Save the en passant square
+		if (movingPiece.waves().includes("P")) {
+			if (endCoords[0]-startCoords[0] == -2*direction) {
+				EPCOORDS = [startCoords[0]-direction,startCoords[1]];
+				EPCOLOR = TURNCOLOR;
+			}
+		}
+		
+		setState("showCompleteMove");
 	} else {
 		setState("clear");
 	}
@@ -556,12 +612,16 @@ function getPotentialMoves(coords,waves) {
 		}
 		
 		newcoords = [coords[0]-direction,coords[1]-1]
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]].piece.color == opponentColor) {
-			moves.push(newcoords)
+		if (isValidCoord(newcoords)) {
+			if (isEqual(newcoords,EPCOORDS) || BOARD[newcoords[0]][newcoords[1]].piece.color == opponentColor) {
+				moves.push(newcoords)
+			}
 		}
 		newcoords = [coords[0]-direction,coords[1]+1]
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]].piece.color == opponentColor) {
-			moves.push(newcoords)
+		if (isValidCoord(newcoords)) {
+			if (isEqual(newcoords,EPCOORDS) || BOARD[newcoords[0]][newcoords[1]].piece.color == opponentColor) {
+				moves.push(newcoords)
+			}
 		}
 	}
 	
@@ -953,6 +1013,8 @@ function setup() {
 	BLACKPIECES = [];
 	MOVEHISTORY = "";
 	THISMOVE = "";
+	EPCOORDS = [];
+	EPCOLOR = "";
 	
     let squareButtons = document.querySelectorAll('[id^="square"]');
 	for (let r = 0; r <= 7; r++) {
@@ -1025,6 +1087,8 @@ let WHITEPIECES;
 let BLACKPIECES;
 let MOVEHISTORY;
 let THISMOVE;
+let EPCOORDS;
+let EPCOLOR;
 
 window.onload = setup
 
