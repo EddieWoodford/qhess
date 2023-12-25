@@ -279,16 +279,13 @@ function showCompleteMove(buttonID) {
 		THISMOVE = THISMOVE + BOARD[endCoords[0]][endCoords[1]].chesscoords + "(" + movingPiece.waves() + ")"
 		
 		updateOptionsFromFullCollapse();
-		// updateOptionsFromEntanglement();
+		updateOptionsFromEntanglement();
 		
 		setState("showCompleteMove")
 	} else {
 		setState("clear");
 	}
 }
-
-
-
 
 
 function updateOptionsFromFullCollapse(colors) {
@@ -343,124 +340,175 @@ function updateOptionsFromFullCollapse(colors) {
 }
 
 function updateOptionsFromEntanglement(colors) {
-	// Update options of all pieces based on entanglement
-	// First, get the options matrix OM
-	// OM is a 16 x 16 matrix, with each row being the piece.options vector from the pieces.
 	
-	let pieceIdx = 0;
-	let optionIdx = 0;
-	let sum1;
-	let sum2;
+	let OM_original;
 	let OM;
-	let OM2;
-	let idxs;
-	let ogValid;
-	let pieces;
+	let pieceIdx;
+	let optionIdx;
+	let matchingCols;
+	let matchingRows;
+	let rowsDone;
+	let colsDone;
+	let OM_before;
+	let result;
+	
 	if (colors == undefined) {
 		colors = ["w","b"];
 	}
-	
-	
 	for (color of colors) {	
-		// Loop through current valid options, and for each, check if after moving it the Option Matrix is still valid.
-		// If it isn't then the option that was removed is invalid and needs to be removed. This ensures that if the 
-		// player takes any given option, they will stay ni a valid state.
-		
-		while (pieceIdx<16) {
-			// Need to reset the pieces and OM variables here in case these loops have been reset after removing an option
-			if (color == "w" ) {
-				pieces = WHITEPIECES;
-			} else {
-				pieces = BLACKPIECES;
-			}
-			OM = getOM(pieces);
-			if (isValidOM(OM) == 0) {
-				setState("ERROR-invalidOM");
-				return;
-			}
-			
-			while (optionIdx<16) {
-				if (OM[pieceIdx][optionIdx] == 1) {
-					// remove ith column:
-					OM2 = OM.map(function(val) {
-						return val.toSpliced(optionIdx,1);
-					})
-					// remove ith row:
-					OM2.splice(pieceIdx,1);
-					
-					// Sort 1's into bottom-right corner. This makes isValidOM() much faster
-					sum1 = OM2.reduce((pieceIdx, a) => pieceIdx.map((b, i) => a[i] + b));
-					sum2 = OM2.map(y => y.reduce((a, b) => a+b));
-					idxs = Array.from(sum1.keys()).sort((a,b) => sum1[a]-sum1[b])
-					for (let i=0; i<8; i++) {
-						OM2[i] = idxs.map(j => OM2[i][j])
-					}
-					idxs = Array.from(sum2.keys()).sort((a,b) => sum2[a]-sum2[b])
-					OM2 = idxs.map(j => OM2[j])
-					
-					// See if any options result in an invalid matrix, and if so remove them and start again
-					if (isValidOM(OM2)==0) {
-						pieces[pieceIdx][optionIdx] = 0;
-						updateOptionsFromFullCollapse(color);
-						pieceIdx = -1;
-						break;
+		if (color == "w" ) {
+			pieces = WHITEPIECES;
+		} else {
+			pieces = BLACKPIECES;
+		}
+		OM_original = getOM(pieces);
+		OM = clone2DArray(OM_original);
+
+		if (isValid(OM)) {
+			pieceIdx = -1;
+			rowsDone = Array(16).fill(false);
+			OM_before = clone2DArray(OM);
+
+			while (pieceIdx < 15) { // <15 here since we increment at start of loop
+				pieceIdx++;
+
+				if (rowsDone[pieceIdx]) {
+					continue;
+				}
+
+				matchingRows = Array(16).fill(false);
+
+				for (let ri = pieceIdx; ri < 16; ri++) {
+					if (isEqual(OM[pieceIdx], OM[ri])) {
+						matchingRows[ri] = true;
 					}
 				}
-				optionIdx = optionIdx + 1;
+
+				colsDone = Array(16).fill(false);
+
+				for (optionIdx = 0; optionIdx < 16; optionIdx++) {
+					matchingCols = Array(16).fill(false);
+
+					if (colsDone[optionIdx]) {
+						continue;
+					}
+
+					for (let ci = optionIdx; ci < 16; ci++) {
+						if (isEqual(getColumn(OM, optionIdx), getColumn(OM, ci))) {
+							matchingCols[ci] = true;
+						}
+					}
+
+					if (OM[pieceIdx][optionIdx] === 1) {
+						// imagine that this piece is moved so that only this option remains
+						let OM_reduced = clone2DArray(OM);
+						OM_reduced.splice(pieceIdx, 1);
+						OM_reduced.forEach(row => row.splice(optionIdx, 1));
+
+						// Sort 1's into bottom right corner. This speeds things up significantly in testing
+						let sum1 = colsum(OM_reduced);
+						let sum2 = rowsum(OM_reduced);
+						OM_reduced = sortcols(OM_reduced,sum1);
+						OM_reduced = sortrows(OM_reduced,sum2);
+
+						result = isValid(OM_reduced);
+
+						if (!result) {
+							setValue(OM[pieceIdx],matchingCols,0);
+						}
+					}
+					setValue(colsDone,matchingCols,true);
+				}
+				for (let ri = pieceIdx; ri < 16; ri++) {
+					if (matchingRows[ri]) {
+						OM[ri] = [...OM[pieceIdx]];
+						pieces[ri].options = [...OM[pieceIdx]];
+						rowsDone[ri] = true;
+					}
+				}
+
+				if (!isEqual(OM_before[pieceIdx], OM[pieceIdx])) {
+					// Something has changed, so start the process again as that change may induce new collapses
+					pieceIdx = -1;
+					rowsDone = Array(16).fill(false);
+					updateOptionsFromFullCollapse(color);
+					OM_before = clone2DArray(OM);
+				}
 			}
-			pieceIdx = pieceIdx + 1;
-			optionIdx = 0;
+
+		} else {
+			throw new Error('Original OM is not valid');
 		}
 	}
-	
-	
+}
+
+function getColumn(matrix, col) {
+    return matrix.map(row => row[col]);
 }
 
 function getOM(pieces) {
 	let OM = [];
-	for (let i=0; i<16; i++) {
+	for (i in pieces) {
 		OM.push(pieces[i].options);
 		// colsum = Math.sum(OM,1);
 	}
 	return OM;
 }
 
-function isValidOM(OM) {
-	// Check if an options matrix is valid - ie it contains no options which, if fufilled, would result in an impossible state 
-	// A valid OM is on that can be rearranged by row swaps to have 1's on its leading diagonal. That is equivalent to saying that
-	// there is an arrangement of the current pieces' options that gives a full chess demographic.
+function isValid(OM) {
+	// Check if the Option Matrix (OM) is valid - it contains an arrangement which would result in a full chess demographic. That's equivalent to saying that the bipartite graph indicated by the OM has a perfect matching, or that each row can be assigned to exactly 1 column with a 1 in entry (row,col).
 	
-	if (OM.length == 1) {
-		if (OM==1) {
-			return 1;
-		} else {
-			return 0;
-		}
-	}
-	sum1 = OM.reduce((pieceIdx, a) => pieceIdx.map((b, i) => a[i] + b));
-	if (sum1.includes(0)) {
-		return 0;
-	}
-	sum2 = OM.map(y => y.reduce((a, b) => a+b));
-	if (sum2.includes(0)) {
-		return 0;
-	}
+    const sz = [OM.length, OM[0].length];
+	
+    if (sz[0] != sz[1]) {
+        throw new Error('OM should be square');
+    }
 
-	for (let i=0; i<OM.length; i++) {
-		if (OM[0][i]==1) {
-			// remove 1st column:
-			let OM2 = OM.map(function(val) {
-				return val.slice(1,16)
-			})
-			// remove ith row:
-			OM2.splice(i,1);
-			result = isValidOM(OM2);
-			if (result == 1) {return 1}
-		}
-	}
-	return 0
-	
+    if (sz[0] === 1) {
+        let result = +(OM==1);
+        matching = [1];
+        return result;
+    }
+
+    const sum1 = colsum(OM);
+    if (sum1.some(val => val === 0)) {
+        return false;
+    }
+
+    const sum2 = rowsum(OM);
+    if (sum2.some(val => val === 0)) {
+        return false;
+    }
+
+    let done = new Array(sz[0]).fill(false);
+	let matchingRows;
+	let OM2;
+    for (i in OM) {
+        if (done[i]) {
+            continue;
+        }
+
+        matchingRows = new Array(sz[0]).fill(false);
+        for (let ri = i; ri < sz[0]; ri++) {
+            if (OM[ri].every((val, idx) => val === OM[i][idx])) {
+                matchingRows[ri] = true;
+            }
+        }
+
+        if (OM[i][0] === 1) {
+            OM2 = OM.map(row => row.slice(1)); // delete 1st col
+            OM2.splice(i, 1); // delete ith row
+            if (isValid(OM2)) {
+                return true;
+            }
+        }
+		setValue(done,matchingRows,true);
+		
+    }
+	// If we make it here then none of the rows gave a valid result, so return false
+    return false;
 }
+
 
 function getPotentialMoves(coords,waves) {
 	// Get a list of all potential destination coordinates.
@@ -611,6 +659,27 @@ function getPotentialMoves(coords,waves) {
 }
 
 // Utilities
+function setValue(arr,filter,val) {
+	for (i in filter) {
+		if (filter[i]) {
+			arr[i] = val;
+		}
+	}
+}
+function isEqual(arr1, arr2) {
+    if (arr1.length !== arr2.length) {
+        return false;
+    }
+    for (i in arr1) {
+        if (arr1[i] !== arr2[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+function clone2DArray(arr) {
+    return arr.map(row => [...row]);
+}
 function buttonID2coords(buttonID) {
 	return [+buttonID.substr(6,1),+buttonID.substr(7,2)]
 }
@@ -630,6 +699,26 @@ function ismember(coords,coordlist) {
 }
 function sum(x) {
 	return x.reduce((a, b) => a + b, 0)
+}
+function colsum(M) {
+	return M.reduce((x, a) => x.map((b, i) => a[i] + b));
+}
+function rowsum(M) {
+	return M.map(y => y.reduce((a, b) => a+b));
+}
+function sortcols(M,ref) {
+	// Sort ref and then sort the cols of M the same way
+	idxs = Array.from(ref.keys()).sort((a,b) => ref[a]-ref[b])
+	for (i in M) {
+		M[i] = idxs.map(j => M[i][j])
+	}
+	return M
+}
+function sortrows(M,ref) {
+	// Sort ref and then sort the rows on M the same way
+	idxs = Array.from(ref.keys()).sort((a,b) => ref[a]-ref[b])
+	M = idxs.map(j => M[j])
+	return M
 }
 function wave2optidxs(wave) {
 	// P1,P2,P3,P4,P5,P6,P7,P8,R1,R2,N1,N2,Bb,Bw,Q, K
@@ -720,7 +809,12 @@ function setState(state) {
 	if (state == "clear") {
 		sideButton1.style.visibility = "hidden";
 		sideButton2.style.visibility = "hidden";
-		promptlabel.innerText = "Select piece to move";
+		if (TURNCOLOR == "w") {
+			promptlabel.innerText = "White -";
+		} else {
+			promptlabel.innerText = "Black -";
+		}
+		promptlabel.innerText = promptlabel.innerText + " select piece to move";
 		STARTID = "";
 		ENDID = "";
 		PREVPIECES = [];
@@ -728,7 +822,12 @@ function setState(state) {
 	} else if (state == "highlightPotentialMoves") {
 		sideButton1.style.visibility = "hidden";
 		sideButton2.style.visibility = "hidden";
-		promptlabel.innerText = "Select piece to move";
+		if (TURNCOLOR == "w") {
+			promptlabel.innerText = "White -";
+		} else {
+			promptlabel.innerText = "Black -";
+		}
+		promptlabel.innerText = promptlabel.innerText + " select piece to move";
 	} else if (state == "showPartialMove") {
 		sideButton1.style.visibility = "hidden";
 		sideButton2.style.visibility = "hidden";

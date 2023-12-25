@@ -1,4 +1,3 @@
-highlighting pieces
 potential checks
 automatic checks
 castling
