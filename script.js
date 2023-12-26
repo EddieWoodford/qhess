@@ -97,6 +97,8 @@ class Piece {
 		this.captured = 0; // boolean for whether this piece is captured
 		this.hasmoved = 0; // boolean for whether this piece has moved
 		this.fullcollapsed = 0; // boolean for whether this piece is fully collapsed
+		this.promoted = 0; // boolean for whether this piece is a promoted pawn
+		this.promotedOptions = [];
 		// options:
 		// options is a 16 element array of 0/1 values to indicate the remaining options available to this piece
 		// P1,P2,P3,P4,P5,P6,P7,P8,R1,R2,N1,N2,Bb,Bw,Q, K
@@ -115,7 +117,11 @@ class Piece {
 		for (let wi in waves) {
 			let optidxs = wave2optidxs(waves[wi]);
 			for (let oi = 0; oi < optidxs.length; oi++) {
-				this.options[optidxs[oi]] = 0;
+				if (this.promoted==0) {
+					this.options[optidxs[oi]] = 0;
+				} else {
+					this.promotedOptions[optidxs[oi]] = 0;
+				}
 			}
 		}
 	}
@@ -123,9 +129,14 @@ class Piece {
 		// Waves string based on options array
 		let allwaves = "KQBNRP";
 		let wavesout = "";
+		let subopts;
 		for (let wi = 0; wi < 6; wi++) {
 			let optidxs = wave2optidxs(allwaves[wi]);
-			let subopts = this.options.slice(optidxs[0],optidxs[optidxs.length-1]+1);
+			if (this.promoted == 0) {
+				subopts = this.options.slice(optidxs[0],optidxs[optidxs.length-1]+1);
+			} else {
+				subopts = this.promotedOptions.slice(optidxs[0],optidxs[optidxs.length-1]+1);
+		}
 			if (sum(subopts) > 0) {
 				wavesout = wavesout + allwaves[wi];
 			}
@@ -202,7 +213,8 @@ function restoreGameHistory() {
 	for (i in lines) {
 		moveText = lines[i];
 		if (moveText != "") {
-			doEP = (moveText.includes('e.p.'));
+			doEP = (moveText.includes("e.p."));
+			doPromotion = (moveText.includes("="));
 			moveText = moveText.split(")");
 			moveText = moveText[1].split("(");
 			moveText = moveText[0].replace("x","");
@@ -214,7 +226,7 @@ function restoreGameHistory() {
 			r = 8-moveText[3];
 			let endButtonID = coords2buttonID([r,c]);
 			showPartialMove(startButtonID);
-			showCompleteMove(endButtonID,doEP);
+			showCompleteMove(endButtonID,doEP,doPromotion);
 			sideButton1Click();
 		}
 	}
@@ -258,7 +270,7 @@ function showPartialMove(buttonID) {
 	}
 }
 
-function showCompleteMove(buttonID,doEP) {
+function showCompleteMove(buttonID,doEP,doPromotion) {
 	// Input doEP (do en passant) is optional and typically empty, except for when restoring a move history
 	
 	// After clicking on destination:
@@ -327,10 +339,7 @@ function showCompleteMove(buttonID,doEP) {
 		} else {
 			doEP = false;
 		}
-		THISMOVE = THISMOVE + BOARD[endCoords[0]][endCoords[1]].chesscoords + "(" + movingPiece.waves() + ")"
-		if (doEP) {
-			THISMOVE = THISMOVE + " e.p."
-		}
+		
 		
 		// Save the en passant square
 		if (movingPiece.waves().includes("P")) {
@@ -338,6 +347,46 @@ function showCompleteMove(buttonID,doEP) {
 				EPCOORDS = [startCoords[0]-direction,startCoords[1]];
 				EPCOLOR = TURNCOLOR;
 			}
+		}
+		
+		// Check if the moving piece is a pawn to be promoted
+		if (movingPiece.waves().includes("P")) {
+			if ((TURNCOLOR=="w" && endCoords[0]==0) || (TURNCOLOR=="b" && endCoords[0]==7)) {
+				if (movingPiece.waves().length > 1) {
+					if (doPromotion == undefined) {
+						// In this case the player needs to decide if they want to promote the piece as though it were a pawn.
+						doPromotion = confirm("Promote Pawn?");
+					}
+				} else {
+					doPromotion = true;
+				}
+				if (doPromotion) {
+					movingPiece.removewaves("KQNBR");
+					movingPiece.promoted = 1;
+					
+					movingPiece.promotedOptions = Array(16).fill(1);
+					movingPiece.removewaves("KP"); // can't be a king or pawn
+					if ((movingPiece.r + movingPiece.c)%2==0) {
+						// on a white square, so black bishop is not possible
+						movingPiece.promotedOptions[12] = 0;
+					} else {
+						// on a black square, so white bishop is not possible
+						movingPiece.promotedOptions[13] = 0;
+					}
+				}
+			}
+		}
+		
+		// Finish move annotation
+		
+		if (doEP) {
+			THISMOVE = THISMOVE + BOARD[endCoords[0]][endCoords[1]].chesscoords + "(" + movingPiece.waves() + ")";
+			THISMOVE = THISMOVE + " e.p.";
+		} else if (doPromotion) {
+			THISMOVE = THISMOVE + BOARD[endCoords[0]][endCoords[1]].chesscoords + "(P)";
+			THISMOVE = THISMOVE + "=(QRNB)";
+		} else {
+			THISMOVE = THISMOVE + BOARD[endCoords[0]][endCoords[1]].chesscoords + "(" + movingPiece.waves() + ")"
 		}
 		
 		// Now, look to see if attacker has put themselves in automatic check. If so, it's an invalid move
@@ -412,6 +461,10 @@ function updateOptionsFromFullCollapse(colors) {
 		while (i < 16) {
 			piece = pieces[i];
 			if (piece.fullcollapsed == 1) {
+				i = i+1;
+				continue;
+			}
+			if (piece.promoted == 1) {
 				i = i+1;
 				continue;
 			}
@@ -551,7 +604,6 @@ function getOM(pieces) {
 	let OM = [];
 	for (i in pieces) {
 		OM.push(pieces[i].options);
-		// colsum = Math.sum(OM,1);
 	}
 	return OM;
 }
@@ -887,6 +939,7 @@ function saveBoard() {
 			pieceClone[prop] = oldPiece[prop];
 		}
 		pieceClone.options = [...oldPiece.options];
+		pieceClone.promotedOptions = [...oldPiece.promotedOptions];
 		PREVPIECES[i] = pieceClone;
 	}
 }
