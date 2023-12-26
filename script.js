@@ -5,7 +5,9 @@ class Square {
         this.c = c;
 		this.piece = "";
 		this.highlighted = 0;
-		this.potentialmove = 0;
+		this.potentialMove = 0;
+		this.checkKing = 0;
+		this.checkAttacker = 0;
 		let x = r+c;
 		if (x%2 == 0) {
 			this.color = 'w';
@@ -30,7 +32,7 @@ class Square {
 				showPartialMove(buttonID)
 			} else if (getState() == "showPartialMove") {
 				showCompleteMove(buttonID)
-			} else if (getState() == "showCompleteMove") {
+			} else if (getState() == "showCompleteMove" || getState() == "invalidMoveIntoCheck") {
 				restoreBoard();
 				setState("clear");
 			}
@@ -139,15 +141,7 @@ function sideButton1Click() {
 		// Calculate new options
 	
 		// The pieces are already in the new location due to the showCompleteMove state
-		if (TURNCOLOR == "w") {
-			TURNCOLOR =	"b";
-		} else {
-			TURNCOLOR = "w";
-		}
-		if (TURNCOLOR == EPCOLOR) {
-			EPCOLOR = "";
-			EPCOORDS = [];
-		}
+		
 			
 		// Update move history label:
 		MOVEHISTORY = MOVEHISTORY + TURNNUMBER.toString() + ". " + THISMOVE + "\r\n";
@@ -155,11 +149,21 @@ function sideButton1Click() {
 		historyArea.value = MOVEHISTORY;
 			
 		TAKENPIECE.captured = 1;
-		TAKENPIECE = "";
 		
-		STARTID = "";
-		ENDID = "";
-		TURNNUMBER = TURNNUMBER + 1;
+		if (TURNCOLOR == "w") {
+			TURNCOLOR =	"b";
+		} else {
+			TURNNUMBER = TURNNUMBER + 1;
+			TURNCOLOR = "w";
+		}
+		if (TURNCOLOR == EPCOLOR) {
+			EPCOLOR = "";
+			EPCOORDS = [];
+		}
+		
+		setState("clear");
+	} else if (getState() == "invalidMoveIntoCheck") {
+		restoreBoard();
 		setState("clear");
 	}
 }
@@ -231,7 +235,7 @@ function highlightPotentialMoves(buttonID) {
 
 		let moves = getPotentialMoves(coords);
 		for (let i=0; i<moves.length; i++) {
-			BOARD[moves[i][0]][moves[i][1]].potentialmove = 1;
+			BOARD[moves[i][0]][moves[i][1]].potentialMove = 1;
 		}
 		setState("highlightPotentialMoves");
 	}
@@ -248,7 +252,7 @@ function showPartialMove(buttonID) {
 		STARTID = buttonID;
 		let moves = getPotentialMoves(coords);
 		for (let i=0; i<moves.length; i++) {
-			BOARD[moves[i][0]][moves[i][1]].potentialmove = 1;
+			BOARD[moves[i][0]][moves[i][1]].potentialMove = 1;
 		}
 		setState("showPartialMove");
 	}
@@ -287,7 +291,6 @@ function showCompleteMove(buttonID,doEP) {
 		BOARD[endCoords[0]][endCoords[1]].piece = movingPiece;
 		BOARD[startCoords[0]][startCoords[1]].piece = "";
 		
-
 		updateOptionsFromFullCollapse();
 		updateOptionsFromEntanglement();
 		
@@ -337,12 +340,62 @@ function showCompleteMove(buttonID,doEP) {
 			}
 		}
 		
-		setState("showCompleteMove");
+		// Now, look to see if attacker has put themselves in automatic check. If so, it's an invalid move
+		[kingCoords,attackerCoords] = findAutoCheck(TURNCOLOR);
+		if (attackerCoords.length > 0) {
+			// We will still display the invalid move, but make it impossible to submit, as
+			// the player might want to inspect the board to understand how the check happened.
+			setState("invalidMoveIntoCheck");
+		} else {			
+			[kingCoords,attackerCoords] = findAutoCheck(oppColor());
+			if (attackerCoords.length > 0) {
+				THISMOVE = THISMOVE + "+";
+			}
+			setState("showCompleteMove");
+		}
 	} else {
 		setState("clear");
 	}
 }
 
+function findAutoCheck(color) {
+	let pieces = getPieces(color);
+	let kingCoords = [];
+	clearCheck();
+	for (pi in pieces) {
+		if (pieces[pi].waves() == "K") {
+			kingCoords = [pieces[pi].r,pieces[pi].c];
+			break;
+		}
+	}
+	if (kingCoords.length==0) {
+		return [[],[]];
+	}
+	pieces = getPieces(oppColor(color));
+	let attackerCoords = [];
+	let moveCoords;
+	for (pi in pieces) {
+		pieceCoords = [pieces[pi].r,pieces[pi].c];
+		moveCoords = getPotentialMoves(pieceCoords);
+		for (mci in moveCoords) {
+			if (isEqual(moveCoords[mci],kingCoords)) {
+				attackerCoords.push(pieceCoords);
+			}
+		}
+	}
+	if (attackerCoords.length > 0) {
+		CHECK = true;
+		BOARD[kingCoords[0]][kingCoords[1]].checkKing = 1;
+		for (aci in attackerCoords) {
+			BOARD[attackerCoords[aci][0]][attackerCoords[aci][1]].checkAttacker = 1;
+		}
+	} else {
+		CHECK = false;
+	}
+	return [kingCoords,attackerCoords];
+	
+	
+}
 
 function updateOptionsFromFullCollapse(colors) {
 	// Loop through the pieces. Continue until the set isn't changed after a pass.
@@ -354,11 +407,7 @@ function updateOptionsFromFullCollapse(colors) {
 		colors = ["w","b"];
 	}
 	for (color of colors) {	
-		if (color == "w" ) {
-			pieces = WHITEPIECES;
-		} else {
-			pieces = BLACKPIECES;
-		}
+		pieces = getPieces(color);
 		i = 0;
 		while (i < 16) {
 			piece = pieces[i];
@@ -412,11 +461,7 @@ function updateOptionsFromEntanglement(colors) {
 		colors = ["w","b"];
 	}
 	for (color of colors) {	
-		if (color == "w" ) {
-			pieces = WHITEPIECES;
-		} else {
-			pieces = BLACKPIECES;
-		}
+		pieces = getPieces(color);
 		OM_original = getOM(pieces);
 		OM = clone2DArray(OM_original);
 
@@ -718,6 +763,15 @@ function getPotentialMoves(coords,waves) {
 	return moves
 }
 
+function clearCheck() {
+	for (let r=0; r<8; r++) {
+		for (let c=0; c<8; c++) {
+			BOARD[r][c].checkKing = 0;
+			BOARD[r][c].checkAttacker = 0;
+		}
+	}
+}
+
 // Utilities
 function setValue(arr,filter,val) {
 	for (i in filter) {
@@ -802,6 +856,22 @@ function wave2optidxs(wave) {
 		return [15]
 	}
 }
+function oppColor(color) {
+	if (color == undefined) {
+		color = TURNCOLOR;
+	}
+	if (color=="w") {
+		return "b";
+	}
+	return "w";
+}
+function getPieces(color) {
+	if (color == "w") {
+		return WHITEPIECES;
+	} else {
+		return BLACKPIECES;
+	}
+}
 function saveBoard() {
 	PREVPIECES = [];
 	let oldPiece;
@@ -865,39 +935,49 @@ function setState(state) {
 	// All the changing of the actual display happens here, always by simply looping over the squares and displaying 
 	// them according to the variables in the object. 
 	
+	
 
+	if (TURNCOLOR == "w") {
+		promptlabel.innerText = "White -";
+	} else {
+		promptlabel.innerText = "Black -";
+	}
+	if (CHECK) {
+		promptlabel.innerText = promptlabel.innerText + " Check -";
+	}
 	if (state == "clear") {
 		sideButton1.style.visibility = "hidden";
 		sideButton2.style.visibility = "hidden";
-		if (TURNCOLOR == "w") {
-			promptlabel.innerText = "White -";
-		} else {
-			promptlabel.innerText = "Black -";
-		}
 		promptlabel.innerText = promptlabel.innerText + " select piece to move";
 		STARTID = "";
 		ENDID = "";
 		PREVPIECES = [];
 		THISMOVE = "";
+		TAKENPIECE = "";
+		[kingCoords,attackerCoords] = findAutoCheck(TURNCOLOR);
 	} else if (state == "highlightPotentialMoves") {
 		sideButton1.style.visibility = "hidden";
 		sideButton2.style.visibility = "hidden";
-		if (TURNCOLOR == "w") {
-			promptlabel.innerText = "White -";
-		} else {
-			promptlabel.innerText = "Black -";
-		}
 		promptlabel.innerText = promptlabel.innerText + " select piece to move";
+		[kingCoords,attackerCoords] = findAutoCheck(TURNCOLOR);
 	} else if (state == "showPartialMove") {
 		sideButton1.style.visibility = "hidden";
 		sideButton2.style.visibility = "hidden";
 		promptlabel.innerText = "Select destination";
+		[kingCoords,attackerCoords] = findAutoCheck(TURNCOLOR);
 	} else if (state == "showCompleteMove") {
 		sideButton1.style.visibility = "visible";
 		sideButton2.style.visibility = "visible";
 		promptlabel.innerText = "Add PC / Submit";
 		sideButton1.innerText = "Submit";
 		sideButton2.innerText = "Add Potential Check";
+		// the findAutoCheck() calls are handled in showCompleteMove() as it may be either the defender or attacker in check
+	} else if (state == "invalidMoveIntoCheck") {
+		promptlabel.innerText = "Invalid - moved into check";
+		sideButton1.style.visibility = "visible";
+		sideButton2.style.visibility = "hidden";
+		sideButton1.innerText = "Cancel";
+		[kingCoords,attackerCoords] = findAutoCheck(TURNCOLOR);
 	} else if (state == "selectPCKing") {
 		promptlabel.innerText = "Select King to attack";
 		sideButton1.style.visibility = "hidden";
@@ -917,16 +997,17 @@ function setState(state) {
 			sqr = BOARD[r][c];
 			
 			if (state == "clear") {
-				// For other states, the propertes are set in calling functions, but you can always reset to clear by just calling setState("clear")
+				// For other states, the propertes are set in calling functions, but you can always reset to clear by 
+				// just calling setState("clear")
 				sqr.highlighted = 0;
-				sqr.potentialmove = 0;
+				sqr.potentialMove = 0;
 			}
 			if (state == "showPartialMove") {
 				sqr.highlighted = 0;
 			}
 			if (state == "showCompleteMove") {
 				sqr.highlighted = 0;
-				sqr.potentialmove = 0;
+				sqr.potentialMove = 0;
 			}
 			
 			// Default border:
@@ -950,7 +1031,7 @@ function setState(state) {
 			if (sqr.highlighted) {
 				sqr.button.style.background = 'orange';
 			}
-			if (sqr.potentialmove) {
+			if (sqr.potentialMove) {
 				sqr.button.style.background = 'green';
 			}
 			if (sqr.button.id == STARTID) {
@@ -959,6 +1040,14 @@ function setState(state) {
 			}
 			if (sqr.button.id == ENDID) {
 				sqr.button.style.borderColor = "green";
+				sqr.button.style.borderWidth = "6px";
+			}
+			if (sqr.checkKing) {
+				sqr.button.style.borderColor = "blue";
+				sqr.button.style.borderWidth = "6px";
+			}
+			if (sqr.checkAttacker) {
+				sqr.button.style.borderColor = "red";
 				sqr.button.style.borderWidth = "6px";
 			}
 		}
@@ -1015,6 +1104,7 @@ function setup() {
 	THISMOVE = "";
 	EPCOORDS = [];
 	EPCOLOR = "";
+	CHECK = false;
 	
     let squareButtons = document.querySelectorAll('[id^="square"]');
 	for (let r = 0; r <= 7; r++) {
@@ -1089,6 +1179,7 @@ let MOVEHISTORY;
 let THISMOVE;
 let EPCOORDS;
 let EPCOLOR;
+let CHECK;
 
 window.onload = setup
 
