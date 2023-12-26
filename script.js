@@ -1009,6 +1009,10 @@ function setState(state) {
 				sqr.highlighted = 0;
 				sqr.potentialMove = 0;
 			}
+			if (state == "invalidMoveIntoCheck") {
+				sqr.highlighted = 0;
+				sqr.potentialMove = 0;
+			}
 			
 			// Default border:
 			sqr.button.style.borderWidth = "";
