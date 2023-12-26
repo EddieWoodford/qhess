@@ -60,22 +60,34 @@ class Square {
 			}
 			
 			if (this.piece.color == "w") {
-				wavetext = wavetext.replace (/^/, '<div class="whitepiece">');
+				if (waves.length==1) {
+					wavetext = waves;
+					wavetext = wavetext.replace (/^/, '<div class="whitepiececollapsed">');
+				} else {
+					wavetext = wavetext.replace (/^/, '<div class="whitepiece">');
+				}
 				wavetext = wavetext.replace (/$/, '</div>');
+				// Need to be careful with the strings used in WB, WK, etc to ensure they don't contain any of the waves
+				// "KWRBNP" as then this method of replacing the text would replace unintentional chars.
+				wavetext = wavetext.replace("B",WB);
 				wavetext = wavetext.replace("K",WK);
 				wavetext = wavetext.replace("Q",WQ);
 				wavetext = wavetext.replace("R",WR);
-				wavetext = wavetext.replace("B",WB);
 				wavetext = wavetext.replace("N",WN);
 				wavetext = wavetext.replace("P",WP);
 				wavetext = wavetext.replaceAll("empty","&nbsp;");
 			} else {
-				wavetext = wavetext.replace (/^/, '<div class="blackpiece">');
+				if (waves.length==1) {
+					wavetext = waves;
+					wavetext = wavetext.replace (/^/, '<div class="blackpiececollapsed">');
+				} else {
+					wavetext = wavetext.replace (/^/, '<div class="blackpiece">');
+				}
 				wavetext = wavetext.replace (/$/, '</div>');
+				wavetext = wavetext.replace("B",BB);
 				wavetext = wavetext.replace("K",BK);
 				wavetext = wavetext.replace("Q",BQ);
 				wavetext = wavetext.replace("R",BR);
-				wavetext = wavetext.replace("B",BB);
 				wavetext = wavetext.replace("N",BN);
 				wavetext = wavetext.replace("P",BP);
 				wavetext = wavetext.replaceAll("empty","&nbsp;");
@@ -1193,23 +1205,6 @@ function setup() {
 }
 
 
-
-// Begin
-// let startingLocations = Array(8).fill().map(() => Array(8).fill(""));
-// startingLocations[2][2] = "w_KB"
-// startingLocations[2][3] = "w_R"
-// startingLocations[3][4] = "w_B"
-// startingLocations[4][5] = "b_Q"
-// startingLocations[5][6] = "w_N"
-// startingLocations[2][5] = "b_R"
-// startingLocations[6][6] = "b_P"
-// startingLocations[7][5] = "b_P"
-// startingLocations[7][6] = "w_P"
-// startingLocations[7][7] = "w_P"
-
-// note: none of these 'color' definitions can have the 'B' character in them,
-// either in RGB or named or whatever. B is special because Bishop and this
-// exists:  wavetext = wavetext.replace("B",WB);
 const WK = "<span style='color:#7E7427'>&#9812;</span>";
 const WQ = "<span style='color:#563F54'>&#9813;</span>";
 const WR = "<span style='color:#394F67'>&#9814;</span>";

@@ -70,6 +70,16 @@ h1 {
     background: #0008;
     border-radius: 6px;
 }
+.whitepiececollapsed {
+    background: #fff8;
+    border-radius: 6px;
+	font-size: 50px;
+}
+.blackpiececollapsed {
+    background: #0008;
+    border-radius: 6px;
+	font-size: 50px;
+}
 
 .captured-pieces {
     grid-column-start: 3;
