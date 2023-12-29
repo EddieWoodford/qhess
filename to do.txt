@@ -1,6 +1,2 @@
-on full collapse, make piece icon full size?
 potential checks
-automatic checks
 castling
-en passant
-pawn promotion

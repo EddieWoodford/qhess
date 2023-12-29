@@ -27,6 +27,7 @@ h1 {
     position: relative;
     float: center;
     vertical-align: top;
+	width: 25%;
 }
 .play-area {
     white-space: nowrap;
@@ -35,11 +36,13 @@ h1 {
     position: relative;
     float: center;
     vertical-align: top;
+	/* width: 50%; */
 }
 .misc {
     display: inline-block;
     position: relative;
     float: center;
+	width: 25%;
 /*    vertical-align: top; */
 }
 
