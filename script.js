@@ -38,6 +38,8 @@ class Square {
 				selectPCKing(buttonID);
 			} else if (getState() == "selectPCAttackers") {
 				selectPCAttackers(buttonID);
+			} else if (getState() == "move0") {
+				setState("move0");
 			} else {
 				restoreGameHistory();
 				setState("clear");
@@ -178,7 +180,7 @@ class Piece {
 
 
 function sideButton1Click() {
-	if (getState() == "showCompleteMove") {
+	if (getState() == "showCompleteMove" || getState() == "move0") {
 		findPotentialKingsToAttack();
 		setState("selectPCKing");
 	} else if (getState() == "clear" && POTCHECK) {
@@ -187,7 +189,7 @@ function sideButton1Click() {
 }
 
 function sideButton2Click() {
-	if (getState() == "showCompleteMove" || getState() == "selectPCAttackers") {
+	if (getState() == "showCompleteMove" || getState() == "selectPCAttackers" || getState() == "move0") {
 		submitMove();
 		setState("clear");
 	} else if (getState() == "invalidMoveIntoCheck") {
@@ -281,6 +283,7 @@ function restoreGameHistory(historyText) {
 	if (historyText == undefined) {
 		historyText = historyArea.value;
 	} else {
+		historyText = historyText.replaceAll("\r\n\r\n","\r\n");
 		historyArea.value = historyText;
 	}
 	let lines = historyText.split("\n");
@@ -292,7 +295,11 @@ function restoreGameHistory(historyText) {
 	setup();
 	for (let i=0; i < lines.length; i++) {
 		moveText = lines[i];
-		if (moveText != "") {
+		// every move needs to include a number such as 1. This requirement lets us skip weird lines from pasting
+		if (moveText.includes(".")) { 
+			if (i==0 && moveText.includes("1.")) {
+				sideButton2Click(); // pass to white on move 0
+			}
 			doEP = (moveText.includes("e.p."));
 			doPromotion = (moveText.includes("="));
 			let pcText = "";
@@ -307,16 +314,26 @@ function restoreGameHistory(historyText) {
 				pcText = moveText[1].split(" ");
 				moveText = moveText[0];
 			}
-			moveText = moveText.split(")");
-			moveText = moveText[1].split("(");
-			moveText = moveText[0].replace("x","");
-			// Now moveText should be 4 chars long, such as h2h3, indicating the from-to coordinates
-			[r,c] = coordstext2coords(moveText.substring(0,2));
-			let startButtonID = coords2buttonID([r,c]);
-			[r,c] = coordstext2coords(moveText.substring(2,4));
-			let endButtonID = coords2buttonID([r,c]);
-			showPartialMove(startButtonID);
-			showCompleteMove(endButtonID,doEP,doPromotion);
+			if (moveText.includes("(")) {
+				moveText = moveText.split(")");
+				moveText = moveText[1].split("(");
+				moveText = moveText[0];
+			}
+			if (!moveText.includes("0.")) {
+				if (moveText.includes(". ")) {
+					moveText = moveText.split(". ");
+					moveText = moveText[1];
+				}
+				moveText = moveText.replace("x","");
+				
+				// Now moveText should be 4 chars long, such as h2h3, indicating the from-to coordinates
+				[r,c] = coordstext2coords(moveText.substring(0,2));
+				let startButtonID = coords2buttonID([r,c]);
+				[r,c] = coordstext2coords(moveText.substring(2,4));
+				let endButtonID = coords2buttonID([r,c]);
+				showPartialMove(startButtonID);
+				showCompleteMove(endButtonID,doEP,doPromotion);
+			}
 			
 			if (pcText.length > 0) {
 				sideButton1Click(); // "Add Potential Check" button
@@ -341,11 +358,16 @@ function copyHistory() {
 	navigator.clipboard.writeText(historyText);
 }
 
-function pasteRestore() {
+function pasteAllRestore() {
 	let historyArea = document.getElementById("movehistory");
 	historyArea.value = "";
 	navigator.clipboard.readText().then((clipText) => (restoreGameHistory(clipText)));
-	
+}
+
+function pasteLineRestore() {
+	let historyArea = document.getElementById("movehistory");
+	historyText = historyArea.value;
+	navigator.clipboard.readText().then((clipText) => (restoreGameHistory(historyText + "\r\n" + clipText)));
 }
 
 function clearFindPieces() {
@@ -1231,6 +1253,10 @@ function getState() {
 }
 
 function setState(state) {
+	if (state == "clear" && TURNNUMBER == 0) {
+		state = "move0";
+	}
+	
 	statelabel = document.getElementById("state");
 	prevState = statelabel.innerText;
 	statelabel.innerText = state;
@@ -1270,7 +1296,15 @@ function setState(state) {
 			sideButton1.style.visibility = "visible";
 			sideButton1.innerText = "Declare 'Not a King'";
 		}
-		
+	} else if (state == "move0") {
+		sideButton2.style.visibility = "visible";
+		sideButton1.style.visibility = "visible";
+		sideButton1.innerText = "Add Potential Check";
+		sideButton2.innerText = "Pass to white";
+		promptlabel.innerHTML = "Move 0 - add Potential Check?";
+		STARTID = "";
+		ENDID = "";
+		TAKENPIECE = "";
 	} else if (state == "highlightPotentialMoves") {
 		sideButton2.style.visibility = "hidden";
 		sideButton1.style.visibility = "hidden";
@@ -1445,8 +1479,8 @@ function setState(state) {
 }
 
 function setup() {
-	TURNNUMBER = 1;
-	TURNCOLOR = "w";
+	TURNNUMBER = 0;
+	TURNCOLOR = "b";
 	TAKENPIECE = "";
 	BOARD = []; // 8 x 8 array of Square objects
 	STARTID = "";
@@ -1489,7 +1523,7 @@ function setup() {
 			BOARD[r][c].piece = WHITEPIECES[i]
 		}
 	}
-	setState("clear");
+	setState("move0");
 }
 
 

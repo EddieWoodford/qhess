@@ -16,8 +16,30 @@ h1 {
     position: relative;
     float: center;
     vertical-align: top;
+	align-items: center;
 	width: 25%;
 }
+.restoreButton{
+	height: 40px;
+	width: 49%;
+	vertical-align:top;
+}
+.copyHistoryButton{
+	height: 40px;
+	width: 49%;
+	vertical-align:top;
+}
+.pasteAllRestoreButton{
+	height: 40px;
+	width: 49%;
+	vertical-align:top;
+}
+.pasteLineRestoreButton{
+	height: 40px;
+	width: 49%;
+	vertical-align:top;
+}
+
 .play-area {
     white-space: nowrap;
     display: inline-block;

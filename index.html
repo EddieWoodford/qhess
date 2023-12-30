@@ -10,8 +10,10 @@
     <h1>Qhess</h1>
     <div class="move-history">
         <button class='restoreButton' id='restorehistory' onclick="restoreGameHistory()">Restore History</button>
-		<button class='pasteRestoreButton' id='pasterestore' onclick="pasteRestore()">Paste & Restore History</button>
 		<button class='copyHistoryButton' id='copyhistory' onclick="copyHistory()">Copy History</button>
+		<br>
+		<button class='pasteAllRestoreButton' id='pasteallrestore' onclick="pasteAllRestore()">Paste All & Restore</button>
+		<button class='pasteLineRestoreButton' id='pastelinerestore' onclick="pasteLineRestore()">Paste Line & Restore</button>
         <textarea id="movehistory" rows=32></textarea>
     </div>
     <div id="play-area" class="play-area">
