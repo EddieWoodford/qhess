@@ -18,25 +18,34 @@ h1 {
     vertical-align: top;
 	align-items: center;
 	width: 25%;
+	padding: 0px;
 }
 .restoreButton{
-	height: 40px;
-	width: 49%;
+	height: 30px;
+	width: 100%;
 	vertical-align:top;
+	float: left;
 }
-.copyHistoryButton{
-	height: 40px;
-	width: 49%;
+.copyAllHistoryButton{
+	height: 30px;
+	width: 50%;
+	vertical-align:top;
+	float: left;
+}
+.copyLastMoveButton{
+	height: 30px;
+	width: 50%;
 	vertical-align:top;
 }
 .pasteAllRestoreButton{
-	height: 40px;
-	width: 49%;
+	height: 30px;
+	width: 50%;
 	vertical-align:top;
+	float: left;
 }
 .pasteLineRestoreButton{
-	height: 40px;
-	width: 49%;
+	height: 30px;
+	width: 50%;
 	vertical-align:top;
 }
 

@@ -235,7 +235,10 @@ function submitMove() {
 		piece = defPiece(PCKING);
 		THISMOVE = THISMOVE + BOARD[piece.r][piece.c].chesscoords + ">";
 	}
-	MOVEHISTORY = MOVEHISTORY + TURNNUMBER.toString() + ". " + THISMOVE + "\r\n";
+	if (MOVEHISTORY.length > 0) {
+		MOVEHISTORY = MOVEHISTORY + "\r\n"
+	}
+	MOVEHISTORY = MOVEHISTORY + TURNNUMBER.toString() + ". " + THISMOVE;
 	THISMOVE = "";
 	historyArea = document.getElementById("movehistory");
 	historyArea.value = MOVEHISTORY;
@@ -352,9 +355,20 @@ function restoreGameHistory(historyText) {
 	}
 }
 
-function copyHistory() {
+function copyAllHistory() {
 	let historyArea = document.getElementById("movehistory");
 	let historyText = historyArea.value;
+	navigator.clipboard.writeText(historyText);
+}
+function copyLastMove() {
+	let historyArea = document.getElementById("movehistory");
+	let historyText = historyArea.value;
+	historyText = historyText.split("\r\n");
+	historyText = historyText[historyText.length-1];
+	historyText = historyText.split("\r");
+	historyText = historyText[historyText.length-1];
+	historyText = historyText.split("\n");
+	historyText = historyText[historyText.length-1];
 	navigator.clipboard.writeText(historyText);
 }
 
