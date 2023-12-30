@@ -9,18 +9,7 @@ body {
 h1 {
     color: red;
 }
-.grid-container {
-    /*
-    display: grid;
-    grid-template-columns: 20em 1fr 1fr;
-    grid-template-rows: 1fr 1fr 1fr 1fr;
-        */
-    /* grid-gap: 20px; */
-    /*
-    grid-column-gap: 1em;
-    align-items: top; 
-        */
-}
+
 .move-history {
     text-align: left;
     display: inline-block;
@@ -129,12 +118,37 @@ textarea {
     float: left;
     border: black solid 1px;
     cursor: pointer;
-    /* white-space: normal; */
     white-space: nowrap;
     font-family: Monospace;
     font-size: 20px;
     line-height: 1;
     text-align: center;
+    padding: 0px;
+}
+.rankcoord {
+	color: black;
+    width: 20px;
+    height: 60px;
+    float: left;
+    border: none;
+    white-space: nowrap;
+    font-family: monospace;
+    font-size: 20px;
+    line-height: 1;
+    text-align: center;
+    padding: 0px;
+}
+.filecoord {
+	color: black;
+    width: 60px;
+    height: 20px;
+    float: left;
+    border: none;
+    white-space: nowrap;
+    font-family: monospace;
+    font-size: 20px;
+    line-height: 1;
+    /* text-align: center; */
     padding: 0px;
 }
 .find-pieces #find-pieces {
