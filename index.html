@@ -104,25 +104,26 @@
 		<button class="filecoord" id="fileH">H</button>
     </div>
     <div id="misc" class="misc">
-        <div class="captured-pieces">
-            <div class="column" id='whitecaptured'><strong>White Captured</strong></div>
-            <div class="column" id='blackcaptured'><strong>Black Captured</strong></div>
-        </div>
         <div class="buttons">
             <label class="prompt" id="prompt">Prompt Text</label><br>
             <button class="sidebutton" id="sideButton1" onclick="sideButton1Click()"></button>
             <button class="sidebutton" id="sideButton2" onclick="sideButton2Click()"></button>
         </div>
+		<div class="captured-pieces">
+            <div class="column" id='whitecaptured'><strong>White Captured</strong></div>
+            <div class="column" id='blackcaptured'><strong>Black Captured</strong></div>
+        </div>
+        
         <div class="find-pieces">
             <strong>Find Pieces</strong>
             <br>
-            <button class="findpieces" id="findK" onmouseenter="findPiecesHover('K')" onmouseleave="clearFindPieces()"></button>
-            <button class="findpieces" id="findQ" onmouseenter="findPiecesHover('Q')" onmouseleave="clearFindPieces()"></button>
-            <button class="findpieces" id="findR" onmouseenter="findPiecesHover('R')" onmouseleave="clearFindPieces()"></button>
+            <button class="findpiecebutton" id="findK" onmouseenter="findPiecesHover('K')" onmouseleave="clearFindPieces()"></button>
+            <button class="findpiecebutton" id="findQ" onmouseenter="findPiecesHover('Q')" onmouseleave="clearFindPieces()"></button>
+            <button class="findpiecebutton" id="findR" onmouseenter="findPiecesHover('R')" onmouseleave="clearFindPieces()"></button>
             <br clear=all>
-            <button class="findpieces" id="findB" onmouseenter="findPiecesHover('B')" onmouseleave="clearFindPieces()"></button>
-            <button class="findpieces" id="findN" onmouseenter="findPiecesHover('N')" onmouseleave="clearFindPieces()"></button>
-            <button class="findpieces" id="findP" onmouseenter="findPiecesHover('P')" onmouseleave="clearFindPieces()"></button>
+            <button class="findpiecebutton" id="findB" onmouseenter="findPiecesHover('B')" onmouseleave="clearFindPieces()"></button>
+            <button class="findpiecebutton" id="findN" onmouseenter="findPiecesHover('N')" onmouseleave="clearFindPieces()"></button>
+            <button class="findpiecebutton" id="findP" onmouseenter="findPiecesHover('P')" onmouseleave="clearFindPieces()"></button>
         </div>
     </div>
 
