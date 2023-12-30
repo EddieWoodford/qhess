@@ -127,6 +127,7 @@ textarea {
 }
 .rankcoord {
 	color: black;
+	background-color: white;
     width: 20px;
     height: 60px;
     float: left;
@@ -140,6 +141,7 @@ textarea {
 }
 .filecoord {
 	color: black;
+	background-color: white;
     width: 60px;
     height: 20px;
     float: left;
@@ -150,6 +152,13 @@ textarea {
     line-height: 1;
     /* text-align: center; */
     padding: 0px;
+}
+.cornerbutton {
+	background-color: white;
+    width: 20px;
+    height: 20px;
+	float: left;
+	border: none;
 }
 .find-pieces{
 	border-top: 1px solid;

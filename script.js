@@ -39,7 +39,7 @@ class Square {
 			} else if (getState() == "selectPCAttackers") {
 				selectPCAttackers(buttonID);
 			} else {
-				restoreBoard();
+				restoreGameHistory();
 				setState("clear");
 			}
 		}
@@ -175,17 +175,9 @@ class Piece {
 	}
 }
 
-function sideButton1Click() {
-	if (getState() == "showCompleteMove" || getState() == "selectPCAttackers") {
-		submitMove();
-		setState("clear");
-	} else if (getState() == "invalidMoveIntoCheck") {
-		restoreBoard();
-		setState("clear");
-	}
-}
 
-function sideButton2Click() {
+
+function sideButton1Click() {
 	if (getState() == "showCompleteMove") {
 		findPotentialKingsToAttack();
 		setState("selectPCKing");
@@ -194,11 +186,22 @@ function sideButton2Click() {
 	}
 }
 
+function sideButton2Click() {
+	if (getState() == "showCompleteMove" || getState() == "selectPCAttackers") {
+		submitMove();
+		setState("clear");
+	} else if (getState() == "invalidMoveIntoCheck") {
+		restoreGameHistory();
+		setState("clear");
+	}
+}
+
 function declareNotAKing() {
 	let defKing = attPiece(PCKING);
-	THISMOVE = "[(" + defKing.waves() + ")" + BOARD[defKing.r][defKing.c].chesscoords;
+	// THISMOVE = "[(" + defKing.waves() + ")" + BOARD[defKing.r][defKing.c].chesscoords;
 	defKing.removewaves("K");
-	THISMOVE = THISMOVE + "(" + defKing.waves() + ")]";
+	// THISMOVE = THISMOVE + "(" + defKing.waves() + ")]";
+	THISMOVE = THISMOVE + "[" + BOARD[defKing.r][defKing.c].chesscoords + "]";
 	updateOptionsFromEntanglement(TURNCOLOR);
 	PCKING = 0; 
 	PCATTACKERS = [];
@@ -272,10 +275,14 @@ function findPiecesHover(wave) {
 	setState("findPieces");
 }
 
-function restoreGameHistory() {
+function restoreGameHistory(historyText) {
 	// Restore a game from whatever history is in the move history textbox
 	let historyArea = document.getElementById("movehistory");
-	let historyText = historyArea.value;
+	if (historyText == undefined) {
+		historyText = historyArea.value;
+	} else {
+		historyArea.value = historyText;
+	}
 	let lines = historyText.split("\n");
 	let moveText;
 	let r;
@@ -292,7 +299,7 @@ function restoreGameHistory() {
 			if (moveText.includes("]")) {
 				moveText = moveText.split("]");
 				moveText = moveText[1];
-				sideButton2Click(); // declare Not A King
+				sideButton1Click(); // declare Not A King
 			}
 			if (moveText.includes("<")) {
 				moveText = moveText.split(">");
@@ -312,7 +319,7 @@ function restoreGameHistory() {
 			showCompleteMove(endButtonID,doEP,doPromotion);
 			
 			if (pcText.length > 0) {
-				sideButton2Click(); // "Add Potential Check" button
+				sideButton1Click(); // "Add Potential Check" button
 				[r,c] = coordstext2coords(pcText[pcText.length-1]);
 				let kingButtonID = coords2buttonID([r,c]);
 				selectPCKing(kingButtonID);
@@ -323,9 +330,22 @@ function restoreGameHistory() {
 					selectPCAttackers(attackerButtonID);
 				}
 			}
-			sideButton1Click();
+			sideButton2Click(); // submit
 		}
 	}
+}
+
+function copyHistory() {
+	let historyArea = document.getElementById("movehistory");
+	let historyText = historyArea.value;
+	navigator.clipboard.writeText(historyText);
+}
+
+function pasteRestore() {
+	let historyArea = document.getElementById("movehistory");
+	historyArea.value = "";
+	navigator.clipboard.readText().then((clipText) => (restoreGameHistory(clipText)));
+	
 }
 
 function clearFindPieces() {
@@ -413,7 +433,7 @@ function selectPCKing(buttonID) {
 	// Get here after clicking on a square in "selectPCKing" state
 	let kingCoords = buttonID2coords(buttonID);
 	if (BOARD[kingCoords[0]][kingCoords[1]].highlightPotKing == 0) {
-		restoreBoard();
+		restoreGameHistory();
 		setState("clear");
 		return
 	}
@@ -432,7 +452,7 @@ function selectPCAttackers(buttonID) {
 	
 	let attackerCoords = buttonID2coords(buttonID);
 	if (BOARD[attackerCoords[0]][attackerCoords[1]].highlightPotAttacker == 0) {
-		restoreBoard();
+		restoreGameHistory();
 		setState("clear");
 		return
 	}
@@ -462,8 +482,7 @@ function showPartialMove(buttonID) {
 	let coords = buttonID2coords(buttonID);
 	let piece = coords2piece(coords);
 	if (piece.color == TURNCOLOR) {
-		THISMOVE = THISMOVE + "(" + piece.waves() + ")" + BOARD[coords[0]][coords[1]].chesscoords;
-		saveBoard();
+		
 		STARTID = buttonID;
 		let moves = getPotentialMoves(coords);
 		for (let i=0; i<moves.length; i++) {
@@ -485,6 +504,7 @@ function showCompleteMove(buttonID,doEP,doPromotion) {
 		return;
 	}
 	movingPiece = BOARD[startCoords[0]][startCoords[1]].piece;
+	THISMOVE = THISMOVE + "(" + movingPiece.waves() + ")" + BOARD[startCoords[0]][startCoords[1]].chesscoords;
 	
 	// Remove the options from this piece based on movement:
 	movingPiece.updateOptionsByDest(endCoords);
@@ -667,20 +687,11 @@ function findChecks(color) {
 		let attacker;
 		let moveCoords;
 		for (let pi=0; pi < 16; pi++) {
-			// Loop through the attacking pieces and see if it is attacking the potential king.
-			// It is a candidate to attack if it was either selected as a PCATTACKER or if its certain-moves attack the potential king.
-			if (PCATTACKERS.includes(pi)) {
-				attacker = attPieces[pi];
-				moveCoords = getPotentialMoves([attacker.r,attacker.c]);
-				if (ismember(kingCoords,moveCoords)) {
-					attackerCoords.push(attacker.coords());
-				}
-			} else {
-				attacker = attPieces[pi];
-				moveCoords = getCertainMoves([attacker.r,attacker.c]);
-				if (ismember(kingCoords,moveCoords)) {
-					attackerCoords.push(attacker.coords());
-				}
+			// Loop through the attacking pieces and see if it is unambiguously attacking the potential king.
+			attacker = attPieces[pi];
+			moveCoords = getCertainMoves([attacker.r,attacker.c]);
+			if (ismember(kingCoords,moveCoords)) {
+				attackerCoords.push(attacker.coords());
 			}
 		}
 		if (attackerCoords.length==0) {
@@ -1212,74 +1223,6 @@ function attPiece(i) {
 	let pieces = getPieces(TURNCOLOR);
 	return pieces[i];
 }
-function saveBoard() {
-	PREVPIECES = [];
-	let oldPiece;
-	let pieceClone;
-	for (let i = 0; i < 32; i++) {
-		pieceClone = new Piece(0,0,0,0);
-		if (i<16) {
-			oldPiece = WHITEPIECES[i];
-		} else {
-			oldPiece = BLACKPIECES[i-16];
-		}
-		for (let prop in oldPiece) {
-			pieceClone[prop] = oldPiece[prop];
-		}
-		pieceClone.options = [...oldPiece.options];
-		pieceClone.promotedOptions = [...oldPiece.promotedOptions];
-		PREVPIECES[i] = pieceClone;
-	}
-	PREVPC = [];
-	if (PCKING > 0) {
-		PREVPC = [...PCATTACKERS];
-		PREVPC.push(PCKING);
-	}
-}
-function restoreBoard() {
-	restoreGameHistory();
-	/* if (PREVPIECES.length == 0) {return};
-	
-	// Clear current pieces:
-	for (let r = 0; r <= 7; r++) {
-		for ( let c = 0; c <= 7; c++) {
-			BOARD[r][c].piece = "";
-		}
-	}
-	WHITEPIECES = [];
-	BLACKPIECES = [];
-	
-	// Load previous pieces:
-	for (let i = 0; i < 32; i++) {
-		piece = PREVPIECES[i];
-		if (i<16) {
-			WHITEPIECES[i] = piece;
-		} else {
-			BLACKPIECES[i-16] = piece;
-		}
-		if (piece.captured==0) {
-			BOARD[piece.r][piece.c].piece = piece;
-		}
-	}
-	
-	// Restore potential check state:
-	PCKING = [];
-	PCATTACKERS = [];
-	if (PREVPC.length > 0) {
-		PCKING = PREVPC[PREVPC.length-1];
-		if (PREVPC.length > 1) {
-			PCATTACKERS = PREVPC.toSpliced(PREVPC.length-1);
-		}
-	}
-	PREVPC = [];
-	PREVPIECES = [];
-	THISMOVE = "";
-	EPCOORDS = [];
-	EPCOLOR = "";
-	
-	clearFindPotentialCheckPieces();
-	findChecks(TURNCOLOR); */
-}
 
  // State Control
 function getState() {
@@ -1298,6 +1241,10 @@ function setState(state) {
 	// All the changing of the actual display happens here, always by simply looping over the squares and displaying 
 	// them according to the variables in the object. 
 	let defaultText;
+	let moveText = "<br>";
+	if (THISMOVE.length > 0) {
+		moveText = "Staged move: " + THISMOVE + "<br>";
+	}
 	if (TURNCOLOR == "w") {
 		defaultText = "White -";
 	} else {
@@ -1311,51 +1258,51 @@ function setState(state) {
 		defaultText = defaultText + " Potential Check -";
 	}
 	defaultText = defaultText + " select piece to move";
+	
 	if (state == "clear") {
-		sideButton1.style.visibility = "hidden";
 		sideButton2.style.visibility = "hidden";
-		promptlabel.innerText = defaultText;
+		sideButton1.style.visibility = "hidden";
+		promptlabel.innerHTML = moveText + defaultText;
 		STARTID = "";
 		ENDID = "";
-		PREVPIECES = [];
 		TAKENPIECE = "";
 		if (POTCHECK) {
-			sideButton2.style.visibility = "visible";
-			sideButton2.innerText = "Declare 'Not a King'";
+			sideButton1.style.visibility = "visible";
+			sideButton1.innerText = "Declare 'Not a King'";
 		}
 		
 	} else if (state == "highlightPotentialMoves") {
-		sideButton1.style.visibility = "hidden";
 		sideButton2.style.visibility = "hidden";
-		promptlabel.innerText = defaultText;
+		sideButton1.style.visibility = "hidden";
+		promptlabel.innerHTML = moveText + defaultText;
 	} else if (state == "showPartialMove") {
-		sideButton1.style.visibility = "hidden";
 		sideButton2.style.visibility = "hidden";
-		promptlabel.innerText = "Select destination";
+		sideButton1.style.visibility = "hidden";
+		promptlabel.innerHTML = moveText + "Select destination";
 	} else if (state == "showCompleteMove") {
-		sideButton1.style.visibility = "visible";
 		sideButton2.style.visibility = "visible";
-		promptlabel.innerText = "Add PC / Submit";
-		sideButton1.innerText = "Submit";
-		sideButton2.innerText = "Add Potential Check";
-	} else if (state == "invalidMoveIntoCheck") {
-		promptlabel.innerText = "Invalid - moved into check";
 		sideButton1.style.visibility = "visible";
-		sideButton2.style.visibility = "hidden";
-		sideButton1.innerText = "Cancel";
-	} else if (state == "selectPCKing") {
-		promptlabel.innerText = "Select King to attack";
+		promptlabel.innerHTML = moveText + "Add PC / Submit";
+		sideButton2.innerText = "Submit";
+		sideButton1.innerText = "Add Potential Check";
+	} else if (state == "invalidMoveIntoCheck") {
+		promptlabel.innerHTML = moveText + "Invalid - moved into check";
+		sideButton2.style.visibility = "visible";
 		sideButton1.style.visibility = "hidden";
+		sideButton2.innerText = "Cancel";
+	} else if (state == "selectPCKing") {
+		promptlabel.innerHTML = moveText + "Select King to attack";
 		sideButton2.style.visibility = "hidden";
+		sideButton1.style.visibility = "hidden";
 	} else if (state == "selectPCAttackers") {
-		promptlabel.innerText = "Select attacking pieces";
-		sideButton1.style.visibility = "hidden"; // turned visible when an attacker is found in the loop below
-		sideButton2.style.visibility = "hidden";
-		sideButton1.innerText = "Submit";
+		promptlabel.innerHTML = moveText + "Select attacking pieces";
+		sideButton2.style.visibility = "hidden"; // turned visible when an attacker is found in the loop below
+		sideButton1.style.visibility = "hidden";
+		sideButton2.innerText = "Submit";
 	} else if (state == "findPieces") {
-		promptlabel.innerText = defaultText;
-		sideButton1.style.visibility = "hidden"; // turned visible when an attacker is found in the loop below
-		sideButton2.style.visibility = "hidden";
+		promptlabel.innerHTML = moveText + defaultText;
+		sideButton2.style.visibility = "hidden"; // turned visible when an attacker is found in the loop below
+		sideButton1.style.visibility = "hidden";
 	}
 	
 	// Loop over all the squares and format them according to their current state
@@ -1403,11 +1350,13 @@ function setState(state) {
 			sqr.button.style.borderWidth = "";
 			sqr.button.style.borderColor = "black"; 
 			
+			let sqrcolor;
 			if (sqr.color=='w') {
-				sqr.button.style.background = "silver" // default white square colour
+				sqrcolor = "silver" // default white square colour
 			} else {
-				sqr.button.style.background = "grey" // default black square colour
+				sqrcolor = "grey" // default black square colour
 			}
+			sqr.button.style.background = sqrcolor;
 			
 			if (r==4 && c==0) {
 				let foo=1;
@@ -1442,14 +1391,16 @@ function setState(state) {
 			
 			if (AUTOCHECK || POTCHECK || state == "selectPCAttackers") {
 				if (isequal([r,c],checkKingCoords)) {
+					sqr.button.style.background = sqrcolor;
 					sqr.button.style.borderColor = "red";
 					sqr.button.style.borderWidth = "6px";
 				}
 				if (ismember([r,c],checkAttackerCoords)) {
+					sqr.button.style.background = sqrcolor;
 					sqr.button.style.borderColor = "blue";
 					sqr.button.style.borderWidth = "6px";
 					if (state == "selectPCAttackers") {
-						sideButton1.style.visibility = "visible";
+						sideButton2.style.visibility = "visible";
 					}
 				}
 			}
@@ -1498,7 +1449,6 @@ function setup() {
 	TURNCOLOR = "w";
 	TAKENPIECE = "";
 	BOARD = []; // 8 x 8 array of Square objects
-	PREVPIECES = []; // for remembering previous state
 	STARTID = "";
 	DESTID = "";
 	WHITEPIECES = [];
@@ -1560,8 +1510,6 @@ let TURNNUMBER;
 let TURNCOLOR;
 let TAKENPIECE;
 let BOARD; // 8 x 8 array of Square objects
-let PREVPIECES; // for remembering previous state
-let PREVPC;
 let STARTID;
 let DESTID;
 let WHITEPIECES;

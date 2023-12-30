@@ -10,6 +10,8 @@
     <h1>Qhess</h1>
     <div class="move-history">
         <button class='restoreButton' id='restorehistory' onclick="restoreGameHistory()">Restore History</button>
+		<button class='pasteRestoreButton' id='pasterestore' onclick="pasteRestore()">Paste & Restore History</button>
+		<button class='copyHistoryButton' id='copyhistory' onclick="copyHistory()">Copy History</button>
         <textarea id="movehistory" rows=32></textarea>
     </div>
     <div id="play-area" class="play-area">
@@ -93,15 +95,15 @@
         <button class="boardsquare" id="square76"></button>
         <button class="boardsquare" id="square77"></button>
 		<br clear="all">
-		<button class="rankcoord" id="rank_"></button>
-		<button class="filecoord" id="fileA">A</button>
-		<button class="filecoord" id="fileB">B</button>
-		<button class="filecoord" id="fileC">C</button>
-		<button class="filecoord" id="fileD">D</button>
-		<button class="filecoord" id="fileE">E</button>
-		<button class="filecoord" id="fileF">F</button>
-		<button class="filecoord" id="fileG">G</button>
-		<button class="filecoord" id="fileH">H</button>
+		<button class="cornerbutton" id="cornerbutton"></button>
+		<button class="filecoord" id="fileA">a</button>
+		<button class="filecoord" id="fileB">b</button>
+		<button class="filecoord" id="fileC">c</button>
+		<button class="filecoord" id="fileD">d</button>
+		<button class="filecoord" id="fileE">e</button>
+		<button class="filecoord" id="fileF">f</button>
+		<button class="filecoord" id="fileG">g</button>
+		<button class="filecoord" id="fileH">h</button>
     </div>
     <div id="misc" class="misc">
         <div class="buttons">
