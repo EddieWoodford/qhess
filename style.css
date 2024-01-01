@@ -10,6 +10,7 @@ h1 {
     color: red;
 }
 
+
 .move-history {
     text-align: left;
     display: inline-block;
@@ -20,11 +21,16 @@ h1 {
 	width: 25%;
 	padding: 0px;
 }
-.restoreButton{
+.resetButton{
 	height: 30px;
-	width: 100%;
+	width: 50%;
 	vertical-align:top;
 	float: left;
+}
+.restoreButton{
+	height: 30px;
+	width: 50%;
+	vertical-align:top;
 }
 .copyAllHistoryButton{
 	height: 30px;
@@ -214,9 +220,11 @@ textarea {
     align-items: center; /* center the content vertically */
     padding: 0px;
     margin: 2px;
+	/* background-color: silver; */
     background-image: linear-gradient(to bottom right, silver, gray);
 }
 .findpiecebutton:hover {
+	background-image: none;
     background-color: orange;
 }
 .sidebutton {

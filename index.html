@@ -9,14 +9,18 @@
 <body>
     <h1>Qhess</h1>
     <div class="move-history">
+		<button class='resetButton' id='reset' onclick="setup()">Reset Game</button>
         <button class='restoreButton' id='restorehistory' onclick="restoreGameHistory()">Restore History</button>
 		<br>
 		<button class='copyAllHistoryButton' id='copyallhistory' onclick="copyAllHistory()">Copy All</button>
-		<button class='copyLastMoveButton' id='copylastmove' onclick="copyLastMove()">Copy Move</button>
+		<button class='copyLastMoveButton' id='copylastmove' onclick="copyLastMove()">Copy Last Move</button>
 		<br>
-		<button class='pasteAllRestoreButton' id='pasteallrestore' onclick="pasteAllRestore()">Paste All & Restore</button>
-		<button class='pasteLineRestoreButton' id='pastelinerestore' onclick="pasteLineRestore()">Paste Move & Restore</button>
-        <textarea id="movehistory" rows=25></textarea>
+		<button class='pasteAllRestoreButton' id='pasteallrestore' onclick="pasteAllRestore()">Paste All & Reset</button>
+		<button class='pasteLineRestoreButton' id='pastelinerestore' onclick="pasteLineRestore()">Paste Move</button>
+		Staged Move:<br>
+        <textarea id="thismove" rows=1></textarea>
+		Move History:<br>
+		<textarea id="movehistory" rows=20></textarea>
     </div>
     <div id="play-area" class="play-area">
 		<button class="rankcoord" id="rank8">8</button>
@@ -123,13 +127,13 @@
         <div class="find-pieces">
             <strong>Find Pieces</strong>
             <br>
-            <button class="findpiecebutton" id="findK" onmouseenter="findPiecesHover('K')" onmouseleave="clearFindPieces()"></button>
-            <button class="findpiecebutton" id="findQ" onmouseenter="findPiecesHover('Q')" onmouseleave="clearFindPieces()"></button>
-            <button class="findpiecebutton" id="findR" onmouseenter="findPiecesHover('R')" onmouseleave="clearFindPieces()"></button>
+            <button class="findpiecebutton" id="findK" onclick="findPiecesClick('K')"></button>
+            <button class="findpiecebutton" id="findQ" onclick="findPiecesClick('Q')"></button>
+            <button class="findpiecebutton" id="findR" onclick="findPiecesClick('R')"></button>
             <br clear=all>
-            <button class="findpiecebutton" id="findB" onmouseenter="findPiecesHover('B')" onmouseleave="clearFindPieces()"></button>
-            <button class="findpiecebutton" id="findN" onmouseenter="findPiecesHover('N')" onmouseleave="clearFindPieces()"></button>
-            <button class="findpiecebutton" id="findP" onmouseenter="findPiecesHover('P')" onmouseleave="clearFindPieces()"></button>
+            <button class="findpiecebutton" id="findB" onclick="findPiecesClick('B')"></button>
+            <button class="findpiecebutton" id="findN" onclick="findPiecesClick('N')"></button>
+            <button class="findpiecebutton" id="findP" onclick="findPiecesClick('P')"></button>
         </div>
     </div>
 

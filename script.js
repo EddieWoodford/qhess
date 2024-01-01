@@ -178,7 +178,9 @@ class Piece {
 }
 
 
-
+////////////////////////////////
+// Button Actions
+////////////////////////////////
 function sideButton1Click() {
 	if (getState() == "showCompleteMove" || getState() == "move0") {
 		findPotentialKingsToAttack();
@@ -205,7 +207,7 @@ function declareNotAKing() {
 	// THISMOVE = THISMOVE + "(" + defKing.waves() + ")]";
 	THISMOVE = THISMOVE + "[" + BOARD[defKing.r][defKing.c].chesscoords + "]";
 	updateOptionsFromEntanglement(TURNCOLOR);
-	PCKING = 0; 
+	PCKING = -1; 
 	PCATTACKERS = [];
 	PCCOLOR = "";
 	clearFindPotentialCheckPieces();
@@ -221,25 +223,15 @@ function submitMove() {
 	// then the contents of the <> in the move annotation is done here
 	if (PCCOLOR == TURNCOLOR) {
 		// Must have gotten out of potential check
-		PCKING = 0;
+		PCKING = -1;
 		PCATTACKERS = [];
 		PCCOLOR = "";
 	}
-	if (PCKING > 0) {
-		THISMOVE = THISMOVE + "<";
-		let piece;
-		for (let ai=0; ai < PCATTACKERS.length; ai++) {
-			piece = attPiece(PCATTACKERS[ai]);
-			THISMOVE = THISMOVE + BOARD[piece.r][piece.c].chesscoords + " ";
-		}
-		piece = defPiece(PCKING);
-		THISMOVE = THISMOVE + BOARD[piece.r][piece.c].chesscoords + ">";
-	}
+	
 	if (MOVEHISTORY.length > 0) {
 		MOVEHISTORY = MOVEHISTORY + "\r\n"
 	}
-	MOVEHISTORY = MOVEHISTORY + TURNNUMBER.toString() + ". " + THISMOVE;
-	THISMOVE = "";
+	MOVEHISTORY = MOVEHISTORY + THISMOVE + pcMoveText();
 	historyArea = document.getElementById("movehistory");
 	historyArea.value = MOVEHISTORY;
 		
@@ -255,12 +247,18 @@ function submitMove() {
 		EPCOLOR = "";
 		EPCOORDS = [];
 	}
+	THISMOVE = TURNNUMBER.toString() + TURNCOLOR + ". ";
 	clearFindPotentialCheckPieces();
 	findChecks(TURNCOLOR);
 }
 
-function findPiecesHover(wave) {
-	if (getState() != "clear") {
+function findPiecesClick(wave) {
+	if (getState() == "findPieces") {
+		clearFindPieces();
+		setState("clear");
+		return;
+	}
+	if (getState() != "clear" && getState() != "move0") {
 		return;
 	}
 	let pieces;
@@ -278,110 +276,6 @@ function findPiecesHover(wave) {
 		}
 	}
 	setState("findPieces");
-}
-
-function restoreGameHistory(historyText) {
-	// Restore a game from whatever history is in the move history textbox
-	let historyArea = document.getElementById("movehistory");
-	if (historyText == undefined) {
-		historyText = historyArea.value;
-	} else {
-		historyText = historyText.replaceAll("\r\n\r\n","\r\n");
-		historyArea.value = historyText;
-	}
-	let lines = historyText.split("\n");
-	let moveText;
-	let r;
-	let c;
-	let doEP; // do En Passant
-	let doPromotion; // do Pawn Promotion
-	setup();
-	for (let i=0; i < lines.length; i++) {
-		moveText = lines[i];
-		// every move needs to include a number such as 1. This requirement lets us skip weird lines from pasting
-		if (moveText.includes(".")) { 
-			if (i==0 && moveText.includes("1.")) {
-				sideButton2Click(); // pass to white on move 0
-			}
-			doEP = (moveText.includes("e.p."));
-			doPromotion = (moveText.includes("="));
-			let pcText = "";
-			if (moveText.includes("]")) {
-				moveText = moveText.split("]");
-				moveText = moveText[1];
-				sideButton1Click(); // declare Not A King
-			}
-			if (moveText.includes("<")) {
-				moveText = moveText.split(">");
-				moveText = moveText[0].split("<");
-				pcText = moveText[1].split(" ");
-				moveText = moveText[0];
-			}
-			if (moveText.includes("(")) {
-				moveText = moveText.split(")");
-				moveText = moveText[1].split("(");
-				moveText = moveText[0];
-			}
-			if (!moveText.includes("0.")) {
-				if (moveText.includes(". ")) {
-					moveText = moveText.split(". ");
-					moveText = moveText[1];
-				}
-				moveText = moveText.replace("x","");
-				
-				// Now moveText should be 4 chars long, such as h2h3, indicating the from-to coordinates
-				[r,c] = coordstext2coords(moveText.substring(0,2));
-				let startButtonID = coords2buttonID([r,c]);
-				[r,c] = coordstext2coords(moveText.substring(2,4));
-				let endButtonID = coords2buttonID([r,c]);
-				showPartialMove(startButtonID);
-				showCompleteMove(endButtonID,doEP,doPromotion);
-			}
-			
-			if (pcText.length > 0) {
-				sideButton1Click(); // "Add Potential Check" button
-				[r,c] = coordstext2coords(pcText[pcText.length-1]);
-				let kingButtonID = coords2buttonID([r,c]);
-				selectPCKing(kingButtonID);
-				let attackerButtonID;
-				for (pci=0; pci<pcText.length-1; pci++) {
-					[r,c] = coordstext2coords(pcText[pci]);
-					let attackerButtonID = coords2buttonID([r,c]);
-					selectPCAttackers(attackerButtonID);
-				}
-			}
-			sideButton2Click(); // submit
-		}
-	}
-}
-
-function copyAllHistory() {
-	let historyArea = document.getElementById("movehistory");
-	let historyText = historyArea.value;
-	navigator.clipboard.writeText(historyText);
-}
-function copyLastMove() {
-	let historyArea = document.getElementById("movehistory");
-	let historyText = historyArea.value;
-	historyText = historyText.split("\r\n");
-	historyText = historyText[historyText.length-1];
-	historyText = historyText.split("\r");
-	historyText = historyText[historyText.length-1];
-	historyText = historyText.split("\n");
-	historyText = historyText[historyText.length-1];
-	navigator.clipboard.writeText(historyText);
-}
-
-function pasteAllRestore() {
-	let historyArea = document.getElementById("movehistory");
-	historyArea.value = "";
-	navigator.clipboard.readText().then((clipText) => (restoreGameHistory(clipText)));
-}
-
-function pasteLineRestore() {
-	let historyArea = document.getElementById("movehistory");
-	historyText = historyArea.value;
-	navigator.clipboard.readText().then((clipText) => (restoreGameHistory(historyText + "\r\n" + clipText)));
 }
 
 function clearFindPieces() {
@@ -403,114 +297,6 @@ function highlightPotentialMoves(buttonID) {
 		}
 		setState("highlightPotentialMoves");
 	}
-}
-
-function findPotentialKingsToAttack() {
-	// FInd all candidate kings for potential check
-	let pieces = getPieces(TURNCOLOR);
-	let piece;
-	let moves;
-	
-	for (let r=0; r<8; r++) {
-		for (let c=0; c<8; c++) {
-			if (BOARD[r][c].piece == "") {continue};
-			if (BOARD[r][c].piece.color == TURNCOLOR) {continue};
-			if (!BOARD[r][c].piece.waves().includes("K")) {continue};
-			// Now we know the square has an opponent king-wave on it
-			// If the square is being attacked by any piece then it is a valid candidate for a PC King, and then we want to
-			// highlight it.
-			for (let pi=0; pi < pieces.length; pi++) {
-				piece = pieces[pi];
-				moves = getPotentialMoves([piece.r,piece.c]);
-				if (ismember([r,c],moves)) {
-					BOARD[r][c].highlightPotKing = 1;
-				}
-			}
-		}
-	}
-}
-
-function findPCAttackers() {
-	// Now a potential check king has been selected, so highlight the potential attacking pieces
-	// Also called after every new PC attacker is selected, in case that selection collapses waves and changes
-	// the remaining candidates
-	
-	let attackPieces = getPieces(TURNCOLOR);
-	let piece;
-	let moves;
-	let defKing = defPiece(PCKING);
-	
-	for (let pi=0; pi < attackPieces.length; pi++) {
-		piece = attackPieces[pi];
-		if (PCATTACKERS.includes(pi)) {
-			// already selected as an attacker, so not to be highlighted
-			BOARD[piece.r][piece.c].highlightPotAttacker = 0;
-			continue;
-		}
-		moves = getPotentialMoves(piece.coords());
-		if (ismember(defKing.coords(),moves)) { 
-			BOARD[piece.r][piece.c].highlightPotAttacker = 1;
-		} else {
-			BOARD[piece.r][piece.c].highlightPotAttacker = 0;
-		}
-	}
-}
-
-function clearFindPotentialCheckPieces() {
-	for (let r=0; r<8; r++) {
-		for (let c=0; c<8; c++) {
-			BOARD[r][c].highlightPotKing = 0;
-			BOARD[r][c].highlightPotAttacker = 0;
-		}
-	}
-}
-
-function selectPCKing(buttonID) {
-	// Get here after clicking on a square in "selectPCKing" state
-	let kingCoords = buttonID2coords(buttonID);
-	if (BOARD[kingCoords[0]][kingCoords[1]].highlightPotKing == 0) {
-		restoreGameHistory();
-		setState("clear");
-		return
-	}
-	clearFindPotentialCheckPieces(); // stop highlighting the potential kings
-	
-	// Make this piece the PC King
-	PCKING = BOARD[kingCoords[0]][kingCoords[1]].piece.i;
-	PCATTACKERS = [];
-	PCCOLOR = BOARD[kingCoords[0]][kingCoords[1]].piece.color;
-	findPCAttackers();
-	setState("selectPCAttackers");
-}
-
-function selectPCAttackers(buttonID) {
-	// Get here when a PC attacker is selected by clicking on its square
-	
-	let attackerCoords = buttonID2coords(buttonID);
-	if (BOARD[attackerCoords[0]][attackerCoords[1]].highlightPotAttacker == 0) {
-		restoreGameHistory();
-		setState("clear");
-		return
-	}
-	let piece = BOARD[attackerCoords[0]][attackerCoords[1]].piece;
-	PCATTACKERS.push(piece.i);
-	BOARD[attackerCoords[0]][attackerCoords[1]].highlightPotAttacker = 0;
-	
-	let defKing = defPiece(PCKING);
-	piece.updateOptionsByDest(defKing.coords());
-	updateOptionsFromEntanglement(TURNCOLOR);
-	
-	// It is possible that by setting a potential check the attacker collapses down to a true king and thus puts 
-	// themselves into auto check. That wouldn't be a valid move
-	clearFindPotentialCheckPieces();
-	findChecks(TURNCOLOR);
-	if (AUTOCHECK) {
-		setState("invalidMoveIntoCheck");
-		return;
-	}
-	
-	findPCAttackers();
-	setState("selectPCAttackers");
 }
 
 function showPartialMove(buttonID) {
@@ -668,6 +454,228 @@ function showCompleteMove(buttonID,doEP,doPromotion) {
 
 }
 
+
+
+////////////////////////////////
+// Move History
+////////////////////////////////
+function restoreGameHistory(historyText) {
+	// Restore a game from whatever history is in the move history textbox
+	let historyArea = document.getElementById("movehistory");
+	if (historyText == undefined) {
+		historyText = historyArea.value;
+	} else {
+		historyText = historyText.replaceAll("\r\n\r\n","\r\n");
+		historyArea.value = historyText;
+	}
+	let lines = historyText.split("\n");
+	let moveText;
+	let r;
+	let c;
+	let doEP; // do En Passant
+	let doPromotion; // do Pawn Promotion
+	setup();
+	for (let i=0; i < lines.length; i++) {
+		moveText = lines[i];
+		// every move needs to include a number such as 1. This requirement lets us skip weird lines from pasting
+		if (moveText.includes(".")) { 
+			if (i==0 && moveText.includes("1w.")) {
+				sideButton2Click(); // pass to white on move 0
+			}
+			doEP = (moveText.includes("e.p."));
+			doPromotion = (moveText.includes("="));
+			let pcText = "";
+			if (moveText.includes("]")) {
+				moveText = moveText.split("]");
+				moveText = moveText[1];
+				sideButton1Click(); // declare Not A King
+			}
+			if (moveText.includes("<")) {
+				moveText = moveText.split(">");
+				moveText = moveText[0].split("<");
+				pcText = moveText[1].split(" ");
+				moveText = moveText[0];
+			}
+			if (moveText.includes("(")) {
+				moveText = moveText.split(")");
+				moveText = moveText[1].split("(");
+				moveText = moveText[0];
+			}
+			if (!lines[i].includes("0b.")) {
+				// includes an actual move
+				if (moveText.includes(". ")) {
+					moveText = moveText.split(". ");
+					moveText = moveText[1];
+				}
+				moveText = moveText.replace("x","");
+				
+				// Now moveText should be 4 chars long, such as h2h3, indicating the from-to coordinates
+				[r,c] = coordstext2coords(moveText.substring(0,2));
+				let startButtonID = coords2buttonID([r,c]);
+				[r,c] = coordstext2coords(moveText.substring(2,4));
+				let endButtonID = coords2buttonID([r,c]);
+				showPartialMove(startButtonID);
+				showCompleteMove(endButtonID,doEP,doPromotion);
+			}
+			
+			if (pcText.length > 0) {
+				sideButton1Click(); // "Add Potential Check" button
+				[r,c] = coordstext2coords(pcText[pcText.length-1]);
+				let kingButtonID = coords2buttonID([r,c]);
+				selectPCKing(kingButtonID);
+				let attackerButtonID;
+				for (pci=0; pci<pcText.length-1; pci++) {
+					[r,c] = coordstext2coords(pcText[pci]);
+					let attackerButtonID = coords2buttonID([r,c]);
+					selectPCAttackers(attackerButtonID);
+				}
+			}
+			sideButton2Click(); // submit
+		}
+	}
+}
+
+function copyAllHistory() {
+	let historyArea = document.getElementById("movehistory");
+	let historyText = historyArea.value;
+	navigator.clipboard.writeText(historyText);
+}
+
+function copyLastMove() {
+	let historyArea = document.getElementById("movehistory");
+	let historyText = historyArea.value;
+	historyText = historyText.split("\r\n");
+	historyText = historyText[historyText.length-1];
+	historyText = historyText.split("\r");
+	historyText = historyText[historyText.length-1];
+	historyText = historyText.split("\n");
+	historyText = historyText[historyText.length-1];
+	navigator.clipboard.writeText(historyText);
+}
+
+function pasteAllRestore() {
+	let historyArea = document.getElementById("movehistory");
+	historyArea.value = "";
+	navigator.clipboard.readText().then((clipText) => (restoreGameHistory(clipText)));
+}
+
+function pasteLineRestore() {
+	let historyArea = document.getElementById("movehistory");
+	historyText = historyArea.value;
+	navigator.clipboard.readText().then((clipText) => (restoreGameHistory(historyText + "\r\n" + clipText)));
+}
+
+////////////////////////////////
+// Check
+////////////////////////////////
+function findPotentialKingsToAttack() {
+	// FInd all candidate kings for potential check
+	let pieces = getPieces(TURNCOLOR);
+	let piece;
+	let moves;
+	
+	for (let r=0; r<8; r++) {
+		for (let c=0; c<8; c++) {
+			if (BOARD[r][c].piece == "") {continue};
+			if (BOARD[r][c].piece.color == TURNCOLOR) {continue};
+			if (!BOARD[r][c].piece.waves().includes("K")) {continue};
+			// Now we know the square has an opponent king-wave on it
+			// If the square is being attacked by any piece then it is a valid candidate for a PC King, and then we want to
+			// highlight it.
+			for (let pi=0; pi < pieces.length; pi++) {
+				piece = pieces[pi];
+				moves = getPotentialMoves([piece.r,piece.c]);
+				if (ismember([r,c],moves)) {
+					BOARD[r][c].highlightPotKing = 1;
+				}
+			}
+		}
+	}
+}
+
+function findPCAttackers() {
+	// Now a potential check king has been selected, so highlight the potential attacking pieces
+	// Also called after every new PC attacker is selected, in case that selection collapses waves and changes
+	// the remaining candidates
+	
+	let attackPieces = getPieces(TURNCOLOR);
+	let piece;
+	let moves;
+	let defKing = defPiece(PCKING);
+	
+	for (let pi=0; pi < attackPieces.length; pi++) {
+		piece = attackPieces[pi];
+		if (PCATTACKERS.includes(pi)) {
+			// already selected as an attacker, so not to be highlighted
+			BOARD[piece.r][piece.c].highlightPotAttacker = 0;
+			continue;
+		}
+		moves = getPotentialMoves(piece.coords());
+		if (ismember(defKing.coords(),moves)) { 
+			BOARD[piece.r][piece.c].highlightPotAttacker = 1;
+		} else {
+			BOARD[piece.r][piece.c].highlightPotAttacker = 0;
+		}
+	}
+}
+
+function clearFindPotentialCheckPieces() {
+	for (let r=0; r<8; r++) {
+		for (let c=0; c<8; c++) {
+			BOARD[r][c].highlightPotKing = 0;
+			BOARD[r][c].highlightPotAttacker = 0;
+		}
+	}
+}
+
+function selectPCKing(buttonID) {
+	// Get here after clicking on a square in "selectPCKing" state
+	let kingCoords = buttonID2coords(buttonID);
+	if (BOARD[kingCoords[0]][kingCoords[1]].highlightPotKing == 0) {
+		restoreGameHistory();
+		setState("clear");
+		return
+	}
+	clearFindPotentialCheckPieces(); // stop highlighting the potential kings
+	
+	// Make this piece the PC King
+	PCKING = BOARD[kingCoords[0]][kingCoords[1]].piece.i;
+	PCATTACKERS = [];
+	PCCOLOR = BOARD[kingCoords[0]][kingCoords[1]].piece.color;
+	findPCAttackers();
+	setState("selectPCAttackers");
+}
+
+function selectPCAttackers(buttonID) {
+	// Get here when a PC attacker is selected by clicking on its square
+	
+	let attackerCoords = buttonID2coords(buttonID);
+	if (BOARD[attackerCoords[0]][attackerCoords[1]].highlightPotAttacker == 0) {
+		restoreGameHistory();
+		setState("clear");
+		return
+	}
+	let piece = BOARD[attackerCoords[0]][attackerCoords[1]].piece;
+	PCATTACKERS.push(piece.i);
+	BOARD[attackerCoords[0]][attackerCoords[1]].highlightPotAttacker = 0;
+	
+	let defKing = defPiece(PCKING);
+	piece.updateOptionsByDest(defKing.coords());
+	updateOptionsFromEntanglement(TURNCOLOR);
+	
+	// It is possible that by setting a potential check the attacker collapses down to a true king and thus puts 
+	// themselves into auto check. That wouldn't be a valid move
+	clearFindPotentialCheckPieces();
+	findChecks(TURNCOLOR);
+	if (AUTOCHECK) {
+		setState("invalidMoveIntoCheck");
+		return;
+	}
+	
+	findPCAttackers();
+	setState("selectPCAttackers");
+}
+
 function findChecks(color) {
 	// Search to see if a check exists. 
 	// Should be called whenever the board state changes and is potentially in a valid move position
@@ -706,7 +714,7 @@ function findChecks(color) {
 
 		// If no auto check, then check if the defender of potential check has moved the potential king out of the way ...
 		// of the potential attackers.
-		if (PCKING == 0) {
+		if (PCKING == -1) {
 			POTCHECK = false;
 			return [[],[]];
 		}
@@ -740,6 +748,27 @@ function findChecks(color) {
 		
 	}
 }
+
+function pcMoveText() {
+	// The PC notation can't be added onto THISMOVE since the king is the last entry.
+	// THis function returns the "<....>" text for the potential check notation
+	let txt = "";
+	if (PCKING >= 0 && PCCOLOR == oppColor()) {
+		txt = txt + "<";
+		let piece;
+		for (let ai=0; ai < PCATTACKERS.length; ai++) {
+			piece = attPiece(PCATTACKERS[ai]);
+			txt = txt + BOARD[piece.r][piece.c].chesscoords + " ";
+		}
+		piece = defPiece(PCKING);
+		txt = txt + BOARD[piece.r][piece.c].chesscoords + ">";
+	}
+	return txt;
+}
+
+////////////////////////////////
+// Piece collapse
+////////////////////////////////
 
 function updateOptionsFromFullCollapse(colors) {
 	// Loop through the pieces. Continue until the set isn't changed after a pass.
@@ -1140,7 +1169,9 @@ function getPotentialMoves(coords,waves) {
 	return moves
 }
 
+////////////////////////////////
 // Utilities
+////////////////////////////////
 function setvalue(arr,filter,val) {
 	for (let i=0; i < filter.length; i++) {
 		if (filter[i]) {
@@ -1260,7 +1291,9 @@ function attPiece(i) {
 	return pieces[i];
 }
 
- // State Control
+////////////////////////////////
+// State Control
+////////////////////////////////
 function getState() {
 	statelabel = document.getElementById("state");
 	return statelabel.innerText;
@@ -1271,38 +1304,46 @@ function setState(state) {
 		state = "move0";
 	}
 	
-	statelabel = document.getElementById("state");
-	prevState = statelabel.innerText;
+	let statelabel = document.getElementById("state");
+	let prevState = statelabel.innerText;
 	statelabel.innerText = state;
-	promptlabel = document.getElementById("prompt");
-	sideButton1 = document.getElementById("sideButton1")
-	sideButton2 = document.getElementById("sideButton2")
+	let promptlabel = document.getElementById("prompt");
+	let moveTextarea = document.getElementById("thismove");
+	let sideButton1 = document.getElementById("sideButton1")
+	let sideButton2 = document.getElementById("sideButton2")
+	if (state != "move0") {
+		historyTextarea = document.getElementById("movehistory");
+		historyTextarea.readOnly = true;
+	}
 	
 	// All the changing of the actual display happens here, always by simply looping over the squares and displaying 
 	// them according to the variables in the object. 
 	let defaultText;
-	let moveText = "<br>";
-	if (THISMOVE.length > 0) {
-		moveText = "Staged move: " + THISMOVE + "<br>";
+	let moveText = "";
+	moveTextarea.value = THISMOVE + pcMoveText();
+	if (TURNNUMBER == 0) {
+		moveText = "Move 0 - ";
 	}
 	if (TURNCOLOR == "w") {
-		defaultText = "White -";
+		moveText = moveText + "White - ";
 	} else {
-		defaultText = "Black -";
+		moveText = moveText + "Black - ";
 	}
 
 	if (AUTOCHECK) {
-		defaultText = defaultText + " Check -";
+		moveText = moveText + " Check - ";
 	}
 	if (POTCHECK) {
-		defaultText = defaultText + " Potential Check -";
+		moveText = moveText + " Potential Check - ";
 	}
-	defaultText = defaultText + " select piece to move";
 	
+	promptlabel.innerHTML = moveText + " select piece to move";
+	if (TURNNUMBER == 0) {
+		promptlabel.innerHTML = "Move 0 - add Potential Check?";
+	}
 	if (state == "clear") {
 		sideButton2.style.visibility = "hidden";
 		sideButton1.style.visibility = "hidden";
-		promptlabel.innerHTML = moveText + defaultText;
 		STARTID = "";
 		ENDID = "";
 		TAKENPIECE = "";
@@ -1315,14 +1356,12 @@ function setState(state) {
 		sideButton1.style.visibility = "visible";
 		sideButton1.innerText = "Add Potential Check";
 		sideButton2.innerText = "Pass to white";
-		promptlabel.innerHTML = "Move 0 - add Potential Check?";
 		STARTID = "";
 		ENDID = "";
 		TAKENPIECE = "";
 	} else if (state == "highlightPotentialMoves") {
 		sideButton2.style.visibility = "hidden";
 		sideButton1.style.visibility = "hidden";
-		promptlabel.innerHTML = moveText + defaultText;
 	} else if (state == "showPartialMove") {
 		sideButton2.style.visibility = "hidden";
 		sideButton1.style.visibility = "hidden";
@@ -1348,9 +1387,8 @@ function setState(state) {
 		sideButton1.style.visibility = "hidden";
 		sideButton2.innerText = "Submit";
 	} else if (state == "findPieces") {
-		promptlabel.innerHTML = moveText + defaultText;
-		sideButton2.style.visibility = "hidden"; // turned visible when an attacker is found in the loop below
-		sideButton1.style.visibility = "hidden";
+		// sideButton2.style.visibility = "hidden"; // turned visible when an attacker is found in the loop below
+		// sideButton1.style.visibility = "hidden";
 	}
 	
 	// Loop over all the squares and format them according to their current state
@@ -1371,7 +1409,7 @@ function setState(state) {
 			x = r + c
 			sqr = BOARD[r][c];
 			
-			if (state == "clear") {
+			if (state == "clear" || state == "move0") {
 				// For other states, the propertes are set in calling functions, but you can always reset to clear by 
 				// just calling setState("clear")
 				sqr.highlighted = 0;
@@ -1502,14 +1540,21 @@ function setup() {
 	WHITEPIECES = [];
 	BLACKPIECES = [];
 	MOVEHISTORY = "";
-	THISMOVE = "";
+	THISMOVE = "0b. ";
 	EPCOORDS = [];
 	EPCOLOR = "";
 	AUTOCHECK = false;
 	POTCHECK = false;
-	PCKING = 0; // piece idx which is selected as potential check king
+	PCKING = -1; // piece idx which is selected as potential check king
 	PCATTACKERS = []; // piece idxs which are selected as potential check attackers
 	PCCOLOR = ""; // the color of the king in potential check
+	
+	moveTextarea = document.getElementById("thismove");
+	moveTextarea.value = "";
+	historyTextarea = document.getElementById("movehistory");
+	historyTextarea.value = "";
+	historyTextarea.readOnly = false;
+	
 	
     let squareButtons = document.querySelectorAll('[id^="square"]');
 	for (let r = 0; r <= 7; r++) {
@@ -1540,7 +1585,9 @@ function setup() {
 	setState("move0");
 }
 
-
+////////////////////////////////
+// Initialisation
+////////////////////////////////
 const WK = "<span style='color:#7E7427'>&#9812;</span>";
 const WQ = "<span style='color:#563F54'>&#9813;</span>";
 const WR = "<span style='color:#394F67'>&#9814;</span>";

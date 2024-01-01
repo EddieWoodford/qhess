@@ -1,2 +1,8 @@
-potential checks
 castling
+
+move history:
+- past not editable
+- single line entry for next move
+- reset button
+
+move 0 noted explicitly in the prompt
