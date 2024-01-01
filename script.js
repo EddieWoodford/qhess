@@ -253,6 +253,7 @@ function submitMove() {
 }
 
 function findPiecesClick(wave) {
+	
 	if (getState() == "findPieces") {
 		clearFindPieces();
 		setState("clear");
@@ -261,6 +262,9 @@ function findPiecesClick(wave) {
 	if (getState() != "clear" && getState() != "move0") {
 		return;
 	}
+	findPieceButton = document.getElementById("find"+wave);
+	findPieceButton.style.borderColor = "orange";
+	findPieceButton.style.borderWidth = "6px";
 	let pieces;
 	if (TURNCOLOR == "w") {
 		pieces = WHITEPIECES;
@@ -1514,7 +1518,6 @@ function setState(state) {
 	if (TURNCOLOR == "w") {
 		document.getElementById("findK").innerHTML = WK;
 		document.getElementById("findQ").innerHTML = WQ;
-		document.getElementById("findK").innerHTML = WK;
 		document.getElementById("findR").innerHTML = WR;
 		document.getElementById("findN").innerHTML = WN;
 		document.getElementById("findB").innerHTML = WB;
@@ -1522,11 +1525,18 @@ function setState(state) {
 	} else {
 		document.getElementById("findK").innerHTML = BK;
 		document.getElementById("findQ").innerHTML = BQ;
-		document.getElementById("findK").innerHTML = BK;
 		document.getElementById("findR").innerHTML = BR;
 		document.getElementById("findN").innerHTML = BN;
 		document.getElementById("findB").innerHTML = BB;
 		document.getElementById("findP").innerHTML = BP;
+	}
+	if (state != "findPieces") {
+		document.getElementById("findK").style.borderWidth = "";
+		document.getElementById("findQ").style.borderWidth = "";
+		document.getElementById("findR").style.borderWidth = "";
+		document.getElementById("findN").style.borderWidth = "";
+		document.getElementById("findB").style.borderWidth = "";
+		document.getElementById("findP").style.borderWidth = "";
 	}
 }
 

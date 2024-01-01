@@ -224,8 +224,9 @@ textarea {
     background-image: linear-gradient(to bottom right, silver, gray);
 }
 .findpiecebutton:hover {
-	background-image: none;
-    background-color: orange;
+	/* background-image: none; */
+    border-color: orange;
+	border-width: 6px;
 }
 .sidebutton {
     color: white;
