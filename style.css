@@ -117,6 +117,10 @@ h1 {
     grid-row-end: 3;
     border-top: 1px solid;
 }
+.column {
+  float: left;
+  width: 50%;
+}
 .buttons {
     grid-column-start: 3;
     grid-column-end: 4;

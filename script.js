@@ -115,7 +115,7 @@ class Piece {
 		this.r = r; // row
 		this.c = c; // column
 		this.color = color;
-		this.captured = 0; // boolean for whether this piece is captured
+		this.captured = -1; // turn number when this piece was captured. -1 indicates not yet captured
 		this.hasmoved = 0; // boolean for whether this piece has moved
 		this.fullcollapsed = 0; // boolean for whether this piece is fully collapsed
 		this.promoted = 0; // boolean for whether this piece is a promoted pawn
@@ -233,8 +233,9 @@ function submitMove() {
 	MOVEHISTORY = MOVEHISTORY + THISMOVE + pcMoveText();
 	historyArea = document.getElementById("movehistory");
 	historyArea.value = MOVEHISTORY;
+	historyArea.scrollTop = historyArea.scrollHeight;
 		
-	TAKENPIECE.captured = 1;
+	TAKENPIECE.captured = TURNNUMBER;
 	
 	if (TURNCOLOR == "w") {
 		TURNCOLOR =	"b";
@@ -329,7 +330,7 @@ function showCompleteMove(buttonID,doEP,doPromotion) {
 	ENDID = buttonID;
 	TAKENPIECE = BOARD[endCoords[0]][endCoords[1]].piece;
 	if (TAKENPIECE != "") {
-		TAKENPIECE.captured = 1;
+		TAKENPIECE.captured = TURNNUMBER;
 		TAKENPIECE.removewaves('K');
 		THISMOVE = THISMOVE + "x";
 	}
@@ -360,7 +361,7 @@ function showCompleteMove(buttonID,doEP,doPromotion) {
 			THISMOVE = THISMOVE + "x";
 			movingPiece.removewaves("KQNRB");
 			TAKENPIECE = BOARD[endCoords[0]+direction][endCoords[1]].piece;
-			TAKENPIECE.captured = 1;
+			TAKENPIECE.captured = TURNNUMBER;
 			TAKENPIECE.removewaves("KQNRB");
 			BOARD[endCoords[0]+direction][endCoords[1]].piece = "";
 			// update all the collpases again!
@@ -562,6 +563,7 @@ function findPotentialKingsToAttack() {
 	let pieces = getPieces(TURNCOLOR);
 	let piece;
 	let moves;
+	let nPotKings = 0;
 	
 	for (let r=0; r<8; r++) {
 		for (let c=0; c<8; c++) {
@@ -576,10 +578,12 @@ function findPotentialKingsToAttack() {
 				moves = getPotentialMoves([piece.r,piece.c]);
 				if (ismember([r,c],moves)) {
 					BOARD[r][c].highlightPotKing = 1;
+					nPotKings++;
 				}
 			}
 		}
 	}
+	return nPotKings;
 }
 
 function findPCAttackers() {
@@ -592,24 +596,24 @@ function findPCAttackers() {
 	let moves;
 	let defKing = defPiece(PCKING);
 	
-	let nPotAttackers = 0;
+	let potAttackerCoords = [];
 	for (let pi=0; pi < attackPieces.length; pi++) {
 		piece = attackPieces[pi];
-		moves = getCertainMoves(piece.coords());
+		/* moves = getCertainMoves(piece.coords());
 		if (ismember(defKing.coords(),moves)) { 
 			// already an attacker, so not to be highlighted
 			BOARD[piece.r][piece.c].highlightPotAttacker = 0;
 			continue;
-		}
+		} */
 		moves = getPotentialMoves(piece.coords());
 		if (ismember(defKing.coords(),moves)) { 
 			BOARD[piece.r][piece.c].highlightPotAttacker = 1;
-			nPotAttackers++;
+			potAttackerCoords.push([piece.r,piece.c]);
 		} else {
 			BOARD[piece.r][piece.c].highlightPotAttacker = 0;
 		}
 	}
-	
+	return potAttackerCoords;
 }
 
 function clearFindPotentialCheckPieces() {
@@ -634,7 +638,11 @@ function selectPCKing(buttonID) {
 	// Make this piece the PC King
 	PCKING = BOARD[kingCoords[0]][kingCoords[1]].piece.i;
 	PCCOLOR = BOARD[kingCoords[0]][kingCoords[1]].piece.color;
-	findPCAttackers();
+	let potAttackerCoords = findPCAttackers();
+	if (potAttackerCoords.length == 1) {
+		let buttonID = coords2buttonID(potAttackerCoords[0]);
+		selectPCAttackers(buttonID);
+	}	
 	setState("selectPCAttackers");
 }
 
@@ -642,6 +650,7 @@ function selectPCAttackers(buttonID) {
 	// Get here when a PC attacker is selected by clicking on its square
 	
 	let attackerCoords = buttonID2coords(buttonID);
+	
 	if (BOARD[attackerCoords[0]][attackerCoords[1]].highlightPotAttacker == 0) {
 		restoreGameHistory();
 		setState("clear");
@@ -1360,10 +1369,17 @@ function setState(state) {
 		promptlabel.innerHTML = moveText + "Select destination";
 	} else if (state == "showCompleteMove") {
 		sideButton2.style.visibility = "visible";
-		sideButton1.style.visibility = "visible";
-		promptlabel.innerHTML = moveText + "Add PC / Submit";
 		sideButton2.innerText = "Submit";
-		sideButton1.innerText = "Add Potential Check";
+		let nPotKings = findPotentialKingsToAttack();
+		clearFindPotentialCheckPieces();
+		if (nPotKings > 0) {
+			promptlabel.innerHTML = moveText + "Add PC / Submit";
+			sideButton1.style.visibility = "visible";
+			sideButton1.innerText = "Add Potential Check";
+		} else {
+			promptlabel.innerHTML = moveText + "Submit";
+			sideButton1.style.visibility = "hidden";
+		}
 	} else if (state == "invalidMoveIntoCheck") {
 		promptlabel.innerHTML = moveText + "Invalid - moved into check";
 		sideButton2.style.visibility = "visible";
@@ -1494,14 +1510,20 @@ function setState(state) {
 	
 	let whitecaptured = "<strong>White Captured</strong><br>";
 	let blackcaptured = "<strong>Black Captured</strong><br>";
+	let whiteorder = [];
+	let blackorder = [];
+	let capturedwaves = [];
 	for (let i=0; i<16; i++) {
-		if (WHITEPIECES[i].captured==1) {
-			whitecaptured = whitecaptured + WHITEPIECES[i].waves() + "<br>";
-		}
-		if (BLACKPIECES[i].captured==1) {
-			blackcaptured = blackcaptured + BLACKPIECES[i].waves() + "<br>";
-		}
+		whiteorder.push(WHITEPIECES[i].captured);
+		blackorder.push(BLACKPIECES[i].captured);
 	}
+	for (let i=0; i <= TURNNUMBER; i++) {
+		let idx = whiteorder.indexOf(i);
+		if (idx > -1) {whitecaptured = whitecaptured + i + '. ' + WHITEPIECES[idx].waves() + "<br>";}
+		idx = blackorder.indexOf(i);
+		if (idx > -1) {blackcaptured = blackcaptured + i + '. ' + BLACKPIECES[idx].waves() + "<br>";}
+	}
+	
 	let capturedLabel;
 	capturedLabel = document.getElementById("whitecaptured");
 	capturedLabel.innerHTML = whitecaptured;
