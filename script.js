@@ -209,7 +209,6 @@ function declareNotAKing() {
 	THISMOVE = THISMOVE + "[" + BOARD[defKing.r][defKing.c].chesscoords + "]";
 	updateOptionsFromEntanglement(TURNCOLOR);
 	PCKING = -1; 
-	PCATTACKERS = [];
 	PCCOLOR = "";
 	clearFindPotentialCheckPieces();
 	findChecks(TURNCOLOR);
@@ -225,7 +224,6 @@ function submitMove() {
 	if (PCCOLOR == TURNCOLOR) {
 		// Must have gotten out of potential check
 		PCKING = -1;
-		PCATTACKERS = [];
 		PCCOLOR = "";
 	}
 	
@@ -594,20 +592,24 @@ function findPCAttackers() {
 	let moves;
 	let defKing = defPiece(PCKING);
 	
+	let nPotAttackers = 0;
 	for (let pi=0; pi < attackPieces.length; pi++) {
 		piece = attackPieces[pi];
-		if (PCATTACKERS.includes(pi)) {
-			// already selected as an attacker, so not to be highlighted
+		moves = getCertainMoves(piece.coords());
+		if (ismember(defKing.coords(),moves)) { 
+			// already an attacker, so not to be highlighted
 			BOARD[piece.r][piece.c].highlightPotAttacker = 0;
 			continue;
 		}
 		moves = getPotentialMoves(piece.coords());
 		if (ismember(defKing.coords(),moves)) { 
 			BOARD[piece.r][piece.c].highlightPotAttacker = 1;
+			nPotAttackers++;
 		} else {
 			BOARD[piece.r][piece.c].highlightPotAttacker = 0;
 		}
 	}
+	
 }
 
 function clearFindPotentialCheckPieces() {
@@ -631,7 +633,6 @@ function selectPCKing(buttonID) {
 	
 	// Make this piece the PC King
 	PCKING = BOARD[kingCoords[0]][kingCoords[1]].piece.i;
-	PCATTACKERS = [];
 	PCCOLOR = BOARD[kingCoords[0]][kingCoords[1]].piece.color;
 	findPCAttackers();
 	setState("selectPCAttackers");
@@ -647,7 +648,6 @@ function selectPCAttackers(buttonID) {
 		return
 	}
 	let piece = BOARD[attackerCoords[0]][attackerCoords[1]].piece;
-	PCATTACKERS.push(piece.i);
 	BOARD[attackerCoords[0]][attackerCoords[1]].highlightPotAttacker = 0;
 	
 	let defKing = defPiece(PCKING);
@@ -742,14 +742,15 @@ function findChecks(color) {
 
 function pcMoveText() {
 	// The PC notation can't be added onto THISMOVE since the king is the last entry.
-	// THis function returns the "<....>" text for the potential check notation
+	// This function returns the "<....>" text for the potential check notation
 	let txt = "";
 	if (PCKING >= 0 && PCCOLOR == oppColor()) {
+		let kingCoords;
+		let attackerCoords;
+		[kingCoords,attackerCoords] = findChecks(PCCOLOR);
 		txt = txt + "<";
-		let piece;
-		for (let ai=0; ai < PCATTACKERS.length; ai++) {
-			piece = attPiece(PCATTACKERS[ai]);
-			txt = txt + BOARD[piece.r][piece.c].chesscoords + " ";
+		for (let ai=0; ai < attackerCoords.length; ai++) {
+			txt = txt + BOARD[attackerCoords[ai][0]][attackerCoords[ai][1]].chesscoords + " ";
 		}
 		piece = defPiece(PCKING);
 		txt = txt + BOARD[piece.r][piece.c].chesscoords + ">";
@@ -1543,7 +1544,6 @@ function setup() {
 	AUTOCHECK = false;
 	POTCHECK = false;
 	PCKING = -1; // piece idx which is selected as potential check king
-	PCATTACKERS = []; // piece idxs which are selected as potential check attackers
 	PCCOLOR = ""; // the color of the king in potential check
 	FINDPIECE = "";
 	
@@ -1614,7 +1614,6 @@ let EPCOLOR;
 let AUTOCHECK;
 let POTCHECK;
 let PCKING;
-let PCATTACKERS;
 let PCCOLOR;
 let FINDPIECE;
 
