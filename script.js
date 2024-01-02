@@ -19,27 +19,27 @@ class Square {
 		
         this.button = document.getElementById(buttonID);
         this.button.onmouseenter = () => {
-			if (getState() == "clear") {
+			if (STATE == "clear") {
 				highlightPotentialMoves(buttonID);
 			}
         }
 		this.button.onmouseleave = () => {
-			if (getState() == "highlightPotentialMoves") {
+			if (STATE == "highlightPotentialMoves") {
 				setState("clear");
 			}
         }
 		this.button.onclick = () => {
 			FINDPIECE = "";
 			clearFindPieces();
-			if (getState() == "highlightPotentialMoves") {
+			if (STATE == "highlightPotentialMoves") {
 				showPartialMove(buttonID);
-			} else if (getState() == "showPartialMove") {
+			} else if (STATE == "showPartialMove") {
 				showCompleteMove(buttonID);
-			} else if (getState() == "selectPCKing") {
+			} else if (STATE == "selectPCKing") {
 				selectPCKing(buttonID);
-			} else if (getState() == "selectPCAttackers") {
+			} else if (STATE == "selectPCAttackers") {
 				selectPCAttackers(buttonID);
-			} else if (getState() == "move0") {
+			} else if (STATE == "move0") {
 				setState("move0");
 			} else {
 				restoreGameHistory();
@@ -183,19 +183,19 @@ class Piece {
 // Button Actions
 ////////////////////////////////
 function sideButton1Click() {
-	if (getState() == "showCompleteMove" || getState() == "move0") {
+	if (STATE == "showCompleteMove" || STATE == "move0") {
 		findPotentialKingsToAttack();
 		setState("selectPCKing");
-	} else if (getState() == "clear" && POTCHECK) {
+	} else if (STATE == "clear" && POTCHECK) {
 		declareNotAKing();
 	}
 }
 
 function sideButton2Click() {
-	if (getState() == "showCompleteMove" || getState() == "selectPCAttackers" || getState() == "move0") {
+	if (STATE == "showCompleteMove" || STATE == "selectPCAttackers" || STATE == "move0") {
 		submitMove();
 		setState("clear");
-	} else if (getState() == "invalidMoveIntoCheck") {
+	} else if (STATE == "invalidMoveIntoCheck") {
 		restoreGameHistory();
 		setState("clear");
 	}
@@ -261,7 +261,7 @@ function findPiecesClick(wave) {
 		document.getElementById("find"+wave).style.background = "purple";
 		document.getElementById("find"+wave).style.backgroundImage = "none";
 	}
-	setState(getState());
+	setState(STATE);
 }
 
 function clearFindPieces() {
@@ -1295,24 +1295,18 @@ function attPiece(i) {
 ////////////////////////////////
 // State Control
 ////////////////////////////////
-function getState() {
-	statelabel = document.getElementById("state");
-	return statelabel.innerText;
-}
 
-function setState(state) {
-	if (state == "clear" && TURNNUMBER == 0) {
-		state = "move0";
+function setState(stateIn) {
+	if (stateIn == "clear" && TURNNUMBER == 0) {
+		stateIn = "move0";
 	}
-	
-	let statelabel = document.getElementById("state");
-	let prevState = statelabel.innerText;
-	statelabel.innerText = state;
+	let prevState = STATE;
+	STATE = stateIn;
 	let promptlabel = document.getElementById("prompt");
 	let moveTextarea = document.getElementById("thismove");
 	let sideButton1 = document.getElementById("sideButton1")
 	let sideButton2 = document.getElementById("sideButton2")
-	if (state != "move0") {
+	if (STATE != "move0") {
 		historyTextarea = document.getElementById("movehistory");
 		historyTextarea.readOnly = true;
 	}
@@ -1342,7 +1336,7 @@ function setState(state) {
 	if (TURNNUMBER == 0) {
 		promptlabel.innerHTML = "Move 0 - add Potential Check?";
 	}
-	if (state == "clear") {
+	if (STATE == "clear") {
 		sideButton2.style.visibility = "hidden";
 		sideButton1.style.visibility = "hidden";
 		STARTID = "";
@@ -1352,7 +1346,7 @@ function setState(state) {
 			sideButton1.style.visibility = "visible";
 			sideButton1.innerText = "Declare 'Not a King'";
 		}
-	} else if (state == "move0") {
+	} else if (STATE == "move0") {
 		sideButton2.style.visibility = "visible";
 		sideButton1.style.visibility = "visible";
 		sideButton1.innerText = "Add Potential Check";
@@ -1360,14 +1354,14 @@ function setState(state) {
 		STARTID = "";
 		ENDID = "";
 		TAKENPIECE = "";
-	} else if (state == "highlightPotentialMoves") {
+	} else if (STATE == "highlightPotentialMoves") {
 		sideButton2.style.visibility = "hidden";
 		sideButton1.style.visibility = "hidden";
-	} else if (state == "showPartialMove") {
+	} else if (STATE == "showPartialMove") {
 		sideButton2.style.visibility = "hidden";
 		sideButton1.style.visibility = "hidden";
 		promptlabel.innerHTML = moveText + "Select destination";
-	} else if (state == "showCompleteMove") {
+	} else if (STATE == "showCompleteMove") {
 		sideButton2.style.visibility = "visible";
 		sideButton2.innerText = "Submit";
 		let nPotKings = findPotentialKingsToAttack();
@@ -1380,16 +1374,16 @@ function setState(state) {
 			promptlabel.innerHTML = moveText + "Submit";
 			sideButton1.style.visibility = "hidden";
 		}
-	} else if (state == "invalidMoveIntoCheck") {
+	} else if (STATE == "invalidMoveIntoCheck") {
 		promptlabel.innerHTML = moveText + "Invalid - moved into check";
 		sideButton2.style.visibility = "visible";
 		sideButton1.style.visibility = "hidden";
 		sideButton2.innerText = "Cancel";
-	} else if (state == "selectPCKing") {
+	} else if (STATE == "selectPCKing") {
 		promptlabel.innerHTML = moveText + "Select King to attack";
 		sideButton2.style.visibility = "hidden";
 		sideButton1.style.visibility = "hidden";
-	} else if (state == "selectPCAttackers") {
+	} else if (STATE == "selectPCAttackers") {
 		promptlabel.innerHTML = moveText + "Select attacking pieces";
 		sideButton2.style.visibility = "hidden"; // turned visible when an attacker is found in the loop below
 		sideButton1.style.visibility = "hidden";
@@ -1399,11 +1393,11 @@ function setState(state) {
 	// Loop over all the squares and format them according to their current state
 	let checkAttackerCoords = [];
 	let checkKingCoords = [];
-	if (state != "selectPCAttackers" && state != "selectPCKing" && state != "highlightPotentialMoves" && state != "clear") {
+	if (STATE != "selectPCAttackers" && STATE != "selectPCKing" && STATE != "highlightPotentialMoves" && STATE != "clear") {
 		clearFindPotentialCheckPieces();
 	}
 	[checkKingCoords,checkAttackerCoords] = findChecks(TURNCOLOR);
-	if (state == "selectPCAttackers") {
+	if (STATE == "selectPCAttackers") {
 		// Can only get here if player is not in check. Now we want to show the PCKing selected.
 		[checkKingCoords,checkAttackerCoords] = findChecks(oppColor());
 	}
@@ -1417,7 +1411,7 @@ function setState(state) {
 			sqr = BOARD[r][c];
 			piece = sqr.piece;
 			
-			if (state == "clear" || state == "move0") {
+			if (STATE == "clear" || STATE == "move0") {
 				// For other states, the propertes are set in calling functions, but you can always reset to clear by 
 				// just calling setState("clear")
 				sqr.highlighted = 0;
@@ -1425,18 +1419,18 @@ function setState(state) {
 				sqr.highlightPotKing = 0;
 				sqr.highlightPotAttacker = 0;
 			}
-			if (state == "showPartialMove") {
+			if (STATE == "showPartialMove") {
 				sqr.highlighted = 0;
 			}
-			if (state == "showCompleteMove") {
-				sqr.highlighted = 0;
-				sqr.potentialMove = 0;
-			}
-			if (state == "invalidMoveIntoCheck") {
+			if (STATE == "showCompleteMove") {
 				sqr.highlighted = 0;
 				sqr.potentialMove = 0;
 			}
-			if (state == "selectPCAttackers") {
+			if (STATE == "invalidMoveIntoCheck") {
+				sqr.highlighted = 0;
+				sqr.potentialMove = 0;
+			}
+			if (STATE == "selectPCAttackers") {
 				sqr.highlightPotKing = 0;
 			}
 			
@@ -1476,7 +1470,7 @@ function setState(state) {
 				sqr.button.style.background = 'blue';
 			}
 			// if they're selected then turn of the highlightPot* backgrounds
-			if (AUTOCHECK || POTCHECK || state == "selectPCAttackers") {
+			if (AUTOCHECK || POTCHECK || STATE == "selectPCAttackers") {
 				if (isequal([r,c],checkKingCoords)) {
 					sqr.button.style.background = sqrcolor;
 					sqr.button.style.borderColor = "red";
@@ -1486,7 +1480,7 @@ function setState(state) {
 					sqr.button.style.background = sqrcolor;
 					sqr.button.style.borderColor = "blue";
 					sqr.button.style.borderWidth = "6px";
-					if (state == "selectPCAttackers") {
+					if (STATE == "selectPCAttackers") {
 						sideButton2.style.visibility = "visible";
 					}
 				}
@@ -1638,6 +1632,7 @@ let POTCHECK;
 let PCKING;
 let PCCOLOR;
 let FINDPIECE;
+let STATE;
 
 window.onload = setup
 
