@@ -29,7 +29,7 @@ class Square {
 			}
         }
 		this.button.onclick = () => {
-			
+			FINDPIECE = "";
 			if (getState() == "highlightPotentialMoves") {
 				showPartialMove(buttonID);
 			} else if (getState() == "showPartialMove") {
@@ -254,38 +254,22 @@ function submitMove() {
 
 function findPiecesClick(wave) {
 	
-	if (getState() == "findPieces") {
-		clearFindPieces();
-		setState("clear");
-		return;
-	}
-	if (getState() != "clear" && getState() != "move0") {
-		return;
-	}
-	findPieceButton = document.getElementById("find"+wave);
-	findPieceButton.style.borderColor = "orange";
-	findPieceButton.style.borderWidth = "6px";
-	let pieces;
-	if (TURNCOLOR == "w") {
-		pieces = WHITEPIECES;
+	if (wave == FINDPIECE) {
+		FINDPIECE = "";
+		document.getElementById("findK").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
+		document.getElementById("findQ").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
+		document.getElementById("findR").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
+		document.getElementById("findN").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
+		document.getElementById("findB").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
+		document.getElementById("findP").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
 	} else {
-		pieces = BLACKPIECES;
+		FINDPIECE = wave;
+		document.getElementById("find"+wave).style.background = "purple";
+		document.getElementById("find"+wave).style.backgroundImage = "none";
 	}
+	setState(getState());
 	
-	for (let i=0; i<16; i++) {
-		if (pieces[i].captured==0) {
-			if (pieces[i].waves().includes(wave)) {
-				BOARD[pieces[i].r][pieces[i].c].highlighted = 1;
-			}
-		}
-	}
-	setState("findPieces");
-}
-
-function clearFindPieces() {
-	if (getState() == "findPieces") {
-		setState("clear");
-	}
+	
 }
 
 function highlightPotentialMoves(buttonID) {
@@ -1390,9 +1374,6 @@ function setState(state) {
 		sideButton2.style.visibility = "hidden"; // turned visible when an attacker is found in the loop below
 		sideButton1.style.visibility = "hidden";
 		sideButton2.innerText = "Submit";
-	} else if (state == "findPieces") {
-		// sideButton2.style.visibility = "hidden"; // turned visible when an attacker is found in the loop below
-		// sideButton1.style.visibility = "hidden";
 	}
 	
 	// Loop over all the squares and format them according to their current state
@@ -1407,11 +1388,14 @@ function setState(state) {
 		[checkKingCoords,checkAttackerCoords] = findChecks(oppColor());
 	}
 	
+	let sqr;
+	let piece;
 	for (let r = 0; r <= 7; r++) {
 		for ( let c = 0; c <= 7; c++) {
 			i = r*8 + c
 			x = r + c
 			sqr = BOARD[r][c];
+			piece = sqr.piece;
 			
 			if (state == "clear" || state == "move0") {
 				// For other states, the propertes are set in calling functions, but you can always reset to clear by 
@@ -1456,29 +1440,13 @@ function setState(state) {
 			sqr.setWavetext();
 
 			// Change formatting if in non-default state:
-			if (sqr.highlighted) {
-				sqr.button.style.background = 'orange';
-			}
-			if (sqr.potentialMove) {
-				sqr.button.style.background = 'green';
-			}
-			if (sqr.button.id == STARTID) {
-				sqr.button.style.borderColor = "orange";
-				sqr.button.style.borderWidth = "6px";
-			}
-			if (sqr.button.id == ENDID) {
-				sqr.button.style.borderColor = "green";
-				sqr.button.style.borderWidth = "6px";
-			}
-
 			if (sqr.highlightPotKing == 1) {
 				sqr.button.style.background = 'red';
 			}
 			if (sqr.highlightPotAttacker == 1) {
 				sqr.button.style.background = 'blue';
 			}
-			
-			
+			// if they're selected then turn of the highlightPot* backgrounds
 			if (AUTOCHECK || POTCHECK || state == "selectPCAttackers") {
 				if (isequal([r,c],checkKingCoords)) {
 					sqr.button.style.background = sqrcolor;
@@ -1493,6 +1461,26 @@ function setState(state) {
 						sideButton2.style.visibility = "visible";
 					}
 				}
+			}
+			if (sqr.highlighted) {
+				sqr.button.style.background = 'orange';
+			}
+			if (sqr.potentialMove) {
+				sqr.button.style.background = 'green';
+			}
+			if (piece != "") {
+				let waves = piece.waves();
+				if (FINDPIECE != "" && waves.includes(FINDPIECE)) {
+					sqr.button.style.background = 'purple';
+				}
+			}
+			if (sqr.button.id == STARTID) {
+				sqr.button.style.borderColor = "orange";
+				sqr.button.style.borderWidth = "6px";
+			}
+			if (sqr.button.id == ENDID) {
+				sqr.button.style.borderColor = "green";
+				sqr.button.style.borderWidth = "6px";
 			}
 
 		}
@@ -1530,14 +1518,8 @@ function setState(state) {
 		document.getElementById("findB").innerHTML = BB;
 		document.getElementById("findP").innerHTML = BP;
 	}
-	if (state != "findPieces") {
-		document.getElementById("findK").style.borderWidth = "";
-		document.getElementById("findQ").style.borderWidth = "";
-		document.getElementById("findR").style.borderWidth = "";
-		document.getElementById("findN").style.borderWidth = "";
-		document.getElementById("findB").style.borderWidth = "";
-		document.getElementById("findP").style.borderWidth = "";
-	}
+	
+
 }
 
 function setup() {
@@ -1558,6 +1540,7 @@ function setup() {
 	PCKING = -1; // piece idx which is selected as potential check king
 	PCATTACKERS = []; // piece idxs which are selected as potential check attackers
 	PCCOLOR = ""; // the color of the king in potential check
+	FINDPIECE = "";
 	
 	moveTextarea = document.getElementById("thismove");
 	moveTextarea.value = "";
@@ -1628,6 +1611,7 @@ let POTCHECK;
 let PCKING;
 let PCATTACKERS;
 let PCCOLOR;
+let FINDPIECE;
 
 window.onload = setup
 

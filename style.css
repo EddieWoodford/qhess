@@ -225,8 +225,7 @@ textarea {
 }
 .findpiecebutton:hover {
 	/* background-image: none; */
-    border-color: orange;
-	border-width: 6px;
+    /* background: purple; */
 }
 .sidebutton {
     color: white;
