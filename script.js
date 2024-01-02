@@ -492,7 +492,7 @@ function restoreGameHistory(historyText) {
 				moveText = moveText[1].split("(");
 				moveText = moveText[0];
 			}
-			if (!lines[i].includes("0b.")) {
+			if (i>0 || !lines[i].includes("0b.")) {
 				// includes an actual move
 				if (moveText.includes(". ")) {
 					moveText = moveText.split(". ");
