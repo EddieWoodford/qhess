@@ -30,6 +30,7 @@ class Square {
         }
 		this.button.onclick = () => {
 			FINDPIECE = "";
+			clearFindPieces();
 			if (getState() == "highlightPotentialMoves") {
 				showPartialMove(buttonID);
 			} else if (getState() == "showPartialMove") {
@@ -254,14 +255,9 @@ function submitMove() {
 
 function findPiecesClick(wave) {
 	
+	clearFindPieces();
 	if (wave == FINDPIECE) {
 		FINDPIECE = "";
-		document.getElementById("findK").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
-		document.getElementById("findQ").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
-		document.getElementById("findR").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
-		document.getElementById("findN").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
-		document.getElementById("findB").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
-		document.getElementById("findP").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
 	} else {
 		FINDPIECE = wave;
 		document.getElementById("find"+wave).style.background = "purple";
@@ -269,7 +265,15 @@ function findPiecesClick(wave) {
 	}
 	setState(getState());
 	
-	
+}
+
+function clearFindPieces() {
+	document.getElementById("findK").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
+	document.getElementById("findQ").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
+	document.getElementById("findR").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
+	document.getElementById("findN").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
+	document.getElementById("findB").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
+	document.getElementById("findP").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
 }
 
 function highlightPotentialMoves(buttonID) {
