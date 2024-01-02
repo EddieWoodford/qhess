@@ -8,136 +8,138 @@
 
 <body>
     <h1>Qhess</h1>
-    <div class="move-history">
-		<button class='resetButton' id='reset' onclick="setup()">Reset Game</button>
-        <button class='restoreButton' id='restorehistory' onclick="restoreGameHistory()">Restore History</button>
-		<br>
-		<button class='copyAllHistoryButton' id='copyallhistory' onclick="copyAllHistory()">Copy All</button>
-		<button class='copyLastMoveButton' id='copylastmove' onclick="copyLastMove()">Copy Last Move</button>
-		<br>
-		<button class='pasteAllRestoreButton' id='pasteallrestore' onclick="pasteAllRestore()">Paste All & Reset</button>
-		<button class='pasteLineRestoreButton' id='pastelinerestore' onclick="pasteLineRestore()">Paste Move</button>
-		Game ID:<br>
-        <textarea id="gameid" rows=1></textarea>
-		Staged Move:<br>
-        <textarea id="thismove" rows=1></textarea>
-		Move History:<br>
-		<textarea id="movehistory" rows=20></textarea>
-    </div>
-    <div id="play-area" class="play-area">
-		<button class="rankcoord" id="rank8">8</button>
-        <button class="boardsquare" id="square00"></button>
-        <button class="boardsquare" id="square01"></button>
-        <button class="boardsquare" id="square02"></button>
-        <button class="boardsquare" id="square03"></button>
-        <button class="boardsquare" id="square04"></button>
-        <button class="boardsquare" id="square05"></button>
-        <button class="boardsquare" id="square06"></button>
-        <button class="boardsquare" id="square07"></button>
-        <br clear="all">
-		<button class="rankcoord" id="rank7">7</button>
-        <button class="boardsquare" id="square10"></button>
-        <button class="boardsquare" id="square11"></button>
-        <button class="boardsquare" id="square12"></button>
-        <button class="boardsquare" id="square13"></button>
-        <button class="boardsquare" id="square14"></button>
-        <button class="boardsquare" id="square15"></button>
-        <button class="boardsquare" id="square16"></button>
-        <button class="boardsquare" id="square17"></button>
-        <br clear="all">
-		<button class="rankcoord" id="rank6">6</button>
-        <button class="boardsquare" id="square20"></button>
-        <button class="boardsquare" id="square21"></button>
-        <button class="boardsquare" id="square22"></button>
-        <button class="boardsquare" id="square23"></button>
-        <button class="boardsquare" id="square24"></button>
-        <button class="boardsquare" id="square25"></button>
-        <button class="boardsquare" id="square26"></button>
-        <button class="boardsquare" id="square27"></button>
-        <br clear="all">
-		<button class="rankcoord" id="rank5">5</button>
-        <button class="boardsquare" id="square30"></button>
-        <button class="boardsquare" id="square31"></button>
-        <button class="boardsquare" id="square32"></button>
-        <button class="boardsquare" id="square33"></button>
-        <button class="boardsquare" id="square34"></button>
-        <button class="boardsquare" id="square35"></button>
-        <button class="boardsquare" id="square36"></button>
-        <button class="boardsquare" id="square37"></button>
-        <br clear="all">
-		<button class="rankcoord" id="rank4">4</button>
-        <button class="boardsquare" id="square40"></button>
-        <button class="boardsquare" id="square41"></button>
-        <button class="boardsquare" id="square42"></button>
-        <button class="boardsquare" id="square43"></button>
-        <button class="boardsquare" id="square44"></button>
-        <button class="boardsquare" id="square45"></button>
-        <button class="boardsquare" id="square46"></button>
-        <button class="boardsquare" id="square47"></button>
-        <br clear="all">
-		<button class="rankcoord" id="rank3">3</button>
-        <button class="boardsquare" id="square50"></button>
-        <button class="boardsquare" id="square51"></button>
-        <button class="boardsquare" id="square52"></button>
-        <button class="boardsquare" id="square53"></button>
-        <button class="boardsquare" id="square54"></button>
-        <button class="boardsquare" id="square55"></button>
-        <button class="boardsquare" id="square56"></button>
-        <button class="boardsquare" id="square57"></button>
-        <br clear="all">
-		<button class="rankcoord" id="rank2">2</button>
-        <button class="boardsquare" id="square60"></button>
-        <button class="boardsquare" id="square61"></button>
-        <button class="boardsquare" id="square62"></button>
-        <button class="boardsquare" id="square63"></button>
-        <button class="boardsquare" id="square64"></button>
-        <button class="boardsquare" id="square65"></button>
-        <button class="boardsquare" id="square66"></button>
-        <button class="boardsquare" id="square67"></button>
-        <br clear="all">
-		<button class="rankcoord" id="rank1">1</button>
-        <button class="boardsquare" id="square70"></button>
-        <button class="boardsquare" id="square71"></button>
-        <button class="boardsquare" id="square72"></button>
-        <button class="boardsquare" id="square73"></button>
-        <button class="boardsquare" id="square74"></button>
-        <button class="boardsquare" id="square75"></button>
-        <button class="boardsquare" id="square76"></button>
-        <button class="boardsquare" id="square77"></button>
-		<br clear="all">
-		<button class="cornerbutton" id="cornerbutton"></button>
-		<button class="filecoord" id="fileA">a</button>
-		<button class="filecoord" id="fileB">b</button>
-		<button class="filecoord" id="fileC">c</button>
-		<button class="filecoord" id="fileD">d</button>
-		<button class="filecoord" id="fileE">e</button>
-		<button class="filecoord" id="fileF">f</button>
-		<button class="filecoord" id="fileG">g</button>
-		<button class="filecoord" id="fileH">h</button>
-    </div>
-    <div id="misc" class="misc">
-        <div class="buttons">
-            <label class="prompt" id="prompt">Prompt Text</label><br>
-            <button class="sidebutton" id="sideButton1" onclick="sideButton1Click()"></button>
-            <button class="sidebutton" id="sideButton2" onclick="sideButton2Click()"></button>
-        </div>
-		<div class="captured-pieces">
-            <div class="column" id='whitecaptured'><strong>White Captured</strong></div>
-            <div class="column" id='blackcaptured'><strong>Black Captured</strong></div>
-        </div>
-        
-        <div class="find-pieces">
-            <strong>Find Pieces</strong>
-            <br>
-            <button class="findpiecebutton" id="findK" onclick="findPiecesClick('K')"></button>
-            <button class="findpiecebutton" id="findQ" onclick="findPiecesClick('Q')"></button>
-            <button class="findpiecebutton" id="findR" onclick="findPiecesClick('R')"></button>
-            <br clear=all>
-            <button class="findpiecebutton" id="findB" onclick="findPiecesClick('B')"></button>
-            <button class="findpiecebutton" id="findN" onclick="findPiecesClick('N')"></button>
-            <button class="findpiecebutton" id="findP" onclick="findPiecesClick('P')"></button>
-        </div>
-    </div>
+	<div class="container">
+		<div class="move-history">
+			<button class='resetButton' id='reset' onclick="setup()">Reset Game</button>
+			<button class='restoreButton' id='restorehistory' onclick="restoreGameHistory()">Restore History</button>
+			<br>
+			<button class='copyAllHistoryButton' id='copyallhistory' onclick="copyAllHistory()">Copy All</button>
+			<button class='copyLastMoveButton' id='copylastmove' onclick="copyLastMove()">Copy Last Move</button>
+			<br>
+			<button class='pasteAllRestoreButton' id='pasteallrestore' onclick="pasteAllRestore()">Paste All & Reset</button>
+			<button class='pasteLineRestoreButton' id='pastelinerestore' onclick="pasteLineRestore()">Paste Move</button>
+			Game ID:<br>
+			<textarea id="gameid" rows=1></textarea>
+			Staged Move:<br>
+			<textarea id="thismove" rows=1></textarea>
+			Move History:<br>
+			<textarea id="movehistory" rows=20></textarea>
+		</div>
+		<div id="play-area" class="play-area">
+			<button class="rankcoord" id="rank8">8</button>
+			<button class="boardsquare" id="square00"></button>
+			<button class="boardsquare" id="square01"></button>
+			<button class="boardsquare" id="square02"></button>
+			<button class="boardsquare" id="square03"></button>
+			<button class="boardsquare" id="square04"></button>
+			<button class="boardsquare" id="square05"></button>
+			<button class="boardsquare" id="square06"></button>
+			<button class="boardsquare" id="square07"></button>
+			<br clear="all">
+			<button class="rankcoord" id="rank7">7</button>
+			<button class="boardsquare" id="square10"></button>
+			<button class="boardsquare" id="square11"></button>
+			<button class="boardsquare" id="square12"></button>
+			<button class="boardsquare" id="square13"></button>
+			<button class="boardsquare" id="square14"></button>
+			<button class="boardsquare" id="square15"></button>
+			<button class="boardsquare" id="square16"></button>
+			<button class="boardsquare" id="square17"></button>
+			<br clear="all">
+			<button class="rankcoord" id="rank6">6</button>
+			<button class="boardsquare" id="square20"></button>
+			<button class="boardsquare" id="square21"></button>
+			<button class="boardsquare" id="square22"></button>
+			<button class="boardsquare" id="square23"></button>
+			<button class="boardsquare" id="square24"></button>
+			<button class="boardsquare" id="square25"></button>
+			<button class="boardsquare" id="square26"></button>
+			<button class="boardsquare" id="square27"></button>
+			<br clear="all">
+			<button class="rankcoord" id="rank5">5</button>
+			<button class="boardsquare" id="square30"></button>
+			<button class="boardsquare" id="square31"></button>
+			<button class="boardsquare" id="square32"></button>
+			<button class="boardsquare" id="square33"></button>
+			<button class="boardsquare" id="square34"></button>
+			<button class="boardsquare" id="square35"></button>
+			<button class="boardsquare" id="square36"></button>
+			<button class="boardsquare" id="square37"></button>
+			<br clear="all">
+			<button class="rankcoord" id="rank4">4</button>
+			<button class="boardsquare" id="square40"></button>
+			<button class="boardsquare" id="square41"></button>
+			<button class="boardsquare" id="square42"></button>
+			<button class="boardsquare" id="square43"></button>
+			<button class="boardsquare" id="square44"></button>
+			<button class="boardsquare" id="square45"></button>
+			<button class="boardsquare" id="square46"></button>
+			<button class="boardsquare" id="square47"></button>
+			<br clear="all">
+			<button class="rankcoord" id="rank3">3</button>
+			<button class="boardsquare" id="square50"></button>
+			<button class="boardsquare" id="square51"></button>
+			<button class="boardsquare" id="square52"></button>
+			<button class="boardsquare" id="square53"></button>
+			<button class="boardsquare" id="square54"></button>
+			<button class="boardsquare" id="square55"></button>
+			<button class="boardsquare" id="square56"></button>
+			<button class="boardsquare" id="square57"></button>
+			<br clear="all">
+			<button class="rankcoord" id="rank2">2</button>
+			<button class="boardsquare" id="square60"></button>
+			<button class="boardsquare" id="square61"></button>
+			<button class="boardsquare" id="square62"></button>
+			<button class="boardsquare" id="square63"></button>
+			<button class="boardsquare" id="square64"></button>
+			<button class="boardsquare" id="square65"></button>
+			<button class="boardsquare" id="square66"></button>
+			<button class="boardsquare" id="square67"></button>
+			<br clear="all">
+			<button class="rankcoord" id="rank1">1</button>
+			<button class="boardsquare" id="square70"></button>
+			<button class="boardsquare" id="square71"></button>
+			<button class="boardsquare" id="square72"></button>
+			<button class="boardsquare" id="square73"></button>
+			<button class="boardsquare" id="square74"></button>
+			<button class="boardsquare" id="square75"></button>
+			<button class="boardsquare" id="square76"></button>
+			<button class="boardsquare" id="square77"></button>
+			<br clear="all">
+			<button class="cornerbutton" id="cornerbutton"></button>
+			<button class="filecoord" id="fileA">a</button>
+			<button class="filecoord" id="fileB">b</button>
+			<button class="filecoord" id="fileC">c</button>
+			<button class="filecoord" id="fileD">d</button>
+			<button class="filecoord" id="fileE">e</button>
+			<button class="filecoord" id="fileF">f</button>
+			<button class="filecoord" id="fileG">g</button>
+			<button class="filecoord" id="fileH">h</button>
+		</div>
+		<div id="misc" class="misc">
+			<div class="buttons">
+				<label class="prompt" id="prompt">Prompt Text</label><br>
+				<button class="sidebutton" id="sideButton1" onclick="sideButton1Click()"></button>
+				<button class="sidebutton" id="sideButton2" onclick="sideButton2Click()"></button>
+			</div>
+			<div class="captured-pieces">
+				<div class="column" id='whitecaptured'><strong>White Captured</strong></div>
+				<div class="column" id='blackcaptured'><strong>Black Captured</strong></div>
+			</div>
+			
+			<div class="find-pieces">
+				<strong>Find Pieces</strong>
+				<br>
+				<button class="findpiecebutton" id="findK" onclick="findPiecesClick('K')"></button>
+				<button class="findpiecebutton" id="findQ" onclick="findPiecesClick('Q')"></button>
+				<button class="findpiecebutton" id="findR" onclick="findPiecesClick('R')"></button>
+				<br clear=all>
+				<button class="findpiecebutton" id="findB" onclick="findPiecesClick('B')"></button>
+				<button class="findpiecebutton" id="findN" onclick="findPiecesClick('N')"></button>
+				<button class="findpiecebutton" id="findP" onclick="findPiecesClick('P')"></button>
+			</div>
+		</div>
+	</div>
 
     <div class="debug">
         <label id="state">clear</label>

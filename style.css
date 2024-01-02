@@ -10,17 +10,53 @@ h1 {
     color: red;
 }
 
-
+.container {
+  display: flex; /* or inline-flex */
+  flex-flow: row wrap;
+  justify-content: space-evenly;
+}
 .move-history {
+	order: 1;
     text-align: left;
     display: inline-block;
     position: relative;
-    float: center;
+    /* float: center; */
     vertical-align: top;
 	align-items: center;
-	width: 25%;
-	padding: 0px;
+	/* width: 25%; */
+	/* padding: 0px; */
 }
+/* Small screens */
+@media all and (max-width: 1000px) {
+	.container {
+		flex-flow: column nowrap;
+		align-items: center;
+	}
+	.move-history {
+		order: 4;
+	}
+}
+.play-area {
+	order: 2;
+	width: 500px; /* 8*60px + 20px
+    /* white-space: nowrap; */
+    /* display: inline-block; */
+    /* border-top: 1px solid; */
+    /* position: relative; */
+    /* float: center; */
+    /* vertical-align: top; */
+	/* width: 50%; */
+}
+.misc {
+	order: 3;
+    display: inline-block;
+    position: relative;
+    /* float: center; */
+	/* width: 25%; */
+/*    vertical-align: top; */
+}
+
+/* ********** History Buttons ************ */
 .resetButton{
 	height: 30px;
 	width: 50%;
@@ -55,22 +91,7 @@ h1 {
 	vertical-align:top;
 }
 
-.play-area {
-    white-space: nowrap;
-    display: inline-block;
-    /* border-top: 1px solid; */
-    position: relative;
-    float: center;
-    vertical-align: top;
-	/* width: 50%; */
-}
-.misc {
-    display: inline-block;
-    position: relative;
-    float: center;
-	width: 25%;
-/*    vertical-align: top; */
-}
+
 
 /* intended to be applied to the square occupied by a white/black piece */
 .white-occupied-black{
@@ -142,9 +163,6 @@ h1 {
 
 }
 
-/* .row { */
-    /* display: flex; */
-/* } */
 textarea {
      width: 100%;
      -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
@@ -156,6 +174,8 @@ textarea {
     color: white;
     width: 60px;
     height: 60px;
+	/* width: 12%; */
+	
     float: left;
     border: black solid 1px;
     cursor: pointer;
