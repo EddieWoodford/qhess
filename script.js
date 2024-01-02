@@ -1443,6 +1443,15 @@ function setState(state) {
 			sqr.setWavetext();
 
 			// Change formatting if in non-default state:
+			if (sqr.button.id == STARTID) {
+				sqr.button.style.borderColor = "orange";
+				sqr.button.style.borderWidth = "6px";
+			}
+			if (sqr.button.id == ENDID) {
+				sqr.button.style.borderColor = "green";
+				sqr.button.style.borderWidth = "6px";
+			}
+			
 			if (sqr.highlightPotKing == 1) {
 				sqr.button.style.background = 'red';
 			}
@@ -1477,14 +1486,7 @@ function setState(state) {
 					sqr.button.style.background = 'purple';
 				}
 			}
-			if (sqr.button.id == STARTID) {
-				sqr.button.style.borderColor = "orange";
-				sqr.button.style.borderWidth = "6px";
-			}
-			if (sqr.button.id == ENDID) {
-				sqr.button.style.borderColor = "green";
-				sqr.button.style.borderWidth = "6px";
-			}
+			
 
 		}
 	}
