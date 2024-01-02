@@ -254,7 +254,6 @@ function submitMove() {
 }
 
 function findPiecesClick(wave) {
-	
 	clearFindPieces();
 	if (wave == FINDPIECE) {
 		FINDPIECE = "";
@@ -264,16 +263,16 @@ function findPiecesClick(wave) {
 		document.getElementById("find"+wave).style.backgroundImage = "none";
 	}
 	setState(getState());
-	
 }
 
 function clearFindPieces() {
-	document.getElementById("findK").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
-	document.getElementById("findQ").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
-	document.getElementById("findR").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
-	document.getElementById("findN").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
-	document.getElementById("findB").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
-	document.getElementById("findP").style.backgroundImage = "linear-gradient(to bottom right, silver, gray)";
+	let img = "linear-gradient(to bottom right, silver, gray)"
+	document.getElementById("findK").style.backgroundImage = img;
+	document.getElementById("findQ").style.backgroundImage = img;
+	document.getElementById("findR").style.backgroundImage = img;
+	document.getElementById("findN").style.backgroundImage = img;
+	document.getElementById("findB").style.backgroundImage = img;
+	document.getElementById("findP").style.backgroundImage = img;
 }
 
 function highlightPotentialMoves(buttonID) {
