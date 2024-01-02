@@ -18,19 +18,20 @@ h1 {
 .move-history {
 	order: 1;
     text-align: left;
-    display: inline-block;
-    position: relative;
+    /* display: inline-block; */
+    /* position: relative; */
     /* float: center; */
-    vertical-align: top;
-	align-items: center;
+    /* vertical-align: top; */
+	/* align-items: center; */
 	/* width: 25%; */
 	/* padding: 0px; */
 }
 /* Small screens */
-@media all and (max-width: 1000px) {
+@media all and (max-aspect-ratio: 3/2) {
+	/* portrait view */
 	.container {
 		flex-flow: column nowrap;
-		align-items: center;
+		align-items: stretch;
 	}
 	.move-history {
 		order: 4;
@@ -38,7 +39,7 @@ h1 {
 }
 .play-area {
 	order: 2;
-	width: 500px; /* 8*60px + 20px
+	/* width: 500px; /* 8*60px + 20px */
     /* white-space: nowrap; */
     /* display: inline-block; */
     /* border-top: 1px solid; */
@@ -49,8 +50,8 @@ h1 {
 }
 .misc {
 	order: 3;
-    display: inline-block;
-    position: relative;
+    /* display: inline-block; */
+    /* position: relative; */
     /* float: center; */
 	/* width: 25%; */
 /*    vertical-align: top; */
@@ -58,35 +59,41 @@ h1 {
 
 /* ********** History Buttons ************ */
 .resetButton{
-	height: 30px;
+	font-size: 2vmin;
+	height: 2em;
 	width: 50%;
 	vertical-align:top;
 	float: left;
 }
 .restoreButton{
-	height: 30px;
+	font-size: 2vmin;
+	height: 2em;
 	width: 50%;
 	vertical-align:top;
 }
 .copyAllHistoryButton{
-	height: 30px;
+	font-size: 2vmin;
+	height: 2em;
 	width: 50%;
 	vertical-align:top;
 	float: left;
 }
 .copyLastMoveButton{
-	height: 30px;
+	font-size: 2vmin;
+	height: 2em;
 	width: 50%;
 	vertical-align:top;
 }
 .pasteAllRestoreButton{
-	height: 30px;
+	font-size: 2vmin;
+	height: 2em;
 	width: 50%;
 	vertical-align:top;
 	float: left;
 }
 .pasteLineRestoreButton{
-	height: 30px;
+	font-size: 2vmin;
+	height: 2em;
 	width: 50%;
 	vertical-align:top;
 }
@@ -131,6 +138,17 @@ h1 {
 	font-size: 50px;
 }
 
+/* Misc area elements */
+.prompt {
+    background-color: #99ff9966;
+}
+.buttons {
+    /* grid-column-start: 3; */
+    /* grid-column-end: 4; */
+    /* grid-row-start: 3; */
+    /* grid-row-end: 4; */
+    border-top: 1px solid;
+}
 .captured-pieces {
     grid-column-start: 3;
     grid-column-end: 4;
@@ -142,85 +160,7 @@ h1 {
   float: left;
   width: 50%;
 }
-.buttons {
-    grid-column-start: 3;
-    grid-column-end: 4;
-    grid-row-start: 3;
-    grid-row-end: 4;
-    border-top: 1px solid;
-}
-.highlight-pieces {
-    grid-column-start: 3;
-    grid-column-end: 4;
-    grid-row-start: 4;
-    grid-row-end: 5;
-    border-top: 1px solid;
-    align-items: center;
-}
 
-.prompt {
-    background-color: #99ff9966;
-
-}
-
-textarea {
-     width: 100%;
-     -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
-     -moz-box-sizing: border-box;    /* Firefox, other Gecko */
-     box-sizing: border-box;         /* Opera/IE 8+ */
-}
-
-.boardsquare {
-    color: white;
-    width: 60px;
-    height: 60px;
-	/* width: 12%; */
-	
-    float: left;
-    border: black solid 1px;
-    cursor: pointer;
-    white-space: nowrap;
-    font-family: Monospace;
-    font-size: 20px;
-    line-height: 1;
-    text-align: center;
-    padding: 0px;
-}
-.rankcoord {
-	color: black;
-	background-color: white;
-    width: 20px;
-    height: 60px;
-    float: left;
-    border: none;
-    white-space: nowrap;
-    font-family: monospace;
-    font-size: 20px;
-    line-height: 1;
-    text-align: center;
-    padding: 0px;
-}
-.filecoord {
-	color: black;
-	background-color: white;
-    width: 60px;
-    height: 20px;
-    float: left;
-    border: none;
-    white-space: nowrap;
-    font-family: monospace;
-    font-size: 20px;
-    line-height: 1;
-    /* text-align: center; */
-    padding: 0px;
-}
-.cornerbutton {
-	background-color: white;
-    width: 20px;
-    height: 20px;
-	float: left;
-	border: none;
-}
 .find-pieces{
 	border-top: 1px solid;
 }
@@ -231,10 +171,15 @@ textarea {
     left: 0;
 }
 .findpiecebutton {
-    font-size: 40px;
     color: white;
-    width: 60px;
-    height: 60px;
+    /* font-size: 40px; */
+	/* width: 60px; */
+    /* height: 60px; */
+	
+	font-size: 6vmin;
+	height: 1.5em;
+	width: 1.5em;
+	
     line-height: 1;
     float: center;
     border: black solid 1px;
@@ -254,8 +199,10 @@ textarea {
 .sidebutton {
     color: white;
     background: grey;
-    width: 10em;
-    height: 5em;
+    width: 50%;
+	height: 3em;
+	font-size: 2.5vmin;
+	float: left;
     border: black solid 1px;
     cursor: pointer;
     vertical-align:top;
@@ -265,19 +212,76 @@ textarea {
     color: white;
 }
 
-.debug {
-    margin: 2em;
-    padding: 1em;
-    font-family: monospace;
-    background-color: silver;
 
-    width: 50%;
-    display: inline-block;
-    position: relative;
-    float: center;
+
+textarea {
+     width: 100%;
+     -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+     -moz-box-sizing: border-box;    /* Firefox, other Gecko */
+     box-sizing: border-box;         /* Opera/IE 8+ */
+}
+
+/* Board elements */
+.boardsquare {
+    color: white;
+    /* width: 60px; */
+    /* height: 60px; */
+	width: 3em;
+	height: 3em;
+	font-size: 3.8vmin;
+	
+    float: left;
+    border: black solid 1px;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: Monospace;
+    
+    line-height: 1;
     text-align: center;
-    border:1px solid #999;
-    padding: 1em;
-    color: black;
-    box-shadow: 0px 0px 8px #333 inset;
+    padding: 0px;
+}
+.rankcoord {
+	color: black;
+	background-color: white;
+	width: 1em;
+	height: 3em;
+	font-size: 3.8vmin;
+	
+    /* width: 20px; */
+    /* height: 60px; */
+    /* font-size: 20px; */
+	
+	float: left;
+    border: none;
+    white-space: nowrap;
+    font-family: monospace;
+    
+    line-height: 1;
+    text-align: center;
+    padding: 0px;
+}
+.filecoord {
+	color: black;
+	background-color: white;
+	width: 3em;
+	height: 1em;
+	font-size: 3.8vmin;
+    /* width: 60px; */
+    /* height: 20px; */
+	/* font-size: 20px; */
+    float: left;
+    border: none;
+    white-space: nowrap;
+    font-family: monospace;
+    
+    line-height: 1;
+    /* text-align: center; */
+    padding: 0px;
+}
+.cornerbutton {
+	background-color: white;
+    width: 20px;
+    height: 20px;
+	float: left;
+	border: none;
 }
