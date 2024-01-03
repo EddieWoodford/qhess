@@ -263,6 +263,8 @@ function submitMove() {
 	THISMOVE = TURNNUMBER.toString() + TURNCOLOR + ". ";
 	clearFindPotentialCheckPieces();
 	findChecks(TURNCOLOR);
+	
+	copyLastMove();
 }
 
 function findPiecesClick(wave) {
