@@ -1,3 +1,8 @@
+:root {
+  --button-height: 2.5em;
+  --button-font-size: 2vmin;
+}
+
 body {
     text-align: center;
     /* top: 50%; */
@@ -57,16 +62,13 @@ textarea {
 
 /* ********** Side Buttons ************ */
 .sidebutton {
-	font-size: 2vmin;
-	height: 2.5em;
+	font-size: var(--button-font-size);
+	height: var(--button-height);
 	width: 50%;
 	vertical-align:top;
 	
     color: white;
     background: grey;
-    /* width: 50%; */
-	/* height: 3em; */
-	/* font-size: 2vmin; */
 	float: left;
     border: black solid 1px;
     cursor: pointer;
@@ -79,46 +81,46 @@ textarea {
 
 /* ********** History Buttons ************ */
 .resetButton{
-	font-size: 2vmin;
-	height: 2.5em;
+	font-size: var(--button-font-size);
+	height: var(--button-height);
 	width: 50%;
 	vertical-align:top;
 	float: left;
 	cursor: pointer;
 }
 .restoreButton{
-	font-size: 2vmin;
-	height: 2.5em;
+	font-size: var(--button-font-size);
+	height: var(--button-height);
 	width: 50%;
 	vertical-align:top;
 	cursor: pointer;
 }
 .copyAllHistoryButton{
-	font-size: 2vmin;
-	height: 2.5em;
+	font-size: var(--button-font-size);
+	height: var(--button-height);
 	width: 50%;
 	vertical-align:top;
 	float: left;
 	cursor: pointer;
 }
 .copyLastMoveButton{
-	font-size: 2vmin;
-	height: 2.5em;
+	font-size: var(--button-font-size);
+	height: var(--button-height);
 	width: 50%;
 	vertical-align:top;
 	cursor: pointer;
 }
 .pasteAllRestoreButton{
-	font-size: 2vmin;
-	height: 2.5em;
+	font-size: var(--button-font-size);
+	height: var(--button-height);
 	width: 50%;
 	vertical-align:top;
 	float: left;
 	cursor: pointer;
 }
 .pasteLineRestoreButton{
-	font-size: 2vmin;
-	height: 2.5em;
+	font-size: var(--button-font-size);
+	height: var(--button-height);
 	width: 50%;
 	vertical-align:top;
 	cursor: pointer;
@@ -162,8 +164,6 @@ textarea {
 	/* background-color: silver; */
     background-image: linear-gradient(to bottom right, silver, gray);
 }
-
-
 
 
 /* Board elements */
@@ -257,7 +257,10 @@ textarea {
     box-shadow: 0px 0px 2px 8px grey inset;
 }
 
-@media all and (max-aspect-ratio: 1.7) { /* Small screens */
+@media all and (max-aspect-ratio: 1.7) { /* Tall screens */
+	:root {
+	  --button-font-size: 3vmin;
+	}
 	/* portrait view */
 	body {
 		font-size: 3vmin;
