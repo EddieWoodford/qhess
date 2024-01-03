@@ -247,6 +247,8 @@ function submitMove() {
 	historyArea.scrollTop = historyArea.scrollHeight;
 		
 	TAKENPIECE.captured = TURNNUMBER;
+	TAKENPIECE.r = -1;
+	TAKENPIECE.c = -1;
 	
 	if (TURNCOLOR == "w") {
 		TURNCOLOR =	"b";
@@ -664,17 +666,25 @@ function selectPCAttackers(buttonID) {
 	// Get here when a PC attacker is selected by clicking on its square
 	
 	let attackerCoords = buttonID2coords(buttonID);
-	
-	if (BOARD[attackerCoords[0]][attackerCoords[1]].highlightPotAttacker == 0) {
+	let attackerPiece = coords2piece(attackerCoords);
+	if (piece == "" || piece.color != TURNCOLOR) {
+		// clicked on an empty square
 		restoreGameHistory();
 		setState("clear");
 		return
 	}
-	let piece = BOARD[attackerCoords[0]][attackerCoords[1]].piece;
-	BOARD[attackerCoords[0]][attackerCoords[1]].highlightPotAttacker = 0;
 	
+	let attackerMoves = getPotentialMoves(attackerCoords);
 	let defKing = defPiece(PCKING);
-	piece.updateOptionsByDest(defKing.coords());
+	if (!ismember(defKing.coords(),attackerMoves)) {
+		// clicked on a piece which doesn't attack the PC king
+		restoreGameHistory();
+		setState("clear");
+		return
+	}
+	
+	
+	attackerPiece.updateOptionsByDest(defKing.coords());
 	updateOptionsFromEntanglement(TURNCOLOR);
 	
 	// It is possible that by setting a potential check the attacker collapses down to a true king and thus puts 
@@ -1490,7 +1500,7 @@ function setState(stateIn) {
 			if (sqr.highlightPotAttacker == 1) {
 				sqr.button.style.background = 'blue';
 			}
-			// if they're selected then turn of the highlightPot* backgrounds
+			// if they're selected then turn off the highlightPot* backgrounds
 			if (AUTOCHECK || POTCHECK || STATE == "selectPCAttackers") {
 				if (isequal([r,c],checkKingCoords)) {
 					sqr.button.style.background = sqrcolor;
