@@ -1349,7 +1349,7 @@ function setState(stateIn) {
 	} else if (STATE == "move0") {
 		sideButton2.style.visibility = "visible";
 		sideButton1.style.visibility = "visible";
-		sideButton1.innerText = "Add Potential Check";
+		sideButton1.innerText = "Add PC";
 		sideButton2.innerText = "Pass to white";
 		STARTID = "";
 		ENDID = "";
@@ -1367,9 +1367,9 @@ function setState(stateIn) {
 		let nPotKings = findPotentialKingsToAttack();
 		clearFindPotentialCheckPieces();
 		if (nPotKings > 0) {
-			promptlabel.innerHTML = moveText + "Add PC / Submit";
+			promptlabel.innerHTML = moveText + "Add Potential Check / Submit";
 			sideButton1.style.visibility = "visible";
-			sideButton1.innerText = "Add Potential Check";
+			sideButton1.innerText = "Add PC";
 		} else {
 			promptlabel.innerHTML = moveText + "Submit";
 			sideButton1.style.visibility = "hidden";
