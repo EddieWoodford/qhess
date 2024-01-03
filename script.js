@@ -176,6 +176,17 @@ class Piece {
 		}
 		return wavesout
 	}
+	wavesWithBishopColor() {
+		let wavesout = this.waves();
+		if (wavesout.includes('B')) {
+			if (this.options[12]==1) {
+				wavesout = wavesout.replace('B','Bb');
+			} else {
+				wavesout = wavesout.replace('B','Bw');
+			}
+		}
+		return wavesout;
+	}
 }
 
 
@@ -467,60 +478,69 @@ function restoreGameHistory(historyText) {
 	setup();
 	for (let i=0; i < lines.length; i++) {
 		moveText = lines[i];
-		// every move needs to include a number such as 1. This requirement lets us skip weird lines from pasting
-		if (moveText.includes(".")) { 
-			if (i==0 && moveText.includes("1w.")) {
-				sideButton2Click(); // pass to white on move 0
-			}
-			doEP = (moveText.includes("e.p."));
-			doPromotion = (moveText.includes("="));
-			let pcText = "";
-			if (moveText.includes("]")) {
-				moveText = moveText.split("]");
-				moveText = moveText[1];
-				sideButton1Click(); // declare Not A King
-			}
-			if (moveText.includes("<")) {
-				moveText = moveText.split(">");
-				moveText = moveText[0].split("<");
-				pcText = moveText[1].split(" ");
-				moveText = moveText[0];
-			}
-			if (moveText.includes("(")) {
-				moveText = moveText.split(")");
-				moveText = moveText[1].split("(");
-				moveText = moveText[0];
-			}
-			if (i>0 || !lines[i].includes("0b.")) {
-				// includes an actual move
-				if (moveText.includes(". ")) {
-					moveText = moveText.split(". ");
-					moveText = moveText[1];
-				}
-				moveText = moveText.replace("x","");
-				
-				// Now moveText should be 4 chars long, such as h2h3, indicating the from-to coordinates
-				[r,c] = coordstext2coords(moveText.substring(0,2));
-				let startButtonID = coords2buttonID([r,c]);
-				[r,c] = coordstext2coords(moveText.substring(2,4));
-				let endButtonID = coords2buttonID([r,c]);
-				showPartialMove(startButtonID);
-				showCompleteMove(endButtonID,doEP,doPromotion);
-			}
-			
-			if (pcText.length > 0) {
-				sideButton1Click(); // "Add Potential Check" button
-				[r,c] = coordstext2coords(pcText[pcText.length-1]);
-				let kingButtonID = coords2buttonID([r,c]);
-				selectPCKing(kingButtonID);
-				let attackerButtonID;
-				for (pci=0; pci<pcText.length-1; pci++) {
-					[r,c] = coordstext2coords(pcText[pci]);
-					let attackerButtonID = coords2buttonID([r,c]);
-					selectPCAttackers(attackerButtonID);
-				}
-			}
-			sideButton2Click(); // submit
+		doMoveFromText(moveText);
+		sideButton2Click(); // submit
+	}
+}
+
+function doMoveFromText(moveText) {
+	// If the moveText includes a turn number such as "3w. " then check it is correct.
+	// If it is not included just go ahead
+	if (moveText.includes(". ")) { 
+		moveText = moveText.split(". ");
+		turnNumber = moveText[0];
+		moveText = moveText[1];
+		if (turnNumber != TURNNUMBER.toString() + TURNCOLOR) {
+			debugPrint("Move text number + colour did not match expected");
+		}
+	}
+	
+	doEP = (moveText.includes("e.p."));
+	doPromotion = (moveText.includes("="));
+	let pcText = "";
+	if (moveText.includes("]")) {
+		// declare Not A King
+		moveText = moveText.split("]");
+		moveText = moveText[1];
+		sideButton1Click(); 
+	}
+	if (moveText.includes("<")) {
+		// Split off potential check text to apply later
+		moveText = moveText.split(">");
+		moveText = moveText[0].split("<");
+		pcText = moveText[1].split(" ");
+		moveText = moveText[0];
+	}
+	if (moveText.includes("(")) {
+		// Remove waveforms as they're not needed for the replay
+		moveText = moveText.split(")");
+		moveText = moveText[1].split("(");
+		moveText = moveText[0];
+	}
+	if (TURNNUMBER > 0) {
+		// moveText should include an actual move
+		moveText = moveText.replace("x","");
+		
+		// Now moveText should be 4 chars long, such as h2h3, indicating the from-to coordinates
+		[r,c] = coordstext2coords(moveText.substring(0,2));
+		let startButtonID = coords2buttonID([r,c]);
+		[r,c] = coordstext2coords(moveText.substring(2,4));
+		let endButtonID = coords2buttonID([r,c]);
+		showPartialMove(startButtonID);
+		showCompleteMove(endButtonID,doEP,doPromotion);
+	}
+	
+	if (pcText.length > 0) {
+		sideButton1Click(); // "Add Potential Check" button
+		[r,c] = coordstext2coords(pcText[0]);
+		let kingButtonID = coords2buttonID([r,c]);
+		selectPCKing(kingButtonID);
+		let attackerButtonID;
+		for (pci=1; pci < pcText.length; pci++) {
+			// Start at idx 1 since idx 0 is the king
+			[r,c] = coordstext2coords(pcText[pci]);
+			let attackerButtonID = coords2buttonID([r,c]);
+			selectPCAttackers(attackerButtonID);
 		}
 	}
 }
@@ -599,12 +619,6 @@ function findPCAttackers() {
 	let potAttackerCoords = [];
 	for (let pi=0; pi < attackPieces.length; pi++) {
 		piece = attackPieces[pi];
-		/* moves = getCertainMoves(piece.coords());
-		if (ismember(defKing.coords(),moves)) { 
-			// already an attacker, so not to be highlighted
-			BOARD[piece.r][piece.c].highlightPotAttacker = 0;
-			continue;
-		} */
 		moves = getPotentialMoves(piece.coords());
 		if (ismember(defKing.coords(),moves)) { 
 			BOARD[piece.r][piece.c].highlightPotAttacker = 1;
@@ -682,6 +696,8 @@ function findChecks(color) {
 	// color is the color of the king to check for check. What a great sentance.
 	
 	// First look for Auto Check:
+	AUTOCHECK = false;
+	POTCHECK = false;
 	let defPieces = getPieces(color);
 	let attPieces = getPieces(oppColor(color));
 	let kingCoords = [];
@@ -695,27 +711,26 @@ function findChecks(color) {
 	if (kingCoords.length > 0) {
 		// There is a collapsed king, so look for auto check
 		let moveCoords;
-		for (let pi=0; pi < attPieces.length; pi++) {
-			pieceCoords = [attPieces[pi].r,attPieces[pi].c];
-			moveCoords = getPotentialMoves(pieceCoords);
+		for (let pi=0; pi < 16; pi++) {
+			attacker = attPieces[pi];
+			moveCoords = getPotentialMoves(attacker.coords());
 			if (ismember(kingCoords,moveCoords)) {
-				attackerCoords.push(pieceCoords);
+				attackerCoords.push(attacker.coords());
 			}
 		}
 		if (attackerCoords.length > 0) {
 			AUTOCHECK = true;
+			return [kingCoords,attackerCoords];
 		} else {
 			// For auto check, only return anything if there are attackers
-			AUTOCHECK = false;
 			return [[],[]];
 		}
-		return [kingCoords,attackerCoords];
+		
 	} else {
 
 		// If no auto check, then check if the defender of potential check has moved the potential king out of the way ...
 		// of the potential attackers.
 		if (PCKING == -1) {
-			POTCHECK = false;
 			return [[],[]];
 		}
 		if (PCCOLOR != color) {
@@ -723,7 +738,6 @@ function findChecks(color) {
 		}
 		let defKing = defPieces[PCKING];
 		if (!defKing.waves().includes("K")) {
-			POTCHECK = false;
 			return [[],[]];
 		}
 		kingCoords = [defKing.r,defKing.c];
@@ -733,14 +747,12 @@ function findChecks(color) {
 		for (let pi=0; pi < 16; pi++) {
 			// Loop through the attacking pieces and see if it is unambiguously attacking the potential king.
 			attacker = attPieces[pi];
-			moveCoords = getCertainMoves([attacker.r,attacker.c]);
+			moveCoords = getCertainMoves(attacker.coords());
 			if (ismember(kingCoords,moveCoords)) {
 				attackerCoords.push(attacker.coords());
 			}
 		}
-		if (attackerCoords.length==0) {
-			POTCHECK = false;
-		} else {
+		if (attackerCoords.length > 0) {
 			POTCHECK = true;
 		}
 		// even if no attackers exist, still return the kingCoords
@@ -754,15 +766,16 @@ function pcMoveText() {
 	// This function returns the "<....>" text for the potential check notation
 	let txt = "";
 	if (PCKING >= 0 && PCCOLOR == oppColor()) {
+		piece = defPiece(PCKING);
+		txt = "<" + BOARD[piece.r][piece.c].chesscoords;
+		
 		let kingCoords;
 		let attackerCoords;
 		[kingCoords,attackerCoords] = findChecks(PCCOLOR);
-		txt = txt + "<";
 		for (let ai=0; ai < attackerCoords.length; ai++) {
-			txt = txt + BOARD[attackerCoords[ai][0]][attackerCoords[ai][1]].chesscoords + " ";
+			txt = txt + " " + BOARD[attackerCoords[ai][0]][attackerCoords[ai][1]].chesscoords;
 		}
-		piece = defPiece(PCKING);
-		txt = txt + BOARD[piece.r][piece.c].chesscoords + ">";
+		txt = txt + ">";
 	}
 	return txt;
 }
@@ -1023,6 +1036,9 @@ function getPotentialMoves(coords,waves) {
 	// Optional input waves only returns destination for those passed in, otherwise use waves available to piece
 	
 	let piece = BOARD[coords[0]][coords[1]].piece; // Find the source pieceID
+	if (piece.captured > -1) {
+		return []
+	}
 	if (piece=="") {
 		return []
 	}
@@ -1296,6 +1312,11 @@ function attPiece(i) {
 // State Control
 ////////////////////////////////
 
+function debugPrint(txt) {
+	debugLabel = document.getElementById("debug");
+	debugLabel.innerText = txt;
+}
+
 function setState(stateIn) {
 	if (stateIn == "clear" && TURNNUMBER == 0) {
 		stateIn = "move0";
@@ -1332,7 +1353,7 @@ function setState(stateIn) {
 		moveText = moveText + " Potential Check - ";
 	}
 	
-	promptlabel.innerHTML = moveText + " select piece to move";
+	promptlabel.innerHTML = moveText + " select piece to move.";
 	if (TURNNUMBER == 0) {
 		promptlabel.innerHTML = "Move 0 - add Potential Check?";
 	}
@@ -1513,9 +1534,9 @@ function setState(stateIn) {
 	}
 	for (let i=0; i <= TURNNUMBER; i++) {
 		let idx = whiteorder.indexOf(i);
-		if (idx > -1) {whitecaptured = whitecaptured + i + '. ' + WHITEPIECES[idx].waves() + "<br>";}
+		if (idx > -1) {whitecaptured = whitecaptured + i + '. ' + WHITEPIECES[idx].wavesWithBishopColor() + "<br>";}
 		idx = blackorder.indexOf(i);
-		if (idx > -1) {blackcaptured = blackcaptured + i + '. ' + BLACKPIECES[idx].waves() + "<br>";}
+		if (idx > -1) {blackcaptured = blackcaptured + i + '. ' + BLACKPIECES[idx].wavesWithBishopColor() + "<br>";}
 	}
 	
 	let capturedLabel;
