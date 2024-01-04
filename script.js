@@ -482,8 +482,10 @@ function restoreGameHistory(historyText) {
 	setup();
 	for (let i=0; i < lines.length; i++) {
 		moveText = lines[i];
-		doMoveFromText(moveText);
-		sideButton2Click(); // submit
+		if (moveText!="") {
+			doMoveFromText(moveText);
+			sideButton2Click(); // submit
+		}
 	}
 }
 
@@ -669,7 +671,7 @@ function selectPCAttackers(buttonID) {
 	
 	let attackerCoords = buttonID2coords(buttonID);
 	let attackerPiece = coords2piece(attackerCoords);
-	if (piece == "" || piece.color != TURNCOLOR) {
+	if (attackerPiece == "" || attackerPiece.color != TURNCOLOR) {
 		// clicked on an empty square
 		restoreGameHistory();
 		setState("clear");
