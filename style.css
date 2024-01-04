@@ -34,12 +34,14 @@ textarea {
 }
 .game-control {
 	order: 2;
-    text-align: left;
+    text-align: center;
 }
 .board {
 	display: flex;
 	flex-flow: column nowrap;
 	order: 1;
+        resize: both;
+        overflow: hidden;
 }
 .misc {
 	order: 3; /* always last */
@@ -59,7 +61,7 @@ textarea {
 /* Game control */
 /* ************************************************* */
 .prompt {
-    background-color: #99ff9966;
+    background-color: #66ff6666;
 }
 
 /* ********** Side Buttons ************ */
@@ -164,7 +166,7 @@ textarea {
     padding: 0px;
     margin: 2px;
 	/* background-color: silver; */
-    background-image: linear-gradient(to bottom right, silver, gray);
+    background-image: linear-gradient(to bottom right, darkgray, dimgray);
 }
 
 /* ************************************************* */
@@ -290,4 +292,11 @@ textarea {
 	body {
 		font-size: 3vmin;
 	}
+}
+
+#gameid {
+    width: 90%;
+}
+#thismove {
+    width: 90%;
 }
