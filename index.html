@@ -17,11 +17,11 @@
 			
 			<br>
 			Game ID:<br>
-			<textarea id="gameid" rows=1></textarea>
+                        <input id="gameid"></input>
 			
 			<br>
 			Staged Move:<br>
-			<textarea id="thismove" rows=1></textarea>
+			<input id="thismove"></input>
 			
 			<br>
 			<button class='historyButton' id='reset' onclick="setup()">Reset Game</button>
@@ -164,6 +164,10 @@
 				<button class="findpiecebutton" id="findN" onclick="findPiecesClick('N')"></button>
 				<button class="findpiecebutton" id="findP" onclick="findPiecesClick('P')"></button>
 			</div>
+                        <div class="options">
+                            <button onclick="toggleBoardFontSize()">big/smol</button>
+                            <button onclick="togglePageTheme()">light/dark</button>
+                        </div>
 			<div>
 				<label id="debug">Debug text</label>
 			</div>

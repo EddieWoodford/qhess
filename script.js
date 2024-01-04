@@ -295,8 +295,19 @@ function findPiecesClick(wave) {
 	setState(STATE);
 }
 
+function toggleBoardFontSize() {
+    if (document.documentElement.style.getPropertyValue('--board-font-size') == '3.5vmin') {
+        document.documentElement.style.setProperty('--board-font-size', '2.5vmin');
+    } else {
+        document.documentElement.style.setProperty('--board-font-size', '3.5vmin');
+    }
+}
+
+function togglePageTheme() {
+}
+
 function clearFindPieces() {
-	let img = "linear-gradient(to bottom right, silver, gray)"
+	let img = "linear-gradient(to bottom right, darkgray, dimgray)"
 	document.getElementById("findK").style.backgroundImage = img;
 	document.getElementById("findQ").style.backgroundImage = img;
 	document.getElementById("findR").style.backgroundImage = img;
@@ -1431,12 +1442,12 @@ function setState(stateIn) {
 	let moveText = "";
 	moveTextarea.value = THISMOVE + pcMoveText();
 	if (TURNNUMBER == 0) {
-		moveText = "Move 0 - ";
+		moveText = "Black<br>Move 0 - ";
 	}
 	if (TURNCOLOR == "w") {
-		moveText = moveText + "White - ";
+		moveText = moveText + "White<br>";
 	} else {
-		moveText = moveText + "Black - ";
+		moveText = moveText + "Black<br>";
 	}
 
 	if (AUTOCHECK) {
@@ -1448,7 +1459,7 @@ function setState(stateIn) {
 	
 	promptlabel.innerHTML = moveText + " select piece to move.";
 	if (TURNNUMBER == 0) {
-		promptlabel.innerHTML = "Move 0 - add Potential Check?";
+		promptlabel.innerHTML = "Black<br>Move 0 - add Potential Check?";
 	}
 	if (STATE == "clear") {
 		sideButton2.style.visibility = "hidden";
@@ -1579,9 +1590,9 @@ function setState(stateIn) {
 			
 			let sqrcolor;
 			if (sqr.color=='w') {
-				sqrcolor = "silver" // default white square colour
+				sqrcolor = "darkgray" // default white square colour
 			} else {
-				sqrcolor = "grey" // default black square colour
+				sqrcolor = "dimgray" // default black square colour
 			}
 			sqr.button.style.background = sqrcolor;
 			
