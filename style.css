@@ -1,6 +1,7 @@
 :root {
   --button-height: 2.5em;
   --button-font-size: 2vmin;
+  --board-font-size: 3.5vmin; /* controls the board square size via the em unit */
 }
 
 body {
@@ -31,16 +32,16 @@ textarea {
   justify-content: space-evenly;
 }
 .game-control {
-	order: 1;
+	order: 2;
     text-align: left;
 }
 .board {
 	display: flex;
 	flex-flow: column nowrap;
-	order: 2;
+	order: 1;
 }
 .misc {
-	order: 4; /* always last */
+	order: 3; /* always last */
 	display: flex;
 	flex-flow: column nowrap;
 	justify-content: space-between;
@@ -165,8 +166,9 @@ textarea {
     background-image: linear-gradient(to bottom right, silver, gray);
 }
 
-
+/* ************************************************* */
 /* Board elements */
+/* ************************************************* */
 .boardrow {
 	display: flex;
 	flex-flow: row nowrap;
@@ -176,7 +178,7 @@ textarea {
     color: white;
 	width: 3em;
 	height: 3em;
-	font-size: 3.5vmin;
+	font-size: var(--board-font-size);
     border: black solid 1px;
     cursor: pointer;
     font-family: Monospace;
@@ -190,7 +192,7 @@ textarea {
 	background-color: white;
 	width: 1em;
 	height: 3em;
-	font-size: 3.5vmin;
+	font-size: font-size: var(--board-font-size);
     border: none;
     font-family: monospace;
     
@@ -203,7 +205,7 @@ textarea {
 	background-color: white;
 	width: 3em;
 	height: 1em;
-	font-size: 3.5vmin;
+	font-size: font-size: var(--board-font-size);
     border: none;
     font-family: monospace;
     text-align: center;
@@ -214,7 +216,7 @@ textarea {
 	background-color: white;
     width: 1em;
     height: 1em;
-	font-size: 3.5vmin;
+	font-size: font-size: var(--board-font-size);
 	/* float: left; */
 	border: none;
 }
@@ -257,31 +259,30 @@ textarea {
     box-shadow: 0px 0px 2px 8px grey inset;
 }
 
-@media all and (max-aspect-ratio: 1.7) { /* Tall screens */
+@media all and (max-aspect-ratio: 1.6) { /* Squarish screens */
+	:root {
+	  /* --button-font-size: 3vmin; */
+	  --board-font-size: 2.19vmax;
+	}
+	/* body { */
+		/* font-size: 3vmin; */
+	/* } */
+	/* .container { */
+		/* flex-flow: column nowrap; */
+		/* align-items: stretch; */
+	/* } */
+}
+
+@media all and (max-aspect-ratio: 0.8) { /* Tall screens */
 	:root {
 	  --button-font-size: 3vmin;
+	  --board-font-size: 3.8vmin;
 	}
-	/* portrait view */
 	body {
 		font-size: 3vmin;
 	}
 	.container {
 		flex-flow: column nowrap;
 		align-items: stretch;
-	}
-	.game-control {
-		order: 3;
-	}
-	.boardsquare {
-		font-size: 3.8vmin;
-	}
-	.rankcoord {
-		font-size: 3.8vmin;
-	}
-	.filecoord {
-		font-size: 3.8vmin;
-	}
-	.cornerbutton {
-		font-size: 3.8vmin;
 	}
 }
