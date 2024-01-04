@@ -13,6 +13,7 @@ body {
     padding: 0em;
     margin: 0em;
 	font-size: 2vmin;
+	/* font-family: Monospace; */
 }
 h1 {
     color: red;
@@ -47,8 +48,17 @@ textarea {
 	flex-flow: column nowrap;
 	justify-content: space-between;
 }
-#movehistory { /* movehistory text area */
-	font-size:2vmin;
+.movehistory { /* movehistory text area */
+	font-size: 2vmin;
+	border: black solid 1px;
+	max-height: 20em;
+	overflow: auto;
+	font-family: Monospace;
+}
+.stepHistoryButton {
+	float: left;
+	width: 25%;
+	height: 1.2em;
 }
 #thismove { /* thismove text area */
 	font-size:2vmin;
@@ -82,49 +92,12 @@ textarea {
 }
 
 /* ********** History Buttons ************ */
-.resetButton{
+.historyButton{
 	font-size: var(--button-font-size);
 	height: var(--button-height);
 	width: 50%;
 	vertical-align:top;
 	float: left;
-	cursor: pointer;
-}
-.restoreButton{
-	font-size: var(--button-font-size);
-	height: var(--button-height);
-	width: 50%;
-	vertical-align:top;
-	cursor: pointer;
-}
-.copyAllHistoryButton{
-	font-size: var(--button-font-size);
-	height: var(--button-height);
-	width: 50%;
-	vertical-align:top;
-	float: left;
-	cursor: pointer;
-}
-.copyLastMoveButton{
-	font-size: var(--button-font-size);
-	height: var(--button-height);
-	width: 50%;
-	vertical-align:top;
-	cursor: pointer;
-}
-.pasteAllRestoreButton{
-	font-size: var(--button-font-size);
-	height: var(--button-height);
-	width: 50%;
-	vertical-align:top;
-	float: left;
-	cursor: pointer;
-}
-.pasteLineRestoreButton{
-	font-size: var(--button-font-size);
-	height: var(--button-height);
-	width: 50%;
-	vertical-align:top;
 	cursor: pointer;
 }
 
@@ -285,7 +258,7 @@ textarea {
 
 @media (pointer:coarse) {
     :root {
-		--button-font-size: 3vmin;
+		--button-font-size: 4vmin;
 	}
 	body {
 		font-size: 3vmin;

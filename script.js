@@ -194,7 +194,23 @@ class Piece {
 // Button Actions
 ////////////////////////////////
 function sideButton1Click() {
-	if (STATE == "showCompleteMove" || STATE == "move0") {
+	if (REPLAYNUMBER > -1) {
+		let foo = REPLAYNUMBER;
+		REPLAYNUMBER = -1;
+		restoreGameHistory(null, 2*foo);
+		// setState(STATE);
+	} else {
+		sideButton1Action();
+	}
+}
+
+function sideButton1Action() {
+	if (REPLAYNUMBER > -1) {
+		let foo = REPLAYNUMBER;
+		REPLAYNUMBER = -1;
+		restoreGameHistory(null, 2*foo);
+		setState(STATE);
+	} else if (STATE == "showCompleteMove" || STATE == "move0") {
 		findPotentialKingsToAttack();
 		setState("selectPCKing");
 	} else if (STATE == "clear" && POTCHECK) {
@@ -243,8 +259,10 @@ function submitMove() {
 	}
 	MOVEHISTORY = MOVEHISTORY + THISMOVE + pcMoveText();
 	historyArea = document.getElementById("movehistory");
-	historyArea.value = MOVEHISTORY;
-	historyArea.scrollTop = historyArea.scrollHeight;
+	if (REPLAYNUMBER == -1) {
+		historyArea.innerText = MOVEHISTORY;
+	}
+	
 		
 	TAKENPIECE.captured = TURNNUMBER;
 	
@@ -262,7 +280,7 @@ function submitMove() {
 	clearFindPotentialCheckPieces();
 	findChecks(TURNCOLOR);
 	
-	copyLastMove();
+	// copyLastMove();
 }
 
 function findPiecesClick(wave) {
@@ -459,27 +477,26 @@ function showCompleteMove(buttonID,doEP,doPromotion) {
 }
 
 
-
 ////////////////////////////////
 // Move History
 ////////////////////////////////
-function restoreGameHistory(historyText) {
+function restoreGameHistory(historyText,nMoves) {
 	// Restore a game from whatever history is in the move history textbox
+	
 	let historyArea = document.getElementById("movehistory");
 	if (historyText == undefined) {
-		historyText = historyArea.value;
+		historyText = historyArea.innerText;
 	} else {
 		historyText = historyText.replaceAll("\r\n\r\n","\r\n");
-		historyArea.value = historyText;
+		historyArea.innerText = historyText;
 	}
 	let lines = historyText.split("\n");
 	let moveText;
-	let r;
-	let c;
-	let doEP; // do En Passant
-	let doPromotion; // do Pawn Promotion
 	setup();
-	for (let i=0; i < lines.length; i++) {
+	if (nMoves == undefined) {
+		nMoves = lines.length;
+	}
+	for (let i=0; i < nMoves; i++) {
 		moveText = lines[i];
 		if (moveText!="") {
 			doMoveFromText(moveText);
@@ -491,6 +508,9 @@ function restoreGameHistory(historyText) {
 function doMoveFromText(moveText) {
 	// If the moveText includes a turn number such as "3w. " then check it is correct.
 	// If it is not included just go ahead
+	let r;
+	let c;
+	
 	if (moveText.includes(". ")) { 
 		moveText = moveText.split(". ");
 		turnNumber = moveText[0];
@@ -500,14 +520,14 @@ function doMoveFromText(moveText) {
 		}
 	}
 	
-	doEP = (moveText.includes("e.p."));
-	doPromotion = (moveText.includes("="));
+	let doEP = (moveText.includes("e.p.")); // do En Passant
+	let doPromotion = (moveText.includes("=")); // do Pawn Promotion
 	let pcText = "";
 	if (moveText.includes("]")) {
 		// declare Not A King
 		moveText = moveText.split("]");
 		moveText = moveText[1];
-		sideButton1Click(); 
+		sideButton1Action(); 
 	}
 	if (moveText.includes("<")) {
 		// Split off potential check text to apply later
@@ -536,13 +556,14 @@ function doMoveFromText(moveText) {
 	}
 	
 	if (pcText.length > 0) {
-		sideButton1Click(); // "Add Potential Check" button
+		sideButton1Action(); // "Add Potential Check" button
 		[r,c] = coordstext2coords(pcText[0]);
 		let kingButtonID = coords2buttonID([r,c]);
 		selectPCKing(kingButtonID);
 		let attackerButtonID;
 		for (pci=1; pci < pcText.length; pci++) {
 			// Start at idx 1 since idx 0 is the king
+			pcText[pci] = pcText[pci].replace("+","");
 			[r,c] = coordstext2coords(pcText[pci]);
 			let attackerButtonID = coords2buttonID([r,c]);
 			selectPCAttackers(attackerButtonID);
@@ -552,13 +573,13 @@ function doMoveFromText(moveText) {
 
 function copyAllHistory() {
 	let historyArea = document.getElementById("movehistory");
-	let historyText = historyArea.value;
+	let historyText = historyArea.innerText;
 	navigator.clipboard.writeText(historyText);
 }
 
 function copyLastMove() {
 	let historyArea = document.getElementById("movehistory");
-	let historyText = historyArea.value;
+	let historyText = historyArea.innerText;
 	historyText = historyText.split("\r\n");
 	historyText = historyText[historyText.length-1];
 	historyText = historyText.split("\r");
@@ -570,15 +591,69 @@ function copyLastMove() {
 
 function pasteAllRestore() {
 	let historyArea = document.getElementById("movehistory");
-	historyArea.value = "";
+	historyArea.innerText = "";
 	navigator.clipboard.readText().then((clipText) => (restoreGameHistory(clipText)));
 }
 
 function pasteLineRestore() {
 	let historyArea = document.getElementById("movehistory");
-	historyText = historyArea.value;
+	historyText = historyArea.innerText;
 	navigator.clipboard.readText().then((clipText) => (restoreGameHistory(historyText + "\r\n" + clipText)));
 }
+
+
+function stepBackAll() {
+	REPLAYNUMBER = 0.5;
+	restoreGameHistory(null, 2*REPLAYNUMBER);
+}
+
+function stepBackMove() {
+	if (REPLAYNUMBER == -1) {
+		// starting replay from game state
+		turn2replaynumber();
+		REPLAYNUMBER = REPLAYNUMBER - 0.5;
+	}
+	REPLAYNUMBER = REPLAYNUMBER - 0.5;
+	REPLAYNUMBER = Math.max(REPLAYNUMBER,0.5);
+	restoreGameHistory(null, 2*REPLAYNUMBER);
+	
+}
+
+function stepForwardMove() {
+	REPLAYNUMBER = REPLAYNUMBER + 0.5;
+	
+	let historyTextarea = document.getElementById("movehistory");
+	historyLines = historyTextarea.innerHTML.split("<br>");
+	REPLAYNUMBER = Math.min(REPLAYNUMBER,historyLines.length/2);
+	restoreGameHistory(null, 2*REPLAYNUMBER);
+}
+
+function stepForwardAll() {
+	let historyTextarea = document.getElementById("movehistory");
+	historyLines = historyTextarea.innerHTML.split("<br>");
+	REPLAYNUMBER = historyLines.length/2;
+	restoreGameHistory(null, 2*REPLAYNUMBER);
+}
+
+function turn2replaynumber() {
+	if (TURNCOLOR == "w") {
+		REPLAYNUMBER = TURNNUMBER;
+	} else {
+		REPLAYNUMBER = TURNNUMBER + 0.5;
+	}
+}
+
+function replaynumber2turnID() {
+	if (REPLAYNUMBER == -1) {
+		return "";
+	} else if (REPLAYNUMBER % 1 == 0) {
+		return TURNNUMBER.toString() + "w. ";
+	} else {
+		return TURNNUMBER.toString() + "b. ";
+	}
+}
+
+
 
 ////////////////////////////////
 // Check
@@ -785,7 +860,7 @@ function pcMoveText() {
 	let txt = "";
 	if (PCKING >= 0 && PCCOLOR == oppColor()) {
 		piece = defPiece(PCKING);
-		txt = "<" + BOARD[piece.r][piece.c].chesscoords;
+		txt = "<" + BOARD[piece.r][piece.c].chesscoords + "+";
 		
 		let kingCoords;
 		let attackerCoords;
@@ -1345,9 +1420,9 @@ function setState(stateIn) {
 	let moveTextarea = document.getElementById("thismove");
 	let sideButton1 = document.getElementById("sideButton1")
 	let sideButton2 = document.getElementById("sideButton2")
+	let historyTextarea = document.getElementById("movehistory");
 	if (STATE != "move0") {
-		historyTextarea = document.getElementById("movehistory");
-		historyTextarea.readOnly = true;
+		historyTextarea.contentEditable = false;
 	}
 	
 	// All the changing of the actual display happens here, always by simply looping over the squares and displaying 
@@ -1427,6 +1502,31 @@ function setState(stateIn) {
 		sideButton2.style.visibility = "hidden"; // turned visible when an attacker is found in the loop below
 		sideButton1.style.visibility = "hidden";
 		sideButton2.innerText = "Submit";
+	}
+	
+	// Replay Buttons
+	let back2 = document.getElementById("back2");
+	let back1 = document.getElementById("back1");
+	let forward1 = document.getElementById("forward1");
+	let forward2 = document.getElementById("forward2");
+	highlightReplayLine();
+	if (REPLAYNUMBER == -1) {
+		back2.style.visibility = "visible";
+		back1.style.visibility = "visible";
+		forward1.style.visibility = "hidden";
+		forward2.style.visibility = "hidden";
+	} else {
+		back2.style.visibility = "visible";
+		back1.style.visibility = "visible";
+		forward1.style.visibility = "visible";
+		forward2.style.visibility = "visible";
+		let historyButtons = document.getElementsByClassName("historyButton");
+		for (let bi = 0; bi < historyButtons.length; bi++) {
+			historyButtons[bi].style.visibility = "hidden";
+		}
+		sideButton2.style.visibility = "hidden";
+		sideButton1.style.visibility = "visible";
+		sideButton1.innerText = "Resume from here";
 	}
 	
 	// Loop over all the squares and format them according to their current state
@@ -1583,6 +1683,20 @@ function setState(stateIn) {
 
 }
 
+function highlightReplayLine() {
+	let historyTextarea = document.getElementById("movehistory");
+	let historyHTML = historyTextarea.innerHTML;
+	
+	lineStyle = "<span style=\"background-color:lightgrey\">";
+	historyHTML = historyHTML.replaceAll(lineStyle,"");
+	historyHTML = historyHTML.replaceAll("</span>","");
+	let historyLines = historyHTML.split("<br>");
+	if (REPLAYNUMBER > -1) {
+		historyLines[REPLAYNUMBER*2-1] = lineStyle + historyLines[REPLAYNUMBER*2-1] + "</span>";
+	}
+	historyTextarea.innerHTML = historyLines.join("<br>");
+}
+
 function setup() {
 	TURNNUMBER = 0;
 	TURNCOLOR = "b";
@@ -1604,9 +1718,11 @@ function setup() {
 	
 	moveTextarea = document.getElementById("thismove");
 	moveTextarea.value = "";
-	historyTextarea = document.getElementById("movehistory");
-	historyTextarea.value = "";
-	historyTextarea.readOnly = false;
+	if (REPLAYNUMBER == -1) {
+		historyTextarea = document.getElementById("movehistory");
+		historyTextarea.innerText = "";
+		historyTextarea.contentEditable = true;
+	}
 	
 	
     let squareButtons = document.querySelectorAll('[id^="square"]');
@@ -1672,6 +1788,7 @@ let PCKING;
 let PCCOLOR;
 let FINDPIECE;
 let STATE;
+let REPLAYNUMBER = -1;
 
 window.onload = setup
 
