@@ -265,30 +265,29 @@ textarea {
 
 @media all and (max-aspect-ratio: 1.6) { /* Squarish screens */
 	:root {
-	  /* --button-font-size: 3vmin; */
+	  /* shrink the board down to fit in the other parts */
 	  --board-font-size: 2.19vmax;
 	  --board-font-size-collapsed: 6vmax;
 	}
-	/* body { */
-		/* font-size: 3vmin; */
-	/* } */
-	/* .container { */
-		/* flex-flow: column nowrap; */
-		/* align-items: stretch; */
-	/* } */
 }
 
 @media all and (max-aspect-ratio: 0.8) { /* Tall screens */
+	/* put everything in one big column */
 	:root {
-	  --button-font-size: 3vmin;
 	  --board-font-size: 3.8vmin;
 	  --board-font-size-collapsed: 11vmin;
-	}
-	body {
-		font-size: 3vmin;
 	}
 	.container {
 		flex-flow: column nowrap;
 		align-items: stretch;
+	}
+}
+
+@media (pointer:coarse) {
+    :root {
+		--button-font-size: 3vmin;
+	}
+	body {
+		font-size: 3vmin;
 	}
 }
