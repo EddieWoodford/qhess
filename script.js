@@ -29,6 +29,7 @@ class Square {
 			}
         }
 		this.button.onclick = () => {
+			if (REPLAYNUMBER > -1) {return}
 			FINDPIECE = "";
 			clearFindPieces();
 			if (STATE == "highlightPotentialMoves") {

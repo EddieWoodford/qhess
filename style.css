@@ -60,7 +60,8 @@ textarea {
 .stepHistoryButton {
 	float: left;
 	width: 25%;
-	height: 1.2em;
+	height: var(--button-height);
+	font-size: var(--button-font-size);
 }
 #thismove { /* thismove text area */
 	font-size:2vmin;
