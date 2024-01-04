@@ -1521,6 +1521,7 @@ function setState(stateIn) {
 	let back1 = document.getElementById("back1");
 	let forward1 = document.getElementById("forward1");
 	let forward2 = document.getElementById("forward2");
+	let historyButtons = document.getElementsByClassName("historyButton");
 	highlightReplayLine();
 	if (REPLAYNUMBER == -1) {
 		forward1.style.visibility = "hidden";
@@ -1532,13 +1533,15 @@ function setState(stateIn) {
 			back2.style.visibility = "hidden";
 			back1.style.visibility = "hidden";
 		}
-		
+		for (let bi = 0; bi < historyButtons.length; bi++) {
+			historyButtons[bi].style.visibility = "visible";
+		}
 	} else {
 		back2.style.visibility = "visible";
 		back1.style.visibility = "visible";
 		forward1.style.visibility = "visible";
 		forward2.style.visibility = "visible";
-		let historyButtons = document.getElementsByClassName("historyButton");
+		
 		for (let bi = 0; bi < historyButtons.length; bi++) {
 			historyButtons[bi].style.visibility = "hidden";
 		}
