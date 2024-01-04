@@ -277,6 +277,17 @@ function findPiecesClick(wave) {
 	setState(STATE);
 }
 
+function toggleBoardFontSize() {
+    if (document.documentElement.style.getPropertyValue('--board-font-size') == '3.5vmin') {
+        document.documentElement.style.setProperty('--board-font-size', '2.5vmin');
+    } else {
+        document.documentElement.style.setProperty('--board-font-size', '3.5vmin');
+    }
+}
+
+function togglePageTheme() {
+}
+
 function clearFindPieces() {
 	let img = "linear-gradient(to bottom right, darkgray, dimgray)"
 	document.getElementById("findK").style.backgroundImage = img;
