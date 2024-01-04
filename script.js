@@ -247,8 +247,6 @@ function submitMove() {
 	historyArea.scrollTop = historyArea.scrollHeight;
 		
 	TAKENPIECE.captured = TURNNUMBER;
-	TAKENPIECE.r = -1;
-	TAKENPIECE.c = -1;
 	
 	if (TURNCOLOR == "w") {
 		TURNCOLOR =	"b";
@@ -715,8 +713,8 @@ function findChecks(color) {
 	let defPieces = getPieces(color);
 	let attPieces = getPieces(oppColor(color));
 	let kingCoords = [];
-	for (let pi=0; pi < defPieces.length; pi++) {
-		if (defPieces[pi].waves() == "K") {
+	for (let pi=0; pi < 16; pi++) {
+		if (defPieces[pi].captured==-1 && defPieces[pi].waves() == "K") {
 			kingCoords = [defPieces[pi].r,defPieces[pi].c];
 			break;
 		}

@@ -2,6 +2,7 @@
   --button-height: 2.5em;
   --button-font-size: 2vmin;
   --board-font-size: 3.5vmin; /* controls the board square size via the em unit */
+  --board-font-size-collapsed: 10vmin;
 }
 
 body {
@@ -173,6 +174,7 @@ textarea {
 	display: flex;
 	flex-flow: row nowrap;
 	justify-content: center;
+	/* align-context: center; */
 }
 .boardsquare {
     color: white;
@@ -192,8 +194,9 @@ textarea {
 	background-color: white;
 	width: 1em;
 	height: 3em;
-	font-size: font-size: var(--board-font-size);
+	font-size: var(--board-font-size);
     border: none;
+	/* border: black solid 1px; */
     font-family: monospace;
     
     line-height: 1;
@@ -205,8 +208,9 @@ textarea {
 	background-color: white;
 	width: 3em;
 	height: 1em;
-	font-size: font-size: var(--board-font-size);
+	font-size: var(--board-font-size);
     border: none;
+	/* border: black solid 1px; */
     font-family: monospace;
     text-align: center;
     line-height: 1;
@@ -216,7 +220,7 @@ textarea {
 	background-color: white;
     width: 1em;
     height: 1em;
-	font-size: font-size: var(--board-font-size);
+	font-size: var(--board-font-size);
 	/* float: left; */
 	border: none;
 }
@@ -232,12 +236,12 @@ textarea {
 .whitepiececollapsed {
     background: #fff8;
     border-radius: 6px;
-	font-size: 11vmin;
+	font-size: var(--board-font-size-collapsed);
 }
 .blackpiececollapsed {
     background: #0008;
     border-radius: 6px;
-	font-size: 11vmin;
+	font-size: var(--board-font-size-collapsed);
 }
 
 
@@ -263,6 +267,7 @@ textarea {
 	:root {
 	  /* --button-font-size: 3vmin; */
 	  --board-font-size: 2.19vmax;
+	  --board-font-size-collapsed: 6vmax;
 	}
 	/* body { */
 		/* font-size: 3vmin; */
@@ -277,6 +282,7 @@ textarea {
 	:root {
 	  --button-font-size: 3vmin;
 	  --board-font-size: 3.8vmin;
+	  --board-font-size-collapsed: 11vmin;
 	}
 	body {
 		font-size: 3vmin;
