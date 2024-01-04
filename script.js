@@ -290,7 +290,8 @@ function clearFindPieces() {
 function highlightPotentialMoves(buttonID) {
 	// Highlight potential moves temporarily while mouse is over square
 	let coords = buttonID2coords(buttonID);
-	if (BOARD[coords[0]][coords[1]].piece=="") {return;}
+	if (BOARD[coords[0]][coords[1]].piece == "") {return;}
+	if (BOARD[coords[0]][coords[1]].piece.captured > -1) {return;}
 	if (BOARD[coords[0]][coords[1]].piece.color == TURNCOLOR) {
 		BOARD[coords[0]][coords[1]].highlighted = 1;
 
@@ -599,6 +600,7 @@ function findPotentialKingsToAttack() {
 			// highlight it.
 			for (let pi=0; pi < pieces.length; pi++) {
 				piece = pieces[pi];
+				if (piece.captured > -1) {continue}
 				moves = getPotentialMoves([piece.r,piece.c]);
 				if (ismember([r,c],moves)) {
 					BOARD[r][c].highlightPotKing = 1;
@@ -623,6 +625,7 @@ function findPCAttackers() {
 	let potAttackerCoords = [];
 	for (let pi=0; pi < attackPieces.length; pi++) {
 		piece = attackPieces[pi];
+		if (piece.captured > -1) {continue}
 		moves = getPotentialMoves(piece.coords());
 		if (ismember(defKing.coords(),moves)) { 
 			BOARD[piece.r][piece.c].highlightPotAttacker = 1;
@@ -660,8 +663,9 @@ function selectPCKing(buttonID) {
 	if (potAttackerCoords.length == 1) {
 		let buttonID = coords2buttonID(potAttackerCoords[0]);
 		selectPCAttackers(buttonID);
-	}	
-	setState("selectPCAttackers");
+	} else {
+		setState("selectPCAttackers");
+	}
 }
 
 function selectPCAttackers(buttonID) {
@@ -725,6 +729,7 @@ function findChecks(color) {
 		let moveCoords;
 		for (let pi=0; pi < 16; pi++) {
 			attacker = attPieces[pi];
+			if (attacker.captured > -1) {continue}
 			moveCoords = getPotentialMoves(attacker.coords());
 			if (ismember(kingCoords,moveCoords)) {
 				attackerCoords.push(attacker.coords());
@@ -759,6 +764,7 @@ function findChecks(color) {
 		for (let pi=0; pi < 16; pi++) {
 			// Loop through the attacking pieces and see if it is unambiguously attacking the potential king.
 			attacker = attPieces[pi];
+			if (attacker.captured > -1) {continue}
 			moveCoords = getCertainMoves(attacker.coords());
 			if (ismember(kingCoords,moveCoords)) {
 				attackerCoords.push(attacker.coords());
