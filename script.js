@@ -1522,10 +1522,16 @@ function setState(stateIn) {
 	let forward2 = document.getElementById("forward2");
 	highlightReplayLine();
 	if (REPLAYNUMBER == -1) {
-		back2.style.visibility = "visible";
-		back1.style.visibility = "visible";
 		forward1.style.visibility = "hidden";
 		forward2.style.visibility = "hidden";
+		if (TURNNUMBER > 0) {
+			back2.style.visibility = "visible";
+			back1.style.visibility = "visible";
+		} else {
+			back2.style.visibility = "hidden";
+			back1.style.visibility = "hidden";
+		}
+		
 	} else {
 		back2.style.visibility = "visible";
 		back1.style.visibility = "visible";
