@@ -41,8 +41,8 @@ textarea {
 	display: flex;
 	flex-flow: column nowrap;
 	order: 1;
-        resize: both;
-        overflow: hidden;
+	/* resize: both; */
+	/* overflow: hidden; */
 }
 .misc {
 	order: 3; /* always last */
@@ -126,7 +126,7 @@ textarea {
 .findpiecebutton {
     color: white;
 	
-	font-size: 6vmin;
+	font-size: 4vmin;
 	height: 1.5em;
 	width: 1.5em;
 	
@@ -152,7 +152,7 @@ textarea {
 	justify-content: center;
 	/* align-context: center; */
 }
-.boardsquare {
+.boardsquare { /* all squares always have this */
     color: white;
 	width: 3em;
 	height: 3em;
@@ -160,11 +160,91 @@ textarea {
     border: black solid 1px;
     cursor: pointer;
     font-family: Monospace;
-    
     line-height: 1;
     text-align: center;
     padding: 0px;
 }
+.whitesquare { /* all white squares always have this */
+	background-color: darkgrey;
+}
+.blacksquare { /* all black squares always have this */
+	background-color: dimgray;
+}
+.hovered { /* when the player is hovering the mouse over it */
+	background-color: orange;
+}
+.selectedStart { /* when the player has clicked on it as a start */
+	border: 6px solid orange;
+}
+.selectedEnd { /* when the player has clicked on it as a destination */
+	border: 6px solid green;
+}
+.potKing { /* when highlighted as a potential king to select */
+	background-color: red;
+}
+.potAttacker { /* when highlighted as a potential attacker to select */
+	background-color: blue;
+}
+.checkKing { /* a king which is in check or potential check */
+	border: 6px solid red;
+}
+.checkAttacker { /* a piece attacking a checked king */
+	border: 6px solid blue;
+}
+.findHighlight { /* when the player has clicked a find-piece button */
+	background-color: purple;
+}
+/* destination1 - destination16 are the 16 points of the compass from NNE, NE, ENE, E, ESE, etc */
+.destination1 {
+	background-image: linear-gradient(to top right, grey,grey,green,grey,grey);
+}
+.destination2 {
+	background-image: linear-gradient(to bottom right, grey,grey,green,grey,grey);
+}
+.destination3 {
+	background-image: linear-gradient(to top right, grey,grey,green,grey,grey);
+}
+.destination4 {
+	background-image: linear-gradient(to bottom, grey,grey,green,grey,grey);
+}
+.destination5 {
+	background-image: linear-gradient(to bottom right, grey,grey,green,grey,grey);
+}
+.destination6 {
+	background-image: linear-gradient(to top right, grey,grey,green,grey,grey);
+}
+.destination7 {
+	background-image: linear-gradient(to bottom right, grey,grey,green,grey,grey);
+}
+.destination8 {
+	background-image: linear-gradient(to right, grey,grey,green,grey,grey);
+}
+.destination9 {
+	background-image: linear-gradient(to top right, grey,grey,green,grey,grey);
+}
+.destination10 {
+	background-image: linear-gradient(to bottom right, grey,grey,green,grey,grey);
+}
+.destination11 {
+	background-image: linear-gradient(to top right, grey,grey,green,grey,grey);
+}
+.destination12 {
+	background-image: linear-gradient(to bottom, grey,grey,green,grey,grey);
+}
+.destination13 {
+	background-image: linear-gradient(to bottom right, grey,grey,green,grey,grey);
+}
+.destination14 {
+	background-image: linear-gradient(to top right, grey,grey,green,grey,grey);
+}
+.destination15 {
+	background-image: linear-gradient(to bottom right, grey,grey,green,grey,grey);
+}
+.destination16 {
+	background-image: linear-gradient(to right, grey,grey,green,grey,grey);
+}
+
+
 .rankcoord {
 	color: black;
 	background-color: white;

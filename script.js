@@ -5,15 +5,16 @@ class Square {
         this.c = c;
 		this.piece = "";
 		this.highlighted = 0;
-		this.potentialMove = 0;
+		// 0 = not a potential move; 1-16 = bearing of potential move where 1=NNE, 2=NE, 3=ENE, 3=E, 5=ESE, etc.
+		this.potentialMove = 0; 
 		this.highlightPotKing = 0; // 0 = not a PK; 1 = candidate for PK; 
 		this.highlightPotAttacker = 0; // 0 = not a PA; 1 = candidate for PA;
 		
 		let x = r+c;
 		if (x%2 == 0) {
-			this.color = 'w';
+			this.color = "w";
 		} else {
-			this.color = 'b';
+			this.color = "b";
 		}
 		this.chesscoords = String.fromCharCode(c+97) + (8-r);
 		
@@ -47,9 +48,21 @@ class Square {
 				setState("clear");
 			}
 		}
+    }
+	resetButtonClasses() {
+			let prevClasses = this.button.className;
+			prevClasses = prevClasses.split(" ");
+			this.button.classList.remove(...prevClasses);
+			this.button.classList.add("boardsquare");
+			if (this.color == "w") {
+				this.button.classList.add("whitesquare");
+			} else {
+				this.button.classList.add("blacksquare");
+			}
+		}
 		// this.button.addEventListener("click",this.set(buttonID))
 		// this.button.addEventListener("mouseout",this.clear(buttonID))
-    }
+	
 	setWavetext() {
 		let wavetext;
 		let waves;
@@ -327,7 +340,11 @@ function highlightPotentialMoves(buttonID) {
 
 		let moves = getPotentialMoves(coords);
 		for (let i=0; i < moves.length; i++) {
-			BOARD[moves[i][0]][moves[i][1]].potentialMove = 1;
+			delY = coords[0] - moves[i][0];
+			delX = moves[i][1] - coords[1];
+			// returns 1-16 = bearing of potential move where 1=NNE, 2=NE, 3=ENE, 3=E, 5=ESE, etc.
+			let bearing = (Math.round(((Math.atan2(delX, delY) * 180) / Math.PI)/22.5) + 16 - 1) % 16 + 1;
+			BOARD[moves[i][0]][moves[i][1]].potentialMove = bearing;
 		}
 		setState("highlightPotentialMoves");
 	}
@@ -342,7 +359,11 @@ function showPartialMove(buttonID) {
 		STARTID = buttonID;
 		let moves = getPotentialMoves(coords);
 		for (let i=0; i<moves.length; i++) {
-			BOARD[moves[i][0]][moves[i][1]].potentialMove = 1;
+			delY = coords[0] - moves[i][0];
+			delX = moves[i][1] - coords[1];
+			// returns 1-16 = bearing of potential move where 1=NNE, 2=NE, 3=ENE, 3=E, 5=ESE, etc.
+			let bearing = (Math.round(((Math.atan2(delX, delY) * 180) / Math.PI)/22.5) + 16 - 1) % 16 + 1;
+			BOARD[moves[i][0]][moves[i][1]].potentialMove = bearing;
 		}
 		setState("showPartialMove");
 	}
@@ -1595,66 +1616,75 @@ function setState(stateIn) {
 			}
 			
 			// Default border:
-			sqr.button.style.borderWidth = "";
+			sqr.resetButtonClasses();
+			/* sqr.button.style.borderWidth = "";
 			sqr.button.style.borderColor = "black"; 
-			
 			let sqrcolor;
 			if (sqr.color=='w') {
 				sqrcolor = "darkgray" // default white square colour
 			} else {
 				sqrcolor = "dimgray" // default black square colour
 			}
-			sqr.button.style.background = sqrcolor;
-			
-			if (r==4 && c==0) {
-				let foo=1;
-			}
+			sqr.button.style.background = sqrcolor; */
 			
 			// Write text of pieces in sqaures:
 			sqr.setWavetext();
 
 			// Change formatting if in non-default state:
 			if (sqr.button.id == STARTID) {
-				sqr.button.style.borderColor = "orange";
-				sqr.button.style.borderWidth = "6px";
+				// sqr.button.style.borderColor = "orange";
+				// sqr.button.style.borderWidth = "6px";
+				sqr.button.classList.add("selectedStart");
 			}
 			if (sqr.button.id == ENDID) {
-				sqr.button.style.borderColor = "green";
-				sqr.button.style.borderWidth = "6px";
+				// sqr.button.style.borderColor = "green";
+				// sqr.button.style.borderWidth = "6px";
+				sqr.button.classList.add("selectedEnd");
 			}
 			
+			
 			if (sqr.highlightPotKing == 1) {
-				sqr.button.style.background = 'red';
+				// sqr.button.style.background = 'red';
+				sqr.button.classList.add("potKing");
 			}
 			if (sqr.highlightPotAttacker == 1) {
-				sqr.button.style.background = 'blue';
+				// sqr.button.style.background = 'blue';
+				sqr.button.classList.add("potAttacker");
 			}
+			
 			// if they're selected then turn off the highlightPot* backgrounds
 			if (AUTOCHECK || POTCHECK || STATE == "selectPCAttackers") {
 				if (isequal([r,c],checkKingCoords)) {
-					sqr.button.style.background = sqrcolor;
+					sqr.button.classList.remove("potKing");
+					sqr.button.classList.add("checkKing");
+					/* sqr.button.style.background = sqrcolor;
 					sqr.button.style.borderColor = "red";
-					sqr.button.style.borderWidth = "6px";
+					sqr.button.style.borderWidth = "6px"; */
 				}
 				if (ismember([r,c],checkAttackerCoords)) {
-					sqr.button.style.background = sqrcolor;
+					sqr.button.classList.remove("potAttacker");
+					sqr.button.classList.add("checkAttacker");
+					/* sqr.button.style.background = sqrcolor;
 					sqr.button.style.borderColor = "blue";
-					sqr.button.style.borderWidth = "6px";
+					sqr.button.style.borderWidth = "6px"; */
 					if (STATE == "selectPCAttackers") {
 						sideButton2.style.visibility = "visible";
 					}
 				}
 			}
 			if (sqr.highlighted) {
-				sqr.button.style.background = 'orange';
+				sqr.button.classList.add("hovered");
+				// sqr.button.style.background = 'orange';
 			}
-			if (sqr.potentialMove) {
-				sqr.button.style.background = 'green';
+			if (sqr.potentialMove > 0) {
+				sqr.button.classList.add("destination" + sqr.potentialMove);
+				// sqr.button.style.background = 'green';
 			}
 			if (piece != "") {
 				let waves = piece.waves();
 				if (FINDPIECE != "" && waves.includes(FINDPIECE)) {
-					sqr.button.style.background = 'purple';
+					sqr.button.classList.add("findHighlight");
+					// sqr.button.style.background = 'purple';
 				}
 			}
 			
@@ -1778,6 +1808,7 @@ function setup() {
 ////////////////////////////////
 // Initialisation
 ////////////////////////////////
+// Chess piece coloured emojis:
 const WK = "<span style='color:#7E7427'>&#9812;</span>";
 const WQ = "<span style='color:#563F54'>&#9813;</span>";
 const WR = "<span style='color:#394F67'>&#9814;</span>";
