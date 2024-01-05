@@ -209,22 +209,17 @@ class Piece {
 ////////////////////////////////
 function sideButton1Click() {
 	if (REPLAYNUMBER > -1) {
+		// When in replay mode, sideButton1 is 'Resume Game From Here'
 		let foo = REPLAYNUMBER;
 		REPLAYNUMBER = -1;
 		restoreGameHistory(null, 2*foo);
-		// setState(STATE);
 	} else {
 		sideButton1Action();
 	}
 }
 
 function sideButton1Action() {
-	if (REPLAYNUMBER > -1) {
-		let foo = REPLAYNUMBER;
-		REPLAYNUMBER = -1;
-		restoreGameHistory(null, 2*foo);
-		setState(STATE);
-	} else if (STATE == "showCompleteMove" || STATE == "move0") {
+	if (STATE == "showCompleteMove" || STATE == "move0") {
 		findPotentialKingsToAttack();
 		setState("selectPCKing");
 	} else if (STATE == "clear" && POTCHECK) {
@@ -233,6 +228,14 @@ function sideButton1Action() {
 }
 
 function sideButton2Click() {
+	// Can put extra code here that will only happen when user clicks the button, rather than when the script calls
+	// sideButton2Action() to replicate a user click (typically while restoring a game)
+	
+	/////////////////////
+	sideButton2Action();
+}
+
+function sideButton2Action() {
 	if (STATE == "showCompleteMove" || STATE == "selectPCAttackers" || STATE == "move0") {
 		submitMove();
 		setState("clear");
@@ -523,17 +526,17 @@ function restoreGameHistory(historyText,nMoves) {
 		historyText = historyText.replaceAll("\r\n\r\n","\r\n");
 		historyArea.innerText = historyText;
 	}
-	let lines = historyText.split("\n");
+	let historyLines = historyText.split("\n");
 	let moveText;
 	setup();
 	if (nMoves == undefined) {
-		nMoves = lines.length;
+		nMoves = historyLines.length;
 	}
 	for (let i=0; i < nMoves; i++) {
-		moveText = lines[i];
+		moveText = historyLines[i];
 		if (moveText!="") {
 			doMoveFromText(moveText);
-			sideButton2Click(); // submit
+			sideButton2Action(); // submit
 		}
 	}
 }
@@ -634,7 +637,6 @@ function pasteLineRestore() {
 	navigator.clipboard.readText().then((clipText) => (restoreGameHistory(historyText + "\r\n" + clipText)));
 }
 
-
 function stepBackAll() {
 	REPLAYNUMBER = 0.5;
 	restoreGameHistory(null, 2*REPLAYNUMBER);
@@ -643,8 +645,11 @@ function stepBackAll() {
 function stepBackMove() {
 	if (REPLAYNUMBER == -1) {
 		// starting replay from game state
-		turn2replaynumber();
-		REPLAYNUMBER = REPLAYNUMBER - 0.5;
+			if (TURNCOLOR == "w") {
+			REPLAYNUMBER = TURNNUMBER - 0.5;
+		} else {
+			REPLAYNUMBER = TURNNUMBER;
+		}
 	}
 	REPLAYNUMBER = REPLAYNUMBER - 0.5;
 	REPLAYNUMBER = Math.max(REPLAYNUMBER,0.5);
@@ -653,12 +658,16 @@ function stepBackMove() {
 }
 
 function stepForwardMove() {
-	REPLAYNUMBER = REPLAYNUMBER + 0.5;
-	
 	let historyTextarea = document.getElementById("movehistory");
 	historyLines = historyTextarea.innerHTML.split("<br>");
-	REPLAYNUMBER = Math.min(REPLAYNUMBER,historyLines.length/2);
-	restoreGameHistory(null, 2*REPLAYNUMBER);
+	if (REPLAYNUMBER < historyLines.length/2) {
+		moveText = historyLines[2*REPLAYNUMBER];
+		REPLAYNUMBER = REPLAYNUMBER + 0.5;
+		doMoveFromText(moveText);
+		sideButton2Action(); // submit
+		
+		// restoreGameHistory(null, 2*REPLAYNUMBER);
+	}
 }
 
 function stepForwardAll() {
@@ -668,13 +677,6 @@ function stepForwardAll() {
 	restoreGameHistory(null, 2*REPLAYNUMBER);
 }
 
-function turn2replaynumber() {
-	if (TURNCOLOR == "w") {
-		REPLAYNUMBER = TURNNUMBER;
-	} else {
-		REPLAYNUMBER = TURNNUMBER + 0.5;
-	}
-}
 
 function replaynumber2turnID() {
 	if (REPLAYNUMBER == -1) {
