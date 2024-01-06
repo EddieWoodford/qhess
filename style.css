@@ -3,6 +3,13 @@
   --button-font-size: 2vmin;
   --board-font-size: 3.5vmin; /* controls the board square size via the em unit */
   --board-font-size-collapsed: 10vmin;
+  --board-white-col: darkgray;  /* base colour of white squares */
+  --board-black-col: dimgray;   /* base colour of black squares */
+  --piece-selectedStart-col: orange;    /* selected piece */
+  --piece-dest-col: #696;    /* valid destinations */
+  --piece-selectedEnd-col: lime;    /* selected destination of piecee */
+  --piece-checkKing-col: red;    /* king in check (including potential) */
+  --piece-checkAttacker-col: blue;    /* piece putting king in check (including potential) */
 }
 
 body {
@@ -15,8 +22,73 @@ body {
 	font-size: 2vmin;
 	/* font-family: Monospace; */
 }
+
+/* header/menubar of the page */
+#header {
+    width: 100%;
+    float: left;
+    margin: 0 0 1em 0;
+    padding: 0;
+    border-bottom: 1px solid black;
+    box-shadow: 0px 0px 4px #ccc inset;
+    background-color: #eee;
+    display: inline;
+    vertical-align: middle;
+    break-after: both;
+}
+
+#header ul {
+        margin: 0;
+        padding: 0 1em 0 1em;
+	font-size: 2rem;
+	display: inline;
+	vertical-align: middle;
+    height: 100%;
+}
+
+#header li {
+    padding: 0px 8px;
+    display: inline-block;
+    text-decoration: none;
+    font-weight: bold;
+    color: #000;
+    border-right: 1px solid #eee;
+    border-left: 1px solid #eee;
+    overflow: auto;
+    line-height: 2em;
+    vertical-align: middle;
+    height: 100%;
+    overflow: clip;
+}
+#header li:hover {
+    border-right: 1px solid #ddd;
+    border-left: 1px solid #ddd;
+    background-color: #fffa;
+    box-shadow: 0px 0px 1px #999;
+}
+
+.left {
+    float: left; 
+    padding: 0em 0.5em 0em 0.5em;
+}
+.center {
+    float: center; 
+    padding: 0em 0.5em 0em 0.5em;
+}
+.right {
+    float: right;
+    padding: 0em 0.5em 0em 0.5em;
+}
+
+
 h1 {
-    color: red;
+    display: inline;
+    float: center;
+    color: #f00c;
+    font-size: 2.5em;
+    text-shadow: -2px 2px 2px black;
+    padding: 0em 0.5em 0em 0.5em;
+    margin: 0;
 }
 textarea {
      width: 100%;
@@ -24,6 +96,7 @@ textarea {
      -moz-box-sizing: border-box;    /* Firefox, other Gecko */
      box-sizing: border-box;         /* Opera/IE 8+ */
 }
+
 
 /* ************************************************* */
 /* Flex container and children */
@@ -56,6 +129,7 @@ textarea {
 	max-height: 20em;
 	overflow: auto;
 	font-family: Monospace;
+        text-align: left;
 }
 .stepHistoryButton {
 	float: left;
@@ -165,19 +239,19 @@ textarea {
     padding: 0px;
 }
 .whitesquare { /* all white squares always have this */
-	background-color: darkgrey;
+	background-color: var(--board-white-col);
 }
 .blacksquare { /* all black squares always have this */
-	background-color: dimgray;
+	background-color: var(--board-black-col);
 }
 .hovered { /* when the player is hovering the mouse over it */
 	background-color: orange;
 }
 .selectedStart { /* when the player has clicked on it as a start */
-	border: 6px solid orange;
+        box-shadow: 0px 0px 0px 6px var(--piece-selectedStart-col) inset;
 }
 .selectedEnd { /* when the player has clicked on it as a destination */
-	border: 6px solid green;
+        box-shadow: 0px 0px 0px 6px var(--piece-selectedEnd-col) inset;
 }
 .potKing { /* when highlighted as a potential king to select */
 	background-color: red;
@@ -186,62 +260,56 @@ textarea {
 	background-color: blue;
 }
 .checkKing { /* a king which is in check or potential check */
-	border: 6px solid red;
+        box-shadow: 0px 0px 0px 6px var(--piece-checkKing-col) inset;
 }
 .checkAttacker { /* a piece attacking a checked king */
-	border: 6px solid blue;
+        box-shadow: 0px 0px 0px 6px var(--piece-checkAttacker-col) inset;
 }
+
+.selectedEnd.checkAttacker { /* both selectedEnd AND check attacker*/
+    box-shadow: 0px 0px 0px 6px var(--piece-checkAttacker-col) inset, 0px 0px 0px 12px var(--piece-selectedEnd-col) inset;
+                }
+
+
 .findHighlight { /* when the player has clicked a find-piece button */
 	background-color: purple;
 }
-/* destination1 - destination16 are the 16 points of the compass from NNE, NE, ENE, E, ESE, etc */
-.destination1 {
-	background-image: linear-gradient(to top right, grey,grey,green,grey,grey);
+/* destination1 - destination16 are the 16 points of the compass clockface style
+ * ie, from NNE, NE, ENE, E, ESE, etc
+     * 1,3,5... = knight (all odd numbers)
+     * 2 = Bishop style (northeast)
+     * 4 = Rook (east)
+     * 6 = Bishop (southeast)
+     * 8 = Rook (South)
+     * 10 = Bishop (southwest)
+     * 12 = Rook (west)
+     * 14 = Bishop (northwest)
+     * 16 = Rook (north)
+     */
+
+.destination1,.destination3,.destination5,.destination7,.destination9,.destination11,.destination13,.destination15 {
+	background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
+        box-shadow: 0px 0px 0px 6px var(--piece-dest-col) inset;
 }
-.destination2 {
-	background-image: linear-gradient(to bottom right, grey,grey,green,grey,grey);
+.destination2,.destination10 {
+ 	/* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
+	background-image: linear-gradient(to bottom right, rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0));
+        box-shadow: 0px 0px 0px 6px var(--piece-dest-col) inset;
 }
-.destination3 {
-	background-image: linear-gradient(to top right, grey,grey,green,grey,grey);
+.destination4,.destination12 {
+	/* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
+	background-image: linear-gradient(to bottom, rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0));
+        box-shadow: 0px 0px 0px 6px var(--piece-dest-col) inset;
 }
-.destination4 {
-	background-image: linear-gradient(to bottom, grey,grey,green,grey,grey);
+.destination6,.destination14 {
+	/* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
+	background-image: linear-gradient(to top right, rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0));
+        box-shadow: 0px 0px 0px 6px var(--piece-dest-col) inset;
 }
-.destination5 {
-	background-image: linear-gradient(to bottom right, grey,grey,green,grey,grey);
-}
-.destination6 {
-	background-image: linear-gradient(to top right, grey,grey,green,grey,grey);
-}
-.destination7 {
-	background-image: linear-gradient(to bottom right, grey,grey,green,grey,grey);
-}
-.destination8 {
-	background-image: linear-gradient(to right, grey,grey,green,grey,grey);
-}
-.destination9 {
-	background-image: linear-gradient(to top right, grey,grey,green,grey,grey);
-}
-.destination10 {
-	background-image: linear-gradient(to bottom right, grey,grey,green,grey,grey);
-}
-.destination11 {
-	background-image: linear-gradient(to top right, grey,grey,green,grey,grey);
-}
-.destination12 {
-	background-image: linear-gradient(to bottom, grey,grey,green,grey,grey);
-}
-.destination13 {
-	background-image: linear-gradient(to bottom right, grey,grey,green,grey,grey);
-}
-.destination14 {
-	background-image: linear-gradient(to top right, grey,grey,green,grey,grey);
-}
-.destination15 {
-	background-image: linear-gradient(to bottom right, grey,grey,green,grey,grey);
-}
-.destination16 {
-	background-image: linear-gradient(to right, grey,grey,green,grey,grey);
+.destination8,.destination16 {
+	/* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
+	background-image: linear-gradient(to right, rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0));
+        box-shadow: 0px 0px 0px 6px var(--piece-dest-col) inset;
 }
 
 
@@ -282,42 +350,25 @@ textarea {
 }
 /* background to individual unicode characters */
 .whitepiece {
-    background: #fff8;
-    border-radius: 6px;
+    background: #fffa;
+    border-radius: 16px;
 }
 .blackpiece {
-    background: #0008;
-    border-radius: 6px;
+    padding: 0;
+    background: #000a;
+    border-radius: 16px;
 }
 .whitepiececollapsed {
-    background: #fff8;
-    border-radius: 6px;
+    background: #fffa;
+    border-radius: 42px;
 	font-size: var(--board-font-size-collapsed);
 }
 .blackpiececollapsed {
-    background: #0008;
-    border-radius: 6px;
+    background: #000a;
+    border-radius: 42px;
 	font-size: var(--board-font-size-collapsed);
 }
 
-
-/* intended to be applied to the square occupied by a white/black piece */
-.white-occupied-black{
-    background: white;
-    box-shadow: 0px 0px 2px 8px grey inset;
-}
-.white-occupied-white{
-    background: white;
-    box-shadow: 0px 0px 2px 8px silver inset;
-}
-.black-occupied-white{
-    background: black;
-    box-shadow: 0px 0px 2px 8px silver inset;
-}
-.black-occupied-black{
-    background: black;
-    box-shadow: 0px 0px 2px 8px grey inset;
-}
 
 @media all and (max-aspect-ratio: 1.6) { /* Squarish screens */
 	:root {
