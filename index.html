@@ -7,15 +7,20 @@
 </head>
 
 <body>
-    <div id=header>
-        <ul class=left>
-            <li> ☰
-        </ul>
-        <h1>Qhess</h1>
-        <ul class=right>
-            <li> 🛈⮭
-            <li> ⚙
-        </ul>
+    <header>
+        <div class=left>
+            <li> 🍔
+            <li class="button" onclick="displayHelp('')"> ❓ 
+        </div>
+        <div class="center title">Qhess</div>
+        <div class=right>
+            <li> 📝
+            <li> ⚙️
+        </div>
+    </header>
+    <div class=modal id='helpDiv'>
+        <li onclick="closeHelp('')">close</li>
+        <id>text
     </div>
     <br clear=all>
 	<div class="container">
@@ -184,5 +189,6 @@
 		</div>
 		
 	</div>
+    <script src="ui.js"></script>
 </body>
 </html>
