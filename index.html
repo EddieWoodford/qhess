@@ -9,20 +9,72 @@
 <body>
     <header>
         <div class=left>
-            <li> 🍔
-            <li class="button" onclick="displayHelp('')"> ❓ 
+            <li class="button" title="Menu" onclick="displayInfo('')"> 🍔
+            <li class="button" title="Game Help" onclick="displayHelp('')"> ❓ 
         </div>
         <div class="center title">Qhess</div>
         <div class=right>
-            <li> 📝
-            <li> ⚙️
+            <li class="button" title=Scorecard onclick="displayMeta('')"> 📝
+            <li class="button"  title=Options onclick="displayOptions('')"> ⚙️
         </div>
     </header>
-    <div class=modal id='helpDiv'>
-        <li onclick="closeHelp('')">close</li>
-        <id>text
-    </div>
     <br clear=all>
+    <!-- information modal - credits, rules? -->
+    <div id='infoWrapper' class=modalWrapper  onclick="closeInfo('')">
+        <div id=infoDiv class=modalData onclick="doNothing('')">
+            Your daily insanity game is...<br>
+            <br>
+            QHESS! 
+        </div>
+    </div>
+    <!-- help modal - game UI help -->
+    <div id='helpWrapper' class=modalWrapper  onclick="closeHelp('')">
+        <div id=helpDiv class=modalData onclick="doNothing('')">
+            hello world. I am here to help<br>
+            <br>
+            That is, to summarise the game UI
+        </div>
+    </div>
+    <!-- metadata modal - move history and controls--> 
+    <div id='metaWrapper' class=modalWrapper  onclick="closeMeta('')">
+        <div id=metaDiv class=modalData onclick="doNothing('')">
+            Scoresheet and share<br>
+                <div class="captured-pieces">
+                        <div class="column" id='whitecaptured'><strong>White Captured</strong></div>
+                        <div class="column" id='blackcaptured'><strong>Black Captured</strong></div>
+                </div>
+                <br clear=all>
+                <br>
+                <hr>
+                <button class='historyButton' id='reset' onclick="setup()">Reset Game</button>
+                <button class='historyButton' id='restorehistory' onclick="restoreGameHistory()">Restore History</button>
+                <br>
+                <button class='historyButton' id='copyallhistory' onclick="copyAllHistory()">Copy All</button>
+                <button class='historyButton' id='copylastmove' onclick="copyLastMove()">Copy Last Move</button>
+                <br>
+                <button class='historyButton' id='pasteallrestore' onclick="pasteAllRestore()">Paste All & Reset</button>
+                <button class='historyButton' id='pastelinerestore' onclick="pasteLineRestore()">Paste Move</button>
+                
+                <!-- <br clear="all"> -->
+                <br>
+                Move History:<br>
+                <div class="movehistory" id="movehistory" contenteditable></div>
+                <button class='stepHistoryButton' id='back2' onclick="stepBackAll()">&lt&lt</button>
+                <button class='stepHistoryButton' id='back1' onclick="stepBackMove()">&lt</button>
+                <button class='stepHistoryButton' id='forward1' onclick="stepForwardMove()">&gt</button>
+                <button class='stepHistoryButton' id='forward2' onclick="stepForwardAll()">&gt&gt</button>
+                <!-- <textarea id="movehistory" rows=20></textarea> -->
+            <br>
+        </div>
+    </div>
+    <!-- options -->
+    <div id='optionsWrapper' class=modalWrapper  onclick="closeOptions('')">
+        <div id=optionsDiv class=modalData onclick="doNothing('')">
+            <button onclick="toggleBoardFontSize()">big/smol</button>
+            <button onclick="togglePageTheme()">light/dark</button>
+        </div>
+    </div>
+
 	<div class="container">
 		<div class="game-control">
 			<label class="prompt" id="prompt">Prompt Text</label>
@@ -39,24 +91,21 @@
 			<input id="thismove"></input>
 			
 			<br>
-			<button class='historyButton' id='reset' onclick="setup()">Reset Game</button>
-			<button class='historyButton' id='restorehistory' onclick="restoreGameHistory()">Restore History</button>
-			<br>
-			<button class='historyButton' id='copyallhistory' onclick="copyAllHistory()">Copy All</button>
-			<button class='historyButton' id='copylastmove' onclick="copyLastMove()">Copy Last Move</button>
-			<br>
-			<button class='historyButton' id='pasteallrestore' onclick="pasteAllRestore()">Paste All & Reset</button>
-			<button class='historyButton' id='pastelinerestore' onclick="pasteLineRestore()">Paste Move</button>
-			
-			<!-- <br clear="all"> -->
-			<br>
-			Move History:<br>
-			<div class="movehistory" id="movehistory" contenteditable></div>
-			<button class='stepHistoryButton' id='back2' onclick="stepBackAll()">&lt&lt</button>
-			<button class='stepHistoryButton' id='back1' onclick="stepBackMove()">&lt</button>
-			<button class='stepHistoryButton' id='forward1' onclick="stepForwardMove()">&gt</button>
-			<button class='stepHistoryButton' id='forward2' onclick="stepForwardAll()">&gt&gt</button>
-			<!-- <textarea id="movehistory" rows=20></textarea> -->
+		
+			<div class="find-pieces">
+				<strong>Find Pieces</strong>
+				<br>
+				<button class="findpiecebutton" id="findK" onclick="findPiecesClick('K')"></button>
+				<button class="findpiecebutton" id="findQ" onclick="findPiecesClick('Q')"></button>
+				<button class="findpiecebutton" id="findR" onclick="findPiecesClick('R')"></button>
+				<br clear=all>
+				<button class="findpiecebutton" id="findB" onclick="findPiecesClick('B')"></button>
+				<button class="findpiecebutton" id="findN" onclick="findPiecesClick('N')"></button>
+				<button class="findpiecebutton" id="findP" onclick="findPiecesClick('P')"></button>
+			</div>
+			<div>
+				<label id="debug">Debug text</label>
+			</div>
 		</div>
 		
 		<div id="board" class="board">
@@ -160,35 +209,7 @@
 				<button class="filecoord" id="fileH">h</button>
 			</div>
 		</div>
-		
-		<div class="misc" id="misc">
-			<br>
-			<div class="captured-pieces">
-				<div class="column" id='whitecaptured'><strong>White Captured</strong></div>
-				<div class="column" id='blackcaptured'><strong>Black Captured</strong></div>
-			</div>
-			<br>
-			<div class="find-pieces">
-				<strong>Find Pieces</strong>
-				<br>
-				<button class="findpiecebutton" id="findK" onclick="findPiecesClick('K')"></button>
-				<button class="findpiecebutton" id="findQ" onclick="findPiecesClick('Q')"></button>
-				<button class="findpiecebutton" id="findR" onclick="findPiecesClick('R')"></button>
-				<br clear=all>
-				<button class="findpiecebutton" id="findB" onclick="findPiecesClick('B')"></button>
-				<button class="findpiecebutton" id="findN" onclick="findPiecesClick('N')"></button>
-				<button class="findpiecebutton" id="findP" onclick="findPiecesClick('P')"></button>
-			</div>
-                        <div class="options">
-                            <button onclick="toggleBoardFontSize()">big/smol</button>
-                            <button onclick="togglePageTheme()">light/dark</button>
-                        </div>
-			<div>
-				<label id="debug">Debug text</label>
-			</div>
-		</div>
-		
-	</div>
+	    </div>
     <script src="ui.js"></script>
 </body>
 </html>

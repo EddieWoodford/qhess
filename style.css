@@ -93,7 +93,7 @@ header li:hover {
     cursor: pointer;
 }
 
-.modal {
+.modalWrapper {
     display:none;
     position:fixed;
     z-index:1;
@@ -105,6 +105,19 @@ header li:hover {
     box-sizing:border-box;
     overflow:auto;
     background-color:#0003;
+    text-align: center;
+}
+
+.modalData {
+    border: 2px solid black;
+    border-radius: 4px;
+    box-shadow: 0px 0px 16px 0px black;
+    background-color: #ffe;
+    width: 80%;
+    max-width: 700px;
+    max-height: 800px;
+    padding: 2em;
+    margin: auto;
 }
  
 textarea {
@@ -125,7 +138,7 @@ textarea {
 }
 .game-control {
 	order: 2;
-    text-align: center;
+        text-align: center;
 }
 .board {
 	display: flex;
@@ -133,12 +146,6 @@ textarea {
 	order: 1;
 	/* resize: both; */
 	/* overflow: hidden; */
-}
-.misc {
-	order: 3; /* always last */
-	display: flex;
-	flex-flow: column nowrap;
-	justify-content: space-between;
 }
 .movehistory { /* movehistory text area */
 	font-size: 2vmin;
