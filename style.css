@@ -120,6 +120,12 @@ header li:hover {
     margin: auto;
 }
 
+h2 {
+    margin-top: 0;
+    padding-top: 0;
+
+}
+
 textarea {
      width: 100%;
      -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
@@ -273,10 +279,18 @@ textarea {
 	background-color: orange;
 }
 .selectable {
-	/* background-color: cyan; */
+        box-shadow: 0px 0px 0px 3px var(--piece-selectedStart-col) inset;
+}
+.selectable.checkKing {
+        box-shadow: 0px 0px 0px 6px var(--piece-checkKing-col) inset,
+                    0px 0px 0px 9px var(--piece-selectedStart-col) inset;
 }
 .selectedStart { /* when the player has clicked on it as a start */
         box-shadow: 0px 0px 0px 6px var(--piece-selectedStart-col) inset;
+}
+.selectedStart.checkKing { /* when the player has clicked on a potKing as a start */
+        box-shadow: 0px 0px 0px 6px var(--piece-checkKing-col) inset,
+                    0px 0px 0px 12px var(--piece-selectedStart-col) inset;
 }
 .selectedEnd { /* when the player has clicked on it as a destination */
         box-shadow: 0px 0px 0px 6px var(--piece-selectedEnd-col) inset;
@@ -295,8 +309,9 @@ textarea {
 }
 
 .selectedEnd.checkAttacker { /* both selectedEnd AND check attacker*/
-    box-shadow: 0px 0px 0px 6px var(--piece-checkAttacker-col) inset, 0px 0px 0px 12px var(--piece-selectedEnd-col) inset;
-                }
+    box-shadow: 0px 0px 0px 6px var(--piece-checkAttacker-col) inset, 
+                0px 0px 0px 12px var(--piece-selectedEnd-col) inset;
+}
 
 
 .findHighlight { /* when the player has clicked a find-piece button */
