@@ -224,6 +224,7 @@ function sideButton1Action() {
 		setState("selectPCKing");
 	} else if (STATE == "clear" && POTCHECK) {
 		declareNotAKing();
+		setState("clear");
 	}
 }
 
@@ -256,7 +257,6 @@ function declareNotAKing() {
 	PCCOLOR = "";
 	clearFindPotentialCheckPieces();
 	findChecks(TURNCOLOR);
-	setState("clear");
 }
 
 function submitMove() {
@@ -512,7 +512,6 @@ function showCompleteMove(buttonID,doEP,doPromotion) {
 
 }
 
-
 ////////////////////////////////
 // Move History
 ////////////////////////////////
@@ -535,25 +534,22 @@ function restoreGameHistory(historyText,nMoves) {
 	for (let i=0; i < nMoves; i++) {
 		moveText = historyLines[i];
 		if (moveText!="") {
-			doMoveFromText(moveText);
+			let resultText = doMoveFromText(moveText);
 			sideButton2Action(); // submit
 		}
 	}
 }
 
 function doMoveFromText(moveText) {
-	// If the moveText includes a turn number such as "3w. " then check it is correct.
-	// If it is not included just go ahead
 	let r;
 	let c;
 	
-	if (moveText.includes(". ")) { 
-		moveText = moveText.split(". ");
-		turnNumber = moveText[0];
-		moveText = moveText[1];
-		if (turnNumber != TURNNUMBER.toString() + TURNCOLOR) {
-			debugPrint("Move text number + colour did not match expected");
-		}
+	// Check that the move number eg "3w. " is correct
+	moveText = moveText.split(".");
+	turnText = moveText[0].trim();
+	moveText = moveText[1].trim();
+	if (turnText != TURNNUMBER.toString() + TURNCOLOR) {
+		debugPrint("Move text number + colour did not match expected");
 	}
 	
 	let doEP = (moveText.includes("e.p.")); // do En Passant
@@ -605,6 +601,8 @@ function doMoveFromText(moveText) {
 			selectPCAttackers(attackerButtonID);
 		}
 	}
+	return THISMOVE
+	
 }
 
 function copyAllHistory() {
@@ -1463,25 +1461,25 @@ function setState(stateIn) {
 	// All the changing of the actual display happens here, always by simply looping over the squares and displaying 
 	// them according to the variables in the object. 
 	let defaultText;
-	let moveText = "";
+	let promptText = "";
 	moveTextarea.value = THISMOVE + pcMoveText();
 	if (TURNNUMBER == 0) {
-		moveText = "Black<br>Move 0 - ";
+		promptText = "Black<br>Move 0 - ";
 	}
 	if (TURNCOLOR == "w") {
-		moveText = moveText + "White<br>";
+		promptText = promptText + "White<br>";
 	} else {
-		moveText = moveText + "Black<br>";
+		promptText = promptText + "Black<br>";
 	}
 
 	if (AUTOCHECK) {
-		moveText = moveText + " Check - ";
+		promptText = promptText + " Check - ";
 	}
 	if (POTCHECK) {
-		moveText = moveText + " Potential Check - ";
+		promptText = promptText + " Potential Check - ";
 	}
 	
-	promptlabel.innerHTML = moveText + " select piece to move.";
+	promptlabel.innerHTML = promptText + " select piece to move.";
 	if (TURNNUMBER == 0) {
 		promptlabel.innerHTML = "Black<br>Move 0 - add Potential Check?";
 	}
@@ -1509,31 +1507,31 @@ function setState(stateIn) {
 	} else if (STATE == "showPartialMove") {
 		sideButton2.style.visibility = "hidden";
 		sideButton1.style.visibility = "hidden";
-		promptlabel.innerHTML = moveText + "Select destination";
+		promptlabel.innerHTML = promptText + "Select destination";
 	} else if (STATE == "showCompleteMove") {
 		sideButton2.style.visibility = "visible";
 		sideButton2.innerText = "Submit";
 		let nPotKings = findPotentialKingsToAttack();
 		clearFindPotentialCheckPieces();
 		if (nPotKings > 0) {
-			promptlabel.innerHTML = moveText + "Add Potential Check / Submit";
+			promptlabel.innerHTML = promptText + "Add Potential Check / Submit";
 			sideButton1.style.visibility = "visible";
 			sideButton1.innerText = "Add PC";
 		} else {
-			promptlabel.innerHTML = moveText + "Submit";
+			promptlabel.innerHTML = promptText + "Submit";
 			sideButton1.style.visibility = "hidden";
 		}
 	} else if (STATE == "invalidMoveIntoCheck") {
-		promptlabel.innerHTML = moveText + "Invalid - moved into check";
+		promptlabel.innerHTML = promptText + "Invalid - moved into check";
 		sideButton2.style.visibility = "visible";
 		sideButton1.style.visibility = "hidden";
 		sideButton2.innerText = "Cancel";
 	} else if (STATE == "selectPCKing") {
-		promptlabel.innerHTML = moveText + "Select King to attack";
+		promptlabel.innerHTML = promptText + "Select King to attack";
 		sideButton2.style.visibility = "hidden";
 		sideButton1.style.visibility = "hidden";
 	} else if (STATE == "selectPCAttackers") {
-		promptlabel.innerHTML = moveText + "Select attacking pieces";
+		promptlabel.innerHTML = promptText + "Select attacking pieces";
 		sideButton2.style.visibility = "hidden"; // turned visible when an attacker is found in the loop below
 		sideButton1.style.visibility = "hidden";
 		sideButton2.innerText = "Submit";
@@ -1619,6 +1617,12 @@ function setState(stateIn) {
 			
 			// Default border:
 			sqr.resetButtonClasses();
+			if (STATE == "clear") {
+				if (piece != "" && piece.color == TURNCOLOR) {
+					sqr.button.classList.add("selectable");
+				}
+			}
+			
 			/* sqr.button.style.borderWidth = "";
 			sqr.button.style.borderColor = "black"; 
 			let sqrcolor;
@@ -1689,11 +1693,10 @@ function setState(stateIn) {
 					// sqr.button.style.background = 'purple';
 				}
 			}
-			
-
 		}
 	}
 	
+	// Built list of captured pieces for display
 	let whitecaptured = "<strong>White Captured</strong><br>";
 	let blackcaptured = "<strong>Black Captured</strong><br>";
 	let whiteorder = [];
@@ -1732,8 +1735,6 @@ function setState(stateIn) {
 		document.getElementById("findB").innerHTML = BB;
 		document.getElementById("findP").innerHTML = BP;
 	}
-	
-
 }
 
 function highlightReplayLine() {
