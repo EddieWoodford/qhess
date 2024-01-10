@@ -48,7 +48,7 @@
         <div id=metaDiv class=modalData onclick="doNothing('')">
             <H2>Scoresheet and Share</h2>
 		Game ID:<br>
-                <input id="gameid"></input>
+                <input id="gameid" onkeyup="setGameTitle(this)"></input>
                 <br>
                 <br>
 			
@@ -84,6 +84,7 @@
 
 	<div class="container">
 		<div class="game-control">
+                        <h2 id=gameTitle></h2>
 			<h3 class="prompt" id="prompt">Prompt Text</h3>
 			<button class="sidebutton" id="sideButton1" onclick="sideButton1Click()"></button>
 			<button class="sidebutton" id="sideButton2" onclick="sideButton2Click()"></button>

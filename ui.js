@@ -44,6 +44,10 @@ var ow = document.getElementById('optionsWrapper'),
 ob = document.getElementById('optionsButton'),
 oc = document.getElementById('optionsClose');
 
+function setGameTitle(element) {
+    document.getElementById("gameTitle").innerHTML = element.value
+};
+
 function displayOptions() {
   ow.style.display = 'block'
 };

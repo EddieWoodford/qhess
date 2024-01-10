@@ -425,6 +425,7 @@ textarea {
 
 #gameid {
     width: 90%;
+    font-size: 3vmin;
 }
 #thismove {
     width: 90%;
