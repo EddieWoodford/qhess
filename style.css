@@ -2,7 +2,7 @@
   --button-height: 2.5em;
   --button-font-size: 2vmin;
   --board-font-size: 3.5vmin; /* controls the board square size via the em unit */
-  --board-font-size-collapsed: 10vmin;
+  --board-font-size-collapsed: 9vmin;
   --board-white-col: darkgray;  /* base colour of white squares */
   --board-black-col: dimgray;   /* base colour of black squares */
   --piece-selectedStart-col: orange;    /* selected piece */
@@ -23,21 +23,22 @@ body {
 	/* font-family: Monospace; */
 }
 
-/* header/menubar of the page */
-#header {
-    width: 100%;
-    float: left;
+header {
     margin: 0 0 1em 0;
     padding: 0;
     border-bottom: 1px solid black;
     box-shadow: 0px 0px 4px #ccc inset;
     background-color: #eee;
-    display: inline;
     vertical-align: middle;
     break-after: both;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
 }
 
-#header ul {
+header div {
         margin: 0;
         padding: 0 1em 0 1em;
 	font-size: 2rem;
@@ -46,7 +47,7 @@ body {
     height: 100%;
 }
 
-#header li {
+header li {
     padding: 0px 8px;
     display: inline-block;
     text-decoration: none;
@@ -60,7 +61,7 @@ body {
     height: 100%;
     overflow: clip;
 }
-#header li:hover {
+header li:hover {
     border-right: 1px solid #ddd;
     border-left: 1px solid #ddd;
     background-color: #fffa;
@@ -69,27 +70,56 @@ body {
 
 .left {
     float: left; 
-    padding: 0em 0.5em 0em 0.5em;
+    padding: 0em 0.1em 0em 0.2em;
 }
-.center {
-    float: center; 
-    padding: 0em 0.5em 0em 0.5em;
+.center,.title {
+    text-align: center;
+    float: center;
+    color: #f00c;
+    font-size: 2.5rem;
+    font-variant-caps: small-caps;
+    text-shadow: -2px 2px 2px black;
+    font-weight: bold;
+    letter-spacing: 0.1rem;
+    padding: 0em 0.1em 0em 0.1em;
+    margin: 0;
 }
 .right {
     float: right;
-    padding: 0em 0.5em 0em 0.5em;
+    padding: 0em 0.2em 0em 0.1em;
 }
 
-
-h1 {
-    display: inline;
-    float: center;
-    color: #f00c;
-    font-size: 2.5em;
-    text-shadow: -2px 2px 2px black;
-    padding: 0em 0.5em 0em 0.5em;
-    margin: 0;
+.button {
+    cursor: pointer;
 }
+
+.modalWrapper {
+    display:none;
+    position:fixed;
+    z-index:1;
+    padding-top:4em;
+    left:0;
+    top:0;
+    width:100%;
+    height:100%;
+    box-sizing:border-box;
+    overflow:auto;
+    background-color:#0003;
+    text-align: center;
+}
+
+.modalData {
+    border: 2px solid black;
+    border-radius: 4px;
+    box-shadow: 0px 0px 16px 0px black;
+    background-color: #ffe;
+    width: 80%;
+    max-width: 700px;
+    max-height: 800px;
+    padding: 2em;
+    margin: auto;
+}
+ 
 textarea {
      width: 100%;
      -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
@@ -108,7 +138,7 @@ textarea {
 }
 .game-control {
 	order: 2;
-    text-align: center;
+        text-align: center;
 }
 .board {
 	display: flex;
@@ -116,12 +146,6 @@ textarea {
 	order: 1;
 	/* resize: both; */
 	/* overflow: hidden; */
-}
-.misc {
-	order: 3; /* always last */
-	display: flex;
-	flex-flow: column nowrap;
-	justify-content: space-between;
 }
 .movehistory { /* movehistory text area */
 	font-size: 2vmin;
@@ -360,15 +384,14 @@ textarea {
 }
 .whitepiececollapsed {
     background: #fffa;
-    border-radius: 42px;
+    border-radius: 10em;
 	font-size: var(--board-font-size-collapsed);
 }
 .blackpiececollapsed {
     background: #000a;
-    border-radius: 42px;
+    border-radius: 10em;
 	font-size: var(--board-font-size-collapsed);
 }
-
 
 @media all and (max-aspect-ratio: 1.6) { /* Squarish screens */
 	:root {
