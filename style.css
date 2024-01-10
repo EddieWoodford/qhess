@@ -313,6 +313,10 @@ textarea {
                 0px 0px 0px 12px var(--piece-selectedEnd-col) inset;
 }
 
+/* TODO: .checkAttacker and .destination{numbers} class pairs should be handled
+ * better
+ * ...any other class pairs that are missed?
+ */
 
 .findHighlight { /* when the player has clicked a find-piece button */
 	background-color: purple;
