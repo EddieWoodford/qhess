@@ -9,36 +9,49 @@
 <body>
     <header>
         <div class=left>
-            <li class="button" title="Menu" onclick="displayInfo('')"> 🍔
+            <li class="button" title="Information" onclick="displayInfo('')"> 🍔
             <li class="button" title="Game Help" onclick="displayHelp('')"> ❓ 
         </div>
         <div class="center title">Qhess</div>
         <div class=right>
+            <li class="button" title=Options onclick="displayOptions('')"> ⚙️
             <li class="button" title=Scorecard onclick="displayMeta('')"> 📝
-            <li class="button"  title=Options onclick="displayOptions('')"> ⚙️
         </div>
     </header>
     <br clear=all>
+    <!-- MODALS -->
     <!-- information modal - credits, rules? -->
     <div id='infoWrapper' class=modalWrapper  onclick="closeInfo('')">
         <div id=infoDiv class=modalData onclick="doNothing('')">
-            Your daily insanity game is...<br>
-            <br>
-            QHESS! 
+            <H2>What is Qhess?</h2>
+            Simply: it is your daily insanity chess!<br>
         </div>
     </div>
     <!-- help modal - game UI help -->
     <div id='helpWrapper' class=modalWrapper  onclick="closeHelp('')">
         <div id=helpDiv class=modalData onclick="doNothing('')">
-            hello world. I am here to help<br>
+            <h2>Help!</h2>
+            Explain the game UI here<br>
             <br>
-            That is, to summarise the game UI
+        </div>
+    </div>
+    <!-- options modal -->
+    <div id='optionsWrapper' class=modalWrapper  onclick="closeOptions('')">
+        <div id=optionsDiv class=modalData onclick="doNothing('')">
+            <h2>Options</h2>
+            <button onclick="toggleBoardFontSize()">big/smol</button>
+            <button onclick="togglePageTheme()">light/dark</button>
         </div>
     </div>
     <!-- metadata modal - move history and controls--> 
     <div id='metaWrapper' class=modalWrapper  onclick="closeMeta('')">
         <div id=metaDiv class=modalData onclick="doNothing('')">
-            Scoresheet and share<br>
+            <H2>Scoresheet and Share</h2>
+		Game ID:<br>
+                <input id="gameid"></input>
+                <br>
+                <br>
+			
                 <div class="captured-pieces">
                         <div class="column" id='whitecaptured'><strong>White Captured</strong></div>
                         <div class="column" id='blackcaptured'><strong>Black Captured</strong></div>
@@ -67,34 +80,25 @@
             <br>
         </div>
     </div>
-    <!-- options -->
-    <div id='optionsWrapper' class=modalWrapper  onclick="closeOptions('')">
-        <div id=optionsDiv class=modalData onclick="doNothing('')">
-            <button onclick="toggleBoardFontSize()">big/smol</button>
-            <button onclick="togglePageTheme()">light/dark</button>
-        </div>
-    </div>
+    <!-- END MODALS -->
 
 	<div class="container">
 		<div class="game-control">
-			<label class="prompt" id="prompt">Prompt Text</label>
-			<br>
+			<h3 class="prompt" id="prompt">Prompt Text</h3>
 			<button class="sidebutton" id="sideButton1" onclick="sideButton1Click()"></button>
 			<button class="sidebutton" id="sideButton2" onclick="sideButton2Click()"></button>
 			
 			<br>
-			Game ID:<br>
-                        <input id="gameid"></input>
-			
 			<br>
-			Staged Move:<br>
+
+                        <h3>Staged Move:</h3>
 			<input id="thismove"></input>
 			
 			<br>
+			<br>
 		
 			<div class="find-pieces">
-				<strong>Find Pieces</strong>
-				<br>
+				<h3>Find Pieces</h3>
 				<button class="findpiecebutton" id="findK" onclick="findPiecesClick('K')"></button>
 				<button class="findpiecebutton" id="findQ" onclick="findPiecesClick('Q')"></button>
 				<button class="findpiecebutton" id="findR" onclick="findPiecesClick('R')"></button>

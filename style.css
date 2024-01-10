@@ -6,7 +6,7 @@
   --board-white-col: darkgray;  /* base colour of white squares */
   --board-black-col: dimgray;   /* base colour of black squares */
   --piece-selectedStart-col: orange;    /* selected piece */
-  --piece-dest-col: #696;    /* valid destinations */
+  --piece-dest-col: #0F0a;    /* valid destinations */
   --piece-selectedEnd-col: lime;    /* selected destination of piecee */
   --piece-checkKing-col: red;    /* king in check (including potential) */
   --piece-checkAttacker-col: blue;    /* piece putting king in check (including potential) */
@@ -104,14 +104,14 @@ header li:hover {
     height:100%;
     box-sizing:border-box;
     overflow:auto;
-    background-color:#0003;
+    background-color:#0002;
     text-align: center;
 }
 
 .modalData {
     border: 2px solid black;
     border-radius: 4px;
-    box-shadow: 0px 0px 16px 0px black;
+    box-shadow: 0px 0px 64px 8px #0008;
     background-color: #ffe;
     width: 80%;
     max-width: 700px;
@@ -214,6 +214,7 @@ textarea {
 
 .find-pieces{
 	border-top: 1px solid;
+        float: bottom;
 }
 /* .find-pieces #find-pieces { */
     /* text-align: center; */
@@ -313,27 +314,27 @@ textarea {
 
 .destination1,.destination3,.destination5,.destination7,.destination9,.destination11,.destination13,.destination15 {
 	background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
-        box-shadow: 0px 0px 0px 6px var(--piece-dest-col) inset;
+        box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
 }
 .destination2,.destination10 {
  	/* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
-	background-image: linear-gradient(to bottom right, rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0));
-        box-shadow: 0px 0px 0px 6px var(--piece-dest-col) inset;
+	background-image: linear-gradient(to bottom right, rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
+        box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
 }
 .destination4,.destination12 {
 	/* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
-	background-image: linear-gradient(to bottom, rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0));
-        box-shadow: 0px 0px 0px 6px var(--piece-dest-col) inset;
+	background-image: linear-gradient(to bottom, rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
+        box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
 }
 .destination6,.destination14 {
 	/* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
-	background-image: linear-gradient(to top right, rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0));
-        box-shadow: 0px 0px 0px 6px var(--piece-dest-col) inset;
+	background-image: linear-gradient(to top right, rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
+        box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
 }
 .destination8,.destination16 {
 	/* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
-	background-image: linear-gradient(to right, rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0));
-        box-shadow: 0px 0px 0px 6px var(--piece-dest-col) inset;
+	background-image: linear-gradient(to right, rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
+        box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
 }
 
 
