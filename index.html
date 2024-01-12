@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="script.js"></script>
+    <!-- <script src="socket.io/socket.io.js"></script> -->
+	<!-- <script src="script.js"></script> -->
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -107,6 +108,16 @@
 				<button class="findpiecebutton" id="findP" onclick="findPiecesClick('P')"></button>
 			</div>
 			<div>
+				<button class="sidebutton" id="creategame" onclick="createGame()">Create Game</button>
+				<button class="sidebutton" id="joingame" onclick="joinGame()">Join Game</button>
+				<button class="sidebutton" id="leavegame" onclick="leaveGame()">Leave Game</button>
+				<button class="sidebutton" id="watchgame" onclick="watchGame()">Watch Game</button>
+				
+				
+			</div>
+			<br>
+			<div>
+				<label id="networkid">Hello</label> <br>
 				<label id="debug">Debug text</label>
 			</div>
 		</div>
