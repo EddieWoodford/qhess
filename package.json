@@ -1,0 +1,21 @@
+{
+  "dependencies": {
+    "expess": "^0.0.1-security",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.3"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "name": "qhess",
+  "description": "Quantum Chess is the idea that every piece on the chess board, initially, could\r become any piece - they are in superposition. As pieces are moved, their\r options collapse, so by the end of the game, each player has a normal\r demographic of pieces. Further reading: http://wiki.thorx.net/wiki/QuantumChess",
+  "version": "1.0.0",
+  "main": "script.js",
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "qhess"
+  },
+  "author": "Edward Woodford",
+  "license": "ISC"
+}

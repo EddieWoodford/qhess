@@ -30,6 +30,7 @@ class Square {
 			}
         }
 		this.button.onclick = () => {
+			if (ONLINEGAME && ONLINECOLOR == oppColor(TURNCOLOR)) {return}
 			if (REPLAYNUMBER > -1) {return}
 			FINDPIECE = "";
 			clearFindPieces();
@@ -279,7 +280,14 @@ function submitMove() {
 	if (REPLAYNUMBER == -1) {
 		historyArea.innerText = MOVEHISTORY;
 	}
-	
+	if (ONLINEGAME && (ONLINECOLOR == "" || TURNCOLOR == ONLINECOLOR)) {
+		// first person to make a move sets the colors
+		ONLINECOLOR = TURNCOLOR;
+		SOCKET.emit("make.move", {
+			movetext: THISMOVE + pcMoveText(),
+			color: TURNCOLOR
+		});
+	}
 		
 	TAKENPIECE.captured = TURNNUMBER;
 	
@@ -296,6 +304,7 @@ function submitMove() {
 	THISMOVE = TURNNUMBER.toString() + TURNCOLOR + ". ";
 	clearFindPotentialCheckPieces();
 	findChecks(TURNCOLOR);
+
 	
 	// copyLastMove();
 }
@@ -602,7 +611,7 @@ function doMoveFromText(moveText) {
 			selectPCAttackers(attackerButtonID);
 		}
 	}
-	return THISMOVE
+	return THISMOVE + pcMoveText();
 	
 }
 
@@ -998,7 +1007,6 @@ function updateOptionsFromEntanglement(colors) {
 				}
 
 				matchingRows = Array(16).fill(false);
-
 				for (let ri = pieceIdx; ri < 16; ri++) {
 					if (isequal(OM[pieceIdx], OM[ri])) {
 						matchingRows[ri] = true;
@@ -1487,6 +1495,7 @@ function setState(stateIn) {
 	if (TURNNUMBER == 0) {
 		promptlabel.innerHTML = "Black<br>Move 0 - add Potential Check?";
 	}
+	
 	if (STATE == "clear") {
 		sideButton2.style.visibility = "hidden";
 		sideButton1.style.visibility = "hidden";
@@ -1540,6 +1549,14 @@ function setState(stateIn) {
 		sideButton1.style.visibility = "hidden";
 		sideButton2.innerText = "Submit";
 	}
+	let waitingForOpponent = false;
+	if (ONLINEGAME && ONLINECOLOR == oppColor(TURNCOLOR)) {
+		sideButton2.style.visibility = "hidden";
+		sideButton1.style.visibility = "hidden";
+		promptlabel.innerHTML = "Waiting for Opponent";
+		waitingForOpponent = true;
+	}
+	
 	
 	// Replay Buttons
 	let back2 = document.getElementById("back2");
@@ -1621,21 +1638,13 @@ function setState(stateIn) {
 			
 			// Default border:
 			sqr.resetButtonClasses();
-			if (STATE == "clear") {
+			
+			if (STATE == "clear" && !waitingForOpponent) {
 				if (piece != "" && piece.color == TURNCOLOR) {
 					sqr.button.classList.add("selectable");
 				}
 			}
 			
-			/* sqr.button.style.borderWidth = "";
-			sqr.button.style.borderColor = "black"; 
-			let sqrcolor;
-			if (sqr.color=='w') {
-				sqrcolor = "darkgray" // default white square colour
-			} else {
-				sqrcolor = "dimgray" // default black square colour
-			}
-			sqr.button.style.background = sqrcolor; */
 			
 			// Write text of pieces in sqaures:
 			sqr.setWavetext();
@@ -1682,14 +1691,18 @@ function setState(stateIn) {
 					}
 				}
 			}
-			if (sqr.highlighted) {
-				sqr.button.classList.add("hovered");
-				// sqr.button.style.background = 'orange';
+			
+			if (!waitingForOpponent) {
+				if (sqr.highlighted) {
+					sqr.button.classList.add("hovered");
+					// sqr.button.style.background = 'orange';
+				}
+				if (sqr.potentialMove > 0) {
+					sqr.button.classList.add("destination" + sqr.potentialMove);
+					// sqr.button.style.background = 'green';
+				}
 			}
-			if (sqr.potentialMove > 0) {
-				sqr.button.classList.add("destination" + sqr.potentialMove);
-				// sqr.button.style.background = 'green';
-			}
+			
 			if (piece != "") {
 				let waves = piece.waves();
 				if (FINDPIECE != "" && waves.includes(FINDPIECE)) {
@@ -1813,8 +1826,84 @@ function setup() {
 }
 
 ////////////////////////////////
+// Networking
+////////////////////////////////
+
+function datestr() {
+	const date = new Date();
+	let currentDay= String(date.getDate()).padStart(2, '0');
+	let currentMonth = String(date.getMonth()+1).padStart(2,"0");
+	let currentYear = date.getFullYear();
+	let currentMinute = String(date.getMinutes()).padStart(2,"0");
+	let currentSecond = String(date.getSeconds()).padStart(2,"0");
+	let currentHour = String(date.getHours()).padStart(2,"0");
+
+	// we will display the date as DD-MM-YYYY 
+
+	return `${currentYear}-${currentMonth}-${currentDay}--${currentHour}-${currentMinute}-${currentSecond}`;
+}
+
+function createGame() {
+	if (!ONLINEGAME) {
+		const genRanHex = size => [...Array(size)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+		const gameID = datestr() + "--" + genRanHex(8);
+		ONLINEGAME = true;
+		SOCKET.emit("create.game", {
+			movehistory: MOVEHISTORY,
+			gameID: gameID,
+			playerID: "Alice"
+		});
+		navigator.clipboard.writeText(gameID);
+		showNetworkID(gameID);
+	}
+}
+
+function joinGame() {
+	if (!ONLINEGAME) {
+		ONLINEGAME = true;
+		const gameID = prompt("Enter Game ID");
+		SOCKET.emit("join.game", {
+			gameID: gameID,
+			playerID: "Bob"
+		});
+		showNetworkID(gameID);
+	}
+}
+
+function leaveGame() {
+	if (ONLINEGAME) {
+		ONLINEGAME = false;
+		ONLINECOLOR = "";
+		SOCKET.emit("leave.game");
+	}
+}
+
+function showNetworkID(gameID) {
+	let lbl = document.getElementById("networkid");
+	lbl.innerText = gameID;
+}
+
+
+
+////////////////////////////////
 // Initialisation
 ////////////////////////////////
+
+const url = window.location.origin;
+let SOCKET;
+if (url != "file://") {
+	SOCKET = io.connect(url);
+	// Bind event on players move
+	SOCKET.on("move.made", function(data) {
+		ONLINECOLOR = oppColor(data.color); // on first move, recieve colour choice
+		let newMoveText = doMoveFromText(data.movetext);
+		if (newMoveText == data.movetext) {
+			sideButton2Action(); // submit
+		}
+	});
+}
+
+
 // Chess piece coloured emojis:
 const WK = "<span style='color:#7E7427'>&#9812;</span>";
 const WQ = "<span style='color:#563F54'>&#9813;</span>";
@@ -1848,8 +1937,11 @@ let PCCOLOR;
 let FINDPIECE;
 let STATE;
 let REPLAYNUMBER = -1;
+let ONLINEGAME = false;
+let ONLINECOLOR = "";
 
 window.onload = setup
+
 
 
 
