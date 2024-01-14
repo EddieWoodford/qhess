@@ -323,6 +323,16 @@ function toggleBoardFontSize() {
 function togglePageTheme() {
 }
 
+function toggleFlippedBoard() {
+	if (document.documentElement.style.getPropertyValue('--board-flex-flow') == 'column-reverse nowrap') {
+        document.documentElement.style.setProperty('--board-flex-flow', 'column nowrap');
+		document.documentElement.style.setProperty('--boardrow-flex-flow', 'row nowrap');
+    } else {
+		document.documentElement.style.setProperty('--board-flex-flow', 'column-reverse nowrap');
+		document.documentElement.style.setProperty('--boardrow-flex-flow', 'row-reverse nowrap');
+    }
+}
+
 function clearFindPieces() {
 	let img = "linear-gradient(to bottom right, darkgray, dimgray)"
 	document.getElementById("findK").style.backgroundImage = img;

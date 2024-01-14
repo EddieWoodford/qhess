@@ -1,15 +1,18 @@
 :root {
   --button-height: 2.5em;
-  --button-font-size: 2vmin;
-  --board-font-size: 3.5vmin; /* controls the board square size via the em unit */
-  --board-font-size-collapsed: 9vmin;
+  --button-font-size: 2dvmin;
+  --board-font-size: 3.35dvmin; /* controls the board square size via the em unit */
+  --board-font-size-collapsed: 9dvmin;
   --board-white-col: darkgray;  /* base colour of white squares */
   --board-black-col: dimgray;   /* base colour of black squares */
+  --board-flex-flow: column nowrap; /* column-reverse nowrap when flipped to black's view */
+  --boardrow-flex-flow: row nowrap; /* row-reverse nowrap when flipped to black's view */
   --piece-selectedStart-col: orange;    /* selected piece */
   --piece-dest-col: #0F0a;    /* valid destinations */
   --piece-selectedEnd-col: lime;    /* selected destination of piecee */
   --piece-checkKing-col: red;    /* king in check (including potential) */
   --piece-checkAttacker-col: blue;    /* piece putting king in check (including potential) */
+  
 }
 
 body {
@@ -19,12 +22,12 @@ body {
     /* transform: translate(-50%, -50%); */
     padding: 0em;
     margin: 0em;
-	font-size: 2vmin;
+	font-size: 2dvmin;
 	/* font-family: Monospace; */
 }
 
 header {
-    margin: 0 0 0.5vmin 0;
+    margin: 0 0 0.5dvmin 0;
     padding: 0;
     border-bottom: 1px solid black;
     box-shadow: 0px 0px 4px #ccc inset;
@@ -148,13 +151,15 @@ textarea {
 }
 .board {
 	display: flex;
-	flex-flow: column nowrap;
+	flex-flow: var(--board-flex-flow);
 	order: 1;
+	justify-content: center;
+	/* border: black solid 1px; */
 	/* resize: both; */
 	/* overflow: hidden; */
 }
 .movehistory { /* movehistory text area */
-	font-size: 2vmin;
+	font-size: 2dvmin;
 	border: black solid 1px;
 	max-height: 20em;
 	overflow: auto;
@@ -168,7 +173,7 @@ textarea {
 	font-size: var(--button-font-size);
 }
 #thismove { /* thismove text area */
-	font-size:2vmin;
+	font-size:2dvmin;
 }
 
 
@@ -231,7 +236,7 @@ textarea {
 .findpiecebutton {
     color: white;
 	
-	font-size: 4vmin;
+	font-size: 4dvmin;
 	height: 1.5em;
 	width: 1.5em;
 	
@@ -253,7 +258,7 @@ textarea {
 /* ************************************************* */
 .boardrow {
 	display: flex;
-	flex-flow: row nowrap;
+	flex-flow: var(--boardrow-flex-flow);
 	justify-content: center;
 	/* align-context: center; */
 }
@@ -390,6 +395,8 @@ textarea {
 	font-size: var(--board-font-size);
 	/* float: left; */
 	border: none;
+	/* border: black solid 1px; */
+	padding: 0px;
 }
 /* background to individual unicode characters */
 .whitepiece {
@@ -415,16 +422,16 @@ textarea {
 @media all and (max-aspect-ratio: 1.6) { /* Squarish screens */
 	:root {
 	  /* shrink the board down to fit in the other parts */
-	  --board-font-size: 2.19vmax;
-	  --board-font-size-collapsed: 6vmax;
+	  --board-font-size: 2.19dvmax;
+	  --board-font-size-collapsed: 6dvmax;
 	}
 }
 
 @media all and (max-aspect-ratio: 0.8) { /* Tall screens */
 	/* put everything in one big column */
 	:root {
-	  --board-font-size: 3.8vmin;
-	  --board-font-size-collapsed: 11vmin;
+	  --board-font-size: 3.8dvmin;
+	  --board-font-size-collapsed: 11dvmin;
 	}
 	.container {
 		flex-flow: column nowrap;
@@ -434,16 +441,16 @@ textarea {
 
 @media (pointer:coarse) {
     :root {
-		--button-font-size: 4vmin;
+		--button-font-size: 4dvmin;
 	}
 	body {
-		font-size: 3vmin;
+		font-size: 3dvmin;
 	}
 }
 
 #gameid {
     width: 90%;
-    font-size: 3vmin;
+    font-size: 3dvmin;
 }
 #thismove {
     width: 90%;
