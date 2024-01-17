@@ -35,3 +35,45 @@ player1 <-> [UI code] <-> [frontend code] <-> [logic core]
                                    |
                                    v
 player2 <-> [UI code] <-> [frontend code] <-> [logic core]
+
+----
+
+* New Game / Join Game / watch game UI screens
+
+* notation updates to wiki
+* terminology updates to wiki (move? turn? stage? motion? round?)
+
+----
+
+# Database
+
+Table: Users
+    userID (random/unique ID)
+    password (user supplied)
+    display name (user supplied)
+    email (user supplied - optional for now)
+    verified (user supplied - optional for now)
+
+Table: Games
+    gameID
+    gamecreator
+    gamecreated-at
+    displayname
+    white-userID (link to a userID)
+    black-userID (link to a userID)
+    status (progress/finished/abandoned)
+
+Table: Plies
+    gameID
+    turn number (eg 1w) (or is this more efficient as an integer, and translate into notation in code as: even=white, odd=black. round down to nearest even number and divide by 2. that then gives the round number and player colour. 
+    resolve-notation (without []?)
+    move-notation
+    challenge-notation (without <> ?)
+    comment-notation (without leading # ?)
+    turn-time
+    
+
+# references
+
+html tabs from https://alvarotrigo.com/blog/html-css-tabs/ 
+    (example 17: "Responsive CSS Tabs With Icons")
