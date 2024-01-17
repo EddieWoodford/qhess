@@ -135,6 +135,61 @@ textarea {
      box-sizing: border-box;         /* Opera/IE 8+ */
 }
 
+/*
+ * sections for tabs
+ */
+section {
+    display: none;
+    padding: 20px 0 0;
+    border-top: 1px solid #888;
+}
+
+input.hidden {
+    display: none;
+}
+
+.tabtitle {
+    display: inline-block;
+    margin: 0 0 -1px;
+    padding: 15px 25px;
+    font-weight: 600;
+    text-align: center;
+    color: black;
+    border: 1px solid white;
+} 
+
+label[for*='1']:before {
+    content: '🏠';
+}
+
+label[for*='2']:before {
+    content: '📝';
+}
+
+label[for*='3']:before {
+    content: '👀';
+}
+
+label:hover {
+    color: black;
+    border-top: 2px solid grey;
+    cursor: pointer;
+}
+
+input:checked + label {
+    color: black;
+    border: 1px solid #ddd;
+    border-top: 2px solid orange;
+    border-bottom: 1px solid white;
+}
+
+#tab1:checked ~ #gameLobbyTab,
+#tab2:checked ~ #gameMetaTab,
+#tab3:checked ~ #gameFindpiecesTab {
+  display: block;
+}
+
+
 
 /* ************************************************* */
 /* Flex container and children */

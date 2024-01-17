@@ -17,7 +17,6 @@
         <div class="center title">Qhess</div>
         <div class=right>
             <li class="button" title=Options onclick="displayOptions('')"> ⚙️
-            <li class="button" title=Scorecard onclick="displayMeta('')"> 📝
         </div>
     </header>
 
@@ -46,41 +45,6 @@
             <button onclick="toggleFlippedBoard()">black/white</button>
         </div>
     </div>
-    <!-- metadata modal - move history and controls--> 
-    <div id='metaWrapper' class=modalWrapper  onclick="closeMeta('')">
-        <div id=metaDiv class=modalData onclick="doNothing('')">
-            <H2>Scoresheet and Share</h2>
-            Game ID:<br>
-            <input id="gameid" onkeyup="setGameTitle(this)"></input>
-            <br>
-            <br>
-            <div class="captured-pieces">
-                <div class="column" id='whitecaptured'><strong>White Captured</strong></div>
-                <div class="column" id='blackcaptured'><strong>Black Captured</strong></div>
-            </div>
-            <br clear=all>
-            <br>
-            <hr>
-            <button class='historyButton' id='reset' onclick="setup()">Reset Game</button>
-            <button class='historyButton' id='restorehistory' onclick="restoreGameHistory()">Restore History</button>
-            <br>
-            <button class='historyButton' id='copyallhistory' onclick="copyAllHistory()">Copy All</button>
-            <button class='historyButton' id='copylastmove' onclick="copyLastMove()">Copy Last Move</button>
-            <br>
-            <button class='historyButton' id='pasteallrestore' onclick="pasteAllRestore()">Paste All & Reset</button>
-            <button class='historyButton' id='pastelinerestore' onclick="pasteLineRestore()">Paste Move</button>
-            <!-- <br clear="all"> -->
-            <br>
-            Move History:<br>
-            <div class="movehistory" id="movehistory" contenteditable></div>
-            <button class='stepHistoryButton' id='back2' onclick="stepBackAll()">&lt&lt</button>
-            <button class='stepHistoryButton' id='back1' onclick="stepBackMove()">&lt</button>
-            <button class='stepHistoryButton' id='forward1' onclick="stepForwardMove()">&gt</button>
-            <button class='stepHistoryButton' id='forward2' onclick="stepForwardAll()">&gt&gt</button>
-            <!-- <textarea id="movehistory" rows=20></textarea> -->
-            <br>
-        </div>
-    </div>
     <!-- END MODALS -->
 
     <div class="container">
@@ -94,7 +58,58 @@
             <input id="thismove"></input>
             <br>
             <br>
-            <div class="find-pieces">
+            <input class="hidden"  id="tab1" type="radio" name="tabs" checked>
+            <label class="tabTitle" for="tab1">Lobby</label>
+
+            <input class="hidden" id="tab2" type="radio" name="tabs">
+            <label class="tabTitle" for="tab2">Metadata</label>
+
+            <input class="hidden" id="tab3" type="radio" name="tabs">
+            <label class="tabTitle" for="tab3">Find Pieces</label>
+
+            <!-- START TABS -->
+                <!-- gameLobbyTab - for create/join/watch/leave game control--> 
+            <section id=gameLobbyTab>
+                    <button class="sidebutton" id="creategame" onclick="createGame()">Create Game</button>
+                    <button class="sidebutton" id="joingame" onclick="joinGame()">Join Game</button>
+                    <button class="sidebutton" id="leavegame" onclick="leaveGame()">Leave Game</button>
+                    <button class="sidebutton" id="watchgame" onclick="watchGame()">Watch Game</button>
+            </section>
+                <!-- metadata tab - move history and controls--> 
+            <section id=gameMetaTab>
+                <H2>Scoresheet and Share</h2>
+                Game ID:<br>
+                <input id="gameid" onkeyup="setGameTitle(this)"></input>
+                <br>
+                <br>
+                <div class="captured-pieces">
+                    <div class="column" id='whitecaptured'><strong>White Captured</strong></div>
+                    <div class="column" id='blackcaptured'><strong>Black Captured</strong></div>
+                </div>
+                <br clear=all>
+                <br>
+                <hr>
+                <button class='historyButton' id='reset' onclick="setup()">Reset Game</button>
+                <button class='historyButton' id='restorehistory' onclick="restoreGameHistory()">Restore History</button>
+                <br>
+                <button class='historyButton' id='copyallhistory' onclick="copyAllHistory()">Copy All</button>
+                <button class='historyButton' id='copylastmove' onclick="copyLastMove()">Copy Last Move</button>
+                <br>
+                <button class='historyButton' id='pasteallrestore' onclick="pasteAllRestore()">Paste All & Reset</button>
+                <button class='historyButton' id='pastelinerestore' onclick="pasteLineRestore()">Paste Move</button>
+                <!-- <br clear="all"> -->
+                <br>
+                Move History:<br>
+                <div class="movehistory" id="movehistory" contenteditable></div>
+                <button class='stepHistoryButton' id='back2' onclick="stepBackAll()">&lt&lt</button>
+                <button class='stepHistoryButton' id='back1' onclick="stepBackMove()">&lt</button>
+                <button class='stepHistoryButton' id='forward1' onclick="stepForwardMove()">&gt</button>
+                <button class='stepHistoryButton' id='forward2' onclick="stepForwardAll()">&gt&gt</button>
+                <!-- <textarea id="movehistory" rows=20></textarea> -->
+                <br>
+            </section>
+                <!-- find pieces tab - for game assistance --> 
+            <section id="gameFindpiecesTab">
                 <h3>Find Pieces</h3>
                 <button class="findpiecebutton" id="findK" onclick="findPiecesClick('K')"></button>
                 <button class="findpiecebutton" id="findQ" onclick="findPiecesClick('Q')"></button>
@@ -103,13 +118,10 @@
                 <button class="findpiecebutton" id="findB" onclick="findPiecesClick('B')"></button>
                 <button class="findpiecebutton" id="findN" onclick="findPiecesClick('N')"></button>
                 <button class="findpiecebutton" id="findP" onclick="findPiecesClick('P')"></button>
-            </div>
-            <div>
-                <button class="sidebutton" id="creategame" onclick="createGame()">Create Game</button>
-                <button class="sidebutton" id="joingame" onclick="joinGame()">Join Game</button>
-                <button class="sidebutton" id="leavegame" onclick="leaveGame()">Leave Game</button>
-                <button class="sidebutton" id="watchgame" onclick="watchGame()">Watch Game</button>
-            </div>
+            </section>
+            <!-- END TABS -->
+
+
             <br>
             <div>
                 <label id="networkid">Hello</label> <br>

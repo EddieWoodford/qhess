@@ -73,4 +73,7 @@ Table: Plies
     turn-time
     
 
+# references
 
+html tabs from https://alvarotrigo.com/blog/html-css-tabs/ 
+    (example 17: "Responsive CSS Tabs With Icons")
