@@ -323,6 +323,16 @@ function toggleBoardFontSize() {
 function togglePageTheme() {
 }
 
+function toggleFlippedBoard() {
+	if (document.documentElement.style.getPropertyValue('--board-flex-flow') == 'column-reverse nowrap') {
+        document.documentElement.style.setProperty('--board-flex-flow', 'column nowrap');
+		document.documentElement.style.setProperty('--boardrow-flex-flow', 'row nowrap');
+    } else {
+		document.documentElement.style.setProperty('--board-flex-flow', 'column-reverse nowrap');
+		document.documentElement.style.setProperty('--boardrow-flex-flow', 'row-reverse nowrap');
+    }
+}
+
 function clearFindPieces() {
 	let img = "linear-gradient(to bottom right, darkgray, dimgray)"
 	document.getElementById("findK").style.backgroundImage = img;
@@ -519,13 +529,14 @@ function restoreGameHistory(historyText,nMoves) {
 	// Restore a game from whatever history is in the move history textbox
 	
 	let historyArea = document.getElementById("movehistory");
-	if (historyText == undefined) {
-		historyText = historyArea.innerText;
-	} else {
+	if (historyText != undefined) {
 		historyText = historyText.replaceAll("\r\n\r\n","\r\n");
 		historyArea.innerText = historyText;
 	}
-	let historyLines = historyText.split("\n");
+	historyText = historyArea.innerHTML;
+	historyText = historyText.replaceAll("&gt;",">");
+	historyText = historyText.replaceAll("&lt;","<");
+	let historyLines = historyText.split("<br>");
 	let moveText;
 	setup();
 	if (nMoves == undefined) {
@@ -656,8 +667,8 @@ function stepBackMove() {
 }
 
 function stepForwardMove() {
-	let historyTextarea = document.getElementById("movehistory");
-	historyLines = historyTextarea.innerHTML.split("<br>");
+	let historyArea = document.getElementById("movehistory");
+	historyLines = historyArea.innerHTML.split("<br>");
 	if (REPLAYNUMBER < historyLines.length/2) {
 		moveText = historyLines[2*REPLAYNUMBER];
 		REPLAYNUMBER = REPLAYNUMBER + 0.5;
@@ -669,8 +680,8 @@ function stepForwardMove() {
 }
 
 function stepForwardAll() {
-	let historyTextarea = document.getElementById("movehistory");
-	historyLines = historyTextarea.innerHTML.split("<br>");
+	let historyArea = document.getElementById("movehistory");
+	historyLines = historyArea.innerHTML.split("<br>");
 	REPLAYNUMBER = historyLines.length/2;
 	restoreGameHistory(null, 2*REPLAYNUMBER);
 }
@@ -1071,7 +1082,11 @@ function getOM(pieces) {
 }
 
 function isValid(OM) {
-	// Check if the Option Matrix (OM) is valid - it contains an arrangement which would result in a full chess demographic. That's equivalent to saying that the bipartite graph indicated by the OM has a perfect matching, or that each row can be assigned to exactly 1 column with a 1 in entry (row,col).
+	// Check if the Option Matrix (OM) is valid - it contains an arrangement which would result in a full chess demographic. 
+	// That's equivalent to saying that the bipartite graph indicated by the OM has a perfect matching, 
+	// or that each row can be assigned to exactly 1 column with a 1 in entry (row,col).
+	
+	
 	
     const sz = [OM.length, OM[0].length];
 	
@@ -1081,7 +1096,6 @@ function isValid(OM) {
 
     if (sz[0] === 1) {
         let result = +(OM==1);
-        matching = [1];
         return result;
     }
 
@@ -1453,9 +1467,9 @@ function setState(stateIn) {
 	let moveTextarea = document.getElementById("thismove");
 	let sideButton1 = document.getElementById("sideButton1")
 	let sideButton2 = document.getElementById("sideButton2")
-	let historyTextarea = document.getElementById("movehistory");
+	let historyArea = document.getElementById("movehistory");
 	if (STATE != "move0") {
-		historyTextarea.contentEditable = false;
+		historyArea.contentEditable = false;
 	}
 	
 	// All the changing of the actual display happens here, always by simply looping over the squares and displaying 
@@ -1738,8 +1752,8 @@ function setState(stateIn) {
 }
 
 function highlightReplayLine() {
-	let historyTextarea = document.getElementById("movehistory");
-	let historyHTML = historyTextarea.innerHTML;
+	let historyArea = document.getElementById("movehistory");
+	let historyHTML = historyArea.innerHTML;
 	
 	lineStyle = "<span style=\"background-color:lightgrey\">";
 	historyHTML = historyHTML.replaceAll(lineStyle,"");
@@ -1748,7 +1762,7 @@ function highlightReplayLine() {
 	if (REPLAYNUMBER > -1) {
 		historyLines[REPLAYNUMBER*2-1] = lineStyle + historyLines[REPLAYNUMBER*2-1] + "</span>";
 	}
-	historyTextarea.innerHTML = historyLines.join("<br>");
+	historyArea.innerHTML = historyLines.join("<br>");
 }
 
 function setup() {
@@ -1773,9 +1787,9 @@ function setup() {
 	moveTextarea = document.getElementById("thismove");
 	moveTextarea.value = "";
 	if (REPLAYNUMBER == -1) {
-		historyTextarea = document.getElementById("movehistory");
-		historyTextarea.innerText = "";
-		historyTextarea.contentEditable = true;
+		historyArea = document.getElementById("movehistory");
+		historyArea.innerText = "";
+		historyArea.contentEditable = true;
 	}
 	
 	
