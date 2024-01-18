@@ -26,6 +26,13 @@
         <div id=infoDiv class=modalData onclick="doNothing('')">
             <H2>What is Qhess?</h2>
             Simply: it is your daily insanity chess!<br>
+            <h3>Credit:</h3>
+            <ul>
+                <li>Thomas Bremner
+                <li>Nemo Thorx
+                <li>Eddie Woodford
+            </ul>
+            <a href="http://wiki.thorx.net/wiki/QuantumChess">Qhess on ThorxWiki</a>
         </div>
     </div>
     <!-- help modal - game UI help -->
@@ -34,15 +41,18 @@
             <h2>Help!</h2>
             Explain the game UI here<br>
             <br>
+            <em>Whaddya mean it's not "intuitive"?</em>
         </div>
     </div>
     <!-- options modal -->
     <div id='optionsWrapper' class=modalWrapper  onclick="closeOptions('')">
         <div id=optionsDiv class=modalData onclick="doNothing('')">
             <h2>Options</h2>
-            <button onclick="toggleBoardFontSize()">big/smol</button>
-            <button onclick="togglePageTheme()">light/dark</button>
-            <button onclick="toggleFlippedBoard()">black/white</button>
+            <button onclick="toggleBoardFontSize()">Toggle board size</button><br>
+            <br>
+            <button onclick="togglePageTheme()">Toggle theme</button><br>
+            <br>
+            <button onclick="toggleFlippedBoard()">Toggle player view</button><br>
         </div>
     </div>
     <!-- END MODALS -->
