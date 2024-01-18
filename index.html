@@ -26,6 +26,13 @@
         <div id=infoDiv class=modalData onclick="doNothing('')">
             <H2>What is Qhess?</h2>
             Simply: it is your daily insanity chess!<br>
+            <h3>Credit:</h3>
+            <ul>
+                <li>Thomas Bremner
+                <li>Nemo Thorx
+                <li>Eddie Woodford
+            </ul>
+            <a href="http://wiki.thorx.net/wiki/QuantumChess">Qhess on ThorxWiki</a>
         </div>
     </div>
     <!-- help modal - game UI help -->
@@ -34,15 +41,18 @@
             <h2>Help!</h2>
             Explain the game UI here<br>
             <br>
+            <em>Whaddya mean it's not "intuitive"?</em>
         </div>
     </div>
     <!-- options modal -->
     <div id='optionsWrapper' class=modalWrapper  onclick="closeOptions('')">
         <div id=optionsDiv class=modalData onclick="doNothing('')">
             <h2>Options</h2>
-            <button onclick="toggleBoardFontSize()">big/smol</button>
-            <button onclick="togglePageTheme()">light/dark</button>
-            <button onclick="toggleFlippedBoard()">black/white</button>
+            <button onclick="toggleBoardFontSize()">Toggle board size</button><br>
+            <br>
+            <button onclick="togglePageTheme()">Toggle theme</button><br>
+            <br>
+            <button onclick="toggleFlippedBoard()">Toggle player view</button><br>
         </div>
     </div>
     <!-- END MODALS -->
@@ -70,30 +80,37 @@
             <!-- START TABS -->
                 <!-- gameLobbyTab - for create/join/watch/leave game control--> 
             <section id=gameLobbyTab>
-                <h3>Game lobby</h3>
-                Welcome user<br>
+                Welcome &lt;user&gt;<br>
                 <em>Shall we play a game?</em><br>
                 <br>
-                <button class="sidebutton" id="creategame" onclick="createGame()">Create Game</button>
-                <button class="sidebutton" id="joingame" onclick="joinGame()">Join Game</button>
-                <button class="sidebutton" id="leavegame" onclick="leaveGame()">Leave Game</button>
-                <button class="sidebutton" id="watchgame" onclick="watchGame()">Watch Game</button>
-                <br clear=all>
-                <br>
-                <input class="hidden" id="tab4" type="radio" name="tabs">
-                <label class="tabTitle" for="tab4">Your game history</label>
-            </section>
-                <!-- user history Tab. opened from the lobby -->
-            <section id=userHistoryTab>
-                <h3>User history</h3>
+                <input class="hidden" id="tab11" type="radio" name="tabs1">
+                <label class="tabTitle" for="tab11">Your game history</label>
+                <input class="hidden" id="tab12" type="radio" name="tabs1">
+                <label class="tabTitle" for="tab12">Your game future</label>
+                    <!-- user history Tab. opened from the lobby -->
+                <section id=gameLobbyPastTab>
                 User profile and game history listings here
+                </section>
+                    <!-- user future Tab. opened from the lobby -->
+                <section id=gameLobbyFutureTab>
+                    <button class="sidebutton" id="creategame" onclick="createGame()">Create Game</button>
+                    <button class="sidebutton" id="joingame" onclick="joinGame()">Join Game</button>
+                    <button class="sidebutton" id="leavegame" onclick="leaveGame()">Leave Game</button>
+                    <button class="sidebutton" id="watchgame" onclick="watchGame()">Watch Game</button>
+                </section>
             </section>
                 <!-- metadata tab - move history and controls--> 
             <section id=gameMetaTab>
-                <h3>Scoresheet and Share</h3>
                 Game ID:<br>
                 <input id="gameid" onkeyup="setGameTitle(this)"></input>
-                <br clear=all>
+                <br>
+                <br>
+                <h4>Move History:</h4>
+                <button class='stepHistoryButton' id='back2' onclick="stepBackAll()">&lt&lt</button>
+                <button class='stepHistoryButton' id='back1' onclick="stepBackMove()">&lt</button>
+                <button class='stepHistoryButton' id='forward1' onclick="stepForwardMove()">&gt</button>
+                <button class='stepHistoryButton' id='forward2' onclick="stepForwardAll()">&gt&gt</button>
+                <div class="movehistory" id="movehistory" contenteditable></div>
                 <br>
                 <button class='historyButton' id='reset' onclick="setup()">Reset Game</button>
                 <button class='historyButton' id='restorehistory' onclick="restoreGameHistory()">Restore History</button>
@@ -103,33 +120,36 @@
                 <br>
                 <button class='historyButton' id='pasteallrestore' onclick="pasteAllRestore()">Paste All & Reset</button>
                 <button class='historyButton' id='pastelinerestore' onclick="pasteLineRestore()">Paste Move</button>
-                <br clear="all">
-                <br>
-                <h4>Move History:</h4>
-                <div class="movehistory" id="movehistory" contenteditable></div>
-                <button class='stepHistoryButton' id='back2' onclick="stepBackAll()">&lt&lt</button>
-                <button class='stepHistoryButton' id='back1' onclick="stepBackMove()">&lt</button>
-                <button class='stepHistoryButton' id='forward1' onclick="stepForwardMove()">&gt</button>
-                <button class='stepHistoryButton' id='forward2' onclick="stepForwardAll()">&gt&gt</button>
                 <!-- <textarea id="movehistory" rows=20></textarea> -->
                 <br>
             </section>
                 <!-- find pieces tab - for game assistance --> 
             <section id="gameFindpiecesTab">
-                <h3>Find Pieces</h3>
+                <button class="findpiecebutton" id="findK" onclick="findPiecesClick('K')">
+                    <div class="findpiece" id=findKpiece></div>
+                </button>
+                <button class="findpiecebutton" id="findQ" onclick="findPiecesClick('Q')">
+                    <div class="findpiece" id=findQpiece></div>
+                </button>
+                <button class="findpiecebutton" id="findR" onclick="findPiecesClick('R')">
+                    <div class="findpiece" id=findRpiece></div>
+                </button>
+                <br clear=all>
+                <button class="findpiecebutton" id="findB" onclick="findPiecesClick('B')">
+                    <div class="findpiece" id=findBpiece></div>
+                </button>
+                <button class="findpiecebutton" id="findN" onclick="findPiecesClick('N')">
+                    <div class="findpiece" id=findNpiece></div>
+                </button>
+                <button class="findpiecebutton" id="findP" onclick="findPiecesClick('P')">
+                    <div class="findpiece" id=findPpiece></div>
+                </button>
+                <br>
+                <br>
                 <div class="captured-pieces">
                     <div class="column" id='whitecaptured'><strong>White Captured</strong></div>
                     <div class="column" id='blackcaptured'><strong>Black Captured</strong></div>
                 </div>
-                <br clear=all>
-                <hr>
-                <button class="findpiecebutton" id="findK" onclick="findPiecesClick('K')"></button>
-                <button class="findpiecebutton" id="findQ" onclick="findPiecesClick('Q')"></button>
-                <button class="findpiecebutton" id="findR" onclick="findPiecesClick('R')"></button>
-                <br clear=all>
-                <button class="findpiecebutton" id="findB" onclick="findPiecesClick('B')"></button>
-                <button class="findpiecebutton" id="findN" onclick="findPiecesClick('N')"></button>
-                <button class="findpiecebutton" id="findP" onclick="findPiecesClick('P')"></button>
             </section>
             <!-- END TABS -->
 

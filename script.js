@@ -306,8 +306,9 @@ function findPiecesClick(wave) {
 		FINDPIECE = "";
 	} else {
 		FINDPIECE = wave;
-		document.getElementById("find"+wave).style.background = "purple";
-		document.getElementById("find"+wave).style.backgroundImage = "none";
+		//document.getElementById("find"+wave).style.background = "purple";
+		//document.getElementById("find"+wave).style.backgroundImage = "none";
+		document.getElementById("find"+wave).classList.add("findHighlight");
 	}
 	setState(STATE);
 }
@@ -334,13 +335,12 @@ function toggleFlippedBoard() {
 }
 
 function clearFindPieces() {
-	let img = "linear-gradient(to bottom right, darkgray, dimgray)"
-	document.getElementById("findK").style.backgroundImage = img;
-	document.getElementById("findQ").style.backgroundImage = img;
-	document.getElementById("findR").style.backgroundImage = img;
-	document.getElementById("findN").style.backgroundImage = img;
-	document.getElementById("findB").style.backgroundImage = img;
-	document.getElementById("findP").style.backgroundImage = img;
+	document.getElementById("findK").classList.remove("findHighlight");
+	document.getElementById("findQ").classList.remove("findHighlight");
+	document.getElementById("findR").classList.remove("findHighlight");
+	document.getElementById("findN").classList.remove("findHighlight");
+	document.getElementById("findB").classList.remove("findHighlight");
+	document.getElementById("findP").classList.remove("findHighlight");
 }
 
 function highlightPotentialMoves(buttonID) {
@@ -1747,27 +1747,51 @@ function setState(stateIn) {
 	// Update the findpiece buttons to display the correct piece for this color
 	findbuttons = document.getElementsByClassName("findpiecebutton");
 	if (TURNCOLOR == "w") {
-		document.getElementById("findK").innerHTML = WK;
-		document.getElementById("findQ").innerHTML = WQ;
-		document.getElementById("findR").innerHTML = WR;
-		document.getElementById("findN").innerHTML = WN;
-		document.getElementById("findB").innerHTML = WB;
-		document.getElementById("findP").innerHTML = WP;
-		for (i = 0; i < 6; i++) {
-			findbuttons[i].classList.remove("blackpiececollapsed");
-			findbuttons[i].classList.add("whitepiececollapsed");
-		}
+		document.getElementById("findKpiece").classList.remove("blackpiececollapsed");
+		document.getElementById("findQpiece").classList.remove("blackpiececollapsed");
+		document.getElementById("findRpiece").classList.remove("blackpiececollapsed");
+		document.getElementById("findNpiece").classList.remove("blackpiececollapsed");
+		document.getElementById("findBpiece").classList.remove("blackpiececollapsed");
+		document.getElementById("findPpiece").classList.remove("blackpiececollapsed");
+		document.getElementById("findKpiece").classList.add("whitepiececollapsed");
+		document.getElementById("findQpiece").classList.add("whitepiececollapsed");
+		document.getElementById("findRpiece").classList.add("whitepiececollapsed");
+		document.getElementById("findNpiece").classList.add("whitepiececollapsed");
+		document.getElementById("findBpiece").classList.add("whitepiececollapsed");
+		document.getElementById("findPpiece").classList.add("whitepiececollapsed");
+		document.getElementById("findKpiece").innerHTML = WK;
+		document.getElementById("findQpiece").innerHTML = WQ;
+		document.getElementById("findRpiece").innerHTML = WR;
+		document.getElementById("findNpiece").innerHTML = WN;
+		document.getElementById("findBpiece").innerHTML = WB;
+		document.getElementById("findPpiece").innerHTML = WP;
+//		for (i = 0; i < 6; i++) {
+//			findbuttons[i].classList.remove("blackpiececollapsed");
+//			findbuttons[i].classList.add("whitepiececollapsed");
+//		}
 	} else {
-		document.getElementById("findK").innerHTML = BK;
-		document.getElementById("findQ").innerHTML = BQ;
-		document.getElementById("findR").innerHTML = BR;
-		document.getElementById("findN").innerHTML = BN;
-		document.getElementById("findB").innerHTML = BB;
-		document.getElementById("findP").innerHTML = BP;
-		for (i = 0; i < 6; i++) {
-			findbuttons[i].classList.add("blackpiececollapsed");
-			findbuttons[i].classList.remove("whitepiececollapsed");
-		}
+		document.getElementById("findKpiece").classList.remove("whitepiececollapsed");
+		document.getElementById("findQpiece").classList.remove("whitepiececollapsed");
+		document.getElementById("findRpiece").classList.remove("whitepiececollapsed");
+		document.getElementById("findNpiece").classList.remove("whitepiececollapsed");
+		document.getElementById("findBpiece").classList.remove("whitepiececollapsed");
+		document.getElementById("findPpiece").classList.remove("whitepiececollapsed");
+		document.getElementById("findKpiece").classList.add("blackpiececollapsed");
+		document.getElementById("findQpiece").classList.add("blackpiececollapsed");
+		document.getElementById("findRpiece").classList.add("blackpiececollapsed");
+		document.getElementById("findNpiece").classList.add("blackpiececollapsed");
+		document.getElementById("findBpiece").classList.add("blackpiececollapsed");
+		document.getElementById("findPpiece").classList.add("blackpiececollapsed");
+		document.getElementById("findKpiece").innerHTML = BK;
+		document.getElementById("findQpiece").innerHTML = BQ;
+		document.getElementById("findRpiece").innerHTML = BR;
+		document.getElementById("findNpiece").innerHTML = BN;
+		document.getElementById("findBpiece").innerHTML = BB;
+		document.getElementById("findPpiece").innerHTML = BP;
+//		for (i = 0; i < 6; i++) {
+//			findbuttons[i].classList.add("blackpiececollapsed");
+//			findbuttons[i].classList.remove("whitepiececollapsed");
+//		}
 	}
 }
 
