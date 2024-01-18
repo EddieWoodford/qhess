@@ -12,7 +12,7 @@
     --piece-selectedEnd-col: lime;    /* selected destination of piecee */
     --piece-checkKing-col: red;    /* king in check (including potential) */
     --piece-checkAttacker-col: blue;    /* piece putting king in check (including potential) */
-    --findpiece-selected-col: purple;    /* find pieces selection filter colour */
+    --findpiece-highlight-col: #808;    /* find pieces selection filter colour */
 }
 
 body {
@@ -306,9 +306,8 @@ input:checked + label {
     color: white;
     
     font-size: 4dvmin;
-    height: 1.5em;
-    width: 1.5em;
-    
+    height: 3em;
+    width: 3em;
     line-height: 1;
     float: center;
     border: black solid 1px;
@@ -318,8 +317,13 @@ input:checked + label {
     align-items: center; /* center the content vertically */
     padding: 0px;
     margin: 2px;
-    /* background-color: silver; */
-    background-image: linear-gradient(to bottom right, darkgray, dimgray);
+    background-color: #888;
+    /* background-image: linear-gradient(to bottom right, darkgray, dimgray);
+     * */
+}
+
+.findpieceselected {
+    background-image: #F0FA;
 }
 
 /* ************************************************* */
@@ -393,7 +397,7 @@ input:checked + label {
  */
 
 .findHighlight { /* when the player has clicked a find-piece button */
-    background-color: purple;
+    background-color: var(--findpiece-highlight-col);
 }
 /* destination1 - destination16 are the 16 points of the compass clockface style
  * ie, from NNE, NE, ENE, E, ESE, etc
