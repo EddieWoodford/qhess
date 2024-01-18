@@ -1745,6 +1745,7 @@ function setState(stateIn) {
 	capturedLabel.innerHTML = blackcaptured;
 	
 	// Update the findpiece buttons to display the correct piece for this color
+	findbuttons = document.getElementsByClassName("findpiecebutton");
 	if (TURNCOLOR == "w") {
 		document.getElementById("findK").innerHTML = WK;
 		document.getElementById("findQ").innerHTML = WQ;
@@ -1752,6 +1753,10 @@ function setState(stateIn) {
 		document.getElementById("findN").innerHTML = WN;
 		document.getElementById("findB").innerHTML = WB;
 		document.getElementById("findP").innerHTML = WP;
+		for (i = 0; i < 6; i++) {
+			findbuttons[i].classList.remove("blackpiececollapsed");
+			findbuttons[i].classList.add("whitepiececollapsed");
+		}
 	} else {
 		document.getElementById("findK").innerHTML = BK;
 		document.getElementById("findQ").innerHTML = BQ;
@@ -1759,6 +1764,10 @@ function setState(stateIn) {
 		document.getElementById("findN").innerHTML = BN;
 		document.getElementById("findB").innerHTML = BB;
 		document.getElementById("findP").innerHTML = BP;
+		for (i = 0; i < 6; i++) {
+			findbuttons[i].classList.add("blackpiececollapsed");
+			findbuttons[i].classList.remove("whitepiececollapsed");
+		}
 	}
 }
 
