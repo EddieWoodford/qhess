@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- <script src="socket.io/socket.io.js"></script> -->
+    <script src="socket.io/socket.io.js"></script>
 	<script src="script.js"></script>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
@@ -109,6 +109,10 @@
 				<button class="findpiecebutton" id="findP" onclick="findPiecesClick('P')"></button>
 			</div>
 			<div>
+				<input id="playerIDInput" placeholder="Enter your playerID"></input><br>
+				<input type="radio" id="blackradio" value="b" name="colorradios" checked><label for="blackradio">Black</label>
+				<input type="radio" id="whiteradio" value="w" name="colorradios"><label for="whiteradio">White</label>
+				<br>	
 				<button class="sidebutton" id="creategame" onclick="createGame()">Create Game</button>
 				<button class="sidebutton" id="joingame" onclick="joinGame()">Join Game</button>
 				<button class="sidebutton" id="leavegame" onclick="leaveGame()">Leave Game</button>

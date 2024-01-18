@@ -230,20 +230,11 @@ function sideButton1Action() {
 }
 
 function sideButton2Click() {
-	// Can put extra code here that will only happen when user clicks the button, rather than when the script calls
-	// sideButton2Action() to replicate a user click (typically while restoring a game)
-	
 	/////////////////////
-	sideButton2Action();
-}
-
-function sideButton2Action() {
 	if (STATE == "showCompleteMove" || STATE == "selectPCAttackers" || STATE == "move0") {
-		submitMove();
-		setState("clear");
+		sendMove(); confirmMove(); setState("clear");
 	} else if (STATE == "invalidMoveIntoCheck") {
-		restoreGameHistory();
-		setState("clear");
+		restoreGameHistory(); setState("clear");
 	}
 }
 
@@ -260,7 +251,7 @@ function declareNotAKing() {
 	findChecks(TURNCOLOR);
 }
 
-function submitMove() {
+function confirmMove() {
 	// Here after clicking sideButton1 when a valid move is chosen
 		
 	// Update move history label:
@@ -280,14 +271,7 @@ function submitMove() {
 	if (REPLAYNUMBER == -1) {
 		historyArea.innerText = MOVEHISTORY;
 	}
-	if (ONLINEGAME && (ONLINECOLOR == "" || TURNCOLOR == ONLINECOLOR)) {
-		// first person to make a move sets the colors
-		ONLINECOLOR = TURNCOLOR;
-		SOCKET.emit("make.move", {
-			movetext: THISMOVE + pcMoveText(),
-			color: TURNCOLOR
-		});
-	}
+	
 		
 	TAKENPIECE.captured = TURNNUMBER;
 	
@@ -555,7 +539,7 @@ function restoreGameHistory(historyText,nMoves) {
 		moveText = historyLines[i];
 		if (moveText!="") {
 			let resultText = doMoveFromText(moveText);
-			sideButton2Action(); // submit
+			confirmMove(); setState("clear"); // submit
 		}
 	}
 }
@@ -682,7 +666,7 @@ function stepForwardMove() {
 		moveText = historyLines[2*REPLAYNUMBER];
 		REPLAYNUMBER = REPLAYNUMBER + 0.5;
 		doMoveFromText(moveText);
-		sideButton2Action(); // submit
+		confirmMove(); setState("clear"); // submit
 		
 		// restoreGameHistory(null, 2*REPLAYNUMBER);
 	}
@@ -1857,27 +1841,53 @@ function createGame() {
 	if (!ONLINEGAME) {
 		const genRanHex = size => [...Array(size)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
 		const gameID = datestr() + "--" + genRanHex(8);
+		const color = colorRadioChoice();
+		const playerID = getPlayerID()
 		ONLINEGAME = true;
 		SOCKET.emit("create.game", {
 			movehistory: MOVEHISTORY,
 			gameID: gameID,
-			playerID: "Alice"
+			playerID: playerID,
+			color: color,
 		});
 		navigator.clipboard.writeText(gameID);
 		showNetworkID(gameID);
+	} else {
+		debugPrint("Already in online game");
+	}
+}
+
+function colorRadioChoice() {
+	var ele = document.getElementsByName("colorradios");
+	for (let i=0; i < ele.length; i++) {
+		if (ele[i].checked) {
+			return ele[i].value;
+		}
 	}
 }
 
 function joinGame() {
 	if (!ONLINEGAME) {
-		ONLINEGAME = true;
+		const playerID = getPlayerID()
 		const gameID = prompt("Enter Game ID");
 		SOCKET.emit("join.game", {
 			gameID: gameID,
-			playerID: "Bob"
+			playerID: playerID,
 		});
-		showNetworkID(gameID);
+		// if successful then the server will emit a "start.game" command, which calls the startGame() function
+	} else {
+		debugPrint("Already connected to an online game");
 	}
+}
+
+function getPlayerID() {
+	const playerIDInput = document.getElementById("playerIDInput");
+	let playerID = playerIDInput.value;
+	if (playerID == "") {
+		playerID = prompt("Enter Player ID");
+		playerIDInput.value = playerID;
+	}
+	return playerID;
 }
 
 function leaveGame() {
@@ -1893,7 +1903,33 @@ function showNetworkID(gameID) {
 	lbl.innerText = gameID;
 }
 
+function startGame(data) {
+	// turn off online mode to restore game
+	// ONLINEGAME = false; 
+	// ONLINECOLOR = "";
+	restoreGameHistory(data.movehistory);
+	showNetworkID(data.gameID);
+	ONLINECOLOR = data.color;
+	ONLINEGAME = true;
+	setState(STATE);
+}
 
+function sendMove() {
+	if (ONLINEGAME && TURNCOLOR == ONLINECOLOR) {
+		// first person to make a move sets the colors
+		SOCKET.emit("make.move", {
+			movehistory: MOVEHISTORY,
+			movetext: THISMOVE + pcMoveText(),
+		});
+	}
+}
+
+function moveMade(data) {
+	let newMoveText = doMoveFromText(data.movetext);
+	if (newMoveText == data.movetext) {
+		confirmMove(); setState("clear"); // submit
+	}
+}
 
 ////////////////////////////////
 // Initialisation
@@ -1904,13 +1940,8 @@ let SOCKET;
 if (url != "file://") {
 	SOCKET = io.connect(url);
 	// Bind event on players move
-	SOCKET.on("move.made", function(data) {
-		ONLINECOLOR = oppColor(data.color); // on first move, recieve colour choice
-		let newMoveText = doMoveFromText(data.movetext);
-		if (newMoveText == data.movetext) {
-			sideButton2Action(); // submit
-		}
-	});
+	SOCKET.on("start.game", startGame);
+	SOCKET.on("move.made", moveMade);
 }
 
 
