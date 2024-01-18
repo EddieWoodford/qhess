@@ -334,13 +334,12 @@ function toggleFlippedBoard() {
 }
 
 function clearFindPieces() {
-	let img = "linear-gradient(to bottom right, darkgray, dimgray)"
-	document.getElementById("findK").style.backgroundImage = img;
-	document.getElementById("findQ").style.backgroundImage = img;
-	document.getElementById("findR").style.backgroundImage = img;
-	document.getElementById("findN").style.backgroundImage = img;
-	document.getElementById("findB").style.backgroundImage = img;
-	document.getElementById("findP").style.backgroundImage = img;
+	document.getElementById("findK").style.background = "none";
+	document.getElementById("findQ").style.background = "none";
+	document.getElementById("findR").style.background = "none";
+	document.getElementById("findN").style.background = "none";
+	document.getElementById("findB").style.background = "none";
+	document.getElementById("findP").style.background = "none";
 }
 
 function highlightPotentialMoves(buttonID) {

@@ -12,6 +12,7 @@
     --piece-selectedEnd-col: lime;    /* selected destination of piecee */
     --piece-checkKing-col: red;    /* king in check (including potential) */
     --piece-checkAttacker-col: blue;    /* piece putting king in check (including potential) */
+    --findpiece-selected-col: purple;    /* find pieces selection filter colour */
 }
 
 body {
