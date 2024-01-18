@@ -122,10 +122,9 @@ header li:hover {
     margin: auto;
 }
 
-h2 {
+h2,h3,h4 {
     margin-top: 0;
     padding-top: 0;
-
 }
 
 textarea {
@@ -148,14 +147,14 @@ input.hidden {
     display: none;
 }
 
-.tabtitle {
+.tabTitle {
     display: inline-block;
     margin: 0 0 -1px;
     padding: 15px 25px;
     font-weight: 600;
     text-align: center;
     color: black;
-    border: 1px solid white;
+    border: 0px solid white;
 } 
 
 label[for*='1']:before {
@@ -168,6 +167,10 @@ label[for*='2']:before {
 
 label[for*='3']:before {
     content: '👀';
+}
+
+label[for*='4']:before {
+    content: '⛬';
 }
 
 label:hover {
@@ -185,11 +188,10 @@ input:checked + label {
 
 #tab1:checked ~ #gameLobbyTab,
 #tab2:checked ~ #gameMetaTab,
-#tab3:checked ~ #gameFindpiecesTab {
+#tab3:checked ~ #gameFindpiecesTab,
+#tab4:checked ~ #userHistoryTab {
   display: block;
 }
-
-
 
 /* ************************************************* */
 /* Flex container and children */
@@ -420,7 +422,7 @@ input:checked + label {
 
 
 .rankcoord {
-    color: black;
+    color: #888;
     background-color: white;
     width: 1em;
     height: 3em;
@@ -434,7 +436,7 @@ input:checked + label {
     padding: 0px;
 }
 .filecoord {
-    color: black;
+    color: #888;
     background-color: white;
     width: 3em;
     height: 1em;
