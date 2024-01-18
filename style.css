@@ -173,6 +173,13 @@ label[for*='4']:before {
     content: '⛬';
 }
 
+label[for*='11']:before {
+    content: '<-';
+}
+label[for*='12']:before {
+    content: '->';
+}
+
 label:hover {
     color: black;
     border-top: 2px solid grey;
@@ -190,6 +197,11 @@ input:checked + label {
 #tab2:checked ~ #gameMetaTab,
 #tab3:checked ~ #gameFindpiecesTab,
 #tab4:checked ~ #userHistoryTab {
+  display: block;
+}
+
+#tab11:checked ~ #gameLobbyPastTab,
+#tab12:checked ~ #gameLobbyFutureTab {
   display: block;
 }
 
@@ -461,21 +473,21 @@ input:checked + label {
 /* background to individual unicode characters */
 .whitepiece {
     background: #fffa;
-    border-radius: 16px;
+    border-radius: 30%;
 }
 .blackpiece {
     padding: 0;
     background: #000a;
-    border-radius: 16px;
+    border-radius: 30%;
 }
 .whitepiececollapsed {
     background: #fffa;
-    border-radius: 10em;
+    border-radius: 50%;
     font-size: var(--board-font-size-collapsed);
 }
 .blackpiececollapsed {
     background: #000a;
-    border-radius: 10em;
+    border-radius: 50%;
     font-size: var(--board-font-size-collapsed);
 }
 
