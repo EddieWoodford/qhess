@@ -529,14 +529,13 @@ function restoreGameHistory(historyText,nMoves) {
 	// Restore a game from whatever history is in the move history textbox
 	
 	let historyArea = document.getElementById("movehistory");
+	let historyLines;
 	if (historyText != undefined) {
-		historyText = historyText.replaceAll("\r\n\r\n","\r\n");
-		historyArea.innerText = historyText;
+		historyLines = getHistoryLines(historyText);
+		historyArea.innerText = historyLines.join("\r\n");
+	} else {
+		historyLines = getHistoryLines(historyArea.innerText);
 	}
-	historyText = historyArea.innerHTML;
-	historyText = historyText.replaceAll("&gt;",">");
-	historyText = historyText.replaceAll("&lt;","<");
-	let historyLines = historyText.split("<br>");
 	let moveText;
 	setup();
 	if (nMoves == undefined) {
@@ -549,6 +548,23 @@ function restoreGameHistory(historyText,nMoves) {
 			sideButton2Action(); // submit
 		}
 	}
+}
+
+function getHistoryLines(historyText) {
+	// ingest historyText in various formats and return a reliable format - an array of trimmed lines
+	const splitOn = (slicable, ...indices) =>
+		[0, ...indices].map((n, i, m) => slicable.slice(n, m[i + 1]).trim());
+	
+	historyText = historyText.replaceAll("\r","");
+	historyText = historyText.replaceAll("\n","");
+	var matches = historyText.match(/(\d+[bw]\.)/g)
+	var idxs = [];
+	for (i=0; i<matches.length; i++) {
+	  idxs.push(historyText.indexOf(matches[i]));
+	}
+	var historyLines = splitOn(historyText,...idxs);
+	historyLines = historyLines.filter((str) => str.length > 0)
+	return historyLines
 }
 
 function doMoveFromText(moveText) {
@@ -625,13 +641,8 @@ function copyAllHistory() {
 function copyLastMove() {
 	let historyArea = document.getElementById("movehistory");
 	let historyText = historyArea.innerText;
-	historyText = historyText.split("\r\n");
-	historyText = historyText[historyText.length-1];
-	historyText = historyText.split("\r");
-	historyText = historyText[historyText.length-1];
-	historyText = historyText.split("\n");
-	historyText = historyText[historyText.length-1];
-	navigator.clipboard.writeText(historyText);
+	let historyLines = getHistoryLines(historyText);
+	navigator.clipboard.writeText(historyLines[historyLines.length-1]);
 }
 
 function pasteAllRestore() {
@@ -642,7 +653,8 @@ function pasteAllRestore() {
 
 function pasteLineRestore() {
 	let historyArea = document.getElementById("movehistory");
-	historyText = historyArea.innerText;
+	let historyLines = getHistoryLines(historyArea.innerText);
+	let historyText = historyLines.join("\r\n");
 	navigator.clipboard.readText().then((clipText) => (restoreGameHistory(historyText + "\r\n" + clipText)));
 }
 
@@ -668,7 +680,7 @@ function stepBackMove() {
 
 function stepForwardMove() {
 	let historyArea = document.getElementById("movehistory");
-	historyLines = historyArea.innerHTML.split("<br>");
+	let historyLines = getHistoryLines(historyArea.innerText);
 	if (REPLAYNUMBER < historyLines.length/2) {
 		moveText = historyLines[2*REPLAYNUMBER];
 		REPLAYNUMBER = REPLAYNUMBER + 0.5;
@@ -681,11 +693,10 @@ function stepForwardMove() {
 
 function stepForwardAll() {
 	let historyArea = document.getElementById("movehistory");
-	historyLines = historyArea.innerHTML.split("<br>");
+	let historyLines = getHistoryLines(historyArea.innerText);
 	REPLAYNUMBER = historyLines.length/2;
 	restoreGameHistory(null, 2*REPLAYNUMBER);
 }
-
 
 function replaynumber2turnID() {
 	if (REPLAYNUMBER == -1) {

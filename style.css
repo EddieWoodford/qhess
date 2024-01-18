@@ -217,7 +217,7 @@ input:checked + label {
 .movehistory { /* movehistory text area */
     font-size: 2dvmin;
     border: black solid 1px;
-    max-height: 20em;
+    max-height: 8em;
     overflow: auto;
     font-family: Monospace;
     text-align: left;
