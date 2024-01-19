@@ -1,18 +1,18 @@
 :root {
-  --button-height: 2.5em;
-  --button-font-size: 2dvmin;
-  --board-font-size: 3.35dvmin; /* controls the board square size via the em unit */
-  --board-font-size-collapsed: 9dvmin;
-  --board-white-col: darkgray;  /* base colour of white squares */
-  --board-black-col: dimgray;   /* base colour of black squares */
-  --board-flex-flow: column nowrap; /* column-reverse nowrap when flipped to black's view */
-  --boardrow-flex-flow: row nowrap; /* row-reverse nowrap when flipped to black's view */
-  --piece-selectedStart-col: orange;    /* selected piece */
-  --piece-dest-col: #0F0a;    /* valid destinations */
-  --piece-selectedEnd-col: lime;    /* selected destination of piecee */
-  --piece-checkKing-col: red;    /* king in check (including potential) */
-  --piece-checkAttacker-col: blue;    /* piece putting king in check (including potential) */
-  
+    --button-height: 2.5em;
+    --button-font-size: 2dvmin;
+    --board-font-size: 3.35dvmin; /* controls the board square size via the em unit */
+    --board-font-size-collapsed: 9dvmin;
+    --board-white-col: darkgray;  /* base colour of white squares */
+    --board-black-col: dimgray;   /* base colour of black squares */
+    --board-flex-flow: column nowrap; /* column-reverse nowrap when flipped to black's view */
+    --boardrow-flex-flow: row nowrap; /* row-reverse nowrap when flipped to black's view */
+    --piece-selectedStart-col: orange;    /* selected piece */
+    --piece-dest-col: #0F0a;    /* valid destinations */
+    --piece-selectedEnd-col: lime;    /* selected destination of piecee */
+    --piece-checkKing-col: red;    /* king in check (including potential) */
+    --piece-checkAttacker-col: blue;    /* piece putting king in check (including potential) */
+    --findpiece-highlight-col: #808;    /* find pieces selection filter colour */
 }
 
 body {
@@ -22,8 +22,8 @@ body {
     /* transform: translate(-50%, -50%); */
     padding: 0em;
     margin: 0em;
-	font-size: 2dvmin;
-	/* font-family: Monospace; */
+    font-size: 2dvmin;
+    /* font-family: Monospace; */
 }
 
 header {
@@ -42,11 +42,11 @@ header {
 }
 
 header div {
-        margin: 0;
-        padding: 0 1em 0 1em;
-	font-size: 2rem;
-	display: inline;
-	vertical-align: middle;
+    margin: 0;
+    padding: 0 1em 0 1em;
+    font-size: 2rem;
+    display: inline;
+    vertical-align: middle;
     height: 100%;
 }
 
@@ -92,8 +92,10 @@ header li:hover {
     padding: 0em 0.2em 0em 0.1em;
 }
 
-.button {
+button {
     cursor: pointer;
+    height: var(--button-height);
+    font-size: var(--button-font-size);
 }
 
 .modalWrapper {
@@ -123,10 +125,9 @@ header li:hover {
     margin: auto;
 }
 
-h2 {
+h2,h3,h4 {
     margin-top: 0;
     padding-top: 0;
-
 }
 
 textarea {
@@ -136,44 +137,114 @@ textarea {
      box-sizing: border-box;         /* Opera/IE 8+ */
 }
 
+/*
+ * sections for tabs
+ */
+section {
+    display: none;
+    padding: 20px 0 0;
+    border-top: 1px solid #888;
+}
+
+input.hidden {
+    display: none;
+}
+
+.tabTitle {
+    display: inline-block;
+    margin: 0 0 -1px;
+    padding: 15px 25px;
+    font-weight: 600;
+    text-align: center;
+    color: black;
+    border: 0px solid white;
+} 
+
+label[for*='1']:before {
+    content: '🏠';
+}
+
+label[for*='2']:before {
+    content: '📝';
+}
+
+label[for*='3']:before {
+    content: '👀';
+}
+
+label[for*='4']:before {
+    content: '⛬';
+}
+
+label[for*='11']:before {
+    content: '<-';
+}
+label[for*='12']:before {
+    content: '->';
+}
+
+label:hover {
+    color: black;
+    border-top: 2px solid grey;
+    cursor: pointer;
+}
+
+input:checked + label {
+    color: black;
+    border: 1px solid #ddd;
+    border-top: 2px solid orange;
+    border-bottom: 1px solid white;
+}
+
+#tab1:checked ~ #gameLobbyTab,
+#tab2:checked ~ #gameMetaTab,
+#tab3:checked ~ #gameFindpiecesTab,
+#tab4:checked ~ #userHistoryTab {
+  display: block;
+}
+
+#tab11:checked ~ #gameLobbyPastTab,
+#tab12:checked ~ #gameLobbyFutureTab {
+  display: block;
+}
 
 /* ************************************************* */
 /* Flex container and children */
 /* ************************************************* */
 .container {
-  display: flex; /* or inline-flex */
-  flex-flow: row nowrap;
-  justify-content: space-evenly;
+    display: flex; /* or inline-flex */
+    flex-flow: row nowrap;
+    justify-content: space-evenly;
 }
 .game-control {
-	order: 2;
-        text-align: center;
+    order: 2;
+    text-align: center;
 }
 .board {
-	display: flex;
-	flex-flow: var(--board-flex-flow);
-	order: 1;
-	justify-content: center;
-	/* border: black solid 1px; */
-	/* resize: both; */
-	/* overflow: hidden; */
+    display: flex;
+    flex-flow: var(--board-flex-flow);
+    order: 1;
+    justify-content: center;
+    /* border: black solid 1px; */
+    /* resize: both; */
+    /* overflow: hidden; */
 }
 .movehistory { /* movehistory text area */
-	font-size: 2dvmin;
-	border: black solid 1px;
-	max-height: 20em;
-	overflow: auto;
-	font-family: Monospace;
-        text-align: left;
+    font-size: 2dvmin;
+    border: black solid 1px;
+    max-height: 8em;
+    overflow: auto;
+    font-family: Monospace;
+    text-align: left;
 }
 .stepHistoryButton {
-	float: left;
-	width: 25%;
-	height: var(--button-height);
-	font-size: var(--button-font-size);
+    float: left;
+    width: 25%;
+    height: var(--button-height);
+    font-size: var(--button-font-size);
 }
 #thismove { /* thismove text area */
-	font-size:2dvmin;
+    font-size:2dvmin;
 }
 
 
@@ -186,14 +257,14 @@ textarea {
 
 /* ********** Side Buttons ************ */
 .sidebutton {
-	font-size: var(--button-font-size);
-	height: var(--button-height);
-	width: 50%;
-	vertical-align:top;
-	
+    font-size: var(--button-font-size);
+    height: var(--button-height);
+    width: 50%;
+    vertical-align:top;
+    
     color: white;
     background: grey;
-	float: left;
+    float: left;
     border: black solid 1px;
     cursor: pointer;
 
@@ -205,12 +276,12 @@ textarea {
 
 /* ********** History Buttons ************ */
 .historyButton{
-	font-size: var(--button-font-size);
-	height: var(--button-height);
-	width: 50%;
-	vertical-align:top;
-	float: left;
-	cursor: pointer;
+    font-size: var(--button-font-size);
+    height: var(--button-height);
+    width: 50%;
+    vertical-align:top;
+    float: left;
+    cursor: pointer;
 }
 
 
@@ -219,13 +290,13 @@ textarea {
     border-top: 1px solid;
 }
 .column {
-  float: left;
-  width: 50%;
+    float: left;
+    width: 50%;
 }
 
 .find-pieces{
-	border-top: 1px solid;
-        float: bottom;
+    border-top: 1px solid;
+    float: bottom;
 }
 /* .find-pieces #find-pieces { */
     /* text-align: center; */
@@ -235,11 +306,10 @@ textarea {
 /* } */
 .findpiecebutton {
     color: white;
-	
-	font-size: 4dvmin;
-	height: 1.5em;
-	width: 1.5em;
-	
+    
+    font-size: 4dvmin;
+    height: 3em;
+    width: 3em;
     line-height: 1;
     float: center;
     border: black solid 1px;
@@ -249,24 +319,29 @@ textarea {
     align-items: center; /* center the content vertically */
     padding: 0px;
     margin: 2px;
-	/* background-color: silver; */
-    background-image: linear-gradient(to bottom right, darkgray, dimgray);
+    background-color: #888;
+    /* background-image: linear-gradient(to bottom right, darkgray, dimgray);
+     * */
+}
+
+.findpieceselected {
+    background-image: #F0FA;
 }
 
 /* ************************************************* */
 /* Board elements */
 /* ************************************************* */
 .boardrow {
-	display: flex;
-	flex-flow: var(--boardrow-flex-flow);
-	justify-content: center;
-	/* align-context: center; */
+    display: flex;
+    flex-flow: var(--boardrow-flex-flow);
+    justify-content: center;
+    /* align-context: center; */
 }
 .boardsquare { /* all squares always have this */
     color: white;
-	width: 3em;
-	height: 3em;
-	font-size: var(--board-font-size);
+    width: 3em;
+    height: 3em;
+    font-size: var(--board-font-size);
     border: black solid 1px;
     cursor: pointer;
     font-family: Monospace;
@@ -275,42 +350,42 @@ textarea {
     padding: 0px;
 }
 .whitesquare { /* all white squares always have this */
-	background-color: var(--board-white-col);
+    background-color: var(--board-white-col);
 }
 .blacksquare { /* all black squares always have this */
-	background-color: var(--board-black-col);
+    background-color: var(--board-black-col);
 }
 .hovered { /* when the player is hovering the mouse over it */
-	background-color: orange;
+    background-color: orange;
 }
 .selectable {
-        box-shadow: 0px 0px 0px 3px var(--piece-selectedStart-col) inset;
+    box-shadow: 0px 0px 0px 3px var(--piece-selectedStart-col) inset;
 }
 .selectable.checkKing {
-        box-shadow: 0px 0px 0px 6px var(--piece-checkKing-col) inset,
-                    0px 0px 0px 9px var(--piece-selectedStart-col) inset;
+    box-shadow: 0px 0px 0px 6px var(--piece-checkKing-col) inset,
+                0px 0px 0px 9px var(--piece-selectedStart-col) inset;
 }
 .selectedStart { /* when the player has clicked on it as a start */
-        box-shadow: 0px 0px 0px 6px var(--piece-selectedStart-col) inset;
+    box-shadow: 0px 0px 0px 6px var(--piece-selectedStart-col) inset;
 }
 .selectedStart.checkKing { /* when the player has clicked on a potKing as a start */
-        box-shadow: 0px 0px 0px 6px var(--piece-checkKing-col) inset,
-                    0px 0px 0px 12px var(--piece-selectedStart-col) inset;
+    box-shadow: 0px 0px 0px 6px var(--piece-checkKing-col) inset,
+                0px 0px 0px 12px var(--piece-selectedStart-col) inset;
 }
 .selectedEnd { /* when the player has clicked on it as a destination */
-        box-shadow: 0px 0px 0px 6px var(--piece-selectedEnd-col) inset;
+    box-shadow: 0px 0px 0px 6px var(--piece-selectedEnd-col) inset;
 }
 .potKing { /* when highlighted as a potential king to select */
-	background-color: red;
+    background-color: red;
 }
 .potAttacker { /* when highlighted as a potential attacker to select */
-	background-color: blue;
+    background-color: blue;
 }
 .checkKing { /* a king which is in check or potential check */
-        box-shadow: 0px 0px 0px 6px var(--piece-checkKing-col) inset;
+    box-shadow: 0px 0px 0px 6px var(--piece-checkKing-col) inset;
 }
 .checkAttacker { /* a piece attacking a checked king */
-        box-shadow: 0px 0px 0px 6px var(--piece-checkAttacker-col) inset;
+    box-shadow: 0px 0px 0px 6px var(--piece-checkAttacker-col) inset;
 }
 
 .selectedEnd.checkAttacker { /* both selectedEnd AND check attacker*/
@@ -318,9 +393,13 @@ textarea {
                 0px 0px 0px 12px var(--piece-selectedEnd-col) inset;
 }
 
+/* TODO: .checkAttacker and .destination{numbers} class pairs should be handled
+ * better
+ * ...any other class pairs that are missed?
+ */
 
 .findHighlight { /* when the player has clicked a find-piece button */
-	background-color: purple;
+    background-color: var(--findpiece-highlight-col);
 }
 /* destination1 - destination16 are the 16 points of the compass clockface style
  * ie, from NNE, NE, ENE, E, ESE, etc
@@ -336,39 +415,39 @@ textarea {
      */
 
 .destination1,.destination3,.destination5,.destination7,.destination9,.destination11,.destination13,.destination15 {
-	background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
-        box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
+    background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
+    box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
 }
 .destination2,.destination10 {
- 	/* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
-	background-image: linear-gradient(to bottom right, rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
-        box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
+     /* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
+    background-image: linear-gradient(to bottom right, rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
+    box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
 }
 .destination4,.destination12 {
-	/* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
-	background-image: linear-gradient(to bottom, rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
-        box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
+    /* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
+    background-image: linear-gradient(to bottom, rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
+    box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
 }
 .destination6,.destination14 {
-	/* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
-	background-image: linear-gradient(to top right, rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
-        box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
+    /* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
+    background-image: linear-gradient(to top right, rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
+    box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
 }
 .destination8,.destination16 {
-	/* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
-	background-image: linear-gradient(to right, rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
-        box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
+    /* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
+    background-image: linear-gradient(to right, rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
+    box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
 }
 
 
 .rankcoord {
-	color: black;
-	background-color: white;
-	width: 1em;
-	height: 3em;
-	font-size: var(--board-font-size);
+    color: #888;
+    background-color: white;
+    width: 1em;
+    height: 3em;
+    font-size: var(--board-font-size);
     border: none;
-	/* border: black solid 1px; */
+    /* border: black solid 1px; */
     font-family: monospace;
     
     line-height: 1;
@@ -376,76 +455,76 @@ textarea {
     padding: 0px;
 }
 .filecoord {
-	color: black;
-	background-color: white;
-	width: 3em;
-	height: 1em;
-	font-size: var(--board-font-size);
+    color: #888;
+    background-color: white;
+    width: 3em;
+    height: 1em;
+    font-size: var(--board-font-size);
     border: none;
-	/* border: black solid 1px; */
+    /* border: black solid 1px; */
     font-family: monospace;
     text-align: center;
     line-height: 1;
     padding: 0px;
 }
 .cornerbutton {
-	background-color: white;
+    background-color: white;
     width: 1em;
     height: 1em;
-	font-size: var(--board-font-size);
-	/* float: left; */
-	border: none;
-	/* border: black solid 1px; */
-	padding: 0px;
+    font-size: var(--board-font-size);
+    /* float: left; */
+    border: none;
+    /* border: black solid 1px; */
+    padding: 0px;
 }
 /* background to individual unicode characters */
 .whitepiece {
     background: #fffa;
-    border-radius: 16px;
+    border-radius: 30%;
 }
 .blackpiece {
     padding: 0;
     background: #000a;
-    border-radius: 16px;
+    border-radius: 30%;
 }
 .whitepiececollapsed {
     background: #fffa;
-    border-radius: 10em;
-	font-size: var(--board-font-size-collapsed);
+    border-radius: 50%;
+    font-size: var(--board-font-size-collapsed);
 }
 .blackpiececollapsed {
     background: #000a;
-    border-radius: 10em;
-	font-size: var(--board-font-size-collapsed);
+    border-radius: 50%;
+    font-size: var(--board-font-size-collapsed);
 }
 
 @media all and (max-aspect-ratio: 1.6) { /* Squarish screens */
-	:root {
-	  /* shrink the board down to fit in the other parts */
-	  --board-font-size: 2.19dvmax;
-	  --board-font-size-collapsed: 6dvmax;
-	}
+    :root {
+        /* shrink the board down to fit in the other parts */
+        --board-font-size: 2.19dvmax;
+        --board-font-size-collapsed: 6dvmax;
+    }
 }
 
 @media all and (max-aspect-ratio: 0.8) { /* Tall screens */
-	/* put everything in one big column */
-	:root {
-	  --board-font-size: 3.8dvmin;
-	  --board-font-size-collapsed: 11dvmin;
-	}
-	.container {
-		flex-flow: column nowrap;
-		align-items: stretch;
-	}
+    /* put everything in one big column */
+    :root {
+        --board-font-size: 3.8dvmin;
+        --board-font-size-collapsed: 11dvmin;
+    }
+    .container {
+        flex-flow: column nowrap;
+        align-items: stretch;
+    }
 }
 
 @media (pointer:coarse) {
     :root {
-		--button-font-size: 4dvmin;
-	}
-	body {
-		font-size: 3dvmin;
-	}
+        --button-font-size: 4dvmin;
+    }
+    body {
+        font-size: 3dvmin;
+    }
 }
 
 #gameid {
