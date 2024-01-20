@@ -545,12 +545,19 @@ function restoreGameHistory(historyText,nMoves) {
 
 function getHistoryLines(historyText) {
 	// ingest historyText in various formats and return a reliable format - an array of trimmed lines
+	if (historyText.length == 0) {
+		return [];
+	}
+	
 	const splitOn = (slicable, ...indices) =>
 		[0, ...indices].map((n, i, m) => slicable.slice(n, m[i + 1]).trim());
 	
 	historyText = historyText.replaceAll("\r","");
 	historyText = historyText.replaceAll("\n","");
 	var matches = historyText.match(/(\d+[bw]\.)/g)
+	if (matches == null) {
+		return [];
+	}
 	var idxs = [];
 	for (i=0; i<matches.length; i++) {
 	  idxs.push(historyText.indexOf(matches[i]));
@@ -1456,8 +1463,7 @@ function attPiece(i) {
 ////////////////////////////////
 
 function debugPrint(txt) {
-	debugLabel = document.getElementById("debug");
-	debugLabel.innerText = txt;
+	prompt(txt);
 }
 
 function setState(stateIn) {
@@ -1881,34 +1887,34 @@ function datestr() {
 	return `${currentYear}-${currentMonth}-${currentDay}--${currentHour}-${currentMinute}-${currentSecond}`;
 }
 
-function createGame() {
+function createGame(color) {
+	closeCreateGame(); // close the modal window
 	if (!ONLINEGAME) {
-		const genRanHex = size => [...Array(size)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
-		const gameID = datestr() + "--" + genRanHex(8);
-		const color = colorRadioChoice();
-		const playerID = getPlayerID()
+		let genRanHex = size => [...Array(size)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+		let gameID = datestr() + "--" + genRanHex(8);
+		let gameTitle = document.getElementById("gametitleInput").innerText;
+		document.getElementById("gametitleInput").innerText = "";
+		if (!gameTitle || gameTitle == "") {
+			gameTitle = "";
+		}
+		let playerID = getPlayerID();
 		ONLINEGAME = true;
 		SOCKET.emit("create.game", {
 			movehistory: MOVEHISTORY,
 			gameID: gameID,
+			gameTitle: gameTitle,
 			playerID: playerID,
 			color: color,
 		});
 		navigator.clipboard.writeText(gameID);
 		showNetworkID(gameID);
+		showGameTitle(gameTitle);
+		
 	} else {
 		debugPrint("Already in online game");
 	}
 }
 
-function colorRadioChoice() {
-	var ele = document.getElementsByName("colorradios");
-	for (let i=0; i < ele.length; i++) {
-		if (ele[i].checked) {
-			return ele[i].value;
-		}
-	}
-}
 
 function joinGame() {
 	if (!ONLINEGAME) {
@@ -1944,16 +1950,22 @@ function leaveGame() {
 
 function showNetworkID(gameID) {
 	let lbl = document.getElementById("networkid");
-	lbl.innerText = gameID;
+	lbl.innerText = "Send this ID to a friend for them to join:\r\n" + gameID;
+}
+
+function showGameTitle(gameTitle) {
+	let lbl = document.getElementById("gameTitle");
+	lbl.innerText = gameTitle;
 }
 
 function startGame(data) {
-	// turn off online mode to restore game
-	// ONLINEGAME = false; 
-	// ONLINECOLOR = "";
 	restoreGameHistory(data.movehistory);
 	showNetworkID(data.gameID);
+	showGameTitle(data.gameTitle);
 	ONLINECOLOR = data.color;
+	if (ONLINECOLOR == "b") {
+		toggleFlippedBoard();
+	}
 	ONLINEGAME = true;
 	setState(STATE);
 }

@@ -24,15 +24,14 @@ app.get("/", (req, res) => {
 
 // These arrays are all the same length and can be thought of as columns in a database, 1 row per game
 var gameID = []; // array of gameID
-var player1ID = []; // player1 player ID
-var player1Color = []; // player1 color
-var player1Socket = []; // player1 socket
-var player1SocketID = []; // player1 socket.id
-var player2ID = []; // player2 ID
-var player2Color = []; // player2 color
-var player2Socket = []; // player2 socket
-var player2SocketID = []; // player2 socket.id
 var movehistory = []; // array of move historys
+var blackID = []; // black player ID
+var blackSocket = []; // black socket
+var blackSocketID = []; // black socket.id
+var whiteID = []; // white ID
+var whiteSocket = []; // white socket
+var whiteSocketID = []; // white socket.id
+
 
 
 
@@ -53,66 +52,31 @@ io.on("connection", function(socket) {
 		// create new row in database:
 		gameID.push(data.gameID);
 		movehistory.push(data.movehistory);
-		player1ID.push(data.playerID);
-		player1Color.push(data.color);
-		player1Socket.push(socket);
-		player1SocketID.push(socket.id);
-		player2ID.push(null);
-		player2Color.push(oppColor(data.color));
-		player2Socket.push(null);
-		player2SocketID.push(null);
-		console.log("Added " + data.playerID + " to " + data.gameID + " in seat 1");
-		printDB();
+		blackID.push(null);
+		blackSocket.push(null);
+		blackSocketID.push(null);
+		whiteID.push(null);
+		whiteSocket.push(null);
+		whiteSocketID.push(null);
+		
+		addPlayerToGame(data,socket);
 	});
 
 	socket.on("join.game", function(data) {
-		let i = gameID.indexOf(data.gameID)
-		if (i == -1) {
-			console.log("Game ID does not exist");
-			socket.emit("game.notfound");
-			return
+		let i = addPlayerToGame(data,socket);
+		
+		if (i > -1) {
+			socket.emit("start.game", {
+				gameID: gameID[i],
+				movehistory: movehistory[i],
+				color: data.color, // the data object was modified to include .color in addPlayerToGame()
+			});
+			opponentOf(socket).emit("start.game", {
+				gameID: gameID[i],
+				movehistory: movehistory[i],
+				color: oppColor(data.color), // the data object was modified to include .color in addPlayerToGame()
+			});
 		}
-		// If two players are in a game and player1 leaves then seat 1 is open and can be joined.
-		// So we need to check if either seat is available.
-		if (player1ID[i]) {
-			if (player2ID[i]) {			
-				console.log("Both seats taken at this game")
-				socket.emit("game.full");
-				return
-			} else {
-				n = 2;
-			}
-		} else {
-			n = 1;
-		}
-		let color;
-		if (n == 2) {
-			player2ID[i] = data.playerID;
-			player2Socket[i] = socket;
-			player2SocketID[i] = socket.id;
-			color = player2Color[i];
-		} else {
-			player1ID[i] = data.playerID;
-			player1Socket[i] = socket;
-			player1SocketID[i] = socket.id;
-			color = player1Color[i];
-		}
-		
-		console.log("Added " + data.playerID + " to " + data.gameID + " in seat" + n);
-		printDB();
-		
-		socket.emit("start.game", {
-			gameID: gameID[i],
-			movehistory: movehistory[i],
-			color: color,
-		});
-		opponentOf(socket).emit("start.game", {
-			gameID: gameID[i],
-			movehistory: movehistory[i],
-			color: oppColor(color),
-		});
-		
-		
 	});
 	
 	socket.on("leave.game", function() {
@@ -125,22 +89,31 @@ io.on("connection", function(socket) {
     // Event for when any player makes a move
     socket.on("make.move", function(data) {
 		console.log(data);
-       
+		
 		// Validation of the moves can be done here
 
+		// socket.emit("move.made", data); // Emit for the player who made the move
+		opponentOf(socket).emit("move.made", data); // Emit for the opponent
+        
+		
 		// Update the game record
-		let json = JSON.stringify(data);
-		fs.writeFile(__dirname + "/games/test.json",json,"utf8",(err) => {
+		let i = socket2i(socket);
+		let jsonData = {}
+		jsonData.gameID = gameID[i];
+		jsonData.blackID = blackID[i];
+		jsonData.whiteID = whiteID[i];
+		let movehistory = data.movehistory.split("\r\n")
+		movehistory.push(data.movetext);
+		jsonData.movehistory = movehistory;
+		console.log(jsonData);
+		let jsonText = JSON.stringify(jsonData,null,4);
+		fs.writeFile(__dirname + "/games/test.json",jsonText,"utf8",(err) => {
 			if (err) {
 				console.log(err);
 			} else {
 				console.log('File write success');
 			}
 		});
-		
-		// socket.emit("move.made", data); // Emit for the player who made the move
-		opponentOf(socket).emit("move.made", data); // Emit for the opponent
-        
     });
 
 
@@ -149,58 +122,100 @@ io.on("connection", function(socket) {
 function printDB() {
 	console.log("gameID:");
 	console.log(gameID);
-	console.log("player1ID:");
-	console.log(player1ID);
-	console.log("player1Color:");
-	console.log(player1Color);
-	console.log("player2ID:");
-	console.log(player2ID);
-	console.log("player2Color:");
-	console.log(player2Color);
+	console.log("blackID:");
+	console.log(blackID);
+	console.log("whiteID:");
+	console.log(whiteID);
 }
+
+
+function addPlayerToGame(data,socket) {
+	let i = gameID.indexOf(data.gameID)
+	if (i == -1) {
+		// look for game file to restore historic game
+		
+		
+		// no live game or historic game of that id exists
+		console.log("Game ID does not exist");
+		socket.emit("game.notfound");
+		return -1
+	}
+	
+	// Figure out which color the player wants
+	let color;
+	if (data.color) {
+		color = data.color; // color requested by input
+	} else if (!blackID[i]) {
+		color = "b"; // black available
+	} else if (!whiteID[i]) {
+		color = "w"; // white available
+	} else {
+		console.log("Both seats taken at this game")
+		socket.emit("game.full");
+		return -1
+	}
+	data.color = color; 
+	
+	if (color == "b") {
+		if (blackID[i]) {
+			console.log("Black is taken at this game")
+			socket.emit("seat.taken");
+			return -1
+		}
+		blackID[i] = data.playerID;
+		blackSocket[i] = socket;
+		blackSocketID[i] = socket.id;
+	} else {
+		if (whiteID[i]) {
+			console.log("White is taken at this game")
+			socket.emit("seat.taken");
+			return -1
+		}
+		whiteID[i] = data.playerID;
+		whiteSocket[i] = socket;
+		whiteSocketID[i] = socket.id;
+	}
+
+	console.log("Added " + data.playerID + " to " + data.gameID + " in color" + color);
+	printDB();
+	return i
+}
+
 
 
 function removePlayerFromGame(socket) {
 	if (opponentOf(socket)) {
 		opponentOf(socket).emit("opponent.left");
 	}
-	let i = player2SocketID.indexOf(socket.id);
+	let i = whiteSocketID.indexOf(socket.id);
 	
 	if (i > -1) {
-		console.log("Removed " + player2ID[i] + " from " + gameID[i]);
-		delete player2ID[i];
-		delete player2Socket[i];
-		delete player2SocketID[i];
-		// clear color choices if either leaves
-		// delete player1Color[i];
-		// delete player2Color[i]; 
+		console.log("Removed " + whiteID[i] + " from " + gameID[i]);
+		delete whiteID[i];
+		delete whiteSocket[i];
+		delete whiteSocketID[i];
 	} else {
-		i = player1SocketID.indexOf(socket.id);
+		i = blackSocketID.indexOf(socket.id);
 		if (i > -1) {
-			console.log("Removed " + player1ID[i] + " from " + gameID[i]);
-			delete player1ID[i];
-			delete player1Socket[i];
-			delete player1SocketID[i];
-			// clear color choices if either leaves
-			// delete player1Color[i];
-			// delete player2Color[i];
+			console.log("Removed " + blackID[i] + " from " + gameID[i]);
+			delete blackID[i];
+			delete blackSocket[i];
+			delete blackSocketID[i];
 		}
 	}
 	
 	
-	if (!player1ID[i] && !player2ID[i]) {
+	if (!blackID[i] && !whiteID[i]) {
 		// No players left for this game, remove row from database
 		console.log("Cleaned up game " + gameID[i]);
 		gameID.splice(i,1);
-		player1ID.splice(i,1);
-		player1Color.splice(i,1);
-		player1Socket.splice(i,1);
-		player1SocketID.splice(i,1);
-		player2ID.splice(i,1);
-		player2Color.splice(i,1);
-		player2Socket.splice(i,1);
-		player2SocketID.splice(i,1);
 		movehistory.splice(i,1);
+		blackID.splice(i,1);
+		blackSocket.splice(i,1);
+		blackSocketID.splice(i,1);
+		whiteID.splice(i,1);
+		whiteSocket.splice(i,1);
+		whiteSocketID.splice(i,1);
 	}
 	
 }
@@ -209,14 +224,23 @@ function removePlayerFromGame(socket) {
 ////////////////////////////////
 // Utilities
 ////////////////////////////////
-function opponentOf(socket) {
-	let i = player2SocketID.indexOf(socket.id);
+function socket2i(socket) {
+	let i = whiteSocketID.indexOf(socket.id);
 	if (i > -1) {
-		return player1Socket[i];
+		return i;
 	} else {
-		i = player1SocketID.indexOf(socket.id);
+		i = blackSocketID.indexOf(socket.id);
+		return i;
+	}
+}
+function opponentOf(socket) {
+	let i = whiteSocketID.indexOf(socket.id);
+	if (i > -1) {
+		return blackSocket[i];
+	} else {
+		i = blackSocketID.indexOf(socket.id);
 		if (i > -1) {
-			return player2Socket[i];
+			return whiteSocket[i];
 		} else {
 			return
 		}

@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-<!-- <script src="socket.io/socket.io.js"></script> -->
+	<script src="socket.io/socket.io.js"></script>
     <script src="script.js"></script>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
@@ -55,6 +55,17 @@
             <button onclick="toggleFlippedBoard()">Toggle player view</button><br>
         </div>
     </div>
+	<div id='createGameWrapper' class=modalWrapper  onclick="closeCreateGame('')">
+        <div id=createGameDiv class=modalData onclick="doNothing('')">
+            <h2>Create Game</h2>
+			Game Title:<br>
+            <input id="gametitleInput"></input>
+			<br><br>
+            <button onclick="createGame('b')">Black</button>
+            <button onclick="createGame('w')">White</button>
+        </div>
+    </div>
+	
     <!-- END MODALS -->
 
     <div class="container">
@@ -80,7 +91,7 @@
             <!-- START TABS -->
                 <!-- gameLobbyTab - for create/join/watch/leave game control--> 
             <section id=gameLobbyTab>
-                Welcome &lt;user&gt;<br>
+                Welcome <input id="playerIDInput" placeholder="Enter your playerID"></input><br>
                 <em>Shall we play a game?</em><br>
                 <br>
                 <input class="hidden" id="tab11" type="radio" name="tabs1">
@@ -93,18 +104,15 @@
                 </section>
                     <!-- user future Tab. opened from the lobby -->
                 <section id=gameLobbyFutureTab>
-                    <button class="sidebutton" id="creategame" onclick="createGame()">Create Game</button>
+                    <button class="sidebutton" id="creategame" onclick="displayCreateGame()">Create Game</button>
                     <button class="sidebutton" id="joingame" onclick="joinGame()">Join Game</button>
                     <button class="sidebutton" id="leavegame" onclick="leaveGame()">Leave Game</button>
                     <button class="sidebutton" id="watchgame" onclick="watchGame()">Watch Game</button>
+					<label id="networkid"></label><br>
                 </section>
             </section>
                 <!-- metadata tab - move history and controls--> 
             <section id=gameMetaTab>
-                Game ID:<br>
-                <input id="gameid" onkeyup="setGameTitle(this)"></input>
-                <br>
-                <br>
                 <h4>Move History:</h4>
                 <button class='stepHistoryButton' id='back2' onclick="stepBackAll()">&lt&lt</button>
                 <button class='stepHistoryButton' id='back1' onclick="stepBackMove()">&lt</button>
@@ -155,10 +163,6 @@
 
             <br clear=all>
             <hr>
-            <div>
-                <label id="networkid">Hello</label> <br>
-                <label id="debug">Debug text</label>
-            </div>
 
             </div>
             <div id="gameArea">
