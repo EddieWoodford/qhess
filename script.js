@@ -1887,6 +1887,47 @@ function datestr() {
 	return `${currentYear}-${currentMonth}-${currentDay}--${currentHour}-${currentMinute}-${currentSecond}`;
 }
 
+function validPlayerID(str) {
+	return /^[A-Za-z0-9_]*$/.test(str);
+}
+
+function login(ele) {
+	if (ele) {
+		if (event.key != "Enter") {
+			return
+		}
+	}
+	const playerIDInput = document.getElementById("playerIDInput");
+	PLAYERID = playerIDInput.value;
+	if (PLAYERID == "") {
+		closeLogin();
+		el = document.getElementById("tab2");
+		el.checked = true;
+		
+	} else {
+		if (validPlayerID(PLAYERID)) {
+			closeLogin();
+			document.getElementById("welcomeLabel").innerText = "Welcome " + PLAYERID;
+			el = document.getElementById("tab1");
+			el.checked = true;
+			SOCKET.emit("login", {
+				playerID: PLAYERID,
+			});
+		} else {
+			alert("Player ID must contain only letters, numbers and underscores");
+			PLAYERID = "";
+			document.getElementById("welcomeLabel").innerText = "";
+		}
+	}
+}
+
+function cancelLogin() {
+	closeLogin();
+	PLAYERID = "";
+	el = document.getElementById("tab2");
+	el.checked = true;
+}
+
 function createGame(color) {
 	closeCreateGame(); // close the modal window
 	if (!ONLINEGAME) {
@@ -1897,13 +1938,12 @@ function createGame(color) {
 		if (!gameTitle || gameTitle == "") {
 			gameTitle = "";
 		}
-		let playerID = getPlayerID();
 		ONLINEGAME = true;
 		SOCKET.emit("create.game", {
 			movehistory: MOVEHISTORY,
 			gameID: gameID,
 			gameTitle: gameTitle,
-			playerID: playerID,
+			playerID: PLAYERID,
 			color: color,
 		});
 		navigator.clipboard.writeText(gameID);
@@ -1918,11 +1958,10 @@ function createGame(color) {
 
 function joinGame() {
 	if (!ONLINEGAME) {
-		const playerID = getPlayerID()
 		const gameID = prompt("Enter Game ID");
 		SOCKET.emit("join.game", {
 			gameID: gameID,
-			playerID: playerID,
+			playerID: PLAYERID,
 		});
 		// if successful then the server will emit a "start.game" command, which calls the startGame() function
 	} else {
@@ -1930,15 +1969,7 @@ function joinGame() {
 	}
 }
 
-function getPlayerID() {
-	const playerIDInput = document.getElementById("playerIDInput");
-	let playerID = playerIDInput.value;
-	if (playerID == "") {
-		playerID = prompt("Enter Player ID");
-		playerIDInput.value = playerID;
-	}
-	return playerID;
-}
+
 
 function leaveGame() {
 	if (ONLINEGAME) {
@@ -2036,6 +2067,7 @@ let STATE;
 let REPLAYNUMBER = -1;
 let ONLINEGAME = false;
 let ONLINECOLOR = "";
+let PLAYERID = "";
 
 window.onload = setup
 

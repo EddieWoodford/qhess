@@ -32,14 +32,17 @@ var whiteID = []; // white ID
 var whiteSocket = []; // white socket
 var whiteSocketID = []; // white socket.id
 
-
-
+// arrays of playerID / sockets
 
 // When a client connects
 io.on("connection", function(socket) {
     let id = socket.id;
 
     console.log("New client connected. ID: ", socket.id);
+
+	// socket.on("login", function(data) {
+		
+	// });
 
     socket.on("disconnect", () => {// Bind event for that socket (player)
         console.log("Client disconnected. ID: ", socket.id);
@@ -88,7 +91,7 @@ io.on("connection", function(socket) {
 
     // Event for when any player makes a move
     socket.on("make.move", function(data) {
-		console.log(data);
+		// console.log(data);
 		
 		// Validation of the moves can be done here
 
@@ -107,7 +110,7 @@ io.on("connection", function(socket) {
 		jsonData.movehistory = movehistory;
 		console.log(jsonData);
 		let jsonText = JSON.stringify(jsonData,null,4);
-		fs.writeFile(__dirname + "/games/test.json",jsonText,"utf8",(err) => {
+		fs.writeFile(__dirname + "/games/" + gameID[i] + ".json",jsonText,"utf8",(err) => {
 			if (err) {
 				console.log(err);
 			} else {
@@ -176,7 +179,7 @@ function addPlayerToGame(data,socket) {
 		whiteSocketID[i] = socket.id;
 	}
 
-	console.log("Added " + data.playerID + " to " + data.gameID + " in color" + color);
+	console.log("Added " + data.playerID + " to " + data.gameID + " in color " + color);
 	printDB();
 	return i
 }

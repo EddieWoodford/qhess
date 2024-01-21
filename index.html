@@ -4,6 +4,7 @@
 <head>
 	<script src="socket.io/socket.io.js"></script>
     <script src="script.js"></script>
+	<script src="ui.js"></script>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -55,6 +56,16 @@
             <button onclick="toggleFlippedBoard()">Toggle player view</button><br>
         </div>
     </div>
+	<div id='loginWrapper' class=modalWrapper  onclick="closeLogin('')">
+        <div id=loginDiv class=modalData onclick="doNothing('')">
+            <h2>Login</h2>
+			Player ID:<br>
+            <input id="playerIDInput" placeholder="Enter your playerID" onkeyup="login(this)"></input><br>
+			<br><br>
+            <button id = "loginOK" onclick="login()">OK</button>
+			<button id = "loginCancel" onclick="cancelLogin()">Cancel</button>
+        </div>
+    </div>
 	<div id='createGameWrapper' class=modalWrapper  onclick="closeCreateGame('')">
         <div id=createGameDiv class=modalData onclick="doNothing('')">
             <h2>Create Game</h2>
@@ -79,10 +90,10 @@
             <input id="thismove"></input>
             <br>
             <br>
-            <input class="hidden"  id="tab1" type="radio" name="tabs" checked>
+            <input class="hidden"  id="tab1" type="radio" name="tabs" onclick="displayLogin()">
             <label class="tabTitle" for="tab1">Lobby</label>
 
-            <input class="hidden" id="tab2" type="radio" name="tabs">
+            <input class="hidden" id="tab2" type="radio" name="tabs" checked>
             <label class="tabTitle" for="tab2">Metadata</label>
 
             <input class="hidden" id="tab3" type="radio" name="tabs">
@@ -91,7 +102,8 @@
             <!-- START TABS -->
                 <!-- gameLobbyTab - for create/join/watch/leave game control--> 
             <section id=gameLobbyTab>
-                Welcome <input id="playerIDInput" placeholder="Enter your playerID"></input><br>
+                <label id="welcomeLabel">Welcome player</label>
+				<br>
                 <em>Shall we play a game?</em><br>
                 <br>
                 <input class="hidden" id="tab11" type="radio" name="tabs1">
@@ -291,7 +303,6 @@
             </div>
         </div>
     </div>
-    <script src="ui.js"></script>
 </body>
 
 </html>
