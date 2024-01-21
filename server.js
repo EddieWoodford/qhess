@@ -24,6 +24,7 @@ app.get("/", (req, res) => {
 
 // These arrays are all the same length and can be thought of as columns in a database, 1 row per game
 var gameID = []; // array of gameID
+var gameTitle = []; // array of gameTitle
 var movehistory = []; // array of move historys
 var blackID = []; // black player ID
 var blackSocket = []; // black socket
@@ -32,7 +33,8 @@ var whiteID = []; // white ID
 var whiteSocket = []; // white socket
 var whiteSocketID = []; // white socket.id
 
-// arrays of playerID / sockets
+// Object with playerID as property and list of gameIDs as value
+var players = {};
 
 // When a client connects
 io.on("connection", function(socket) {
@@ -54,6 +56,7 @@ io.on("connection", function(socket) {
 	socket.on("create.game", function(data) {
 		// create new row in database:
 		gameID.push(data.gameID);
+		gameTitle.push(data.gameTitle);
 		movehistory.push(data.movehistory);
 		blackID.push(null);
 		blackSocket.push(null);
@@ -69,6 +72,9 @@ io.on("connection", function(socket) {
 		let i = addPlayerToGame(data,socket);
 		
 		if (i > -1) {
+			// savePlayerGameList(blackID[i]);
+			// savePlayerGameList(whiteID[i]);
+			
 			socket.emit("start.game", {
 				gameID: gameID[i],
 				movehistory: movehistory[i],
@@ -95,19 +101,23 @@ io.on("connection", function(socket) {
 		
 		// Validation of the moves can be done here
 
-		// socket.emit("move.made", data); // Emit for the player who made the move
-		opponentOf(socket).emit("move.made", data); // Emit for the opponent
-        
-		
+		// Validation passed:
 		// Update the game record
 		let i = socket2i(socket);
+		let thisMoveHistory = data.movehistory.split("\r\n")
+		thisMoveHistory.push(data.movetext);
+		movehistory[i] = thisMoveHistory;
+		
+		
+		// socket.emit("move.made", data); // Emit for the player who made the move
+		opponentOf(socket).emit("move.made", data); // Emit for the opponent
+		
+		// Save the game history to json
 		let jsonData = {}
 		jsonData.gameID = gameID[i];
 		jsonData.blackID = blackID[i];
 		jsonData.whiteID = whiteID[i];
-		let movehistory = data.movehistory.split("\r\n")
-		movehistory.push(data.movetext);
-		jsonData.movehistory = movehistory;
+		jsonData.movehistory = movehistory[i];
 		console.log(jsonData);
 		let jsonText = JSON.stringify(jsonData,null,4);
 		fs.writeFile(__dirname + "/games/" + gameID[i] + ".json",jsonText,"utf8",(err) => {
@@ -125,6 +135,8 @@ io.on("connection", function(socket) {
 function printDB() {
 	console.log("gameID:");
 	console.log(gameID);
+	console.log("gameTitle:");
+	console.log(gameTitle);
 	console.log("blackID:");
 	console.log(blackID);
 	console.log("whiteID:");
@@ -146,15 +158,24 @@ function addPlayerToGame(data,socket) {
 	
 	// Figure out which color the player wants
 	let color;
+	let oppID;
 	if (data.color) {
 		color = data.color; // color requested by input
+		oppID = null;
 	} else if (!blackID[i]) {
 		color = "b"; // black available
+		oppID = whiteID[i];
 	} else if (!whiteID[i]) {
-		color = "w"; // white available
+		color = "w"; // whie available
+		oppID = blackID[i];
 	} else {
 		console.log("Both seats taken at this game")
 		socket.emit("game.full");
+		return -1
+	}
+	if (data.playerID == oppID) {
+		console.log("Same player can't play both seats");
+		socket.emit("cant.play.self");
 		return -1
 	}
 	data.color = color; 
@@ -184,7 +205,9 @@ function addPlayerToGame(data,socket) {
 	return i
 }
 
-
+// savePlayerGameList(playerID) {
+	// filepath = __dirname + "/players/" + playerID + ".json";
+// }
 
 function removePlayerFromGame(socket) {
 	if (opponentOf(socket)) {
@@ -212,6 +235,7 @@ function removePlayerFromGame(socket) {
 		// No players left for this game, remove row from database
 		console.log("Cleaned up game " + gameID[i]);
 		gameID.splice(i,1);
+		gameTitle.splice(i,1);
 		movehistory.splice(i,1);
 		blackID.splice(i,1);
 		blackSocket.splice(i,1);

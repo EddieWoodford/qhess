@@ -543,30 +543,6 @@ function restoreGameHistory(historyText,nMoves) {
 	}
 }
 
-function getHistoryLines(historyText) {
-	// ingest historyText in various formats and return a reliable format - an array of trimmed lines
-	if (historyText.length == 0) {
-		return [];
-	}
-	
-	const splitOn = (slicable, ...indices) =>
-		[0, ...indices].map((n, i, m) => slicable.slice(n, m[i + 1]).trim());
-	
-	historyText = historyText.replaceAll("\r","");
-	historyText = historyText.replaceAll("\n","");
-	var matches = historyText.match(/(\d+[bw]\.)/g)
-	if (matches == null) {
-		return [];
-	}
-	var idxs = [];
-	for (i=0; i<matches.length; i++) {
-	  idxs.push(historyText.indexOf(matches[i]));
-	}
-	var historyLines = splitOn(historyText,...idxs);
-	historyLines = historyLines.filter((str) => str.length > 0)
-	return historyLines
-}
-
 function doMoveFromText(moveText) {
 	let r;
 	let c;
@@ -1339,6 +1315,29 @@ function getPotentialMoves(coords,waves) {
 ////////////////////////////////
 // Utilities
 ////////////////////////////////
+function getHistoryLines(historyText) {
+	// ingest historyText in various formats and return a reliable format - an array of trimmed lines
+	if (historyText.length == 0) {
+		return [];
+	}
+	
+	const splitOn = (slicable, ...indices) =>
+		[0, ...indices].map((n, i, m) => slicable.slice(n, m[i + 1]).trim());
+	
+	historyText = historyText.replaceAll("\r","");
+	historyText = historyText.replaceAll("\n","");
+	var matches = historyText.match(/(\d+[bw]\.)/g)
+	if (matches == null) {
+		return [];
+	}
+	var idxs = [];
+	for (i=0; i<matches.length; i++) {
+	  idxs.push(historyText.indexOf(matches[i]));
+	}
+	var historyLines = splitOn(historyText,...idxs);
+	historyLines = historyLines.filter((str) => str.length > 0)
+	return historyLines
+}
 function setvalue(arr,filter,val) {
 	for (let i=0; i < filter.length; i++) {
 		if (filter[i]) {
@@ -1564,7 +1563,7 @@ function setState(stateIn) {
 	if (ONLINEGAME && ONLINECOLOR == oppColor(TURNCOLOR)) {
 		sideButton2.style.visibility = "hidden";
 		sideButton1.style.visibility = "hidden";
-		promptlabel.innerHTML = "Waiting for Opponent";
+		promptlabel.innerHTML = "Waiting for Opponent<br><br>";
 		waitingForOpponent = true;
 	}
 	
@@ -1888,7 +1887,9 @@ function datestr() {
 }
 
 function validPlayerID(str) {
-	return /^[A-Za-z0-9_]*$/.test(str);
+	let test1 = /^[A-Za-z]*$/.test(str[0]);
+	let test2 = /^[A-Za-z0-9_]*$/.test(str);
+	return test1 && test2;
 }
 
 function login(ele) {
@@ -1908,13 +1909,13 @@ function login(ele) {
 		if (validPlayerID(PLAYERID)) {
 			closeLogin();
 			document.getElementById("welcomeLabel").innerText = "Welcome " + PLAYERID;
-			el = document.getElementById("tab1");
-			el.checked = true;
+			document.getElementById("tab1").checked = true;
+			document.getElementById("tab12").checked = true;
 			SOCKET.emit("login", {
 				playerID: PLAYERID,
 			});
 		} else {
-			alert("Player ID must contain only letters, numbers and underscores");
+			alert("Player ID must start with a letter, and contain only letters, numbers and underscores");
 			PLAYERID = "";
 			document.getElementById("welcomeLabel").innerText = "";
 		}
@@ -1929,12 +1930,13 @@ function cancelLogin() {
 }
 
 function createGame(color) {
-	closeCreateGame(); // close the modal window
+	
 	if (!ONLINEGAME) {
 		let genRanHex = size => [...Array(size)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
 		let gameID = datestr() + "--" + genRanHex(8);
-		let gameTitle = document.getElementById("gametitleInput").innerText;
-		document.getElementById("gametitleInput").innerText = "";
+		let gameTitle = document.getElementById("gametitleInput").value;
+		closeCreateGame(); // close the modal window
+		document.getElementById("gametitleInput").value = "";
 		if (!gameTitle || gameTitle == "") {
 			gameTitle = "";
 		}
@@ -1951,10 +1953,10 @@ function createGame(color) {
 		showGameTitle(gameTitle);
 		
 	} else {
+		closeCreateGame(); // close the modal window
 		debugPrint("Already in online game");
 	}
 }
-
 
 function joinGame() {
 	if (!ONLINEGAME) {
@@ -1968,8 +1970,6 @@ function joinGame() {
 		debugPrint("Already connected to an online game");
 	}
 }
-
-
 
 function leaveGame() {
 	if (ONLINEGAME) {
@@ -2017,6 +2017,65 @@ function moveMade(data) {
 		confirmMove(); setState("clear"); // submit
 	}
 }
+
+////////////////////////////////
+// UI
+////////////////////////////////
+function doNothing() {
+  event.preventDefault();
+  event.stopPropagation();
+};
+// infomation modal
+function displayInfo() {
+  document.getElementById('infoWrapper').style.display = 'block'
+};
+function closeInfo() {
+  document.getElementById('infoWrapper').style.display = 'none'
+};
+// help modal
+function displayHelp() {
+  document.getElementById('helpWrapper').style.display = 'block'
+};
+function closeHelp() {
+  document.getElementById('helpWrapper').style.display = 'none'
+};
+// meta (score and share) modal
+function displayMeta() {
+  document.getElementById('metaWrapper').style.display = 'block'
+};
+function closeMeta() {
+  document.getElementById('metaWrapper').style.display = 'none'
+};
+// options modal
+function displayOptions() {
+  document.getElementById('optionsWrapper').style.display = 'block'
+};
+function closeOptions() {
+  document.getElementById('optionsWrapper').style.display = 'none'
+};
+// create game modal
+function displayCreateGame() { 
+	// done via the "Create Game" button
+	document.getElementById('createGameWrapper').style.display = 'block';
+	document.getElementById("gametitleInput").focus();
+	document.getElementById("gametitleInput").select();
+};
+function closeCreateGame() {
+  document.getElementById('createGameWrapper').style.display = 'none'
+};
+// login modal
+function displayLogin() { 
+	// done via the "Create Game" button
+	if (PLAYERID == "") {
+		document.getElementById('loginWrapper').style.display = 'block';
+		document.getElementById("playerIDInput").focus();
+		document.getElementById("playerIDInput").select();
+	}
+  
+};
+function closeLogin() {
+	document.getElementById('loginWrapper').style.display = 'none'
+};
 
 ////////////////////////////////
 // Initialisation
