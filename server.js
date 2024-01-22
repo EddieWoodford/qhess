@@ -22,7 +22,7 @@ if (os.hostname().indexOf("DESKTOP") > -1) {
 	app.use(express.static(__dirname + "/qhessapi/node_modules/"));
 }
 
-app.get("/", (req, res) => {
+app.get("//", (req, res) => {
     console.log('createReadStream at ' +  __dirname + "/index.html")
     res.writeHead(200, {'Content-Type': 'text/html'});
     const stream = fs.createReadStream(__dirname + "/index.html");
