@@ -12,17 +12,19 @@ const io = socketIo(server);
 // Serve static resources
 
 if (os.hostname().indexOf("DESKTOP") > -1) {
-	console.log('local')
+        console.log('local at ' + __dirname )
 	app.use(express.static(__dirname + "/"));
 	app.use(express.static(__dirname + "/node_modules/"));
 } else {
 	console.log(os.hostname())
-	console.log('deployed')
+	console.log('deployed at ' + __dirname )
 	app.use(express.static(__dirname + "/qhessapi/"));
 	app.use(express.static(__dirname + "/qhessapi/node_modules/"));
 }
 
 app.get("/", (req, res) => {
+    console.log('createReadStream at ' +  __dirname + "/index.html")
+    res.writeHead(200, {'Content-Type': 'text/html'});
     const stream = fs.createReadStream(__dirname + "/index.html");
     stream.pipe(res);
 });
