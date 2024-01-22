@@ -1,21 +1,23 @@
-const http = require("http")
+const http = require("http");
 const express = require("express");
 const app = express();
 const socketIo = require("socket.io");
 const fs = require("fs");
+const os = require("os");
 
 const server = http.Server(app).listen(8080,'localhost');
 const io = socketIo(server);
 
 
 // Serve static resources
-// app.use(express.static(__dirname + "/../client/"));
-// app.use(express.static(__dirname + "/../node_modules/"));
 
-if (location.hostname === "localhost") {
+if (os.hostname().indexOf("DESKTOP") > -1) {
+	console.log('local')
 	app.use(express.static(__dirname + "/"));
 	app.use(express.static(__dirname + "/node_modules/"));
 } else {
+	console.log(os.hostname())
+	console.log('deployed')
 	app.use(express.static(__dirname + "/qhessapi/"));
 	app.use(express.static(__dirname + "/qhessapi/node_modules/"));
 }
