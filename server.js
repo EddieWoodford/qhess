@@ -12,8 +12,13 @@ const io = socketIo(server);
 // app.use(express.static(__dirname + "/../client/"));
 // app.use(express.static(__dirname + "/../node_modules/"));
 
-app.use(express.static(__dirname + "/"));
-app.use(express.static(__dirname + "/node_modules/"));
+if (location.hostname === "localhost") {
+	app.use(express.static(__dirname + "/"));
+	app.use(express.static(__dirname + "/node_modules/"));
+} else {
+	app.use(express.static(__dirname + "/qhessapi/"));
+	app.use(express.static(__dirname + "/qhessapi/node_modules/"));
+}
 
 app.get("/", (req, res) => {
     const stream = fs.createReadStream(__dirname + "/index.html");
