@@ -159,7 +159,7 @@ function addPlayerToGame(data,socket) {
 		
 		// no live game or historic game of that id exists
 		console.log("Game ID does not exist");
-		socket.emit("game.notfound");
+		socket.emit("err.gamenotfound");
 		return -1
 	}
 	
@@ -177,12 +177,12 @@ function addPlayerToGame(data,socket) {
 		oppID = blackID[i];
 	} else {
 		console.log("Both seats taken at this game")
-		socket.emit("game.full");
+		socket.emit("err.gamefull");
 		return -1
 	}
 	if (data.playerID == oppID) {
 		console.log("Same player can't play both seats");
-		socket.emit("cant.play.self");
+		socket.emit("err.cantplayself");
 		return -1
 	}
 	data.color = color; 
@@ -190,7 +190,7 @@ function addPlayerToGame(data,socket) {
 	if (color == "b") {
 		if (blackID[i]) {
 			console.log("Black is taken at this game")
-			socket.emit("seat.taken");
+			socket.emit("err.seattaken");
 			return -1
 		}
 		blackID[i] = data.playerID;
@@ -199,7 +199,7 @@ function addPlayerToGame(data,socket) {
 	} else {
 		if (whiteID[i]) {
 			console.log("White is taken at this game")
-			socket.emit("seat.taken");
+			socket.emit("err.seattaken");
 			return -1
 		}
 		whiteID[i] = data.playerID;

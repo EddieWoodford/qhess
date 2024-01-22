@@ -26,6 +26,10 @@ body {
     /* font-family: Monospace; */
 }
 
+input {
+	font-size:2dvmin;
+}
+
 header {
     margin: 0 0 0.5dvmin 0;
     padding: 0;

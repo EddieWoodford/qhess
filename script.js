@@ -30,7 +30,7 @@ class Square {
 			}
         }
 		this.button.onclick = () => {
-			if (ONLINEGAME && ONLINECOLOR == oppColor(TURNCOLOR)) {return}
+			if (ONLINEGAME && ONLINECOLOR != TURNCOLOR) {return}
 			if (REPLAYNUMBER > -1) {return}
 			FINDPIECE = "";
 			clearFindPieces();
@@ -1320,6 +1320,9 @@ function getHistoryLines(historyText) {
 	if (historyText.length == 0) {
 		return [];
 	}
+	if (typeof historyText == "object") {
+		historyText = historyText.join("\r\n");
+	}
 	
 	const splitOn = (slicable, ...indices) =>
 		[0, ...indices].map((n, i, m) => slicable.slice(n, m[i + 1]).trim());
@@ -1560,7 +1563,7 @@ function setState(stateIn) {
 		sideButton2.innerText = "Submit";
 	}
 	let waitingForOpponent = false;
-	if (ONLINEGAME && ONLINECOLOR == oppColor(TURNCOLOR)) {
+	if (ONLINEGAME && ONLINECOLOR != TURNCOLOR) {
 		sideButton2.style.visibility = "hidden";
 		sideButton1.style.visibility = "hidden";
 		promptlabel.innerHTML = "Waiting for Opponent<br><br>";
@@ -1930,7 +1933,6 @@ function cancelLogin() {
 }
 
 function createGame(color) {
-	
 	if (!ONLINEGAME) {
 		let genRanHex = size => [...Array(size)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
 		let gameID = datestr() + "--" + genRanHex(8);
@@ -1951,7 +1953,7 @@ function createGame(color) {
 		navigator.clipboard.writeText(gameID);
 		showNetworkID(gameID);
 		showGameTitle(gameTitle);
-		
+		setState(STATE);
 	} else {
 		closeCreateGame(); // close the modal window
 		debugPrint("Already in online game");
@@ -1976,7 +1978,13 @@ function leaveGame() {
 		ONLINEGAME = false;
 		ONLINECOLOR = "";
 		SOCKET.emit("leave.game");
+		setState(STATE);
 	}
+}
+
+function opponentLeft() {
+	ONLINECOLOR = "";
+	setState(STATE);
 }
 
 function showNetworkID(gameID) {
@@ -1993,7 +2001,7 @@ function startGame(data) {
 	restoreGameHistory(data.movehistory);
 	showNetworkID(data.gameID);
 	showGameTitle(data.gameTitle);
-	ONLINECOLOR = data.color;
+	ONLINECOLOR = data.color; // need ONLINECOLOR to play
 	if (ONLINECOLOR == "b") {
 		toggleFlippedBoard();
 	}
@@ -2088,6 +2096,12 @@ if (url != "file://") {
 	// Bind event on players move
 	SOCKET.on("start.game", startGame);
 	SOCKET.on("move.made", moveMade);
+	SOCKET.on("opponent.left",opponentLeft);
+	// SOCKET.on("err.gamenotfound",gameNotFound);
+	// SOCKET.on("err.gamefull",gameFull);
+	// SOCKET.on("err.cantplayself",cantPlaySelf);
+	// SOCKET.on("err.seattaken",seatTaken);
+	
 }
 
 
