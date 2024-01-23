@@ -2089,20 +2089,7 @@ function closeLogin() {
 // Initialisation
 ////////////////////////////////
 
-const url = window.location.origin;
-let SOCKET;
-if (url != "file://") {
-	SOCKET = io.connect(url);
-	// Bind event on players move
-	SOCKET.on("start.game", startGame);
-	SOCKET.on("move.made", moveMade);
-	SOCKET.on("opponent.left",opponentLeft);
-	// SOCKET.on("err.gamenotfound",gameNotFound);
-	// SOCKET.on("err.gamefull",gameFull);
-	// SOCKET.on("err.cantplayself",cantPlaySelf);
-	// SOCKET.on("err.seattaken",seatTaken);
-	
-}
+
 
 
 // Chess piece coloured emojis:
@@ -2141,6 +2128,35 @@ let REPLAYNUMBER = -1;
 let ONLINEGAME = false;
 let ONLINECOLOR = "";
 let PLAYERID = "";
+
+
+let SERVER = window.location.origin;
+if (SERVER == "file://") {
+	// developing on Eddie's computer
+	SERVER = "http://localhost:8080";
+} else {
+	SERVER = "https://generic-trademark.com/qhessapi";
+}
+let SOCKET;
+if (SERVER != "file://") {
+	var connectionOptions =  {
+            "force new connection" : true,
+            "reconnectionAttempts": "Infinity", //avoid having user reconnect manually in order to prevent dead clients after a server restart
+            "timeout" : 10000, //before connect_error and connect_timeout are emitted.
+            "transports" : ["websocket"]
+        };
+	SOCKET = io(SERVER,connectionOptions);
+	// SOCKET = io.connect(SERVER);
+		
+	// Bind event on players move
+	SOCKET.on("start.game", startGame);
+	SOCKET.on("move.made", moveMade);
+	SOCKET.on("opponent.left",opponentLeft);
+	// SOCKET.on("err.gamenotfound",gameNotFound);
+	// SOCKET.on("err.gamefull",gameFull);
+	// SOCKET.on("err.cantplayself",cantPlaySelf);
+	// SOCKET.on("err.seattaken",seatTaken);
+}
 
 window.onload = setup
 
