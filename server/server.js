@@ -8,6 +8,8 @@ const os = require("os");
 const server = http.Server(app).listen(8080,'localhost');
 const io = socketIo(server);
 
+//Allow Cross Domain Requests
+io.set('transports', [ 'websocket' ]);
 
 // Serve static resources
 
