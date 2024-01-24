@@ -5,11 +5,11 @@ const socketIo = require("socket.io");
 const fs = require("fs");
 const os = require("os");
 
-const server = http.Server(app).listen(8080,'localhost');
+const server = http.Server(app).listen(8080);
 const io = socketIo(server);
 
 //Allow Cross Domain Requests
-io.set('transports', [ 'websocket' ]);
+// io.set('transports', [ 'websocket' ]);
 
 // Serve static resources
 
