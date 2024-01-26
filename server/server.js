@@ -6,8 +6,7 @@ const fs = require("fs");
 const os = require("os");
 
 const server = http.Server(app).listen(8080);
-const io = socketIo(server);
-
+const io = socketIo(server, {transports: ["websocket"]});
 //Allow Cross Domain Requests
 // io.set('transports', [ 'websocket' ]);
 
