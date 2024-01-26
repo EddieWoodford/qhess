@@ -60,9 +60,9 @@
         <div id=loginDiv class=modalData onclick="doNothing('')">
             <h2>Login</h2>
 			Player ID:<br>
-            <input id="playerIDInput" placeholder="Enter your playerID" onkeyup="login(this)"></input><br>
+            <input id="playerIDInput" placeholder="Enter your playerID" onkeyup="loginAttempt(this)"></input><br>
 			<br><br>
-            <button id = "loginOK" onclick="login()">OK</button>
+            <button id = "loginOK" onclick="loginAttempt()">OK</button>
 			<button id = "loginCancel" onclick="cancelLogin()">Cancel</button>
         </div>
     </div>
@@ -117,7 +117,7 @@
                     <!-- user future Tab. opened from the lobby -->
                 <section id=gameLobbyFutureTab>
                     <button class="sidebutton" id="creategame" onclick="displayCreateGame()">Create Game</button>
-                    <button class="sidebutton" id="joingame" onclick="joinGame()">Join Game</button>
+                    <button class="sidebutton" id="joingame" onclick="attemptJoinGame()">Join Game</button>
                     <button class="sidebutton" id="leavegame" onclick="leaveGame()">Leave Game</button>
                     <button class="sidebutton" id="watchgame" onclick="watchGame()">Watch Game</button>
 					<label id="networkid"></label><br>

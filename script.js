@@ -319,12 +319,19 @@ function togglePageTheme() {
 
 function toggleFlippedBoard() {
 	if (document.documentElement.style.getPropertyValue('--board-flex-flow') == 'column-reverse nowrap') {
-        document.documentElement.style.setProperty('--board-flex-flow', 'column nowrap');
-		document.documentElement.style.setProperty('--boardrow-flex-flow', 'row nowrap');
+		setBoardView("w");
     } else {
+		setBoardView("b");
+    }
+}
+function setBoardView(color) {
+	if (color == "w") {
+		document.documentElement.style.setProperty('--board-flex-flow', 'column nowrap');
+		document.documentElement.style.setProperty('--boardrow-flex-flow', 'row nowrap');
+	} else {
 		document.documentElement.style.setProperty('--board-flex-flow', 'column-reverse nowrap');
 		document.documentElement.style.setProperty('--boardrow-flex-flow', 'row-reverse nowrap');
-    }
+	}
 }
 
 function clearFindPieces() {
@@ -1895,34 +1902,44 @@ function validPlayerID(str) {
 	return test1 && test2;
 }
 
-function login(ele) {
+function loginAttempt(ele) {
 	if (ele) {
 		if (event.key != "Enter") {
 			return
 		}
 	}
-	const playerIDInput = document.getElementById("playerIDInput");
-	PLAYERID = playerIDInput.value;
-	if (PLAYERID == "") {
+	const playerIDInput = document.getElementById("playerIDInput").value;
+	if (playerIDInput == "") {
 		closeLogin();
-		el = document.getElementById("tab2");
-		el.checked = true;
-		
+		document.getElementById("tab2").checked = true;
 	} else {
-		if (validPlayerID(PLAYERID)) {
-			closeLogin();
-			document.getElementById("welcomeLabel").innerText = "Welcome " + PLAYERID;
-			document.getElementById("tab1").checked = true;
-			document.getElementById("tab12").checked = true;
-			SOCKET.emit("login", {
-				playerID: PLAYERID,
+		if (validPlayerID(playerIDInput)) {
+			SOCKET.emit("login.attempt", {
+				playerID: playerIDInput,
 			});
+			// the server should immediate respond with either "login.success" or "login.fail"
 		} else {
 			alert("Player ID must start with a letter, and contain only letters, numbers and underscores");
-			PLAYERID = "";
 			document.getElementById("welcomeLabel").innerText = "";
 		}
 	}
+}
+
+function loginSuccess(data) {
+	closeLogin();
+	PLAYERID = data.playerID;
+	document.getElementById("welcomeLabel").innerText = "Welcome " + PLAYERID;
+	// Go to the lobby tab:
+	document.getElementById("tab1").checked = true;
+	document.getElementById("tab12").checked = true;
+}
+
+function loginFail() {
+	closeLogin();
+	PLAYERID = "";
+	// Send to the metadata tab:
+	document.getElementById("tab2").checked = true;
+	alert("Invalid login credentials");
 }
 
 function cancelLogin() {
@@ -1942,35 +1959,48 @@ function createGame(color) {
 		if (!gameTitle || gameTitle == "") {
 			gameTitle = "";
 		}
-		ONLINEGAME = true;
 		SOCKET.emit("create.game", {
-			movehistory: MOVEHISTORY,
+			moveHistory: MOVEHISTORY,
 			gameID: gameID,
 			gameTitle: gameTitle,
 			playerID: PLAYERID,
 			color: color,
 		});
-		navigator.clipboard.writeText(gameID);
-		showNetworkID(gameID);
-		showGameTitle(gameTitle);
-		setState(STATE);
+		// this should go to the server, and all being good the server will then emit a "game.joined" signal, which will trigger the gameJoined() function
+		
 	} else {
 		closeCreateGame(); // close the modal window
 		debugPrint("Already in online game");
 	}
 }
 
-function joinGame() {
+function attemptJoinGame() {
 	if (!ONLINEGAME) {
 		const gameID = prompt("Enter Game ID");
 		SOCKET.emit("join.game", {
 			gameID: gameID,
 			playerID: PLAYERID,
 		});
-		// if successful then the server will emit a "start.game" command, which calls the startGame() function
+		// this should go to the server, and all being good the server will then emit a "game.joined" signal, which will trigger the gameJoined() function
+		// if game is full then the server will emit a "start.game" command, which calls the startGame() function
 	} else {
 		debugPrint("Already connected to an online game");
 	}
+}
+
+function gameJoined(data) {
+	ONLINEGAME = true;
+	navigator.clipboard.writeText(data.gameID);
+	restoreGameHistory(data.moveHistory);
+	showNetworkID(data.gameID);
+	showGameTitle(data.gameTitle);
+	setBoardView(data.color);
+	setState(STATE);
+}
+
+function startGame(data) {
+	ONLINECOLOR = data.color; // set ONLINECOLOR when both players ready to go
+	setState(STATE);
 }
 
 function leaveGame() {
@@ -1997,23 +2027,13 @@ function showGameTitle(gameTitle) {
 	lbl.innerText = gameTitle;
 }
 
-function startGame(data) {
-	restoreGameHistory(data.movehistory);
-	showNetworkID(data.gameID);
-	showGameTitle(data.gameTitle);
-	ONLINECOLOR = data.color; // need ONLINECOLOR to play
-	if (ONLINECOLOR == "b") {
-		toggleFlippedBoard();
-	}
-	ONLINEGAME = true;
-	setState(STATE);
-}
+
 
 function sendMove() {
 	if (ONLINEGAME && TURNCOLOR == ONLINECOLOR) {
 		// first person to make a move sets the colors
 		SOCKET.emit("make.move", {
-			movehistory: MOVEHISTORY,
+			moveHistory: MOVEHISTORY,
 			movetext: THISMOVE + pcMoveText(),
 		});
 	}
@@ -2024,6 +2044,20 @@ function moveMade(data) {
 	if (newMoveText == data.movetext) {
 		confirmMove(); setState("clear"); // submit
 	}
+}
+
+////////////////////////////////
+// Error messages from server
+////////////////////////////////
+
+function gameNotFound() {
+	alert("Game ID does not exist");
+}
+function gameFull() {
+	alert("Game already full");
+}
+function seatTaken() {
+	alert("That seat is taken");
 }
 
 ////////////////////////////////
@@ -2084,6 +2118,8 @@ function displayLogin() {
 function closeLogin() {
 	document.getElementById('loginWrapper').style.display = 'none'
 };
+
+
 
 ////////////////////////////////
 // Initialisation
@@ -2148,14 +2184,16 @@ if (SERVER != "file://") {
 	SOCKET = io(SERVER,connectionOptions);
 	// SOCKET = io.connect(SERVER);
 		
-	// Bind event on players move
+	// Bind events
+	SOCKET.on("game.joined", gameJoined);
 	SOCKET.on("start.game", startGame);
 	SOCKET.on("move.made", moveMade);
 	SOCKET.on("opponent.left",opponentLeft);
-	// SOCKET.on("err.gamenotfound",gameNotFound);
-	// SOCKET.on("err.gamefull",gameFull);
-	// SOCKET.on("err.cantplayself",cantPlaySelf);
-	// SOCKET.on("err.seattaken",seatTaken);
+	SOCKET.on("login.success",loginSuccess);
+	SOCKET.on("login.fail",loginFail);
+	SOCKET.on("err.gamenotfound",gameNotFound);
+	SOCKET.on("err.gamefull",gameFull);
+	SOCKET.on("err.seattaken",seatTaken);
 }
 
 window.onload = setup
