@@ -1,21 +1,12 @@
 const http = require("http");
 const express = require("express");
 const app = express();
-const socketIo = require("socket.io");
+const socketIo = require("../node_modules/socket.io");
 const fs = require("fs");
 const os = require("os");
-
 const server = http.Server(app).listen(8080);
+const io = socketIo(server);
 
-const io = socketIo(server, {transports: ["websocket"]});
-
-
-
-
-//Allow Cross Domain Requests
-// io.set('transports', [ 'websocket' ]);
-
-// Serve static resources
 
 if (os.hostname().indexOf("DESKTOP") > -1) {
     console.log('local at ' + __dirname )
@@ -27,13 +18,6 @@ if (os.hostname().indexOf("DESKTOP") > -1) {
 	// app.use(express.static(__dirname + "/qhessapi/"));
 	// app.use(express.static(__dirname + "/qhessapi/node_modules/"));
 }
-
-// app.get("//", (req, res) => {
-    // console.log('createReadStream at ' +  __dirname + "/index.html")
-    // res.writeHead(200, {'Content-Type': 'text/html'});
-    // const stream = fs.createReadStream(__dirname + "/index.html");
-    // stream.pipe(res);
-// });
 
 
 

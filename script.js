@@ -2173,28 +2173,26 @@ if (SERVER == "file://") {
 } else {
 	SERVER = "https://generic-trademark.com:8080";
 }
-let SOCKET;
-if (SERVER != "file://") {
-	var connectionOptions =  {
-            "force new connection" : true,
-            "reconnectionAttempts": "Infinity", //avoid having user reconnect manually in order to prevent dead clients after a server restart
-            "timeout" : 10000, //before connect_error and connect_timeout are emitted.
-            "transports" : ["websocket"]
-        };
-	SOCKET = io(SERVER,connectionOptions);
-	// SOCKET = io.connect(SERVER);
-		
-	// Bind events
-	SOCKET.on("game.joined", gameJoined);
-	SOCKET.on("start.game", startGame);
-	SOCKET.on("move.made", moveMade);
-	SOCKET.on("opponent.left",opponentLeft);
-	SOCKET.on("login.success",loginSuccess);
-	SOCKET.on("login.fail",loginFail);
-	SOCKET.on("err.gamenotfound",gameNotFound);
-	SOCKET.on("err.gamefull",gameFull);
-	SOCKET.on("err.seattaken",seatTaken);
-}
+var connectionOptions =  {
+		"force new connection" : true,
+		"reconnectionAttempts": "Infinity", //avoid having user reconnect manually in order to prevent dead clients after a server restart
+		"timeout" : 10000, //before connect_error and connect_timeout are emitted.
+		"transports" : ["websocket"]
+	};
+let SOCKET = io(SERVER,connectionOptions);
+// SOCKET = io.connect(SERVER);
+	
+// Bind events
+SOCKET.on("game.joined", gameJoined);
+SOCKET.on("start.game", startGame);
+SOCKET.on("move.made", moveMade);
+SOCKET.on("opponent.left",opponentLeft);
+SOCKET.on("login.success",loginSuccess);
+SOCKET.on("login.fail",loginFail);
+SOCKET.on("err.gamenotfound",gameNotFound);
+SOCKET.on("err.gamefull",gameFull);
+SOCKET.on("err.seattaken",seatTaken);
+
 
 window.onload = setup
 
