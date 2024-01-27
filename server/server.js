@@ -1,3 +1,9 @@
+const logger = (socket, next) => {
+	console.log(socket.request)
+	console.log('hello')
+	next()
+};
+
 const http = require("http");
 const express = require("express");
 const app = express();
@@ -20,10 +26,10 @@ if (os.hostname().indexOf("DESKTOP") > -1) {
 }
 
 
-
+io.use(logger)
 // These arrays are all the same length and can be thought of as columns in a database, 1 row per game
-var gameID = []; // array of gameID
 var gameTitle = []; // array of gameTitle
+var gameID = []; // array of gameID
 var moveHistory = []; // array of move historys
 var blackID = []; // black player ID
 var blackSocket = []; // black socket
