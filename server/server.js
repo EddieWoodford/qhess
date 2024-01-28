@@ -7,11 +7,17 @@ const logger = (socket, next) => {
 const http = require("http");
 const express = require("express");
 const app = express();
-const socketIo = require("../node_modules/socket.io");
+const cors = require("cors");
+const socketIo = require("socket.io");
 const fs = require("fs");
 const os = require("os");
-const server = http.Server(app).listen(8080);
-const io = socketIo(server);
+const server = http.Server(app,{transports: 'polling'}).listen(8080);
+// const io = socketIo(server);
+const io = socketIo(server, {
+		cors: {
+			origin: "null"
+		}
+});
 
 
 if (os.hostname().indexOf("DESKTOP") > -1) {
@@ -25,8 +31,8 @@ if (os.hostname().indexOf("DESKTOP") > -1) {
 	// app.use(express.static(__dirname + "/qhessapi/node_modules/"));
 }
 
-
 io.use(logger)
+
 // These arrays are all the same length and can be thought of as columns in a database, 1 row per game
 var gameTitle = []; // array of gameTitle
 var gameID = []; // array of gameID
