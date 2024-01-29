@@ -4,11 +4,16 @@ const logger = (socket, next) => {
 	next()
 };
 
-const http = require("http");
+const http = require("https");
+const fs = require("fs");
+// const options = {
+  // key: fs.readFileSync("my-site-key.pem"),
+  // cert: fs.readFileSync("chain.pem")
+// };
 const express = require("express");
 const app = express();
-const socketIo = require("../node_modules/socket.io");
-const fs = require("fs");
+const socketIo = require("socket.io");
+
 const os = require("os");
 const server = http.Server(app).listen(8080);
 const io = socketIo(server);
