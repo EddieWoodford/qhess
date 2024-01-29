@@ -26,7 +26,7 @@ if (os.hostname().indexOf("DESKTOP") > -1) {
 }
 
 
-io.use(logger)
+// io.use(logger)
 // These arrays are all the same length and can be thought of as columns in a database, 1 row per game
 var gameTitle = []; // array of gameTitle
 var gameID = []; // array of gameID
