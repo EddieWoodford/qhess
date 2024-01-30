@@ -2171,7 +2171,8 @@ if (SERVER == "file://") {
 	// developing on Eddie's computer
 	SERVER = "http://localhost:8080";
 } else {
-	SERVER = "http://generic-trademark.com:8080";
+	// SERVER = "http://generic-trademark.com:8080";
+	SERVER = "http://174.142.77.20:8080/";
 }
 var connectionOptions =  {
 		"force new connection" : true,
