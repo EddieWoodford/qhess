@@ -2022,6 +2022,10 @@ function showNetworkID(gameID) {
 	lbl.innerText = "Send this ID to a friend for them to join:\r\n" + gameID;
 }
 
+function getNetworkID() {
+	return document.getElementById("networkid").innerText;
+}
+
 function showGameTitle(gameTitle) {
 	let lbl = document.getElementById("gameTitle");
 	lbl.innerText = gameTitle;
@@ -2033,6 +2037,9 @@ function sendMove() {
 	if (ONLINEGAME && TURNCOLOR == ONLINECOLOR) {
 		// first person to make a move sets the colors
 		SOCKET.emit("make.move", {
+			gameID: getNetworkID(),
+			playerID: PLAYERID,
+			color: ONLINECOLOR,
 			moveHistory: MOVEHISTORY,
 			movetext: THISMOVE + pcMoveText(),
 		});

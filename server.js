@@ -120,6 +120,15 @@ io.on("connection", function(socket) {
 		// Validation passed:
 		// Update the game record
 		let i = socket2i(socket);
+		if (i == -1) {
+			// attempt reconnect
+			i = addPlayerToGame(data,socket);
+			if (i == -1) {
+				console.log("Player not in a game");
+				return
+			}
+		}
+		
 		let thisMoveHistory = getHistoryLines(data.moveHistory)
 		thisMoveHistory.push(data.movetext);
 		moveHistory[i] = thisMoveHistory;
