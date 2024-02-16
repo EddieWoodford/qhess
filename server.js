@@ -7,7 +7,12 @@ const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const { Server } = require("socket.io");
-const io = new Server(server);
+const io = new Server(server,{ 
+		  log: false
+		, "close timeout": 60
+		, "heartbeat timeout": 60
+		, "heartbeat interval": 20
+	});
 
 const os = require("os");
 // const fs = require("fs");
