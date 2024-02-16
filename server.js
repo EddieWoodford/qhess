@@ -1,33 +1,36 @@
-const logger = (socket, next) => {
-	console.log(socket.request)
-	console.log('hello')
-	next()
-};
+// Use port number from the PORT environment variable or 3000 if not specified
+console.log(process.env.PORT)
+const port = process.env.PORT || 3000;
 
-const http = require("https");
-const fs = require("fs");
-const express = require("express");
+const express = require('express');
 const app = express();
-const socketIo = require("./../node_modules/socket.io");
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server);
 
 const os = require("os");
-const server = http.Server(app).listen(8080);
-const io = socketIo(server);
+// const fs = require("fs");
 
+app.use(express.static(__dirname))
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/index.html');
+});
+
+server.listen(port, () => {
+  console.log('listening on *:' + port);
+});
 
 if (os.hostname().indexOf("DESKTOP") > -1) {
     console.log('local at ' + __dirname )
-	// app.use(express.static(__dirname + "/../"));
-	// app.use(express.static(__dirname + "/../node_modules/"));
 } else {
 	console.log(os.hostname())
 	console.log('deployed at ' + __dirname )
-	// app.use(express.static(__dirname + "/qhessapi/"));
-	// app.use(express.static(__dirname + "/qhessapi/node_modules/"));
 }
 
 
-// io.use(logger)
+
+
 // These arrays are all the same length and can be thought of as columns in a database, 1 row per game
 var gameTitle = []; // array of gameTitle
 var gameID = []; // array of gameID
@@ -128,13 +131,13 @@ io.on("connection", function(socket) {
 		console.log(jsonData);
 		let jsonText = JSON.stringify(jsonData,null,4);
 		let filepath = __dirname + "/games/" + gameID[i] + ".json";
-		fs.writeFile(filepath,jsonText,"utf8",(err) => {
+		/* fs.writeFile(filepath,jsonText,"utf8",(err) => {
 			if (err) {
 				console.log(err);
 			} else {
 				console.log('File write success');
 			}
-		});
+		}); */
     });
 
 
@@ -158,7 +161,7 @@ function addPlayerToGame(data,socket) {
 	let i = gameID.indexOf(data.gameID);
 	
 	if (i == -1) {
-		// look for game file to restore historic game
+		/* // look for game file to restore historic game
 		// console.log(data);
 		let filepath = __dirname + "/games/" + data.gameID + ".json";
 		try {
@@ -183,7 +186,7 @@ function addPlayerToGame(data,socket) {
 		} catch (err) {
 			console.error(err.message);
 		}
-		
+		 */
 		if (i == -1) {
 			// no live game or historic game of that id exists
 			console.log("Game ID does not exist");

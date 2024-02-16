@@ -2166,21 +2166,7 @@ let ONLINECOLOR = "";
 let PLAYERID = "";
 
 
-let SERVER = window.location.origin;
-if (SERVER == "file://") {
-	// developing on Eddie's computer
-	SERVER = "http://localhost:8080";
-} else {
-	// SERVER = "http://generic-trademark.com:8080";
-	SERVER = "http://174.142.77.20:8080/";
-}
-var connectionOptions =  {
-		"force new connection" : true,
-		"reconnectionAttempts": "Infinity", //avoid having user reconnect manually in order to prevent dead clients after a server restart
-		"timeout" : 10000, //before connect_error and connect_timeout are emitted.
-		"transports" : ["websocket"]
-	};
-let SOCKET = io(SERVER,connectionOptions);
+let SOCKET = io();
 // SOCKET = io.connect(SERVER);
 	
 // Bind events
