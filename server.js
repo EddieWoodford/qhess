@@ -268,21 +268,21 @@ function removePlayerFromGame(socket) {
 		}
 	}
 	
-	// if (i > -1) {
-		// if (!blackID[i] && !whiteID[i]) {
-			No players left for this game, remove row from database
-			// console.log("Cleaned up game " + gameID[i]);
-			// gameID.splice(i,1);
-			// gameTitle.splice(i,1);
-			// moveHistory.splice(i,1);
-			// blackID.splice(i,1);
-			// blackSocket.splice(i,1);
-			// blackSocketID.splice(i,1);
-			// whiteID.splice(i,1);
-			// whiteSocket.splice(i,1);
-			// whiteSocketID.splice(i,1);
-		// }
-	// }
+	/* if (i > -1) {
+		if (!blackID[i] && !whiteID[i]) {
+			// No players left for this game, remove row from database
+			console.log("Cleaned up game " + gameID[i]);
+			gameID.splice(i,1);
+			gameTitle.splice(i,1);
+			moveHistory.splice(i,1);
+			blackID.splice(i,1);
+			blackSocket.splice(i,1);
+			blackSocketID.splice(i,1);
+			whiteID.splice(i,1);
+			whiteSocket.splice(i,1);
+			whiteSocketID.splice(i,1);
+		}
+	} */
 	
 }
 
