@@ -1882,6 +1882,19 @@ function setup() {
 // Networking
 ////////////////////////////////
 
+function helloServer() {
+	if (ONLINEGAME && ONLINECOLOR != "") {
+		console.log("Reconnecting after socket loss");
+		let data = {
+			gameID: getGameID(),
+			playerID: PLAYERID,
+			color: ONLINECOLOR
+		}
+		console.log(data);
+		SOCKET.emit("join.game", data);
+	}
+}
+
 function datestr() {
 	const date = new Date();
 	let currentDay= String(date.getDate()).padStart(2, '0');
@@ -1992,7 +2005,7 @@ function gameJoined(data) {
 	ONLINEGAME = true;
 	navigator.clipboard.writeText(data.gameID);
 	restoreGameHistory(data.moveHistory);
-	showNetworkID(data.gameID);
+	showGameID(data.gameID);
 	showGameTitle(data.gameTitle);
 	setBoardView(data.color);
 	setState(STATE);
@@ -2017,13 +2030,13 @@ function opponentLeft() {
 	setState(STATE);
 }
 
-function showNetworkID(gameID) {
-	let lbl = document.getElementById("networkid");
+function showGameID(gameID) {
+	let lbl = document.getElementById("gameid");
 	lbl.innerText = "Send this ID to a friend for them to join:\r\n" + gameID;
 }
 
-function getNetworkID() {
-	return document.getElementById("networkid").innerText;
+function getGameID() {
+	return document.getElementById("gameid").innerText;
 }
 
 function showGameTitle(gameTitle) {
@@ -2031,13 +2044,11 @@ function showGameTitle(gameTitle) {
 	lbl.innerText = gameTitle;
 }
 
-
-
 function sendMove() {
 	if (ONLINEGAME && TURNCOLOR == ONLINECOLOR) {
 		// first person to make a move sets the colors
 		SOCKET.emit("make.move", {
-			gameID: getNetworkID(),
+			gameID: getGameID(),
 			playerID: PLAYERID,
 			color: ONLINECOLOR,
 			moveHistory: MOVEHISTORY,
@@ -2177,6 +2188,7 @@ let SOCKET = io();
 // SOCKET = io.connect(SERVER);
 	
 // Bind events
+SOCKET.on("connect", helloServer);
 SOCKET.on("game.joined", gameJoined);
 SOCKET.on("start.game", startGame);
 SOCKET.on("move.made", moveMade);

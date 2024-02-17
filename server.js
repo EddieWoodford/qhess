@@ -52,6 +52,11 @@ var whiteSocketID = []; // white socket.id
 // Object with playerID as property and list of gameIDs as value
 var players = {};
 
+setInterval(function() {
+  console.log("Looking for games to clean");
+  // do your stuff here
+}, 60 * 5 * 1000);
+
 // When a client connects
 io.on("connection", function(socket) {
     let id = socket.id;
@@ -232,7 +237,7 @@ function addPlayerToGame(data,socket) {
 	data.color = color; 
 	
 	if (color == "b") {
-		if (blackID[i]) {
+		if (blackID[i] && blackID[i] != data.playerID) {
 			console.log("Black is taken at this game")
 			socket.emit("err.seattaken");
 			return -1
@@ -241,7 +246,7 @@ function addPlayerToGame(data,socket) {
 		blackSocket[i] = socket;
 		blackSocketID[i] = socket.id;
 	} else {
-		if (whiteID[i]) {
+		if (whiteID[i] && whiteID[i] != data.playerID) {
 			console.log("White is taken at this game")
 			socket.emit("err.seattaken");
 			return -1
@@ -264,9 +269,9 @@ function addPlayerToGame(data,socket) {
 // }
 
 function removePlayerFromGame(socket) {
-	if (opponentOf(socket)) {
-		opponentOf(socket).emit("opponent.left");
-	}
+	// if (opponentOf(socket)) {
+		// opponentOf(socket).emit("opponent.left");
+	// }
 	let i = whiteSocketID.indexOf(socket.id);
 	
 	if (i > -1) {
