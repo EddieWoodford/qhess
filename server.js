@@ -88,25 +88,7 @@ io.on("connection", function(socket) {
 	});
 
 	socket.on("join.game", function(data) {
-		let i = addPlayerToGame(data,socket);
-		
-		if (i > -1) {
-			if (blackID[i] && whiteID[i]) {
-				// savePlayerGameList(blackID[i]);
-				// savePlayerGameList(whiteID[i]);
-				
-				socket.emit("start.game", {
-					gameID: gameID[i],
-					moveHistory: moveHistory[i],
-					color: data.color, // the data object was modified to include .color in addPlayerToGame()
-				});
-				opponentEmit(socket,"start.game",{
-					gameID: gameID[i],
-					moveHistory: moveHistory[i],
-					color: oppColor(data.color), // the data object was modified to include .color in addPlayerToGame()
-				});
-			}
-		}
+		addPlayerToGame(data,socket);
 	});
 	
 	socket.on("leave.game", function() {

@@ -1883,7 +1883,7 @@ function setup() {
 ////////////////////////////////
 
 function helloServer() {
-	if (ONLINEGAME && ONLINECOLOR != "") {
+	if (ONLINEGAME) {
 		console.log("Reconnecting after socket loss");
 		let data = {
 			gameID: getGameID(),
@@ -1963,7 +1963,10 @@ function cancelLogin() {
 }
 
 function createGame(color) {
-	if (!ONLINEGAME) {
+	if (ONLINEGAME) {
+		loseCreateGame(); // close the modal window
+		debugPrint("Already in online game");
+	} else {
 		let genRanHex = size => [...Array(size)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
 		let gameID = datestr() + "--" + genRanHex(8);
 		let gameTitle = document.getElementById("gametitleInput").value;
@@ -1981,14 +1984,13 @@ function createGame(color) {
 		});
 		// this should go to the server, and all being good the server will then emit a "game.joined" signal, which will trigger the gameJoined() function
 		
-	} else {
-		closeCreateGame(); // close the modal window
-		debugPrint("Already in online game");
 	}
 }
 
 function attemptJoinGame() {
-	if (!ONLINEGAME) {
+	if (ONLINEGAME) {
+		debugPrint("Already connected to an online game");
+	} else {
 		const gameID = prompt("Enter Game ID");
 		SOCKET.emit("join.game", {
 			gameID: gameID,
@@ -1996,24 +1998,21 @@ function attemptJoinGame() {
 		});
 		// this should go to the server, and all being good the server will then emit a "game.joined" signal, which will trigger the gameJoined() function
 		// if game is full then the server will emit a "start.game" command, which calls the startGame() function
-	} else {
-		debugPrint("Already connected to an online game");
 	}
 }
 
 function gameJoined(data) {
 	ONLINEGAME = true;
-	navigator.clipboard.writeText(data.gameID);
-	restoreGameHistory(data.moveHistory);
-	showGameID(data.gameID);
-	showGameTitle(data.gameTitle);
-	setBoardView(data.color);
-	setState(STATE);
-}
-
-function startGame(data) {
-	ONLINECOLOR = data.color; // set ONLINECOLOR when both players ready to go
-	setState(STATE);
+	let historyArea = document.getElementById("movehistory");
+	if (data.gameID != getGameID() || !isequal(data.moveHistory,historyArea.innerText) {
+		ONLINECOLOR = data.color;
+		navigator.clipboard.writeText(data.gameID);
+		restoreGameHistory(data.moveHistory);
+		showGameID(data.gameID);
+		showGameTitle(data.gameTitle);
+		setBoardView(data.color);
+		setState(STATE);
+	}
 }
 
 function leaveGame() {
@@ -2023,11 +2022,6 @@ function leaveGame() {
 		SOCKET.emit("leave.game");
 		setState(STATE);
 	}
-}
-
-function opponentLeft() {
-	ONLINECOLOR = "";
-	setState(STATE);
 }
 
 function showGameID(gameID) {
@@ -2047,7 +2041,6 @@ function showGameTitle(gameTitle) {
 
 function sendMove() {
 	if (ONLINEGAME && TURNCOLOR == ONLINECOLOR) {
-		// first person to make a move sets the colors
 		SOCKET.emit("make.move", {
 			gameID: getGameID(),
 			playerID: PLAYERID,
@@ -2193,7 +2186,6 @@ SOCKET.on("connect", helloServer);
 SOCKET.on("game.joined", gameJoined);
 SOCKET.on("start.game", startGame);
 SOCKET.on("move.made", moveMade);
-SOCKET.on("opponent.left",opponentLeft);
 SOCKET.on("login.success",loginSuccess);
 SOCKET.on("login.fail",loginFail);
 SOCKET.on("err.gamenotfound",gameNotFound);
