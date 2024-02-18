@@ -218,7 +218,8 @@ function addPlayerToGame(data,socket) {
 		 */
 		if (i == -1) {
 			// no live game or historic game of that id exists
-			console.log("Game ID does not exist");
+			console.log("Game ID does not exist: " data.gameID);
+			printDB();
 			socket.emit("err.gamenotfound");
 			return -1
 		}
