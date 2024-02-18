@@ -113,8 +113,6 @@ io.on("connection", function(socket) {
 		removePlayerFromGame(socket);
 		printDB();
 	})
-    
-
 
     // Event for when any player makes a move
     socket.on("make.move", function(data) {
@@ -160,7 +158,6 @@ io.on("connection", function(socket) {
 			}
 		}); */
     });
-
 
 });
 
@@ -218,7 +215,7 @@ function addPlayerToGame(data,socket) {
 		 */
 		if (i == -1) {
 			// no live game or historic game of that id exists
-			console.log("Game ID does not exist: " data.gameID);
+			console.log("Game ID does not exist: " + data.gameID);
 			printDB();
 			socket.emit("err.gamenotfound");
 			return -1
