@@ -100,7 +100,7 @@ io.on("connection", function(socket) {
 					moveHistory: moveHistory[i],
 					color: data.color, // the data object was modified to include .color in addPlayerToGame()
 				});
-				opponentOf(socket).emit("start.game", {
+				opponentEmit(socket,"start.game",{
 					gameID: gameID[i],
 					moveHistory: moveHistory[i],
 					color: oppColor(data.color), // the data object was modified to include .color in addPlayerToGame()
@@ -140,7 +140,7 @@ io.on("connection", function(socket) {
 		
 		
 		// socket.emit("move.made", data); // Emit for the player who made the move
-		opponentOf(socket).emit("move.made", data); // Emit for the opponent
+		opponentEmit(socket,"move.made",data);
 		
 		// Save the game history to json
 		let jsonData = {}
@@ -165,6 +165,14 @@ io.on("connection", function(socket) {
 });
 
 
+function opponentEmit(socket,s,data) {
+	// wrapper to only emit to opponent when socket is still connected
+	let oppSocket = opponentOf(socket);
+	if (oppSocket) {
+		oppSocket.emit(s,data);
+	}
+	
+}
 
 function setupGame(data) {
 	gameID.push(data.gameID);
@@ -269,9 +277,6 @@ function addPlayerToGame(data,socket) {
 // }
 
 function removePlayerFromGame(socket) {
-	// if (opponentOf(socket)) {
-		// opponentOf(socket).emit("opponent.left");
-	// }
 	let i = whiteSocketID.indexOf(socket.id);
 	
 	if (i > -1) {
@@ -329,7 +334,7 @@ function opponentOf(socket) {
 		if (i > -1) {
 			return whiteSocket[i];
 		} else {
-			return
+			return null;
 		}
 	}
 }
