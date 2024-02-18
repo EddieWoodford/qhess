@@ -2033,10 +2033,11 @@ function opponentLeft() {
 function showGameID(gameID) {
 	let lbl = document.getElementById("gameid");
 	lbl.innerText = "Send this ID to a friend for them to join:\r\n" + gameID;
+	let x = getGameID(); // for testing
 }
 
 function getGameID() {
-	return document.getElementById("gameid").innerText;
+	return document.getElementById("gameid").innerText.split("\n")[1];
 }
 
 function showGameTitle(gameTitle) {
