@@ -2004,7 +2004,7 @@ function attemptJoinGame() {
 function gameJoined(data) {
 	ONLINEGAME = true;
 	let historyArea = document.getElementById("movehistory");
-	if (data.gameID != getGameID() || !isequal(data.moveHistory,historyArea.innerText) {
+	if (data.gameID != getGameID() || !isequal(data.moveHistory,historyArea.innerText)) {
 		ONLINECOLOR = data.color;
 		navigator.clipboard.writeText(data.gameID);
 		restoreGameHistory(data.moveHistory);
