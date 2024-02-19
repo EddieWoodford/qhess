@@ -2184,7 +2184,6 @@ let SOCKET = io();
 // Bind events
 SOCKET.on("connect", helloServer);
 SOCKET.on("game.joined", gameJoined);
-SOCKET.on("start.game", startGame);
 SOCKET.on("move.made", moveMade);
 SOCKET.on("login.success",loginSuccess);
 SOCKET.on("login.fail",loginFail);
