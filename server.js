@@ -64,6 +64,8 @@ io.on("connection", function(socket) {
     console.log("New client connected. ID: ", socket.id);
 
 	socket.on("login.attempt", function(data) {
+		console.log("login.attempt: ===============>");
+		console.log(data);
 		// Login credentials check goes here
 		
 		// Login success
@@ -78,27 +80,32 @@ io.on("connection", function(socket) {
         console.log("Client disconnected. ID: ", socket.id);
         socket.broadcast.emit("clientdisconnect", id);
 		removePlayerFromGame(socket);
-		printDB();
+		// printDB();
     });
 	
 	socket.on("create.game", function(data) {
 		// create new row in database:
+		console.log("create.game: ===============>");
+		console.log(data);
 		setupGame(data);
 		addPlayerToGame(data,socket);
 	});
 
 	socket.on("join.game", function(data) {
+		console.log("join.game: ===============>");
+		console.log(data);
 		addPlayerToGame(data,socket);
 	});
 	
 	socket.on("leave.game", function() {
 		removePlayerFromGame(socket);
-		printDB();
+		// printDB();
 	})
 
     // Event for when any player makes a move
     socket.on("make.move", function(data) {
-		// console.log(data);
+		console.log("make.move: ===============>");
+		console.log(data);
 		
 		// Validation of the moves can be done here
 
@@ -123,15 +130,15 @@ io.on("connection", function(socket) {
 		opponentEmit(socket,"move.made",data);
 		
 		// Save the game history to json
-		let jsonData = {}
-		jsonData.gameID = gameID[i];
-		jsonData.gameTitle = gameTitle[i];
-		jsonData.blackID = blackID[i];
-		jsonData.whiteID = whiteID[i];
-		jsonData.moveHistory = moveHistory[i];
-		console.log(jsonData);
-		let jsonText = JSON.stringify(jsonData,null,4);
-		let filepath = __dirname + "/games/" + gameID[i] + ".json";
+		// let jsonData = {}
+		// jsonData.gameID = gameID[i];
+		// jsonData.gameTitle = gameTitle[i];
+		// jsonData.blackID = blackID[i];
+		// jsonData.whiteID = whiteID[i];
+		// jsonData.moveHistory = moveHistory[i];
+		// console.log(jsonData);
+		// let jsonText = JSON.stringify(jsonData,null,4);
+		// let filepath = __dirname + "/games/" + gameID[i] + ".json";
 		/* fs.writeFile(filepath,jsonText,"utf8",(err) => {
 			if (err) {
 				console.log(err);
@@ -198,7 +205,7 @@ function addPlayerToGame(data,socket) {
 		if (i == -1) {
 			// no live game or historic game of that id exists
 			console.log("Game ID does not exist: " + data.gameID);
-			printDB();
+			// printDB();
 			socket.emit("err.gamenotfound");
 			return -1
 		}
@@ -248,7 +255,7 @@ function addPlayerToGame(data,socket) {
 
 	console.log("Added " + data.playerID + " to " + data.gameID + " in color " + color);
 	socket.emit("game.joined",data)
-	printDB();
+	// printDB();
 	return i
 }
 

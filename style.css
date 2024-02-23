@@ -359,6 +359,9 @@ input:checked + label {
 .blacksquare { /* all black squares always have this */
     background-color: var(--board-black-col);
 }
+.lastmove {
+	background-color: LightGreen;
+}
 .hovered { /* when the player is hovering the mouse over it */
     background-color: orange;
 }

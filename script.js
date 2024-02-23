@@ -51,16 +51,16 @@ class Square {
 		}
     }
 	resetButtonClasses() {
-			let prevClasses = this.button.className;
-			prevClasses = prevClasses.split(" ");
-			this.button.classList.remove(...prevClasses);
-			this.button.classList.add("boardsquare");
-			if (this.color == "w") {
-				this.button.classList.add("whitesquare");
-			} else {
-				this.button.classList.add("blacksquare");
-			}
+		let prevClasses = this.button.className;
+		prevClasses = prevClasses.split(" ");
+		this.button.classList.remove(...prevClasses);
+		this.button.classList.add("boardsquare");
+		if (this.color == "w") {
+			this.button.classList.add("whitesquare");
+		} else {
+			this.button.classList.add("blacksquare");
 		}
+	}
 		// this.button.addEventListener("click",this.set(buttonID))
 		// this.button.addEventListener("mouseout",this.clear(buttonID))
 	
@@ -403,6 +403,7 @@ function showCompleteMove(buttonID,doEP,doPromotion) {
 	movingPiece.hasmoved = 1;
 	movingPiece.r = endCoords[0];
 	movingPiece.c = endCoords[1];
+	LASTTOMOVE = movingPiece.i;
 	
 	// Move the piece:
 	ENDID = buttonID;
@@ -1472,7 +1473,7 @@ function attPiece(i) {
 ////////////////////////////////
 
 function debugPrint(txt) {
-	prompt(txt);
+	window.alert(txt);
 }
 
 function setState(stateIn) {
@@ -1665,6 +1666,9 @@ function setState(stateIn) {
 				}
 			}
 			
+			if (STATE == "clear" && piece.i == LASTTOMOVE && piece.color == oppColor(TURNCOLOR)) {
+				sqr.button.classList.add("lastmove");
+			}
 			
 			// Write text of pieces in sqaures:
 			sqr.setWavetext();
@@ -2165,6 +2169,7 @@ let WHITEPIECES;
 let BLACKPIECES;
 let MOVEHISTORY;
 let THISMOVE;
+let LASTTOMOVE;
 let EPCOORDS;
 let EPCOLOR;
 let AUTOCHECK;
