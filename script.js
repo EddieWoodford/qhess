@@ -266,12 +266,14 @@ function confirmMove() {
 	if (MOVEHISTORY.length > 0) {
 		MOVEHISTORY = MOVEHISTORY + "\r\n"
 	}
-	MOVEHISTORY = MOVEHISTORY + THISMOVE + pcMoveText();
+	
+	
+	MOVEHISTORY = MOVEHISTORY + THISMOVE + pcMoveText() + moveMessage();
 	historyArea = document.getElementById("movehistory");
 	if (REPLAYNUMBER == -1) {
 		historyArea.innerText = MOVEHISTORY;
 	}
-	
+	document.getElementById("movemessage").value = "";
 		
 	TAKENPIECE.captured = TURNNUMBER;
 	
@@ -291,6 +293,14 @@ function confirmMove() {
 
 	
 	// copyLastMove();
+}
+
+function moveMessage() {
+	let msg = document.getElementById("movemessage").value;
+	if (msg != "") {
+		msg = " # " + msg;
+	}
+	return msg;
 }
 
 function findPiecesClick(wave) {
@@ -545,23 +555,30 @@ function restoreGameHistory(historyText,nMoves) {
 	for (let i=0; i < nMoves; i++) {
 		moveText = historyLines[i];
 		if (moveText!="") {
-			let resultText = doMoveFromText(moveText);
+			doMoveFromText(moveText);
 			confirmMove(); setState("clear"); // submit
 		}
 	}
 }
 
 function doMoveFromText(moveText) {
+	// This function is meant to take a move line and simulate the button pushes which would create it.
+	
 	let r;
 	let c;
 	
 	// Check that the move number eg "3w. " is correct
 	moveText = moveText.split(".");
-	turnText = moveText[0].trim();
+	let turnText = moveText[0].trim();
 	moveText = moveText[1].trim();
 	if (turnText != TURNNUMBER.toString() + TURNCOLOR) {
 		debugPrint("Move text number + colour did not match expected");
 	}
+	moveText = moveText.split("#");
+	if (moveText.length > 1) {
+		document.getElementById("movemessage").value = moveText[1].trim();
+	}
+	moveText = moveText[0].trim(); // remove comments
 	
 	let doEP = (moveText.includes("e.p.")); // do En Passant
 	let doPromotion = (moveText.includes("=")); // do Pawn Promotion
@@ -612,7 +629,7 @@ function doMoveFromText(moveText) {
 			selectPCAttackers(attackerButtonID);
 		}
 	}
-	return THISMOVE + pcMoveText();
+	return THISMOVE + pcMoveText() + moveMessage();
 	
 }
 
@@ -1495,7 +1512,7 @@ function setState(stateIn) {
 	// them according to the variables in the object. 
 	let defaultText;
 	let promptText = "";
-	moveTextarea.value = THISMOVE + pcMoveText();
+	moveTextarea.value = THISMOVE + pcMoveText() + moveMessage();
 	if (TURNNUMBER == 0) {
 		promptText = "Black<br>Move 0 - ";
 	}
@@ -1888,6 +1905,7 @@ function setup() {
 
 function helloServer() {
 	if (ONLINEGAME) {
+		console.log("connect: ===============>");
 		console.log("Reconnecting after socket loss");
 		let data = {
 			gameID: getGameID(),
@@ -1943,6 +1961,8 @@ function loginAttempt(ele) {
 }
 
 function loginSuccess(data) {
+	console.log("login.success: ===============>");
+	console.log(data);
 	closeLogin();
 	PLAYERID = data.playerID;
 	document.getElementById("welcomeLabel").innerText = "Welcome " + PLAYERID;
@@ -1952,10 +1972,10 @@ function loginSuccess(data) {
 }
 
 function loginFail() {
+	console.log("login.fail: ===============>");
 	closeLogin();
 	PLAYERID = "";
-	// Send to the metadata tab:
-	document.getElementById("tab2").checked = true;
+	document.getElementById("tab2").checked = true; // activate metadata tab
 	alert("Invalid login credentials");
 }
 
@@ -2006,6 +2026,8 @@ function attemptJoinGame() {
 }
 
 function gameJoined(data) {
+	console.log("game.joined: ===============>");
+	console.log(data);
 	ONLINEGAME = true;
 	let historyArea = document.getElementById("movehistory");
 	let currentHistory = getHistoryLines(historyArea.innerText);
@@ -2017,6 +2039,7 @@ function gameJoined(data) {
 		showGameTitle(data.gameTitle);
 		setBoardView(data.color);
 		setState(STATE);
+		document.getElementById("tab2").checked = true; // activate metadata tab
 	}
 }
 
@@ -2051,12 +2074,14 @@ function sendMove() {
 			playerID: PLAYERID,
 			color: ONLINECOLOR,
 			moveHistory: MOVEHISTORY,
-			movetext: THISMOVE + pcMoveText(),
+			movetext: THISMOVE + pcMoveText() + moveMessage(),
 		});
 	}
 }
 
 function moveMade(data) {
+	console.log("move.made: ===============>");
+	console.log(data);
 	let newMoveText = doMoveFromText(data.movetext);
 	if (newMoveText == data.movetext) {
 		confirmMove(); setState("clear"); // submit
@@ -2068,12 +2093,15 @@ function moveMade(data) {
 ////////////////////////////////
 
 function gameNotFound() {
+	console.log("err.gamenotfound: ===============>");
 	alert("Game ID does not exist");
 }
 function gameFull() {
+	console.log("err.gamefull: ===============>");
 	alert("Game already full");
 }
 function seatTaken() {
+	console.log("err.seattaken: ===============>");
 	alert("That seat is taken");
 }
 

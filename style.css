@@ -208,7 +208,7 @@ input:checked + label {
 }
 
 #tab11:checked ~ #gameLobbyPastTab,
-#tab12:checked ~ #gameLobbyFutureTab {
+#tab12:checked ~ #gameLobbyFutureTab { 
   display: block;
 }
 
@@ -535,9 +535,10 @@ input:checked + label {
 }
 
 #gameid {
-    width: 90%;
-    font-size: 3dvmin;
+	width: 10%;
+    /* width: 90%; */
+    /* font-size: 3dvmin; */
 }
 #thismove {
-    width: 90%;
+    /* width: 90%; */
 }
