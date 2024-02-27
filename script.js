@@ -2059,7 +2059,7 @@ function showGameID(gameID) {
 }
 
 function getGameID() {
-	return document.getElementById("gameid").innerText.split("\n")[1];
+	return document.getElementById("gameid").innerHTML.split("<br>")[1];
 }
 
 function showGameTitle(gameTitle) {
