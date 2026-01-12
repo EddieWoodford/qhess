@@ -1,4 +1,5 @@
 :root {
+	--border-main: #d3d6da;
     --button-height: 2.5em;
     --button-font-size: 2dvmin;
     --board-font-size: 3.35dvmin; /* controls the board square size via the em unit */
@@ -29,7 +30,7 @@ body {
 header {
     margin: 0 0 0.5dvmin 0;
     padding: 0;
-    border-bottom: 1px solid black;
+    border-bottom: 1px solid var(--border-main);
     box-shadow: 0px 0px 4px #ccc inset;
     background-color: #eee;
     vertical-align: middle;
@@ -114,7 +115,7 @@ button {
 }
 
 .modalData {
-    border: 2px solid black;
+    border: 2px 1px solid var(--border-main);
     border-radius: 4px;
     box-shadow: 0px 0px 64px 8px #0008;
     background-color: #ffe;
@@ -225,13 +226,10 @@ input:checked + label {
     flex-flow: var(--board-flex-flow);
     order: 1;
     justify-content: center;
-    /* border: black solid 1px; */
-    /* resize: both; */
-    /* overflow: hidden; */
 }
 .movehistory { /* movehistory text area */
     font-size: 2dvmin;
-    border: black solid 1px;
+    border: 1px solid var(--border-main);
     max-height: 8em;
     overflow: auto;
     font-family: Monospace;
@@ -265,7 +263,7 @@ input:checked + label {
     color: white;
     background: grey;
     float: left;
-    border: black solid 1px;
+    border: 1px solid var(--border-main);
     cursor: pointer;
 
 }
@@ -287,7 +285,7 @@ input:checked + label {
 
 /* Misc area elements */
 .captured-pieces {
-    border-top: 1px solid;
+    border-top: 1px solid var(--border-main);
 }
 .column {
     float: left;
@@ -295,7 +293,7 @@ input:checked + label {
 }
 
 .find-pieces{
-    border-top: 1px solid;
+    border-top: 1px solid var(--border-main);
     float: bottom;
 }
 /* .find-pieces #find-pieces { */
@@ -312,7 +310,7 @@ input:checked + label {
     width: 3em;
     line-height: 1;
     float: center;
-    border: black solid 1px;
+    border: 1px solid var(--border-main);
     cursor: pointer;
     white-space: normal;
     justify-content: center; /* center the content horizontally */
@@ -447,7 +445,6 @@ input:checked + label {
     height: 3em;
     font-size: var(--board-font-size);
     border: none;
-    /* border: black solid 1px; */
     font-family: monospace;
     
     line-height: 1;
@@ -461,7 +458,6 @@ input:checked + label {
     height: 1em;
     font-size: var(--board-font-size);
     border: none;
-    /* border: black solid 1px; */
     font-family: monospace;
     text-align: center;
     line-height: 1;
@@ -474,7 +470,6 @@ input:checked + label {
     font-size: var(--board-font-size);
     /* float: left; */
     border: none;
-    /* border: black solid 1px; */
     padding: 0px;
 }
 /* background to individual unicode characters */
