@@ -8,12 +8,11 @@
     --board-black-col: #222;   /* darker black squares */
     --board-flex-flow: column nowrap; /* column-reverse nowrap when flipped to black's view */
     --boardrow-flex-flow: row nowrap; /* row-reverse nowrap when flipped to black's view */
-    --piece-selectedStart-col: orange;    /* selected piece */
-    --piece-dest-col: #0F0a;    /* valid destinations */
-    --piece-selectedEnd-col: lime;    /* selected destination of piece */
-    --piece-checkKing-col: #ff4d4d;    /* brighter red for king in check */
-    --piece-checkAttacker-col: #4d88ff;    /* brighter blue for attacker */
-    --findpiece-highlight-col: #aa33ff;    /* more visible highlight */
+    --piece-selectedStart-col: #a87c2a; /* dark amber */
+    --piece-dest-col: #4f8f5a;    /* green */
+    --piece-checkKing-col: #7a1f1f; /* dark oxblood */
+    --piece-checkAttacker-col: #5a8fb5; /* blue */
+    --findpiece-highlight-col: #5f4a82;    /* more visible highlight */
     --font-ui: system-ui, -apple-system, BlinkMacSystemFont,
                "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco,
@@ -468,7 +467,7 @@ input:checked + label {
     background-color: var(--board-black-col);
 }
 .hovered { /* when the player is hovering the mouse over it */
-    background-color: orange;
+    background-color: color-mix(in srgb, var(--piece-selectedStart-col) 60%, transparent);
 }
 .selectable {
     box-shadow: 0px 0px 0px 3px var(--piece-selectedStart-col) inset;
@@ -485,13 +484,21 @@ input:checked + label {
                 0px 0px 0px 12px var(--piece-selectedStart-col) inset;
 }
 .selectedEnd { /* when the player has clicked on it as a destination */
-    box-shadow: 0px 0px 0px 6px var(--piece-selectedEnd-col) inset;
+    box-shadow: 0px 0px 0px 6px var(--piece-dest-col) inset;
 }
 .potKing { /* when highlighted as a potential king to select */
-    background-color: red;
+    background-color: color-mix(
+        in srgb,
+        var(--piece-checkKing-col) 55%,
+        transparent
+    );
 }
 .potAttacker { /* when highlighted as a potential attacker to select */
-    background-color: blue;
+    background-color: color-mix(
+        in srgb,
+        var(--piece-checkAttacker-col) 55%,
+        transparent
+    );
 }
 .checkKing { /* a king which is in check or potential check */
     box-shadow: 0px 0px 0px 6px var(--piece-checkKing-col) inset;
@@ -502,7 +509,7 @@ input:checked + label {
 
 .selectedEnd.checkAttacker { /* both selectedEnd AND check attacker*/
     box-shadow: 0px 0px 0px 6px var(--piece-checkAttacker-col) inset, 
-                0px 0px 0px 12px var(--piece-selectedEnd-col) inset;
+                0px 0px 0px 12px var(--piece-dest-col) inset;
 }
 
 .findHighlight { /* when the player has clicked a find-piece button */
