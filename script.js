@@ -1859,18 +1859,22 @@ function setup() {
 // Initialisation
 ////////////////////////////////
 // Chess piece coloured emojis:
-const WK = "<span style='color:#7E7427'>&#9812;</span>";
-const WQ = "<span style='color:#563F54'>&#9813;</span>";
-const WR = "<span style='color:#394F67'>&#9814;</span>";
-const WB = "<span style='color:#771515'>&#9815;</span>";
-const WN = "<span style='color:#803300'>&#9816;</span>";
-const WP = "<span style='color:#45711A'>&#9817;</span>";
-const BK = "<span style='color:#FCE94F'>&#9818;</span>";
-const BQ = "<span style='color:#AD7FA8'>&#9819;</span>";
-const BR = "<span style='color:#729FCF'>&#9820;</span>";
-const BB = "<span style='color:#EF2929'>&#9821;</span>";
-const BN = "<span style='color:#FF6600'>&#9822;</span>";
-const BP = "<span style='color:#8AE234'>&#9823;</span>";
+// White pieces – richer, warmer, darker shades for visibility
+const WK = "<span style='color:#FFD700'>&#9812;</span>"; // bright gold
+const WQ = "<span style='color:#FF69B4'>&#9813;</span>"; // hot pink
+const WR = "<span style='color:#1E90FF'>&#9814;</span>"; // dodger blue
+const WB = "<span style='color:#FF4500'>&#9815;</span>"; // orange-red
+const WP = "<span style='color:#32CD32'>&#9817;</span>"; // lime green
+const WN = "<span style='color:#FFA500'>&#9816;</span>"; // orange
+
+// Black pieces – softer, slightly glowing pastels to pop on dark squares
+const BK = "<span style='color:#F0E68C'>&#9818;</span>"; // khaki
+const BQ = "<span style='color:#BA55D3'>&#9819;</span>"; // medium orchid
+const BR = "<span style='color:#87CEFA'>&#9820;</span>"; // light sky blue
+const BB = "<span style='color:#FF6347'>&#9821;</span>"; // tomato
+const BN = "<span style='color:#FFA07A'>&#9822;</span>"; // light salmon
+const BP = "<span style='color:#90EE90'>&#9823;</span>"; // light green
+
 
 let TURNNUMBER;
 let TURNCOLOR;

@@ -1,47 +1,60 @@
 :root {
-	--border-main: #d3d6da;
+    --border-main: #555; /* darker border for dark theme */
     --button-height: 2.5em;
     --button-font-size: 2dvmin;
     --board-font-size: 3.35dvmin; /* controls the board square size via the em unit */
     --board-font-size-collapsed: 9dvmin;
-    --board-white-col: darkgray;  /* base colour of white squares */
-    --board-black-col: dimgray;   /* base colour of black squares */
+    --board-white-col: #555;  /* darkened 'white' squares */
+    --board-black-col: #222;   /* darker black squares */
     --board-flex-flow: column nowrap; /* column-reverse nowrap when flipped to black's view */
     --boardrow-flex-flow: row nowrap; /* row-reverse nowrap when flipped to black's view */
     --piece-selectedStart-col: orange;    /* selected piece */
     --piece-dest-col: #0F0a;    /* valid destinations */
-    --piece-selectedEnd-col: lime;    /* selected destination of piecee */
-    --piece-checkKing-col: red;    /* king in check (including potential) */
-    --piece-checkAttacker-col: blue;    /* piece putting king in check (including potential) */
-    --findpiece-highlight-col: #808;    /* find pieces selection filter colour */
+    --piece-selectedEnd-col: lime;    /* selected destination of piece */
+    --piece-checkKing-col: #ff4d4d;    /* brighter red for king in check */
+    --piece-checkAttacker-col: #4d88ff;    /* brighter blue for attacker */
+    --findpiece-highlight-col: #aa33ff;    /* more visible highlight */
     --font-ui: system-ui, -apple-system, BlinkMacSystemFont,
                "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco,
                  Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
-body {
-    text-align: center;
-    /* top: 50%; */
-    /* left: 50%; */
-    /* transform: translate(-50%, -50%); */
-    padding: 0em;
-    margin: 0em;
-    font-size: 2dvmin;
-	font-family: var(--font-ui);
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* remove scrollbars */
 }
 
+body {
+    text-align: center;
+    text-align: center;
+    font-size: 2dvmin;
+    font-family: var(--font-ui);
+    background-color: #121212; /* deep dark background */
+    color: #eee;               /* light text for readability */
+    -webkit-font-smoothing: antialiased; /* smoother fonts */
+    -moz-osx-font-smoothing: grayscale;
+}
+
+
 header {
+	flex-shrink: 0;       /* header keeps its height */
+    height: 5dvmin;       /* or whatever you want the visible height to be */
+    box-sizing: border-box;
     margin: 0;
     padding: 0.5em 1em;
-    border-bottom: 1px solid #ddd;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    background-color: #fff;
+    border-bottom: 1px solid #333; /* subtle divider on dark background */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.6); /* slightly stronger shadow */
+    background-color: #1e1e1e; /* dark header */
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-family: 'Inter', 'Segoe UI', 'Helvetica Neue', sans-serif;
+    font-family: var(--font-ui);
     font-size: 3dvmin; /* scales with screen size */
+    color: #eee; /* light text for readability */
 }
 
 header .left,
@@ -56,7 +69,7 @@ header .center.title {
     font-weight: 500;       /* lighter than bold */
     font-size: 4dvmin;      /* slightly bigger than icons */
     letter-spacing: 0.05em; 
-    color: #222;
+    color: #fff;            /* light text on dark background */
 }
 
 header li.button {
@@ -65,43 +78,53 @@ header li.button {
     align-items: center;
     justify-content: center;
     padding: 0.3em 0.6em;
-    font-size: 3dvmin;
+    font-size: 2dvmin;
     border-radius: 6px;
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease;
+    transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    background-color: #2c2c2c; /* dark button base */
+    color: #ccc;                /* muted icon/text color */
 }
 
 header li.button:hover {
-    background-color: #eee;
+    background-color: #444;     /* slightly lighter on hover */
     transform: scale(1.1);
+    box-shadow: 0 0 8px #fff4;  /* subtle glow for modern look */
+    color: #fff;                /* brighter on hover for contrast */
 }
+
 
 
 h1, h2, h3, h4, h5, h6 {
-    font-weight: 400; /* normal weight for a modern look */
-    letter-spacing: 0.03em; /* optional: slightly airy */
-    line-height: 1.2; /* a bit tighter spacing */
-	text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
+    font-weight: 400;           /* normal weight for modern look */
+    letter-spacing: 0.03em;     /* slightly airy */
+    line-height: 1.2;           /* tighter spacing */
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.05); /* subtle light shadow for dark bg */
+    color: #eee;                /* light text for dark theme */
 }
+
 h1, h2, h3 {
-    color: #111; /* dark gray instead of black */
+    color: #fff;                /* slightly brighter for main headers */
 }
 
 .left {
     float: left; 
     padding: 0em 0.1em 0em 0.2em;
 }
-.center,.title {
-    font-weight: 500;      /* lighter than bold */
-    font-size: 4dvmin;     /* scales slightly bigger than header icons */
+
+.center, .title {
+    font-weight: 500;           /* lighter than bold */
+    font-size: 4dvmin;          /* scales slightly bigger than header icons */
     letter-spacing: 0.05em; 
-    color: #222;
-    text-shadow: none;     /* remove heavy shadow */
+    color: #fff;                /* white text for dark theme */
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5); /* subtle dark shadow for depth */
 }
+
 .right {
     float: right;
     padding: 0em 0.2em 0em 0.1em;
 }
+
 
 button {
     cursor: pointer;
@@ -110,43 +133,51 @@ button {
 }
 
 .modalWrapper {
-    display:none;
-    position:fixed;
-    z-index:1;
-    padding-top:4em;
-    left:0;
-    top:0;
-    width:100%;
-    height:100%;
-    box-sizing:border-box;
-    overflow:auto;
-    background-color:#0002;
+    display: none;
+    position: fixed;
+    z-index: 1;
+    padding-top: 4em;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.75); /* darker overlay */
     text-align: center;
 }
 
 .modalData {
-    border: 2px 1px solid var(--border-main);
-    border-radius: 4px;
-    box-shadow: 0px 0px 64px 8px #0008;
-    background-color: #ffe;
+    border: 1px solid #555;
+    border-radius: 8px;
+    box-shadow: 0 0 32px rgba(0,0,0,0.8);
+    background-color: #1a1a1a;  /* dark background */
+    color: #eee;                /* light text */
     width: 80%;
     max-width: 700px;
-    max-height: 800px;
+    max-height: 80%;
     padding: 2em;
     margin: auto;
+    overflow: auto;
 }
 
-h2,h3,h4 {
-    margin-top: 0;
-    padding-top: 0;
-}
 
 textarea {
-     width: 100%;
-     -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
-     -moz-box-sizing: border-box;    /* Firefox, other Gecko */
-     box-sizing: border-box;         /* Opera/IE 8+ */
+    width: 100%;
+    -webkit-box-sizing: border-box; /* Safari/Chrome */
+    -moz-box-sizing: border-box;    /* Firefox */
+    box-sizing: border-box;         /* All modern browsers */
+
+    background-color: #222;         /* dark background */
+    color: #eee;                    /* light text */
+    border: 1px solid #555;         /* subtle border */
+    border-radius: 4px;             /* slightly rounded */
+    padding: 0.5em;                 /* a bit of padding for comfort */
+    font-family: var(--font-mono);  /* preserve monospaced text for move history */
+    font-size: var(--button-font-size); /* scale nicely with UI */
+    resize: vertical;               /* allow vertical resizing only */
 }
+
 
 /*
  * sections for tabs
@@ -154,7 +185,9 @@ textarea {
 section {
     display: none;
     padding: 20px 0 0;
-    border-top: 1px solid #888;
+    border-top: 1px solid #444; /* darker border for dark theme */
+    background-color: #1e1e1e; /* subtle dark background for tab content */
+    color: #eee;               /* light text for readability */
 }
 
 input.hidden {
@@ -164,60 +197,47 @@ input.hidden {
 .tabTitle {
     display: inline-block;
     margin: 0 0 -1px;
-    padding: 15px 25px;
-    font-weight: 600;
+    padding: 12px 20px;          /* slightly smaller padding for sleek look */
+    font-weight: 500;            /* lighter than before */
     text-align: center;
-    color: black;
-    border: 0px solid white;
+    color: #ccc;                 /* lighter gray for unselected tabs */
+    border-radius: 6px 6px 0 0; /* rounded top corners for tabs */
+    background-color: #2a2a2a;   /* dark tab background */
+    transition: background 0.2s, color 0.2s;
 } 
 
-label[for*='1']:before {
-    content: '🏠';
-}
-
-label[for*='2']:before {
-    content: '📝';
-}
-
-label[for*='3']:before {
-    content: '👀';
-}
-
-label[for*='4']:before {
-    content: '⛬';
-}
-
-label[for*='11']:before {
-    content: '<-';
-}
-label[for*='12']:before {
-    content: '->';
-}
+label[for*='1']:before { content: '🏠'; }
+label[for*='2']:before { content: '📝'; }
+label[for*='3']:before { content: '👀'; }
+label[for*='4']:before { content: '⛬'; }
+label[for*='11']:before { content: '<-'; }
+label[for*='12']:before { content: '->'; }
 
 label:hover {
-    color: black;
-    border-top: 2px solid grey;
+    color: #fff;                   /* highlight text on hover */
+    background-color: #333;        /* slightly lighter hover */
     cursor: pointer;
 }
 
 input:checked + label {
-    color: black;
-    border: 1px solid #ddd;
-    border-top: 2px solid orange;
-    border-bottom: 1px solid white;
+    color: #fff;                    /* selected tab text */
+    background-color: #444;         /* selected tab background */
+    border: 1px solid #666;         /* subtle border to separate from content */
+    border-bottom: 1px solid #1e1e1e; /* hide border between tab and section */
 }
 
 #tab1:checked ~ #gameLobbyTab,
 #tab2:checked ~ #gameMetaTab,
 #tab3:checked ~ #gameFindpiecesTab,
 #tab4:checked ~ #userHistoryTab {
-  display: block;
+    display: block;
 }
 
 #tab11:checked ~ #gameLobbyPastTab,
 #tab12:checked ~ #gameLobbyFutureTab {
-  display: block;
+    display: block;
 }
+
 
 /* ************************************************* */
 /* Flex container and children */
@@ -226,33 +246,70 @@ input:checked + label {
     display: flex; /* or inline-flex */
     flex-flow: row nowrap;
     justify-content: space-evenly;
+    background-color: #181818; /* subtle dark background for container */
+    padding: 0.5em;
+    gap: 1em; /* spacing between board and controls */
+	height: calc(100% - 4dvmin); /* fill vertical space */
+    box-sizing: border-box;
 }
+
 .game-control {
     order: 2;
     text-align: center;
+    background-color: #1f1f1f; /* slightly lighter dark panel */
+    border-radius: 8px;
+    padding: 1em;
+    color: #eee; /* light text */
 }
+
 .board {
     display: flex;
     flex-flow: var(--board-flex-flow);
     order: 1;
     justify-content: center;
+    background-color: #1a1a1a; /* dark background behind the board */
+    padding: 0.5em;
+    border-radius: 8px;
+	max-height: 100%;
 }
-.movehistory { /* movehistory text area */
+
+.movehistory {
     font-size: 2dvmin;
-    border: 1px solid var(--border-main);
+    border: 1px solid #444;   /* darker border for dark theme */
     max-height: 8em;
     overflow: auto;
     font-family: var(--font-mono);
     text-align: left;
+    background-color: #222;   /* dark background for text area */
+    color: #eee;              /* light text */
+    padding: 0.5em;
+    border-radius: 6px;
 }
+
 .stepHistoryButton {
     float: left;
     width: 25%;
     height: var(--button-height);
     font-size: var(--button-font-size);
+    background-color: #333;    /* dark button */
+    color: #eee;               /* light text */
+    border: 1px solid #555;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
 }
-#thismove { /* thismove text area */
-    font-size:2dvmin;
+
+.stepHistoryButton:hover {
+    background-color: #555;    /* highlight on hover */
+}
+
+#thismove {
+    font-size: 2dvmin;
+    background-color: #222;  /* match movehistory style */
+    color: #eee;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 0.4em;
 }
 
 
@@ -260,58 +317,85 @@ input:checked + label {
 /* Game control */
 /* ************************************************* */
 .prompt {
-    background-color: #66ff6666;
+    background-color: #66ff66aa; /* keep green hint, but slightly more subtle on dark bg */
+    color: #000;                 /* dark text for contrast */
+    border-radius: 4px;
+    padding: 0.3em 0.5em;
+    box-shadow: 0 0 4px 1px #0008 inset; /* subtle inner shadow for depth */
 }
+
 
 /* ********** Side Buttons ************ */
 .sidebutton {
     font-size: var(--button-font-size);
     height: var(--button-height);
     width: 50%;
-    vertical-align:top;
-    
-    color: white;
-    background: grey;
-    float: left;
-    border: 1px solid var(--border-main);
-    cursor: pointer;
+    vertical-align: top;
 
+    color: #eee; /* light text for contrast */
+    background: #333; /* dark button base */
+    float: left;
+    border: 1px solid #555; /* darker border */
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 4px #0008; /* subtle depth */
 }
+
 .sidebutton:hover {
-    background-color: orange;
-    color: white;
+    background-color: #ff9500; /* modern orange highlight */
+    color: #fff;
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px #000a;
 }
+
 
 /* ********** History Buttons ************ */
-.historyButton{
+.historyButton {
     font-size: var(--button-font-size);
     height: var(--button-height);
     width: 50%;
-    vertical-align:top;
+    vertical-align: top;
     float: left;
     cursor: pointer;
+
+    color: #eee;               /* light text */
+    background-color: #333;    /* dark base */
+    border: 1px solid #555;    /* subtle border */
+    border-radius: 6px;
+    transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 4px #0008; /* subtle depth */
 }
+
+.historyButton:hover {
+    background-color: #ff9500; /* modern orange highlight */
+    color: #fff;
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px #000a;
+}
+
 
 
 /* Misc area elements */
 .captured-pieces {
-    border-top: 1px solid var(--border-main);
+    border-top: 1px solid #555; /* darker border for dark theme */
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5em 0;
 }
 .column {
     float: left;
     width: 50%;
+    color: #eee;           /* light text for captured pieces labels */
+    font-weight: 500;
+}
+.find-pieces {
+    border-top: 1px solid #555;
+    display: flex;
+    justify-content: center;
+    padding: 0.5em 0;
 }
 
-.find-pieces{
-    border-top: 1px solid var(--border-main);
-    float: bottom;
-}
-/* .find-pieces #find-pieces { */
-    /* text-align: center; */
-    /* position: absolute; */
-    /* bottom: 0; */
-    /* left: 0; */
-/* } */
 .findpiecebutton {
     color: white;
     
@@ -332,8 +416,17 @@ input:checked + label {
      * */
 }
 
+
+.findpiecebutton:hover {
+    background-color: #ff9500; /* modern accent color on hover */
+    box-shadow: 0 4px 8px #000a;
+    transform: scale(1.05);
+}
+
 .findpieceselected {
-    background-image: #F0FA;
+    background-color: #ff9500;   /* highlight selected piece */
+    color: #fff;
+    box-shadow: 0 0 8px #ff9500aa inset;
 }
 
 /* ************************************************* */
@@ -401,11 +494,6 @@ input:checked + label {
                 0px 0px 0px 12px var(--piece-selectedEnd-col) inset;
 }
 
-/* TODO: .checkAttacker and .destination{numbers} class pairs should be handled
- * better
- * ...any other class pairs that are missed?
- */
-
 .findHighlight { /* when the player has clicked a find-piece button */
     background-color: var(--findpiece-highlight-col);
 }
@@ -449,8 +537,8 @@ input:checked + label {
 
 
 .rankcoord {
-    color: #888;
-    background-color: white;
+    color: #ccc;                /* light gray text for visibility */
+    background-color: #111;     /* dark background instead of white */
     width: 1em;
     height: 3em;
     font-size: var(--board-font-size);
@@ -459,9 +547,10 @@ input:checked + label {
     text-align: center;
     padding: 0px;
 }
+
 .filecoord {
-    color: #888;
-    background-color: white;
+    color: #ccc;                /* light gray text */
+    background-color: #111;     /* match rank coord */
     width: 3em;
     height: 1em;
     font-size: var(--board-font-size);
@@ -471,35 +560,31 @@ input:checked + label {
     line-height: 1;
     padding: 0px;
 }
+
 .cornerbutton {
-    background-color: white;
+    background-color: #111;     /* dark like the board edges */
     width: 1em;
     height: 1em;
     font-size: var(--board-font-size);
-    /* float: left; */
     border: none;
     padding: 0px;
-}
+    cursor: default;
+
 /* background to individual unicode characters */
-.whitepiece {
-    background: #fffa;
-    border-radius: 30%;
+.whitepiece, .blackpiece {
+    font-weight: bold;
+    text-shadow:
+        0 0 2px #0008,                 /* subtle black outline */
+        0 0 4px currentColor;           /* glow in the same color as the piece */
 }
-.blackpiece {
-    padding: 0;
-    background: #000a;
-    border-radius: 30%;
-}
-.whitepiececollapsed {
-    background: #fffa;
-    border-radius: 50%;
+
+.whitepiececollapsed, .blackpiececollapsed {
+    text-shadow: 0 0 3px #0008;  /* slightly stronger glow for collapsed pieces */
+    font-weight: bold;
     font-size: var(--board-font-size-collapsed);
 }
-.blackpiececollapsed {
-    background: #000a;
-    border-radius: 50%;
-    font-size: var(--board-font-size-collapsed);
-}
+
+
 
 @media all and (max-aspect-ratio: 1.6) { /* Squarish screens */
     :root {
