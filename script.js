@@ -313,17 +313,6 @@ function findPiecesClick(wave) {
 	setState(STATE);
 }
 
-function toggleBoardFontSize() {
-    if (document.documentElement.style.getPropertyValue('--board-font-size') == '3.5vmin') {
-        document.documentElement.style.setProperty('--board-font-size', '2.5vmin');
-    } else {
-        document.documentElement.style.setProperty('--board-font-size', '3.5vmin');
-    }
-}
-
-function togglePageTheme() {
-}
-
 function toggleFlippedBoard() {
 	if (document.documentElement.style.getPropertyValue('--board-flex-flow') == 'column-reverse nowrap') {
         document.documentElement.style.setProperty('--board-flex-flow', 'column nowrap');
