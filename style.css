@@ -273,6 +273,17 @@ input:checked + label {
 	max-height: 100%;
 }
 
+/* outlines for debugging */
+/* .container { */
+    /* outline: 3px solid red; */
+/* } */
+/* .board { */
+    /* outline: 3px solid blue; */
+/* } */
+/* .game-control { */
+    /* outline: 3px solid green; */
+/* } */
+
 .movehistory {
     font-size: 2dvmin;
     border: 1px solid #444;   /* darker border for dark theme */
@@ -569,18 +580,14 @@ input:checked + label {
     border: none;
     padding: 0px;
     cursor: default;
+}
 
 /* background to individual unicode characters */
 .whitepiece, .blackpiece {
-    font-weight: bold;
-    text-shadow:
-        0 0 2px #0008,                 /* subtle black outline */
-        0 0 4px currentColor;           /* glow in the same color as the piece */
+    font-size: var(--board-font-size);
 }
 
 .whitepiececollapsed, .blackpiececollapsed {
-    text-shadow: 0 0 3px #0008;  /* slightly stronger glow for collapsed pieces */
-    font-weight: bold;
     font-size: var(--board-font-size-collapsed);
 }
 
@@ -594,7 +601,7 @@ input:checked + label {
     }
 }
 
-@media all and (max-aspect-ratio: 0.8) { /* Tall screens */
+@media all and (max-aspect-ratio: 1) { /* Tall screens */
     /* put everything in one big column */
     :root {
         --board-font-size: 3.8dvmin;
