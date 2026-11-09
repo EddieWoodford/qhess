@@ -918,160 +918,129 @@ function pcMoveText() {
 }
 
 ////////////////////////////////
-// Piece collapse
+// Piece collapse (replacement)
 ////////////////////////////////
+// Drop-in replacement for updateOptionsFromEntanglement().
+//
+// What it does: for each colour, a (piece, identity) pair stays only if some complete
+// assignment of the 16 identities to the 16 pieces uses it. This is Regin's AllDifferent
+// filter: find one perfect matching, orient the edges, and keep an unmatched edge only if
+// its two endpoints are in the same strongly connected component.
+//
+// One pass reaches the fixed point, because deleting edges that are in no perfect
+// matching never changes the set of perfect matchings. No restart loop is needed.
 
-function updateOptionsFromFullCollapse(colors) {
-	// Loop through the pieces. Continue until the set isn't changed after a pass.
-	// If a piece only has one waveform, assign it to a specific option, and remove that option from all other pieces
-	let pieces;
-	let i;
-	let piece;
-	if (colors == undefined) {
-		colors = ["w","b"];
+// Pure helper (no globals, easy to test on its own).
+// OM: square 0/1 matrix, rows = pieces, cols = identities (P1..P8, R1, R2, N1, N2, Bb, Bw, Q, K).
+// Returns a NEW matrix with every pair that cannot appear in any perfect matching zeroed,
+// or null if no perfect matching exists at all.
+function filterOptionMatrix(OM) {
+	const n = OM.length;
+
+	// 1. Find one perfect matching with augmenting paths (Kuhn's algorithm).
+	const matchOfRow = Array(n).fill(-1);
+	const matchOfCol = Array(n).fill(-1);
+	function augment(r, seen) {
+		for (let c = 0; c < n; c++) {
+			if (OM[r][c] !== 1 || seen[c]) { continue; }
+			seen[c] = true;
+			if (matchOfCol[c] === -1 || augment(matchOfCol[c], seen)) {
+				matchOfCol[c] = r;
+				matchOfRow[r] = c;
+				return true;
+			}
+		}
+		return false;
 	}
-	for (color of colors) {	
-		pieces = getPieces(color);
-		i = 0;
-		while (i < 16) {
-			piece = pieces[i];
-			if (piece.fullcollapsed == 1) {
-				i = i+1;
-				continue;
-			}
-			if (piece.promoted == 1) {
-				i = i+1;
-				continue;
-			}
-			// If a piece only has one waveform, assign it to a specific option, 
-			// and remove that option from all other pieces:
-			let waves = piece.waves();
-			if (waves.length == 1) {
-				let optidxs = wave2optidxs(waves);
-				for (oi = 0; oi < optidxs.length; oi++) {
-					if (piece.options[optidxs[oi]] == 1) {
-						break;
-					}
-				}
-				// Now optidxs[oi] is the option index to set for this piece and remove for all others
-				// Loop through other pieces:
-				for (j = 0; j < 16; j++) {
-					if (j==i) {
-						pieces[j].options = Array(16).fill(0);
-						pieces[j].options[optidxs[oi]] = 1;	
-					} else {
-						pieces[j].options[optidxs[oi]] = 0;
-					}
-				}
-				piece.fullcollapsed = 1;
-				i = 0; // start the loop again
+	for (let r = 0; r < n; r++) {
+		if (!augment(r, Array(n).fill(false))) {
+			return null; // some piece can't be given an identity, so the matrix is impossible
+		}
+	}
+
+	// 2. Directed graph on 2n nodes: rows are 0..n-1, columns are n..2n-1.
+	// Matched edges point row -> column, unmatched edges point column -> row.
+	// A cycle in this graph is an alternating cycle, so an unmatched edge lies on one
+	// exactly when its endpoints are in the same strongly connected component.
+	const adj = Array.from({ length: 2 * n }, () => []);
+	for (let r = 0; r < n; r++) {
+		for (let c = 0; c < n; c++) {
+			if (OM[r][c] !== 1) { continue; }
+			if (matchOfRow[r] === c) {
+				adj[r].push(n + c);
 			} else {
-				i = i+1;
+				adj[n + c].push(r);
 			}
 		}
 	}
+
+	// 3. Tarjan's strongly connected components (at most 32 nodes, so recursion is fine).
+	const idx = Array(2 * n).fill(-1);
+	const low = Array(2 * n).fill(0);
+	const onStack = Array(2 * n).fill(false);
+	const comp = Array(2 * n).fill(-1);
+	const stack = [];
+	let counter = 0;
+	let nComp = 0;
+	function strong(v) {
+		idx[v] = low[v] = counter++;
+		stack.push(v);
+		onStack[v] = true;
+		for (const w of adj[v]) {
+			if (idx[w] === -1) {
+				strong(w);
+				low[v] = Math.min(low[v], low[w]);
+			} else if (onStack[w]) {
+				low[v] = Math.min(low[v], idx[w]);
+			}
+		}
+		if (low[v] === idx[v]) {
+			let w;
+			do {
+				w = stack.pop();
+				onStack[w] = false;
+				comp[w] = nComp;
+			} while (w !== v);
+			nComp++;
+		}
+	}
+	for (let v = 0; v < 2 * n; v++) {
+		if (idx[v] === -1) { strong(v); }
+	}
+
+	// 4. Keep matched edges, and unmatched edges whose endpoints share a component.
+	const out = OM.map(row => Array(row.length).fill(0));
+	for (let r = 0; r < n; r++) {
+		for (let c = 0; c < n; c++) {
+			if (OM[r][c] !== 1) { continue; }
+			if (matchOfRow[r] === c || comp[r] === comp[n + c]) {
+				out[r][c] = 1;
+			}
+		}
+	}
+	return out;
 }
 
 function updateOptionsFromEntanglement(colors) {
-	
-	let OM_original;
-	let OM;
-	let pieceIdx;
-	let optionIdx;
-	let matchingCols;
-	let matchingRows;
-	let rowsDone;
-	let colsDone;
-	let OM_before;
-	let result;
-	
-	
 	if (colors == undefined) {
-		colors = ["w","b"];
+		colors = ["w", "b"];
 	}
-	updateOptionsFromFullCollapse(colors);
-	for (color of colors) {	
-		pieces = getPieces(color);
-		OM_original = getOM(pieces);
-		OM = clone2DArray(OM_original);
-
-		if (isValid(OM)) {
-			pieceIdx = -1;
-			rowsDone = Array(16).fill(false);
-			OM_before = clone2DArray(OM);
-
-			while (pieceIdx < 15) { // <15 here since we increment at start of loop
-				pieceIdx++;
-
-				if (rowsDone[pieceIdx]) {
-					continue;
-				}
-
-				matchingRows = Array(16).fill(false);
-
-				for (let ri = pieceIdx; ri < 16; ri++) {
-					if (isequal(OM[pieceIdx], OM[ri])) {
-						matchingRows[ri] = true;
-					}
-				}
-
-				colsDone = Array(16).fill(false);
-
-				for (optionIdx = 0; optionIdx < 16; optionIdx++) {
-					matchingCols = Array(16).fill(false);
-
-					if (colsDone[optionIdx]) {
-						continue;
-					}
-
-					for (let ci = optionIdx; ci < 16; ci++) {
-						if (isequal(getcolumn(OM, optionIdx), getcolumn(OM, ci))) {
-							matchingCols[ci] = true;
-						}
-					}
-
-					if (OM[pieceIdx][optionIdx] === 1) {
-						// imagine that this piece is moved so that only this option remains
-						let OM_reduced = clone2DArray(OM);
-						OM_reduced.splice(pieceIdx, 1);
-						OM_reduced.forEach(row => row.splice(optionIdx, 1));
-
-						// Sort 1's into bottom right corner. This speeds things up significantly in testing
-						let sum1 = colsum(OM_reduced);
-						let sum2 = rowsum(OM_reduced);
-						OM_reduced = sortcols(OM_reduced,sum1);
-						OM_reduced = sortrows(OM_reduced,sum2);
-
-						result = isValid(OM_reduced);
-
-						if (!result) {
-							setvalue(OM[pieceIdx],matchingCols,0);
-						}
-					}
-					setvalue(colsDone,matchingCols,true);
-				}
-				for (let ri = pieceIdx; ri < 16; ri++) {
-					if (matchingRows[ri]) {
-						OM[ri] = [...OM[pieceIdx]];
-						pieces[ri].options = [...OM[pieceIdx]];
-						rowsDone[ri] = true;
-					}
-				}
-
-				if (!isequal(OM_before[pieceIdx], OM[pieceIdx])) {
-					// Something has changed, so start the process again as that change may induce new collapses
-					pieceIdx = -1;
-					rowsDone = Array(16).fill(false);
-					updateOptionsFromFullCollapse(color);
-					OM_before = clone2DArray(OM);
-				}
-			}
-
-		} else {
+	if (typeof colors === "string") {
+		// The old code was sometimes called with a bare "w" or "b"
+		colors = colors.split("");
+	}
+	for (const color of colors) {
+		const pieces = getPieces(color);
+		const filtered = filterOptionMatrix(getOM(pieces));
+		if (filtered === null) {
 			throw new Error('Original OM is not valid');
+		}
+		for (let pi = 0; pi < pieces.length; pi++) {
+			pieces[pi].options = filtered[pi];
 		}
 	}
 }
+
 
 function getOM(pieces) {
 	let OM = [];
@@ -1081,62 +1050,7 @@ function getOM(pieces) {
 	return OM;
 }
 
-function isValid(OM) {
-	// Check if the Option Matrix (OM) is valid - it contains an arrangement which would result in a full chess demographic. 
-	// That's equivalent to saying that the bipartite graph indicated by the OM has a perfect matching, 
-	// or that each row can be assigned to exactly 1 column with a 1 in entry (row,col).
-	
-	
-	
-    const sz = [OM.length, OM[0].length];
-	
-    if (sz[0] != sz[1]) {
-        throw new Error('OM should be square');
-    }
 
-    if (sz[0] === 1) {
-        let result = +(OM==1);
-        return result;
-    }
-
-    const sum1 = colsum(OM);
-    if (sum1.some(val => val === 0)) {
-        return false;
-    }
-
-    const sum2 = rowsum(OM);
-    if (sum2.some(val => val === 0)) {
-        return false;
-    }
-
-    let done = new Array(sz[0]).fill(false);
-	let matchingRows;
-	let OM2;
-	for (let i=0; i < OM.length; i++) {
-        if (done[i]) {
-            continue;
-        }
-
-        matchingRows = new Array(sz[0]).fill(false);
-        for (let ri = i; ri < sz[0]; ri++) {
-            if (OM[ri].every((val, idx) => val === OM[i][idx])) {
-                matchingRows[ri] = true;
-            }
-        }
-
-        if (OM[i][0] === 1) {
-            OM2 = OM.map(row => row.slice(1)); // delete 1st col
-            OM2.splice(i, 1); // delete ith row
-            if (isValid(OM2)) {
-                return true;
-            }
-        }
-		setvalue(done,matchingRows,true);
-		
-    }
-	// If we make it here then none of the rows gave a valid result, so return false
-    return false;
-}
 
 function getCertainMoves(coords) {
 	// Get a list of the certain move destinations. That is - the desinations that a piece can definitely move to in all of their available waves.
