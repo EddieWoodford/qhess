@@ -287,6 +287,10 @@ function submitMove() {
 		TAKENPIECE.captured = TURNNUMBER;
 	}
 
+	// Remember this move's squares so replay can highlight the last move
+	LASTSTARTID = STARTID;
+	LASTENDID = ENDID;
+
 	if (TURNCOLOR == "w") {
 		TURNCOLOR =	"b";
 	} else {
@@ -1546,7 +1550,7 @@ function setState(stateIn) {
 			
 			// Default border:
 			sqr.resetButtonClasses();
-			if (STATE == "clear") {
+			if (STATE == "clear" && REPLAYNUMBER == -1) {
 				if (piece != "" && piece.color == TURNCOLOR) {
 					sqr.button.classList.add("selectable");
 				}
@@ -1576,7 +1580,16 @@ function setState(stateIn) {
 				// sqr.button.style.borderWidth = "6px";
 				sqr.button.classList.add("selectedEnd");
 			}
-			
+			if (REPLAYNUMBER > -1) {
+				// In replay, show the move that led to this position
+				if (sqr.button.id == LASTSTARTID) {
+					sqr.button.classList.add("selectedStart");
+				}
+				if (sqr.button.id == LASTENDID) {
+					sqr.button.classList.add("selectedEnd");
+				}
+			}
+
 			
 			if (sqr.highlightPotKing == 1) {
 				// sqr.button.style.background = 'red';
@@ -1719,6 +1732,8 @@ function setup() {
 	BOARD = []; // 8 x 8 array of Square objects
 	STARTID = "";
 	DESTID = "";
+	LASTSTARTID = "";
+	LASTENDID = "";
 	WHITEPIECES = [];
 	BLACKPIECES = [];
 	MOVEHISTORY = "";
@@ -1797,6 +1812,8 @@ let BOARD; // 8 x 8 array of Square objects
 let STARTID;
 let ENDID;
 let DESTID;
+let LASTSTARTID; // start square of the last submitted move, for replay highlighting
+let LASTENDID;   // end square of the last submitted move
 let WHITEPIECES;
 let BLACKPIECES;
 let MOVEHISTORY;
