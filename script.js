@@ -1828,7 +1828,51 @@ let FINDPIECE;
 let STATE;
 let REPLAYNUMBER = -1;
 
-window.onload = setup
+////////////////////////////////
+// Exports
+////////////////////////////////
+export {
+	// Used by src/client/main.js to wire up the page
+	setup,
+	sideButton1Click,
+	sideButton2Click,
+	toggleFlippedBoard,
+	findPiecesClick,
+	stepBackAll,
+	stepBackMove,
+	stepForwardMove,
+	stepForwardAll,
+	restoreGameHistory,
+	copyAllHistory,
+	copyLastMove,
+	pasteAllRestore,
+	pasteLineRestore,
+
+	// Used by tests/test.html and tests/generate.html to drive and inspect the game.
+	// These go away as the game state moves into a proper state object.
+	sideButton1Action,
+	sideButton2Action,
+	getHistoryLines,
+	doMoveFromText,
+	showPartialMove,
+	showCompleteMove,
+	selectPCKing,
+	selectPCAttackers,
+	getPotentialMoves,
+	TURNNUMBER,
+	TURNCOLOR,
+	BOARD,
+	WHITEPIECES,
+	BLACKPIECES,
+	MOVEHISTORY,
+	EPCOORDS,
+	EPCOLOR,
+	AUTOCHECK,
+	POTCHECK,
+	PCKING,
+	PCCOLOR,
+	STATE,
+};
 
 
 

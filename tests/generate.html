@@ -35,11 +35,17 @@ function mulberry32(a) {
 	};
 }
 
-// Load a fresh copy of the game into the frame and return its window
+// Load a fresh copy of the game into the frame. Returns the frame's window and the game module's exports
+// (imported from inside the frame, so it is the same instance the page is running).
+const GAME_MODULE_URL = new URL("../script.js", location.href).href;
 function loadFrame() {
 	return new Promise(resolve => {
 		const frame = document.getElementById("game");
-		frame.onload = () => resolve(frame.contentWindow);
+		frame.onload = async () => {
+			const win = frame.contentWindow;
+			const game = await win.eval("import('" + GAME_MODULE_URL + "')");
+			resolve({ win, game });
+		};
 		frame.src = "../index.html?t=" + Date.now();
 	});
 }
@@ -66,12 +72,12 @@ function historyFeatures(history) {
 async function playGame(seed, maxPlies, pawnBias = 1) {
 	const rng = mulberry32(seed);
 	const pick = arr => arr[Math.floor(rng() * arr.length)];
-	const g = await loadFrame();
-	const E = expr => g.eval(expr); // read the game's top-level variables
-	const sideButtonVisible = n => g.document.getElementById("sideButton" + n).style.visibility === "visible";
+	const { win, game: g } = await loadFrame();
+	const E = name => g[name]; // read the game's exported variables
+	const sideButtonVisible = n => win.document.getElementById("sideButton" + n).style.visibility === "visible";
 
 	// When a move is ambiguous (en passant / promotion), the game asks with confirm(). Answer randomly.
-	g.confirm = () => rng() < 0.5;
+	win.confirm = () => rng() < 0.5;
 
 	// Move 0: black passes (no potential check is possible yet)
 	g.sideButton2Action();
@@ -181,9 +187,9 @@ async function playGame(seed, maxPlies, pawnBias = 1) {
 
 // Replay a history from text in a fresh frame and check it reproduces itself
 async function checkRoundTrip(history) {
-	const g = await loadFrame();
+	const { game: g } = await loadFrame();
 	g.restoreGameHistory(history);
-	return g.eval("MOVEHISTORY") === history;
+	return g.MOVEHISTORY === history;
 }
 
 document.getElementById("go").onclick = async () => {

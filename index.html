@@ -3,7 +3,7 @@
 
 <head>
 <!-- <script src="socket.io/socket.io.js"></script> -->
-    <script src="script.js"></script>
+    <script type="module" src="src/client/main.js"></script>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -11,19 +11,19 @@
 <body>
     <header>
         <div class=left>
-            <li class="button" title="Information" onclick="displayInfo('')"> ℹ️
-            <li class="button" title="Game Help" onclick="displayHelp('')"> ❔
+            <li class="button" id="infoButton" title="Information"> ℹ️
+            <li class="button" id="helpButton" title="Game Help"> ❔
         </div>
         <div class="center title">Qhess</div>
         <div class=right>
-            <li class="button" title=Options onclick="displayOptions('')"> ⚙️
+            <li class="button" id="optionsButton" title=Options> ⚙️
         </div>
     </header>
 
     <!-- MODALS -->
     <!-- information modal - credits, rules? -->
-    <div id='infoWrapper' class=modalWrapper  onclick="closeInfo('')">
-        <div id=infoDiv class=modalData onclick="doNothing('')">
+    <div id='infoWrapper' class=modalWrapper>
+        <div id=infoDiv class=modalData>
             <H2>What is Qhess?</h2>
             Simply: it is your daily insanity chess!<br>
             <h3>Credit:</h3>
@@ -36,8 +36,8 @@
         </div>
     </div>
     <!-- help modal - game UI help -->
-    <div id='helpWrapper' class=modalWrapper  onclick="closeHelp('')">
-        <div id=helpDiv class=modalData onclick="doNothing('')">
+    <div id='helpWrapper' class=modalWrapper>
+        <div id=helpDiv class=modalData>
             <h2>Help!</h2>
             Explain the game UI here<br>
             <br>
@@ -45,10 +45,10 @@
         </div>
     </div>
     <!-- options modal -->
-    <div id='optionsWrapper' class=modalWrapper  onclick="closeOptions('')">
-        <div id=optionsDiv class=modalData onclick="doNothing('')">
+    <div id='optionsWrapper' class=modalWrapper>
+        <div id=optionsDiv class=modalData>
             <h2>Options</h2>
-            <button onclick="toggleFlippedBoard()">Toggle player view</button><br>
+            <button id="toggleFlippedBoard">Toggle player view</button><br>
         </div>
     </div>
     <!-- END MODALS -->
@@ -56,8 +56,8 @@
     <div class="container">
         <div class="game-control">
             <h3 class="prompt" id="prompt">Prompt Text</h3>
-            <button class="sidebutton" id="sideButton1" onclick="sideButton1Click()"></button>
-            <button class="sidebutton" id="sideButton2" onclick="sideButton2Click()"></button>
+            <button class="sidebutton" id="sideButton1"></button>
+            <button class="sidebutton" id="sideButton2"></button>
             <br clear=all>
             <h3>Staged Move:</h3>
             <input id="thismove"></input>
@@ -75,42 +75,42 @@
                 <br>
                 <br>
                 <h4>Move History:</h4>
-                <button class='stepHistoryButton' id='back2' onclick="stepBackAll()">&lt&lt</button>
-                <button class='stepHistoryButton' id='back1' onclick="stepBackMove()">&lt</button>
-                <button class='stepHistoryButton' id='forward1' onclick="stepForwardMove()">&gt</button>
-                <button class='stepHistoryButton' id='forward2' onclick="stepForwardAll()">&gt&gt</button>
+                <button class='stepHistoryButton' id='back2'>&lt&lt</button>
+                <button class='stepHistoryButton' id='back1'>&lt</button>
+                <button class='stepHistoryButton' id='forward1'>&gt</button>
+                <button class='stepHistoryButton' id='forward2'>&gt&gt</button>
                 <div class="movehistory" id="movehistory" contenteditable></div>
                 <br>
-                <button class='historyButton' id='reset' onclick="setup()">Reset Game</button>
-                <button class='historyButton' id='restorehistory' onclick="restoreGameHistory()">Restore History</button>
+                <button class='historyButton' id='reset'>Reset Game</button>
+                <button class='historyButton' id='restorehistory'>Restore History</button>
                 <br>
-                <button class='historyButton' id='copyallhistory' onclick="copyAllHistory()">Copy All</button>
-                <button class='historyButton' id='copylastmove' onclick="copyLastMove()">Copy Last Move</button>
+                <button class='historyButton' id='copyallhistory'>Copy All</button>
+                <button class='historyButton' id='copylastmove'>Copy Last Move</button>
                 <br>
-                <button class='historyButton' id='pasteallrestore' onclick="pasteAllRestore()">Paste All & Reset</button>
-                <button class='historyButton' id='pastelinerestore' onclick="pasteLineRestore()">Paste Move</button>
+                <button class='historyButton' id='pasteallrestore'>Paste All & Reset</button>
+                <button class='historyButton' id='pastelinerestore'>Paste Move</button>
                 <!-- <textarea id="movehistory" rows=20></textarea> -->
                 <br>
             </section>
                 <!-- find pieces tab - for game assistance --> 
             <section id="gameFindpiecesTab">
-                <button class="findpiecebutton" id="findK" onclick="findPiecesClick('K')">
+                <button class="findpiecebutton" id="findK">
                     <div class="findpiece" id=findKpiece></div>
                 </button>
-                <button class="findpiecebutton" id="findQ" onclick="findPiecesClick('Q')">
+                <button class="findpiecebutton" id="findQ">
                     <div class="findpiece" id=findQpiece></div>
                 </button>
-                <button class="findpiecebutton" id="findR" onclick="findPiecesClick('R')">
+                <button class="findpiecebutton" id="findR">
                     <div class="findpiece" id=findRpiece></div>
                 </button>
                 <br clear=all>
-                <button class="findpiecebutton" id="findB" onclick="findPiecesClick('B')">
+                <button class="findpiecebutton" id="findB">
                     <div class="findpiece" id=findBpiece></div>
                 </button>
-                <button class="findpiecebutton" id="findN" onclick="findPiecesClick('N')">
+                <button class="findpiecebutton" id="findN">
                     <div class="findpiece" id=findNpiece></div>
                 </button>
-                <button class="findpiecebutton" id="findP" onclick="findPiecesClick('P')">
+                <button class="findpiecebutton" id="findP">
                     <div class="findpiece" id=findPpiece></div>
                 </button>
                 <br>
@@ -255,7 +255,6 @@
             </div>
         </div>
     </div>
-    <script src="ui.js"></script>
 </body>
 
 </html>

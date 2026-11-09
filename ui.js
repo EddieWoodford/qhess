@@ -1,52 +1,25 @@
-function doNothing() {
-  event.preventDefault();
-  event.stopPropagation();
-};
+"use strict";
 
-// infomation modal
-var iw = document.getElementById('infoWrapper'),
-ib = document.getElementById('infoButton'),
-ic = document.getElementById('infoClose');
+// Show/hide the header modals (info, help, options).
+// Each modal is a full-screen wrapper (click it to close) holding a content box (clicks inside don't close it).
 
-function displayInfo() {
-  iw.style.display = 'block'
-};
-function closeInfo() {
-  iw.style.display = 'none'
-};
+const MODALS = ["info", "help", "options"];
 
-// help modal
-var hw = document.getElementById('helpWrapper'),
-hb = document.getElementById('helpButton'),
-hc = document.getElementById('helpClose');
+function showModal(name) {
+	document.getElementById(name + "Wrapper").style.display = "block";
+}
 
-function displayHelp() {
-  hw.style.display = 'block'
-};
-function closeHelp() {
-  hw.style.display = 'none'
-};
+function hideModal(name) {
+	document.getElementById(name + "Wrapper").style.display = "none";
+}
 
-// meta (score and share) modal
-var mw = document.getElementById('metaWrapper'),
-mb = document.getElementById('metaButton'),
-mc = document.getElementById('metaClose');
+function setupModals() {
+	for (const name of MODALS) {
+		document.getElementById(name + "Button").addEventListener("click", () => showModal(name));
+		document.getElementById(name + "Wrapper").addEventListener("click", () => hideModal(name));
+		// Clicks inside the content box shouldn't reach the wrapper and close the modal
+		document.getElementById(name + "Div").addEventListener("click", e => e.stopPropagation());
+	}
+}
 
-function displayMeta() {
-  mw.style.display = 'block'
-};
-function closeMeta() {
-  mw.style.display = 'none'
-};
-
-// options modal
-var ow = document.getElementById('optionsWrapper'),
-ob = document.getElementById('optionsButton'),
-oc = document.getElementById('optionsClose');
-
-function displayOptions() {
-  ow.style.display = 'block'
-};
-function closeOptions() {
-  ow.style.display = 'none'
-};
+export { setupModals, showModal, hideModal };

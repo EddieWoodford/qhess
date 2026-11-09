@@ -50,14 +50,17 @@ const GAMES = [
 
 ////////////////////////////////
 // Adapter: the only part that knows how the game code is structured.
-// When script.js is split into modules, update these functions to call the new engine.
+// As script.js is split up further, update these functions to call the new engine.
 ////////////////////////////////
 
-// Load a fresh copy of the game page into the frame and return its window
+// Load a fresh copy of the game page into the frame and return the game module's exports.
+// Importing the module from inside the frame gives the same instance the page is running,
+// and its exported variables (TURNNUMBER etc.) are live, so they always show the current value.
+const GAME_MODULE_URL = new URL("../script.js", location.href).href;
 function loadGame() {
 	return new Promise(resolve => {
 		const frame = document.getElementById("game");
-		frame.onload = () => resolve(frame.contentWindow);
+		frame.onload = async () => resolve(await frame.contentWindow.eval("import('" + GAME_MODULE_URL + "')"));
 		frame.src = "../index.html?t=" + Date.now();
 	});
 }
@@ -83,12 +86,12 @@ function restoreAll(g, text) {
 }
 
 function writtenHistory(g) {
-	return g.eval("MOVEHISTORY");
+	return g.MOVEHISTORY;
 }
 
 // Everything about the game position that matters, as plain data
 function captureState(g) {
-	const E = expr => g.eval(expr);
+	const E = name => g[name];
 	const pieceState = p => [
 		String.fromCharCode(97 + p.c) + (8 - p.r),
 		"cap" + p.captured,
