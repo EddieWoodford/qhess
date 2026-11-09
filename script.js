@@ -275,7 +275,7 @@ function submitMove() {
 		MOVEHISTORY = MOVEHISTORY + "\r\n"
 	}
 	MOVEHISTORY = MOVEHISTORY + THISMOVE + pcMoveText();
-	historyArea = document.getElementById("movehistory");
+	let historyArea = document.getElementById("movehistory");
 	if (REPLAYNUMBER == -1) {
 		historyArea.innerText = MOVEHISTORY;
 	}
@@ -342,8 +342,8 @@ function highlightPotentialMoves(buttonID) {
 
 		let moves = getPotentialMoves(coords);
 		for (let i=0; i < moves.length; i++) {
-			delY = coords[0] - moves[i][0];
-			delX = moves[i][1] - coords[1];
+			let delY = coords[0] - moves[i][0];
+			let delX = moves[i][1] - coords[1];
 			// returns 1-16 = bearing of potential move where 1=NNE, 2=NE, 3=ENE, 3=E, 5=ESE, etc.
 			let bearing = (Math.round(((Math.atan2(delX, delY) * 180) / Math.PI)/22.5) + 16 - 1) % 16 + 1;
 			BOARD[moves[i][0]][moves[i][1]].potentialMove = bearing;
@@ -361,8 +361,8 @@ function showPartialMove(buttonID) {
 		STARTID = buttonID;
 		let moves = getPotentialMoves(coords);
 		for (let i=0; i<moves.length; i++) {
-			delY = coords[0] - moves[i][0];
-			delX = moves[i][1] - coords[1];
+			let delY = coords[0] - moves[i][0];
+			let delX = moves[i][1] - coords[1];
 			// returns 1-16 = bearing of potential move where 1=NNE, 2=NE, 3=ENE, 3=E, 5=ESE, etc.
 			let bearing = (Math.round(((Math.atan2(delX, delY) * 180) / Math.PI)/22.5) + 16 - 1) % 16 + 1;
 			BOARD[moves[i][0]][moves[i][1]].potentialMove = bearing;
@@ -382,7 +382,7 @@ function showCompleteMove(buttonID,doEP,doPromotion) {
 		setState("clear");
 		return;
 	}
-	movingPiece = BOARD[startCoords[0]][startCoords[1]].piece;
+	let movingPiece = BOARD[startCoords[0]][startCoords[1]].piece;
 	THISMOVE = THISMOVE + "(" + movingPiece.waves() + ")" + BOARD[startCoords[0]][startCoords[1]].chesscoords;
 	
 	// Remove the options from this piece based on movement:
@@ -494,7 +494,7 @@ function showCompleteMove(buttonID,doEP,doPromotion) {
 	
 	// Now, look to see if attacker has put themselves in automatic check. If so, it's an invalid move
 	clearFindPotentialCheckPieces();
-	[kingCoords,attackerCoords] = findChecks(TURNCOLOR);
+	let [kingCoords,attackerCoords] = findChecks(TURNCOLOR);
 	if (attackerCoords.length > 0) {
 		// We will still display the invalid move, but make it impossible to submit, as
 		// the player might want to inspect the board to understand how the check happened.
@@ -548,7 +548,7 @@ function getHistoryLines(historyText) {
 	historyText = historyText.replaceAll("\n","");
 	var matches = historyText.match(/(\d+[bw]\.)/g)
 	var idxs = [];
-	for (i=0; i<matches.length; i++) {
+	for (let i=0; i<matches.length; i++) {
 	  idxs.push(historyText.indexOf(matches[i]));
 	}
 	var historyLines = splitOn(historyText,...idxs);
@@ -562,7 +562,7 @@ function doMoveFromText(moveText) {
 	
 	// Check that the move number eg "3w. " is correct
 	moveText = moveText.split(".");
-	turnText = moveText[0].trim();
+	let turnText = moveText[0].trim();
 	moveText = moveText[1].trim();
 	if (turnText != TURNNUMBER.toString() + TURNCOLOR) {
 		debugPrint("Move text number + colour did not match expected");
@@ -608,8 +608,7 @@ function doMoveFromText(moveText) {
 		[r,c] = coordstext2coords(pcText[0]);
 		let kingButtonID = coords2buttonID([r,c]);
 		selectPCKing(kingButtonID);
-		let attackerButtonID;
-		for (pci=1; pci < pcText.length; pci++) {
+		for (let pci=1; pci < pcText.length; pci++) {
 			// Start at idx 1 since idx 0 is the king
 			pcText[pci] = pcText[pci].replace("+","");
 			[r,c] = coordstext2coords(pcText[pci]);
@@ -671,7 +670,7 @@ function stepForwardMove() {
 	let historyArea = document.getElementById("movehistory");
 	let historyLines = getHistoryLines(historyArea.innerText);
 	if (REPLAYNUMBER < historyLines.length/2) {
-		moveText = historyLines[2*REPLAYNUMBER];
+		let moveText = historyLines[2*REPLAYNUMBER];
 		REPLAYNUMBER = REPLAYNUMBER + 0.5;
 		doMoveFromText(moveText);
 		sideButton2Action(); // submit
@@ -847,7 +846,7 @@ function findChecks(color) {
 		// There is a collapsed king, so look for auto check
 		let moveCoords;
 		for (let pi=0; pi < 16; pi++) {
-			attacker = attPieces[pi];
+			let attacker = attPieces[pi];
 			if (attacker.captured > -1) {continue}
 			moveCoords = getPotentialMoves(attacker.coords());
 			if (ismember(kingCoords,moveCoords)) {
@@ -877,7 +876,6 @@ function findChecks(color) {
 			return [[],[]];
 		}
 		kingCoords = [defKing.r,defKing.c];
-		let pi = 0;
 		let attacker;
 		let moveCoords;
 		for (let pi=0; pi < 16; pi++) {
@@ -903,7 +901,7 @@ function pcMoveText() {
 	// This function returns the "<....>" text for the potential check notation
 	let txt = "";
 	if (PCKING >= 0 && PCCOLOR == oppColor()) {
-		piece = defPiece(PCKING);
+		let piece = defPiece(PCKING);
 		txt = "<" + BOARD[piece.r][piece.c].chesscoords + "+";
 		
 		let kingCoords;
@@ -1062,7 +1060,7 @@ function getCertainMoves(coords) {
 	let waves = piece.waves();
 	let moves;
 	let thismoves;
-	for (wi=0; wi < waves.length; wi++) {
+	for (let wi=0; wi < waves.length; wi++) {
 		// Loop through the waves and intersec the resulting moves
 		thismoves = getPotentialMoves(coords,waves[wi]);
 		if (wi==0) {
@@ -1274,8 +1272,8 @@ function coords2buttonID(coords) {
 	return "square"+coords[0]+coords[1]
 }
 function coordstext2coords(coordstext) {
-	c = coordstext[0].charCodeAt()-97;
-	r = 8-coordstext[1];
+	let c = coordstext[0].charCodeAt()-97;
+	let r = 8-coordstext[1];
 	return [r,c];
 }
 function isValidCoord(coords) {
@@ -1303,7 +1301,7 @@ function rowsum(M) {
 }
 function sortcols(M,ref) {
 	// Sort ref and then sort the cols of M the same way
-	idxs = Array.from(ref.keys()).sort((a,b) => ref[a]-ref[b])
+	let idxs =Array.from(ref.keys()).sort((a,b) => ref[a]-ref[b])
 	for (let i=0; i < M.length; i++) {
 		M[i] = idxs.map(j => M[i][j])
 	}
@@ -1311,7 +1309,7 @@ function sortcols(M,ref) {
 }
 function sortrows(M,ref) {
 	// Sort ref and then sort the rows of M the same way
-	idxs = Array.from(ref.keys()).sort((a,b) => ref[a]-ref[b])
+	let idxs =Array.from(ref.keys()).sort((a,b) => ref[a]-ref[b])
 	M = idxs.map(j => M[j])
 	return M
 }
@@ -1367,7 +1365,7 @@ function attPiece(i) {
 ////////////////////////////////
 
 function debugPrint(txt) {
-	debugLabel = document.getElementById("debug");
+	let debugLabel = document.getElementById("debug");
 	debugLabel.innerText = txt;
 }
 
@@ -1515,8 +1513,6 @@ function setState(stateIn) {
 	let piece;
 	for (let r = 0; r <= 7; r++) {
 		for ( let c = 0; c <= 7; c++) {
-			i = r*8 + c
-			x = r + c
 			sqr = BOARD[r][c];
 			piece = sqr.piece;
 			
@@ -1648,7 +1644,6 @@ function setState(stateIn) {
 	capturedLabel.innerHTML = blackcaptured;
 	
 	// Update the findpiece buttons to display the correct piece for this color
-	findbuttons = document.getElementsByClassName("findpiecebutton");
 	if (TURNCOLOR == "w") {
 		document.getElementById("findKpiece").classList.remove("blackpiececollapsed");
 		document.getElementById("findQpiece").classList.remove("blackpiececollapsed");
@@ -1702,7 +1697,7 @@ function highlightReplayLine() {
 	let historyArea = document.getElementById("movehistory");
 	let historyHTML = historyArea.innerHTML;
 	
-	lineStyle = "<span style=\"background-color:lightgrey\">";
+	let lineStyle = "<span style=\"background-color:lightgrey\">";
 	historyHTML = historyHTML.replaceAll(lineStyle,"");
 	historyHTML = historyHTML.replaceAll("</span>","");
 	let historyLines = historyHTML.split("<br>");
@@ -1731,10 +1726,10 @@ function setup() {
 	PCCOLOR = ""; // the color of the king in potential check
 	FINDPIECE = "";
 	
-	moveTextarea = document.getElementById("thismove");
+	let moveTextarea = document.getElementById("thismove");
 	moveTextarea.value = "";
 	if (REPLAYNUMBER == -1) {
-		historyArea = document.getElementById("movehistory");
+		let historyArea = document.getElementById("movehistory");
 		historyArea.innerText = "";
 		historyArea.contentEditable = true;
 	}
@@ -1744,8 +1739,8 @@ function setup() {
 	for (let r = 0; r <= 7; r++) {
 		let thisrow = [];
 		for ( let c = 0; c <= 7; c++) {
-			i = r*8 + c
-			let square = new Square(r, c, squareButtons[i].id);
+			let i = r*8 + c
+			let square =new Square(r, c, squareButtons[i].id);
 			
 			thisrow.push(square)
 		}
@@ -1753,14 +1748,14 @@ function setup() {
 	}
 	for (let r = 0; r <= 1; r++) {
 		for (let c=0; c <= 7; c++) {
-			i = r*8 + c
+			let i = r*8 + c
 			let piece = new Piece(i, r, c, 'b')
 			BLACKPIECES.push(piece)
 			BOARD[r][c].piece = BLACKPIECES[i]
 		}
 	}for (let r = 6; r <= 7; r++) {
 		for (let c=0; c <= 7; c++) {
-			i = (r-6)*8 + c
+			let i = (r-6)*8 + c
 			let piece = new Piece(i, r, c, 'w')
 			WHITEPIECES.push(piece)
 			BOARD[r][c].piece = WHITEPIECES[i]
@@ -1795,6 +1790,7 @@ let TURNCOLOR;
 let TAKENPIECE;
 let BOARD; // 8 x 8 array of Square objects
 let STARTID;
+let ENDID;
 let DESTID;
 let WHITEPIECES;
 let BLACKPIECES;
