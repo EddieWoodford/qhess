@@ -1,24 +1,113 @@
+/* ==========================================================================
+   QHESS STYLESHEET
+   ==========================================================================
+
+   CONTENTS
+     1. Design tokens
+     2. Base elements
+     3. Page layout
+     4. Header
+     5. Modals
+     6. Control panel
+        6.1 Prompt and action buttons
+        6.2 Staged move
+        6.3 Tabs
+        6.4 History tab
+        6.5 Find Pieces tab and captured lists
+     7. Board
+        7.1 Structure and squares
+        7.2 Square states        (order matters)
+        7.3 Move markers         (order matters)
+        7.4 Coordinates and piece text
+     8. Responsive overrides     (must stay last)
+     9. Unused and debug
+
+   NOTES
+   - Class names, ids and the --board-flex-flow / --boardrow-flex-flow
+     variables are used by index.html and script.js. Rename them there first.
+   - script.js adds and removes the classes in section 7.2 and 7.3 at runtime.
+   - Where two rules have equal specificity, the later one wins. That is why
+     sections 7.2, 7.3 and 8 keep their original order.
+   - "UNUSED" comments mark selectors that match nothing in index.html or
+     script.js today. They are left in place rather than deleted.
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. DESIGN TOKENS
+   Change a colour, radius or shadow here and it updates everywhere.
+   ========================================================================== */
 :root {
-    --border-main: #555; /* darker border for dark theme */
-    --button-height: 2.5em;
-    --button-font-size: 2dvmin;
-    --board-font-size: 3.35dvmin; /* controls the board square size via the em unit */
-    --board-font-size-collapsed: 9dvmin;
-    --board-white-col: #555;  /* darkened 'white' squares */
-    --board-black-col: #222;   /* darker black squares */
-    --board-flex-flow: column nowrap; /* column-reverse nowrap when flipped to black's view */
-    --boardrow-flex-flow: row nowrap; /* row-reverse nowrap when flipped to black's view */
-    --piece-selectedStart-col: #a87c2a; /* dark amber */
-    --piece-dest-col: #4f8f5a;    /* green */
-    --piece-checkKing-col: #7a1f1f; /* dark oxblood */
-    --piece-checkAttacker-col: #5a8fb5; /* blue */
-    --findpiece-highlight-col: #5f4a82;    /* more visible highlight */
+    /* ---- Fonts ---- */
     --font-ui: system-ui, -apple-system, BlinkMacSystemFont,
                "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco,
                  Consolas, "Liberation Mono", "Courier New", monospace;
+
+    /* ---- Text ---- */
+    --text: #eee;
+    --text-muted: #ccc;
+    --text-strong: #fff;
+
+    /* ---- Surfaces, darkest to lightest ---- */
+    --bg-page: #121212;
+    --bg-container: #181818;
+    --bg-inset: #1a1a1a;          /* board frame, modal box */
+    --bg-raised: #1e1e1e;         /* header, tab content */
+    --bg-panel: #1f1f1f;          /* control panel */
+    --bg-input: #222;             /* move history, staged move */
+
+    /* ---- Interactive controls: resting, hover, pressed ---- */
+    --bg-control: #333;
+    --bg-control-hover: #444;
+    --bg-control-active: #555;
+
+    /* ---- Borders ---- */
+    --border-faint: #333;
+    --border-subtle: #444;
+    --border-main: #555;
+
+    /* ---- Accent ---- */
+    --accent: #ff9500;
+    --accent-glow: #ff9500aa;
+    --prompt-bg: #66ff66aa;
+
+    /* ---- Shape, depth and motion ---- */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --shadow-button: 0 2px 4px #0008;
+    --shadow-button-hover: 0 4px 8px #000a;
+    --transition-button: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+
+    /* ---- Sizing ---- */
+    --button-height: 2.5em;
+    --button-font-size: 2dvmin;
+    --board-font-size: 3.35dvmin;           /* controls the board square size via the em unit */
+    --board-font-size-collapsed: 9dvmin;
+
+    /* ---- Board colours ---- */
+    --board-white-col: #555;                /* darkened 'white' squares */
+    --board-black-col: #222;                /* darker black squares */
+    --board-edge-col: #111;                 /* coordinate labels and corners */
+    --piece-selectedStart-col: #a87c2a;     /* dark amber */
+    --piece-dest-col: #4f8f5a;              /* green */
+    --piece-checkKing-col: #7a1f1f;         /* dark oxblood */
+    --piece-checkAttacker-col: #5a8fb5;     /* blue */
+    --findpiece-highlight-col: #5f4a82;     /* more visible highlight */
+    --marker-clear: rgba(255,0,0,0);        /* transparent stop used by the move markers */
+
+    /* ---- Board orientation ----
+       script.js overwrites these two when the player view is toggled.
+       column-reverse nowrap / row-reverse nowrap = black's view. */
+    --board-flex-flow: column nowrap;
+    --boardrow-flex-flow: row nowrap;
 }
 
+
+/* ==========================================================================
+   2. BASE ELEMENTS
+   ========================================================================== */
 html, body {
     width: 100%;
     height: 100%;
@@ -29,31 +118,92 @@ html, body {
 
 body {
     text-align: center;
-    text-align: center;
     font-size: 2dvmin;
     font-family: var(--font-ui);
-    background-color: #121212; /* deep dark background */
-    color: #eee;               /* light text for readability */
+    background-color: var(--bg-page);
+    color: var(--text);
     -webkit-font-smoothing: antialiased; /* smoother fonts */
     -moz-osx-font-smoothing: grayscale;
 }
 
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 400;           /* normal weight for modern look */
+    letter-spacing: 0.03em;     /* slightly airy */
+    line-height: 1.2;           /* tighter spacing */
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.05); /* subtle light shadow for dark bg */
+    color: var(--text);
+}
 
+h1, h2, h3 {
+    color: var(--text-strong);  /* slightly brighter for main headers */
+}
+
+/* Every button gets these. Specific button types override below. */
+button {
+    cursor: pointer;
+    height: var(--button-height);
+    font-size: var(--button-font-size);
+}
+
+/* UNUSED: index.html has no <textarea> (the move history is a contenteditable div) */
+textarea {
+    width: 100%;
+    box-sizing: border-box;
+    background-color: var(--bg-input);
+    color: var(--text);
+    border: 1px solid var(--border-main);
+    border-radius: var(--radius-sm);
+    padding: 0.5em;
+    font-family: var(--font-mono);  /* preserve monospaced text for move history */
+    font-size: var(--button-font-size);
+    resize: vertical;               /* allow vertical resizing only */
+}
+
+
+/* ==========================================================================
+   3. PAGE LAYOUT
+   Two columns: board on the left (order 1), control panel on the right
+   (order 2). Tall screens stack them (see section 8).
+   ========================================================================== */
+.container {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-evenly;
+    background-color: var(--bg-container);
+    padding: 0.5em;
+    gap: 1em; /* spacing between board and controls */
+    height: calc(100% - 4dvmin); /* fill vertical space */
+    box-sizing: border-box;
+}
+
+.game-control {
+    order: 2;
+    text-align: center;
+    background-color: var(--bg-panel);
+    border-radius: var(--radius-lg);
+    padding: 1em;
+    color: var(--text);
+}
+
+
+/* ==========================================================================
+   4. HEADER
+   ========================================================================== */
 header {
-	flex-shrink: 0;       /* header keeps its height */
-    height: 5dvmin;       /* or whatever you want the visible height to be */
+    flex-shrink: 0;       /* header keeps its height */
+    height: 5dvmin;
     box-sizing: border-box;
     margin: 0;
     padding: 0.5em 1em;
-    border-bottom: 1px solid #333; /* subtle divider on dark background */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.6); /* slightly stronger shadow */
-    background-color: #1e1e1e; /* dark header */
+    border-bottom: 1px solid var(--border-faint);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.6);
+    background-color: var(--bg-raised);
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-family: var(--font-ui);
-    font-size: 3dvmin; /* scales with screen size */
-    color: #eee; /* light text for readability */
+    font-size: 3dvmin;    /* scales with screen size */
+    color: var(--text);
 }
 
 header .left,
@@ -64,13 +214,7 @@ header .right {
     gap: 0.5em; /* spacing between icons/text */
 }
 
-header .center.title {
-    font-weight: 500;       /* lighter than bold */
-    font-size: 4dvmin;      /* slightly bigger than icons */
-    letter-spacing: 0.05em; 
-    color: #fff;            /* light text on dark background */
-}
-
+/* Icon buttons (info, help, options) */
 header li.button {
     list-style: none;
     display: inline-flex;
@@ -78,45 +222,25 @@ header li.button {
     justify-content: center;
     padding: 0.3em 0.6em;
     font-size: 2dvmin;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-    background-color: #2c2c2c; /* dark button base */
-    color: #ccc;                /* muted icon/text color */
+    background-color: #2c2c2c;
+    color: var(--text-muted);
 }
 
 header li.button:hover {
-    background-color: #444;     /* slightly lighter on hover */
+    background-color: var(--bg-control-hover);
     transform: scale(1.1);
-    box-shadow: 0 0 8px #fff4;  /* subtle glow for modern look */
-    color: #fff;                /* brighter on hover for contrast */
+    box-shadow: 0 0 8px #fff4;  /* subtle glow */
+    color: var(--text-strong);
 }
 
-
-
-h1, h2, h3, h4, h5, h6 {
-    font-weight: 400;           /* normal weight for modern look */
-    letter-spacing: 0.03em;     /* slightly airy */
-    line-height: 1.2;           /* tighter spacing */
-    text-shadow: 1px 1px 0 rgba(255,255,255,0.05); /* subtle light shadow for dark bg */
-    color: #eee;                /* light text for dark theme */
-}
-
-h1, h2, h3 {
-    color: #fff;                /* slightly brighter for main headers */
-}
-
+/* NOTE: floats have no effect on flex items, so inside the header these only
+   contribute their padding. */
 .left {
-    float: left; 
+    float: left;
     padding: 0em 0.1em 0em 0.2em;
-}
-
-.center, .title {
-    font-weight: 500;           /* lighter than bold */
-    font-size: 4dvmin;          /* scales slightly bigger than header icons */
-    letter-spacing: 0.05em; 
-    color: #fff;                /* white text for dark theme */
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5); /* subtle dark shadow for depth */
 }
 
 .right {
@@ -124,13 +248,20 @@ h1, h2, h3 {
     padding: 0em 0.2em 0em 0.1em;
 }
 
-
-button {
-    cursor: pointer;
-    height: var(--button-height);
-    font-size: var(--button-font-size);
+/* The "Qhess" title */
+.center, .title {
+    font-weight: 500;
+    font-size: 4dvmin;          /* slightly bigger than header icons */
+    letter-spacing: 0.05em;
+    color: var(--text-strong);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
+
+/* ==========================================================================
+   5. MODALS  (info, help, options)
+   ui.js shows and hides them by toggling display on the wrapper.
+   ========================================================================== */
 .modalWrapper {
     display: none;
     position: fixed;
@@ -147,11 +278,11 @@ button {
 }
 
 .modalData {
-    border: 1px solid #555;
-    border-radius: 8px;
+    border: 1px solid var(--border-main);
+    border-radius: var(--radius-lg);
     box-shadow: 0 0 32px rgba(0,0,0,0.8);
-    background-color: #1a1a1a;  /* dark background */
-    color: #eee;                /* light text */
+    background-color: var(--bg-inset);
+    color: var(--text);
     width: 80%;
     max-width: 700px;
     max-height: 80%;
@@ -161,32 +292,84 @@ button {
 }
 
 
-textarea {
-    width: 100%;
-    -webkit-box-sizing: border-box; /* Safari/Chrome */
-    -moz-box-sizing: border-box;    /* Firefox */
-    box-sizing: border-box;         /* All modern browsers */
+/* ==========================================================================
+   6. CONTROL PANEL  (right-hand column)
+   ========================================================================== */
 
-    background-color: #222;         /* dark background */
-    color: #eee;                    /* light text */
-    border: 1px solid #555;         /* subtle border */
-    border-radius: 4px;             /* slightly rounded */
-    padding: 0.5em;                 /* a bit of padding for comfort */
-    font-family: var(--font-mono);  /* preserve monospaced text for move history */
-    font-size: var(--button-font-size); /* scale nicely with UI */
-    resize: vertical;               /* allow vertical resizing only */
+/* ---------- 6.1 Prompt and action buttons ---------- */
+.prompt {
+    background-color: var(--prompt-bg);
+    color: #000;                 /* dark text for contrast */
+    border-radius: var(--radius-sm);
+    padding: 0.3em 0.5em;
+    box-shadow: 0 0 4px 1px #0008 inset; /* subtle inner shadow for depth */
+}
+
+/* Look shared by the three button types: side buttons (Submit etc.),
+   history buttons (Reset Game, Copy All, ...) and the step buttons (<< < > >>).
+   Height, font size and cursor come from the base `button` rule. */
+.sidebutton,
+.historyButton,
+.stepHistoryButton {
+    float: left;
+    color: var(--text);
+    background-color: var(--bg-control);
+    border: 1px solid var(--border-main);
+}
+
+/* Side and history buttons: half width, with depth and an accent hover */
+.sidebutton,
+.historyButton {
+    width: 50%;
+    vertical-align: top;
+    border-radius: var(--radius-md);
+    transition: var(--transition-button);
+    box-shadow: var(--shadow-button);
+}
+
+.sidebutton:hover,
+.historyButton:hover {
+    background-color: var(--accent);
+    color: var(--text-strong);
+    transform: scale(1.05);
+    box-shadow: var(--shadow-button-hover);
+}
+
+/* Step buttons: quarter width, flat */
+.stepHistoryButton {
+    width: 25%;
+    border-radius: var(--radius-sm);
+    transition: background 0.2s ease;
+}
+
+.stepHistoryButton:hover {
+    background-color: var(--bg-control-active);
 }
 
 
-/*
- * sections for tabs
- */
+/* ---------- 6.2 Staged move ---------- */
+#thismove {
+    width: 90%;
+    font-size: 2dvmin;
+    background-color: var(--bg-input);
+    color: var(--text);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 0.4em;
+}
+
+
+/* ---------- 6.3 Tabs ----------
+   Pure-CSS tabs: a hidden radio input, then its label, and a <section>
+   that is shown when the radio is checked.
+   Currently in index.html: tab2 (History) and tab3 (Find Pieces).
+   tab1, tab4, tab11 and tab12 are UNUSED: they have no markup today. */
 section {
     display: none;
     padding: 20px 0 0;
-    border-top: 1px solid #444; /* darker border for dark theme */
-    background-color: #1e1e1e; /* subtle dark background for tab content */
-    color: #eee;               /* light text for readability */
+    border-top: 1px solid var(--border-subtle);
+    background-color: var(--bg-raised);
+    color: var(--text);
 }
 
 input.hidden {
@@ -196,259 +379,146 @@ input.hidden {
 .tabTitle {
     display: inline-block;
     margin: 0 0 -1px;
-    padding: 12px 20px;          /* slightly smaller padding for sleek look */
-    font-weight: 500;            /* lighter than before */
+    padding: 12px 20px;
+    font-weight: 500;
     text-align: center;
-    color: #ccc;                 /* lighter gray for unselected tabs */
-    border-radius: 6px 6px 0 0; /* rounded top corners for tabs */
-    background-color: #2a2a2a;   /* dark tab background */
+    color: var(--text-muted);
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    background-color: #2a2a2a;
     transition: background 0.2s, color 0.2s;
-} 
+}
 
-label[for*='1']:before { content: '🏠'; }
-label[for*='2']:before { content: '📝'; }
-label[for*='3']:before { content: '👀'; }
-label[for*='4']:before { content: '⛬'; }
-label[for*='11']:before { content: '<-'; }
-label[for*='12']:before { content: '->'; }
+/* Tab icons, chosen by which tab id the label's `for` contains */
+label[for*='1']:before { content: '🏠'; }   /* UNUSED (tab1) */
+label[for*='2']:before { content: '📝'; }   /* History */
+label[for*='3']:before { content: '👀'; }   /* Find Pieces */
+label[for*='4']:before { content: '⛬'; }    /* UNUSED (tab4) */
+label[for*='11']:before { content: '<-'; }  /* UNUSED (tab11) */
+label[for*='12']:before { content: '->'; }  /* UNUSED (tab12) */
 
+/* NOTE: this applies to every <label>, including #debug */
 label:hover {
-    color: #fff;                   /* highlight text on hover */
-    background-color: #333;        /* slightly lighter hover */
+    color: var(--text-strong);
+    background-color: var(--bg-control);
     cursor: pointer;
 }
 
 input:checked + label {
-    color: #fff;                    /* selected tab text */
-    background-color: #444;         /* selected tab background */
-    border: 1px solid #666;         /* subtle border to separate from content */
-    border-bottom: 1px solid #1e1e1e; /* hide border between tab and section */
+    color: var(--text-strong);
+    background-color: var(--bg-control-hover);
+    border: 1px solid #666;
+    border-bottom: 1px solid var(--bg-raised); /* hides the border between tab and content */
 }
 
-#tab1:checked ~ #gameLobbyTab,
-#tab2:checked ~ #gameMetaTab,
-#tab3:checked ~ #gameFindpiecesTab,
-#tab4:checked ~ #userHistoryTab {
+/* Which section each tab reveals */
+#tab1:checked ~ #gameLobbyTab,            /* UNUSED */
+#tab2:checked ~ #gameMetaTab,             /* History */
+#tab3:checked ~ #gameFindpiecesTab,       /* Find Pieces */
+#tab4:checked ~ #userHistoryTab {         /* UNUSED */
     display: block;
 }
 
-#tab11:checked ~ #gameLobbyPastTab,
-#tab12:checked ~ #gameLobbyFutureTab {
+#tab11:checked ~ #gameLobbyPastTab,       /* UNUSED */
+#tab12:checked ~ #gameLobbyFutureTab {    /* UNUSED */
     display: block;
 }
 
 
-/* ************************************************* */
-/* Flex container and children */
-/* ************************************************* */
-.container {
-    display: flex; /* or inline-flex */
-    flex-flow: row nowrap;
-    justify-content: space-evenly;
-    background-color: #181818; /* subtle dark background for container */
+/* ---------- 6.4 History tab ----------
+   The buttons are styled in 6.1. */
+.movehistory {
+    font-size: 2dvmin;
+    border: 1px solid var(--border-subtle);
+    max-height: 8em;
+    overflow: auto;
+    font-family: var(--font-mono);
+    text-align: left;
+    background-color: var(--bg-input);
+    color: var(--text);
     padding: 0.5em;
-    gap: 1em; /* spacing between board and controls */
-	height: calc(100% - 4dvmin); /* fill vertical space */
-    box-sizing: border-box;
+    border-radius: var(--radius-md);
 }
 
-.game-control {
-    order: 2;
-    text-align: center;
-    background-color: #1f1f1f; /* slightly lighter dark panel */
-    border-radius: 8px;
-    padding: 1em;
-    color: #eee; /* light text */
+
+/* ---------- 6.5 Find Pieces tab and captured lists ---------- */
+.captured-pieces {
+    border-top: 1px solid var(--border-main);
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5em 0;
 }
 
+.column {
+    float: left;
+    width: 50%;
+    color: var(--text);    /* captured piece labels */
+    font-weight: 500;
+}
+
+/* UNUSED */
+.find-pieces {
+    border-top: 1px solid var(--border-main);
+    display: flex;
+    justify-content: center;
+    padding: 0.5em 0;
+}
+
+/* The K Q R B N P buttons. script.js adds .findHighlight (section 7.2) to the
+   active one. */
+.findpiecebutton {
+    color: var(--text-strong);
+    font-size: 4dvmin;
+    height: 3em;
+    width: 3em;
+    line-height: 1;
+    border: 1px solid var(--border-main);
+    cursor: pointer;
+    white-space: normal;
+    justify-content: center; /* center the content horizontally */
+    align-items: center;     /* center the content vertically */
+    padding: 0px;
+    margin: 2px;
+    background-color: #888;
+}
+
+.findpiecebutton:hover {
+    background-color: var(--accent);
+    box-shadow: var(--shadow-button-hover);
+    transform: scale(1.05);
+}
+
+/* UNUSED: script.js uses .findHighlight instead */
+.findpieceselected {
+    background-color: var(--accent);
+    color: var(--text-strong);
+    box-shadow: 0 0 8px var(--accent-glow) inset;
+}
+
+
+/* ==========================================================================
+   7. BOARD
+   ========================================================================== */
+
+/* ---------- 7.1 Structure and squares ---------- */
 .board {
     display: flex;
     flex-flow: var(--board-flex-flow);
     order: 1;
     justify-content: center;
-    background-color: #1a1a1a; /* dark background behind the board */
+    background-color: var(--bg-inset);
     padding: 0.5em;
-    border-radius: 8px;
-	max-height: 100%;
+    border-radius: var(--radius-lg);
+    max-height: 100%;
 }
 
-/* outlines for debugging */
-/* .container { */
-    /* outline: 3px solid red; */
-/* } */
-/* .board { */
-    /* outline: 3px solid blue; */
-/* } */
-/* .game-control { */
-    /* outline: 3px solid green; */
-/* } */
-
-.movehistory {
-    font-size: 2dvmin;
-    border: 1px solid #444;   /* darker border for dark theme */
-    max-height: 8em;
-    overflow: auto;
-    font-family: var(--font-mono);
-    text-align: left;
-    background-color: #222;   /* dark background for text area */
-    color: #eee;              /* light text */
-    padding: 0.5em;
-    border-radius: 6px;
-}
-
-.stepHistoryButton {
-    float: left;
-    width: 25%;
-    height: var(--button-height);
-    font-size: var(--button-font-size);
-    background-color: #333;    /* dark button */
-    color: #eee;               /* light text */
-    border: 1px solid #555;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-
-.stepHistoryButton:hover {
-    background-color: #555;    /* highlight on hover */
-}
-
-#thismove {
-    font-size: 2dvmin;
-    background-color: #222;  /* match movehistory style */
-    color: #eee;
-    border: 1px solid #444;
-    border-radius: 6px;
-    padding: 0.4em;
-}
-
-
-/* ************************************************* */
-/* Game control */
-/* ************************************************* */
-.prompt {
-    background-color: #66ff66aa; /* keep green hint, but slightly more subtle on dark bg */
-    color: #000;                 /* dark text for contrast */
-    border-radius: 4px;
-    padding: 0.3em 0.5em;
-    box-shadow: 0 0 4px 1px #0008 inset; /* subtle inner shadow for depth */
-}
-
-
-/* ********** Side Buttons ************ */
-.sidebutton {
-    font-size: var(--button-font-size);
-    height: var(--button-height);
-    width: 50%;
-    vertical-align: top;
-
-    color: #eee; /* light text for contrast */
-    background: #333; /* dark button base */
-    float: left;
-    border: 1px solid #555; /* darker border */
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
-    box-shadow: 0 2px 4px #0008; /* subtle depth */
-}
-
-.sidebutton:hover {
-    background-color: #ff9500; /* modern orange highlight */
-    color: #fff;
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px #000a;
-}
-
-
-/* ********** History Buttons ************ */
-.historyButton {
-    font-size: var(--button-font-size);
-    height: var(--button-height);
-    width: 50%;
-    vertical-align: top;
-    float: left;
-    cursor: pointer;
-
-    color: #eee;               /* light text */
-    background-color: #333;    /* dark base */
-    border: 1px solid #555;    /* subtle border */
-    border-radius: 6px;
-    transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
-    box-shadow: 0 2px 4px #0008; /* subtle depth */
-}
-
-.historyButton:hover {
-    background-color: #ff9500; /* modern orange highlight */
-    color: #fff;
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px #000a;
-}
-
-
-
-/* Misc area elements */
-.captured-pieces {
-    border-top: 1px solid #555; /* darker border for dark theme */
-    display: flex;
-    justify-content: space-between;
-    padding: 0.5em 0;
-}
-.column {
-    float: left;
-    width: 50%;
-    color: #eee;           /* light text for captured pieces labels */
-    font-weight: 500;
-}
-.find-pieces {
-    border-top: 1px solid #555;
-    display: flex;
-    justify-content: center;
-    padding: 0.5em 0;
-}
-
-.findpiecebutton {
-    color: white;
-    
-    font-size: 4dvmin;
-    height: 3em;
-    width: 3em;
-    line-height: 1;
-    float: center;
-    border: 1px solid var(--border-main);
-    cursor: pointer;
-    white-space: normal;
-    justify-content: center; /* center the content horizontally */
-    align-items: center; /* center the content vertically */
-    padding: 0px;
-    margin: 2px;
-    background-color: #888;
-    /* background-image: linear-gradient(to bottom right, darkgray, dimgray);
-     * */
-}
-
-
-.findpiecebutton:hover {
-    background-color: #ff9500; /* modern accent color on hover */
-    box-shadow: 0 4px 8px #000a;
-    transform: scale(1.05);
-}
-
-.findpieceselected {
-    background-color: #ff9500;   /* highlight selected piece */
-    color: #fff;
-    box-shadow: 0 0 8px #ff9500aa inset;
-}
-
-/* ************************************************* */
-/* Board elements */
-/* ************************************************* */
 .boardrow {
     display: flex;
     flex-flow: var(--boardrow-flex-flow);
     justify-content: center;
-    /* align-context: center; */
 }
-.boardsquare { /* all squares always have this */
+
+/* Every square has .boardsquare, plus .whitesquare or .blacksquare */
+.boardsquare {
     color: white;
     width: 3em;
     height: 3em;
@@ -460,103 +530,115 @@ input:checked + label {
     text-align: center;
     padding: 0px;
 }
-.whitesquare { /* all white squares always have this */
+
+.whitesquare {
     background-color: var(--board-white-col);
 }
-.blacksquare { /* all black squares always have this */
+
+.blacksquare {
     background-color: var(--board-black-col);
 }
-.hovered { /* when the player is hovering the mouse over it */
+
+
+/* ---------- 7.2 Square states ----------
+   ORDER MATTERS. Several of these set the same property (background-color or
+   box-shadow) at equal specificity, so later rules win. Combined selectors
+   like .selectable.checkKing are more specific and win regardless of order. */
+.hovered { /* mouse is over it */
     background-color: color-mix(in srgb, var(--piece-selectedStart-col) 60%, transparent);
 }
+
 .selectable {
-    box-shadow: 0px 0px 0px 3px var(--piece-selectedStart-col) inset;
+    box-shadow: 0 0 0 3px var(--piece-selectedStart-col) inset;
 }
+
 .selectable.checkKing {
-    box-shadow: 0px 0px 0px 6px var(--piece-checkKing-col) inset,
-                0px 0px 0px 9px var(--piece-selectedStart-col) inset;
+    box-shadow: 0 0 0 6px var(--piece-checkKing-col) inset,
+                0 0 0 9px var(--piece-selectedStart-col) inset;
 }
-.selectedStart { /* when the player has clicked on it as a start */
-    box-shadow: 0px 0px 0px 6px var(--piece-selectedStart-col) inset;
+
+.selectedStart { /* player has clicked it as the start square */
+    box-shadow: 0 0 0 6px var(--piece-selectedStart-col) inset;
 }
-.selectedStart.checkKing { /* when the player has clicked on a potKing as a start */
-    box-shadow: 0px 0px 0px 6px var(--piece-checkKing-col) inset,
-                0px 0px 0px 12px var(--piece-selectedStart-col) inset;
+
+.selectedStart.checkKing { /* player has clicked a potential king as the start */
+    box-shadow: 0 0 0 6px var(--piece-checkKing-col) inset,
+                0 0 0 12px var(--piece-selectedStart-col) inset;
 }
-.selectedEnd { /* when the player has clicked on it as a destination */
-    box-shadow: 0px 0px 0px 6px var(--piece-dest-col) inset;
+
+.selectedEnd { /* player has clicked it as the destination */
+    box-shadow: 0 0 0 6px var(--piece-dest-col) inset;
 }
-.potKing { /* when highlighted as a potential king to select */
-    background-color: color-mix(
-        in srgb,
-        var(--piece-checkKing-col) 55%,
-        transparent
-    );
+
+.potKing { /* highlighted as a potential king to select */
+    background-color: color-mix(in srgb, var(--piece-checkKing-col) 55%, transparent);
 }
-.potAttacker { /* when highlighted as a potential attacker to select */
-    background-color: color-mix(
-        in srgb,
-        var(--piece-checkAttacker-col) 55%,
-        transparent
-    );
+
+.potAttacker { /* highlighted as a potential attacker to select */
+    background-color: color-mix(in srgb, var(--piece-checkAttacker-col) 55%, transparent);
 }
-.checkKing { /* a king which is in check or potential check */
-    box-shadow: 0px 0px 0px 6px var(--piece-checkKing-col) inset;
+
+.checkKing { /* a king in check or potential check */
+    box-shadow: 0 0 0 6px var(--piece-checkKing-col) inset;
 }
+
 .checkAttacker { /* a piece attacking a checked king */
-    box-shadow: 0px 0px 0px 6px var(--piece-checkAttacker-col) inset;
+    box-shadow: 0 0 0 6px var(--piece-checkAttacker-col) inset;
 }
 
-.selectedEnd.checkAttacker { /* both selectedEnd AND check attacker*/
-    box-shadow: 0px 0px 0px 6px var(--piece-checkAttacker-col) inset, 
-                0px 0px 0px 12px var(--piece-dest-col) inset;
+.selectedEnd.checkAttacker { /* both of the above */
+    box-shadow: 0 0 0 6px var(--piece-checkAttacker-col) inset,
+                0 0 0 12px var(--piece-dest-col) inset;
 }
 
-.findHighlight { /* when the player has clicked a find-piece button */
+.findHighlight { /* a Find Pieces button is active (also used on its button) */
     background-color: var(--findpiece-highlight-col);
 }
-/* destination1 - destination16 are the 16 points of the compass clockface style
- * ie, from NNE, NE, ENE, E, ESE, etc
-     * 1,3,5... = knight (all odd numbers)
-     * 2 = Bishop style (northeast)
-     * 4 = Rook (east)
-     * 6 = Bishop (southeast)
-     * 8 = Rook (South)
-     * 10 = Bishop (southwest)
-     * 12 = Rook (west)
-     * 14 = Bishop (northwest)
-     * 16 = Rook (north)
-     */
-
-.destination1,.destination3,.destination5,.destination7,.destination9,.destination11,.destination13,.destination15 {
-    background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
-    box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
-}
-.destination2,.destination10 {
-     /* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
-    background-image: linear-gradient(to bottom right, rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
-    box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
-}
-.destination4,.destination12 {
-    /* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
-    background-image: linear-gradient(to bottom, rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
-    box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
-}
-.destination6,.destination14 {
-    /* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
-    background-image: linear-gradient(to top right, rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
-    box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
-}
-.destination8,.destination16 {
-    /* background-image: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0)); */
-    background-image: linear-gradient(to right, rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0),var(--piece-dest-col),rgba(255,0,0,0),rgba(255,0,0,0),rgba(255,0,0,0));
-    box-shadow: 0px 0px 0px 3px var(--piece-dest-col) inset;
-}
 
 
+/* ---------- 7.3 Move markers ----------
+   script.js adds .destination1 to .destination16 to every square a piece can
+   move to. The number is a point on a 16-point compass, like a clock face:
+       odd numbers   knight-style hop (ring)
+       2 and 10      bishop-style, NE and SW (stripe along that diagonal)
+       4 and 12      rook-style, E and W
+       6 and 14      bishop-style, SE and NW
+       8 and 16      rook-style, S and N
+   Each gradient's direction is perpendicular to the stripe it draws.
+   ORDER MATTERS: these come after 7.2 so their ring wins over the state rings. */
+.destination1, .destination2, .destination3, .destination4,
+.destination5, .destination6, .destination7, .destination8,
+.destination9, .destination10, .destination11, .destination12,
+.destination13, .destination14, .destination15, .destination16 {
+    box-shadow: 0 0 0 3px var(--piece-dest-col) inset;
+}
+
+.destination1, .destination3, .destination5, .destination7,
+.destination9, .destination11, .destination13, .destination15 {
+    background-image: radial-gradient(var(--marker-clear), var(--marker-clear), var(--piece-dest-col), var(--marker-clear), var(--marker-clear), var(--marker-clear));
+}
+
+.destination2, .destination10 {
+    background-image: linear-gradient(to bottom right, var(--marker-clear), var(--marker-clear), var(--marker-clear), var(--piece-dest-col), var(--marker-clear), var(--marker-clear), var(--marker-clear));
+}
+
+.destination4, .destination12 {
+    background-image: linear-gradient(to bottom, var(--marker-clear), var(--marker-clear), var(--marker-clear), var(--piece-dest-col), var(--marker-clear), var(--marker-clear), var(--marker-clear));
+}
+
+.destination6, .destination14 {
+    background-image: linear-gradient(to top right, var(--marker-clear), var(--marker-clear), var(--marker-clear), var(--piece-dest-col), var(--marker-clear), var(--marker-clear), var(--marker-clear));
+}
+
+.destination8, .destination16 {
+    background-image: linear-gradient(to right, var(--marker-clear), var(--marker-clear), var(--marker-clear), var(--piece-dest-col), var(--marker-clear), var(--marker-clear), var(--marker-clear));
+}
+
+
+/* ---------- 7.4 Coordinates and piece text ---------- */
 .rankcoord {
-    color: #ccc;                /* light gray text for visibility */
-    background-color: #111;     /* dark background instead of white */
+    color: var(--text-muted);
+    background-color: var(--board-edge-col);
     width: 1em;
     height: 3em;
     font-size: var(--board-font-size);
@@ -567,8 +649,8 @@ input:checked + label {
 }
 
 .filecoord {
-    color: #ccc;                /* light gray text */
-    background-color: #111;     /* match rank coord */
+    color: var(--text-muted);
+    background-color: var(--board-edge-col);
     width: 3em;
     height: 1em;
     font-size: var(--board-font-size);
@@ -580,7 +662,7 @@ input:checked + label {
 }
 
 .cornerbutton {
-    background-color: #111;     /* dark like the board edges */
+    background-color: var(--board-edge-col);
     width: 1em;
     height: 1em;
     font-size: var(--board-font-size);
@@ -589,7 +671,8 @@ input:checked + label {
     cursor: default;
 }
 
-/* background to individual unicode characters */
+/* Piece text inside a square. "collapsed" means only one possibility is left,
+   so the piece is drawn large. */
 .whitepiece, .blackpiece {
     font-size: var(--board-font-size);
 }
@@ -599,7 +682,12 @@ input:checked + label {
 }
 
 
-
+/* ==========================================================================
+   8. RESPONSIVE OVERRIDES
+   ORDER MATTERS: these override the tokens and rules above, and the two
+   aspect-ratio queries stack (a tall screen matches both, and the later one
+   wins).
+   ========================================================================== */
 @media all and (max-aspect-ratio: 1.6) { /* Squarish screens */
     :root {
         /* shrink the board down to fit in the other parts */
@@ -609,18 +697,18 @@ input:checked + label {
 }
 
 @media all and (max-aspect-ratio: 1) { /* Tall screens */
-    /* put everything in one big column */
     :root {
         --board-font-size: 3.8dvmin;
         --board-font-size-collapsed: 11dvmin;
     }
+    /* put everything in one big column */
     .container {
         flex-flow: column nowrap;
         align-items: stretch;
     }
 }
 
-@media (pointer:coarse) {
+@media (pointer:coarse) { /* Touch screens: bigger text and buttons */
     :root {
         --button-font-size: 4dvmin;
     }
@@ -629,10 +717,19 @@ input:checked + label {
     }
 }
 
+
+/* ==========================================================================
+   9. UNUSED AND DEBUG
+   ========================================================================== */
+
+/* UNUSED: no element with this id in index.html (left over from a lobby UI) */
 #gameid {
     width: 90%;
     font-size: 3dvmin;
 }
-#thismove {
-    width: 90%;
-}
+
+/* Debug outlines. Uncomment to see the three main areas.
+.container    { outline: 3px solid red; }
+.board        { outline: 3px solid blue; }
+.game-control { outline: 3px solid green; }
+*/
