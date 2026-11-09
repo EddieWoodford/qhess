@@ -1,5 +1,11 @@
 "use strict";
 
+import { isequal, clone2DArray, isValidCoord, ismember, sum } from "./src/engine/utils.js";
+import { wave2optidxs } from "./src/engine/constants.js";
+import { filterOptionMatrix, getOM } from "./src/engine/entanglement.js";
+import { getHistoryLines, parseMoveText } from "./src/engine/notation.js";
+import { WK, WQ, WR, WB, WN, WP, BK, BQ, BR, BB, BN, BP, waveHTML } from "./src/client/glyphs.js";
+
 // Classes
 class Square {
     constructor(r, c, buttonID) {
@@ -66,59 +72,11 @@ class Square {
 		// this.button.addEventListener("mouseout",this.clear(buttonID))
 	
 	setWavetext() {
-		let wavetext;
-		let waves;
 		if (this.piece == "") {
-			wavetext = "";
+			this.button.innerHTML = "";
 		} else {
-			
-			wavetext = "";
-			waves = this.piece.waves();
-			let allwaves = "KQRBNP";
-			for (let i=0; i<6; i++) {
-				if (waves.includes(allwaves[i])) {
-					wavetext = wavetext + allwaves[i];
-				} else {
-					wavetext = wavetext + "empty";
-				}
-				if (i==2) {wavetext = wavetext + "<br>"};
-			}
-			
-			if (this.piece.color == "w") {
-				if (waves.length==1) {
-					wavetext = waves;
-					wavetext = wavetext.replace (/^/, '<div class="whitepiececollapsed">');
-				} else {
-					wavetext = wavetext.replace (/^/, '<div class="whitepiece">');
-				}
-				wavetext = wavetext.replace (/$/, '</div>');
-				// Need to be careful with the strings used in WB, WK, etc to ensure they don't contain any of the waves
-				// "KWRBNP" as then this method of replacing the text would replace unintentional chars.
-				wavetext = wavetext.replace("B",WB);
-				wavetext = wavetext.replace("K",WK);
-				wavetext = wavetext.replace("Q",WQ);
-				wavetext = wavetext.replace("R",WR);
-				wavetext = wavetext.replace("N",WN);
-				wavetext = wavetext.replace("P",WP);
-				wavetext = wavetext.replaceAll("empty","&nbsp;");
-			} else {
-				if (waves.length==1) {
-					wavetext = waves;
-					wavetext = wavetext.replace (/^/, '<div class="blackpiececollapsed">');
-				} else {
-					wavetext = wavetext.replace (/^/, '<div class="blackpiece">');
-				}
-				wavetext = wavetext.replace (/$/, '</div>');
-				wavetext = wavetext.replace("B",BB);
-				wavetext = wavetext.replace("K",BK);
-				wavetext = wavetext.replace("Q",BQ);
-				wavetext = wavetext.replace("R",BR);
-				wavetext = wavetext.replace("N",BN);
-				wavetext = wavetext.replace("P",BP);
-				wavetext = wavetext.replaceAll("empty","&nbsp;");
-			}
+			this.button.innerHTML = waveHTML(this.piece.waves(), this.piece.color);
 		}
-		this.button.innerHTML = wavetext;
 	}
     reset() {
         this.button.innerText = "";
@@ -547,86 +505,31 @@ function restoreGameHistory(historyText,nMoves) {
 	}
 }
 
-function getHistoryLines(historyText) {
-	// ingest historyText in various formats and return a reliable format - an array of trimmed lines
-	const splitOn = (slicable, ...indices) =>
-		[0, ...indices].map((n, i, m) => slicable.slice(n, m[i + 1]).trim());
-	
-	historyText = historyText.replaceAll("\r","");
-	historyText = historyText.replaceAll("\n","");
-	var matches = historyText.match(/(\d+[bw]\.)/g)
-	var idxs = [];
-	for (let i=0; i<matches.length; i++) {
-	  idxs.push(historyText.indexOf(matches[i]));
-	}
-	var historyLines = splitOn(historyText,...idxs);
-	historyLines = historyLines.filter((str) => str.length > 0)
-	return historyLines
-}
-
 function doMoveFromText(moveText) {
-	let r;
-	let c;
-	
+	// Replay one ply of notation by performing the same actions a player would
+	let move = parseMoveText(moveText);
+
 	// Check that the move number eg "3w. " is correct.
-	// Split on the first "." only, so the "e.p." marker stays in moveText.
-	let dotIdx = moveText.indexOf(".");
-	let turnText = moveText.slice(0, dotIdx).trim();
-	moveText = moveText.slice(dotIdx + 1).trim();
-	if (turnText != TURNNUMBER.toString() + TURNCOLOR) {
+	if (move.turn != TURNNUMBER.toString() + TURNCOLOR) {
 		debugPrint("Move text number + colour did not match expected");
 	}
-	
-	let doEP = (moveText.includes("e.p.")); // do En Passant
-	let doPromotion = (moveText.includes("=")); // do Pawn Promotion
-	let pcText = "";
-	if (moveText.includes("]")) {
-		// declare Not A King
-		moveText = moveText.split("]");
-		moveText = moveText[1];
-		sideButton1Action(); 
-	}
-	if (moveText.includes("<")) {
-		// Split off potential check text to apply later
-		moveText = moveText.split(">");
-		moveText = moveText[0].split("<");
-		pcText = moveText[1].split(" ");
-		moveText = moveText[0];
-	}
-	if (moveText.includes("(")) {
-		// Remove waveforms as they're not needed for the replay
-		moveText = moveText.split(")");
-		moveText = moveText[1].split("(");
-		moveText = moveText[0];
+
+	if (move.notAKing) {
+		sideButton1Action(); // "Declare 'Not a King'" button
 	}
 	if (TURNNUMBER > 0) {
-		// moveText should include an actual move
-		moveText = moveText.replace("x","");
-		
-		// Now moveText should be 4 chars long, such as h2h3, indicating the from-to coordinates
-		[r,c] = coordstext2coords(moveText.substring(0,2));
-		let startButtonID = coords2buttonID([r,c]);
-		[r,c] = coordstext2coords(moveText.substring(2,4));
-		let endButtonID = coords2buttonID([r,c]);
-		showPartialMove(startButtonID);
-		showCompleteMove(endButtonID,doEP,doPromotion);
+		// The ply should include an actual move
+		showPartialMove(coords2buttonID(move.from));
+		showCompleteMove(coords2buttonID(move.to), move.enPassant, move.promotion);
 	}
-	
-	if (pcText.length > 0) {
+	if (move.pcKing) {
 		sideButton1Action(); // "Add Potential Check" button
-		[r,c] = coordstext2coords(pcText[0]);
-		let kingButtonID = coords2buttonID([r,c]);
-		selectPCKing(kingButtonID);
-		for (let pci=1; pci < pcText.length; pci++) {
-			// Start at idx 1 since idx 0 is the king
-			pcText[pci] = pcText[pci].replace("+","");
-			[r,c] = coordstext2coords(pcText[pci]);
-			let attackerButtonID = coords2buttonID([r,c]);
-			selectPCAttackers(attackerButtonID);
+		selectPCKing(coords2buttonID(move.pcKing));
+		for (const attacker of move.pcAttackers) {
+			selectPCAttackers(coords2buttonID(attacker));
 		}
 	}
 	return THISMOVE
-	
 }
 
 function copyAllHistory() {
@@ -925,109 +828,8 @@ function pcMoveText() {
 }
 
 ////////////////////////////////
-// Piece collapse (replacement)
+// Piece collapse
 ////////////////////////////////
-// Drop-in replacement for updateOptionsFromEntanglement().
-//
-// What it does: for each colour, a (piece, identity) pair stays only if some complete
-// assignment of the 16 identities to the 16 pieces uses it. This is Regin's AllDifferent
-// filter: find one perfect matching, orient the edges, and keep an unmatched edge only if
-// its two endpoints are in the same strongly connected component.
-//
-// One pass reaches the fixed point, because deleting edges that are in no perfect
-// matching never changes the set of perfect matchings. No restart loop is needed.
-
-// Pure helper (no globals, easy to test on its own).
-// OM: square 0/1 matrix, rows = pieces, cols = identities (P1..P8, R1, R2, N1, N2, Bb, Bw, Q, K).
-// Returns a NEW matrix with every pair that cannot appear in any perfect matching zeroed,
-// or null if no perfect matching exists at all.
-function filterOptionMatrix(OM) {
-	const n = OM.length;
-
-	// 1. Find one perfect matching with augmenting paths (Kuhn's algorithm).
-	const matchOfRow = Array(n).fill(-1);
-	const matchOfCol = Array(n).fill(-1);
-	function augment(r, seen) {
-		for (let c = 0; c < n; c++) {
-			if (OM[r][c] !== 1 || seen[c]) { continue; }
-			seen[c] = true;
-			if (matchOfCol[c] === -1 || augment(matchOfCol[c], seen)) {
-				matchOfCol[c] = r;
-				matchOfRow[r] = c;
-				return true;
-			}
-		}
-		return false;
-	}
-	for (let r = 0; r < n; r++) {
-		if (!augment(r, Array(n).fill(false))) {
-			return null; // some piece can't be given an identity, so the matrix is impossible
-		}
-	}
-
-	// 2. Directed graph on 2n nodes: rows are 0..n-1, columns are n..2n-1.
-	// Matched edges point row -> column, unmatched edges point column -> row.
-	// A cycle in this graph is an alternating cycle, so an unmatched edge lies on one
-	// exactly when its endpoints are in the same strongly connected component.
-	const adj = Array.from({ length: 2 * n }, () => []);
-	for (let r = 0; r < n; r++) {
-		for (let c = 0; c < n; c++) {
-			if (OM[r][c] !== 1) { continue; }
-			if (matchOfRow[r] === c) {
-				adj[r].push(n + c);
-			} else {
-				adj[n + c].push(r);
-			}
-		}
-	}
-
-	// 3. Tarjan's strongly connected components (at most 32 nodes, so recursion is fine).
-	const idx = Array(2 * n).fill(-1);
-	const low = Array(2 * n).fill(0);
-	const onStack = Array(2 * n).fill(false);
-	const comp = Array(2 * n).fill(-1);
-	const stack = [];
-	let counter = 0;
-	let nComp = 0;
-	function strong(v) {
-		idx[v] = low[v] = counter++;
-		stack.push(v);
-		onStack[v] = true;
-		for (const w of adj[v]) {
-			if (idx[w] === -1) {
-				strong(w);
-				low[v] = Math.min(low[v], low[w]);
-			} else if (onStack[w]) {
-				low[v] = Math.min(low[v], idx[w]);
-			}
-		}
-		if (low[v] === idx[v]) {
-			let w;
-			do {
-				w = stack.pop();
-				onStack[w] = false;
-				comp[w] = nComp;
-			} while (w !== v);
-			nComp++;
-		}
-	}
-	for (let v = 0; v < 2 * n; v++) {
-		if (idx[v] === -1) { strong(v); }
-	}
-
-	// 4. Keep matched edges, and unmatched edges whose endpoints share a component.
-	const out = OM.map(row => Array(row.length).fill(0));
-	for (let r = 0; r < n; r++) {
-		for (let c = 0; c < n; c++) {
-			if (OM[r][c] !== 1) { continue; }
-			if (matchOfRow[r] === c || comp[r] === comp[n + c]) {
-				out[r][c] = 1;
-			}
-		}
-	}
-	return out;
-}
-
 function updateOptionsFromEntanglement(colors) {
 	if (colors == undefined) {
 		colors = ["w", "b"];
@@ -1049,13 +851,7 @@ function updateOptionsFromEntanglement(colors) {
 }
 
 
-function getOM(pieces) {
-	let OM = [];
-	for (let pi=0; pi < pieces.length; pi++) {
-		OM.push(pieces[pi].options);
-	}
-	return OM;
-}
+
 
 
 
@@ -1250,27 +1046,6 @@ function getPotentialMoves(coords,waves) {
 ////////////////////////////////
 // Utilities
 ////////////////////////////////
-function setvalue(arr,filter,val) {
-	for (let i=0; i < filter.length; i++) {
-		if (filter[i]) {
-			arr[i] = val;
-		}
-	}
-}
-function isequal(arr1, arr2) {
-    if (arr1.length !== arr2.length) {
-        return false;
-    }
-	for (let i=0; i < arr1.length; i++) {
-        if (arr1[i] !== arr2[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-function clone2DArray(arr) {
-    return arr.map(row => [...row]);
-}
 function buttonID2coords(buttonID) {
 	return [+buttonID.substr(6,1),+buttonID.substr(7,2)]
 }
@@ -1279,70 +1054,6 @@ function coords2piece(coords) {
 }
 function coords2buttonID(coords) {
 	return "square"+coords[0]+coords[1]
-}
-function coordstext2coords(coordstext) {
-	let c = coordstext[0].charCodeAt()-97;
-	let r = 8-coordstext[1];
-	return [r,c];
-}
-function isValidCoord(coords) {
-	return coords[0] >= 0 && coords[0] <= 7 && coords[1] >= 0 && coords[1] <= 7
-}
-function ismember(coords,coordlist) {
-	for (let i=0; i < coordlist.length; i++) {
-		if (coords[0] == coordlist[i][0] && coords[1] == coordlist[i][1]) {
-			return 1
-		}
-	}
-	return 0
-}
-function sum(x) {
-	return x.reduce((a, b) => a + b, 0)
-}
-function getcolumn(matrix, col) {
-    return matrix.map(row => row[col]);
-}
-function colsum(M) {
-	return M.reduce((x, a) => x.map((b, i) => a[i] + b));
-}
-function rowsum(M) {
-	return M.map(y => y.reduce((a, b) => a+b));
-}
-function sortcols(M,ref) {
-	// Sort ref and then sort the cols of M the same way
-	let idxs =Array.from(ref.keys()).sort((a,b) => ref[a]-ref[b])
-	for (let i=0; i < M.length; i++) {
-		M[i] = idxs.map(j => M[i][j])
-	}
-	return M
-}
-function sortrows(M,ref) {
-	// Sort ref and then sort the rows of M the same way
-	let idxs =Array.from(ref.keys()).sort((a,b) => ref[a]-ref[b])
-	M = idxs.map(j => M[j])
-	return M
-}
-function wave2optidxs(wave) {
-	// P1,P2,P3,P4,P5,P6,P7,P8,R1,R2,N1,N2,Bb,Bw,Q, K
-	// 0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15
-	if (wave=="P") {
-		return [0,1,2,3,4,5,6,7];
-	}
-	if (wave == "R") {
-		return [8,9];
-	}
-	if (wave == "N") {
-		return [10,11];
-	}
-	if (wave == "B") {
-		return [12,13];
-	}
-	if (wave == "Q") {
-		return [14];
-	}
-	if (wave=="K") {
-		return [15]
-	}
 }
 function oppColor(color) {
 	if (color == undefined) {
@@ -1787,24 +1498,6 @@ function setup() {
 ////////////////////////////////
 // Initialisation
 ////////////////////////////////
-// Chess piece coloured emojis:
-// White pieces – richer, warmer, darker shades for visibility
-const WK = "<span style='color:#FFD700'>&#9812;</span>"; // bright gold
-const WQ = "<span style='color:#FF69B4'>&#9813;</span>"; // hot pink
-const WR = "<span style='color:#1E90FF'>&#9814;</span>"; // dodger blue
-const WB = "<span style='color:#FF4500'>&#9815;</span>"; // orange-red
-const WP = "<span style='color:#32CD32'>&#9817;</span>"; // lime green
-const WN = "<span style='color:#FFA500'>&#9816;</span>"; // orange
-
-// Black pieces – softer, slightly glowing pastels to pop on dark squares
-const BK = "<span style='color:#F0E68C'>&#9818;</span>"; // khaki
-const BQ = "<span style='color:#BA55D3'>&#9819;</span>"; // medium orchid
-const BR = "<span style='color:#87CEFA'>&#9820;</span>"; // light sky blue
-const BB = "<span style='color:#FF6347'>&#9821;</span>"; // tomato
-const BN = "<span style='color:#FFA07A'>&#9822;</span>"; // light salmon
-const BP = "<span style='color:#90EE90'>&#9823;</span>"; // light green
-
-
 let TURNNUMBER;
 let TURNCOLOR;
 let TAKENPIECE;

@@ -20,7 +20,7 @@
 <h1>Qhess regression tests</h1>
 <p>Replays every game in <code>example_games/</code> through the real game page and checks that:
 the game replays without errors, the move history it writes back matches the file exactly,
-and the board state after every move matches the snapshot recorded in <code>tests/snapshots.json</code>.</p>
+and the board state and what the page shows after every move match the snapshot recorded in <code>tests/snapshots.json</code>.</p>
 <p>
 	<button id="run">Run tests</button>
 	<button id="record">Record new snapshots</button>
@@ -53,45 +53,70 @@ const GAMES = [
 // As script.js is split up further, update these functions to call the new engine.
 ////////////////////////////////
 
-// Load a fresh copy of the game page into the frame and return the game module's exports.
+// Load a fresh copy of the game page into the frame.
+// Returns { game, win }: the game module's exports and the frame's window.
 // Importing the module from inside the frame gives the same instance the page is running,
 // and its exported variables (TURNNUMBER etc.) are live, so they always show the current value.
 const GAME_MODULE_URL = new URL("../script.js", location.href).href;
 function loadGame() {
 	return new Promise(resolve => {
 		const frame = document.getElementById("game");
-		frame.onload = async () => resolve(await frame.contentWindow.eval("import('" + GAME_MODULE_URL + "')"));
+		frame.onload = async () => {
+			const win = frame.contentWindow;
+			const game = await win.eval("import('" + GAME_MODULE_URL + "')");
+			resolve({ game, win });
+		};
 		frame.src = "../index.html?t=" + Date.now();
 	});
 }
 
 // Split a history file into one string per ply
-function historyLines(g, text) {
-	return g.getHistoryLines(text);
+function historyLines(ctx, text) {
+	return ctx.game.getHistoryLines(text);
 }
 
 // Replay the lines one ply at a time, calling onPly(i) after each one
-function replay(g, lines, onPly) {
-	g.setup();
+function replay(ctx, lines, onPly) {
+	ctx.game.setup();
 	for (let i = 0; i < lines.length; i++) {
-		g.doMoveFromText(lines[i]);
-		g.sideButton2Action(); // submit
+		ctx.game.doMoveFromText(lines[i]);
+		ctx.game.sideButton2Action(); // submit
 		onPly(i);
 	}
 }
 
 // Replay the whole history the way the "Restore History" button does
-function restoreAll(g, text) {
-	g.restoreGameHistory(text);
+function restoreAll(ctx, text) {
+	ctx.game.restoreGameHistory(text);
 }
 
-function writtenHistory(g) {
-	return g.MOVEHISTORY;
+function writtenHistory(ctx) {
+	return ctx.game.MOVEHISTORY;
+}
+
+// What the page is showing: every square's classes and contents, the prompt, buttons,
+// staged move, captured lists, find-piece buttons and history panel, as one string
+function captureView(ctx) {
+	const doc = ctx.win.document;
+	const el = id => doc.getElementById(id);
+	const parts = [];
+	doc.querySelectorAll(".boardsquare").forEach(sq => parts.push(sq.id + "|" + sq.className + "|" + sq.innerHTML));
+	parts.push(el("prompt").innerHTML);
+	for (const id of ["sideButton1", "sideButton2", "back2", "back1", "forward1", "forward2"]) {
+		parts.push(id + "|" + el(id).innerText + "|" + el(id).style.visibility);
+	}
+	parts.push(el("thismove").value);
+	parts.push(el("whitecaptured").innerHTML, el("blackcaptured").innerHTML);
+	for (const w of "KQRBNP") {
+		parts.push(el("find" + w).className + "|" + el("find" + w + "piece").className + "|" + el("find" + w + "piece").innerHTML);
+	}
+	parts.push(el("movehistory").innerHTML);
+	return parts.join("\n");
 }
 
 // Everything about the game position that matters, as plain data
-function captureState(g) {
-	const E = name => g[name];
+function captureState(ctx) {
+	const E = name => ctx.game[name];
 	const pieceState = p => [
 		String.fromCharCode(97 + p.c) + (8 - p.r),
 		"cap" + p.captured,
@@ -144,15 +169,20 @@ async function playFile(name) {
 	const g = await loadGame();
 	const lines = historyLines(g, text);
 	const plyHashes = [];
+	const viewHashes = [];
 	let error = null;
 	try {
-		replay(g, lines, i => plyHashes.push(hash(JSON.stringify(captureState(g)))));
+		replay(g, lines, i => {
+			plyHashes.push(hash(JSON.stringify(captureState(g))));
+			viewHashes.push(hash(captureView(g)));
+		});
 	} catch (err) {
 		error = "Error at ply " + plyHashes.length + " (" + lines[plyHashes.length] + "): " + err;
 	}
 	const result = {
 		lines,
 		plyHashes,
+		viewHashes,
 		error,
 		history: writtenHistory(g),
 		final: captureState(g),
@@ -195,6 +225,14 @@ function compare(result, snap) {
 			break;
 		}
 	}
+	if (snap.viewHashes) {
+		for (let i = 0; i < Math.max(snap.viewHashes.length, result.viewHashes.length); i++) {
+			if (snap.viewHashes[i] !== result.viewHashes[i]) {
+				problems.push("Screen differs from snapshot after ply " + i + " (" + result.lines[i] + ")");
+				break;
+			}
+		}
+	}
 	for (const key of Object.keys(snap.final)) {
 		const a = JSON.stringify(snap.final[key]);
 		const b = JSON.stringify(result.final[key]);
@@ -233,7 +271,7 @@ async function runAll(record) {
 			const result = await playFile(name);
 			pliesCell.textContent = result.lines.length;
 			outcome = compare(result, snapshots.games[name]);
-			newSnapshots.games[name] = { plyHashes: result.plyHashes, final: result.final };
+			newSnapshots.games[name] = { plyHashes: result.plyHashes, viewHashes: result.viewHashes, final: result.final };
 		} catch (err) {
 			outcome = { status: "fail", problems: [String(err)] };
 		}
