@@ -1,3 +1,5 @@
+"use strict";
+
 // Classes
 class Square {
     constructor(r, c, buttonID) {
@@ -280,9 +282,11 @@ function submitMove() {
 		historyArea.innerText = MOVEHISTORY;
 	}
 	
-		
-	TAKENPIECE.captured = TURNNUMBER;
-	
+
+	if (TAKENPIECE != "") {
+		TAKENPIECE.captured = TURNNUMBER;
+	}
+
 	if (TURNCOLOR == "w") {
 		TURNCOLOR =	"b";
 	} else {
@@ -560,10 +564,11 @@ function doMoveFromText(moveText) {
 	let r;
 	let c;
 	
-	// Check that the move number eg "3w. " is correct
-	moveText = moveText.split(".");
-	let turnText = moveText[0].trim();
-	moveText = moveText[1].trim();
+	// Check that the move number eg "3w. " is correct.
+	// Split on the first "." only, so the "e.p." marker stays in moveText.
+	let dotIdx = moveText.indexOf(".");
+	let turnText = moveText.slice(0, dotIdx).trim();
+	moveText = moveText.slice(dotIdx + 1).trim();
 	if (turnText != TURNNUMBER.toString() + TURNCOLOR) {
 		debugPrint("Move text number + colour did not match expected");
 	}
