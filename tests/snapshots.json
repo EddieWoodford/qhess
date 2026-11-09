@@ -1,0 +1,316 @@
+{
+	"games": {
+		"01_short_opening.txt": {
+			"plyHashes": ["698be6e2","2e84aab4","e401bfbf","8ec98ee9","d24c4879","bef17552","eb541dd1","bedbde45","e8b0091e","81e645c6","0a2bb931","ac8d218d","9a3b3f08","7a0fc8f0","f749e9bc","a3ecc861","d27265b6","4d7d0aae","18829646","5faaa000","c0cfb0eb"],
+			"final": {
+				"turn": "11w",
+				"enPassant": {
+					"coords": [],
+					"color": ""
+				},
+				"potentialCheck": {
+					"king": -1,
+					"color": ""
+				},
+				"autoCheck": false,
+				"potCheck": false,
+				"white": [
+					"a5 cap-1 moved1 1111111100000000",
+					"b8 cap-1 moved1 0000000000000010",
+					"c2 cap-1 moved0 1111111100000000",
+					"e3 cap-1 moved1 0000000000000001",
+					"e2 cap-1 moved0 1111111100000000",
+					"f2 cap-1 moved0 0000000011000000",
+					"g2 cap-1 moved0 0000000000000100",
+					"h2 cap-1 moved0 0000000000001000",
+					"a3 cap-1 moved1 1111111100000000",
+					"b1 cap-1 moved0 1111111100000000",
+					"b3 cap-1 moved1 0000000000110000",
+					"d3 cap-1 moved1 0000000011000000",
+					"f3 cap-1 moved1 0000000000110000",
+					"f1 cap-1 moved0 1111111100000000",
+					"g1 cap-1 moved0 1111111100000000",
+					"h1 cap-1 moved0 1111111100000000"
+				],
+				"black": [
+					"a4 cap-1 moved1 0000000000110000",
+					"b8 cap7 moved0 1111111100000000",
+					"c7 cap-1 moved1 0000000011000000",
+					"d8 cap-1 moved0 1111111100000000",
+					"e8 cap-1 moved0 1111111100000101",
+					"e6 cap-1 moved1 0000000000110000",
+					"g7 cap-1 moved1 1111111100000001",
+					"h8 cap-1 moved0 1111111100000001",
+					"a7 cap4 moved0 1111111100000000",
+					"b7 cap3 moved0 0000000011000000",
+					"g6 cap-1 moved1 0000000000000010",
+					"d7 cap-1 moved0 1111111100000100",
+					"e7 cap-1 moved0 1111111100000001",
+					"f7 cap-1 moved0 1111111100000100",
+					"b2 cap-1 moved1 0000000000001000",
+					"h5 cap-1 moved1 1111111100000000"
+				]
+			}
+		},
+		"02_potential_checks.txt": {
+			"plyHashes": ["698be6e2","f48b7717","381a3449","f1c3d56f","07bcf82e","2533fa5a","0ae4daca","8d60f425","f6126ac7","f2523a59","e7cf5ef3","ee9900f4","33e27a02","a925e086","60f060f4","d7d2c65f","5aa99e74","ba12f7d7","5e128bb2","f7a825b5","9814fd5d","d3f33d7d","0726bc23","3eaddf7b","175eba01","49f5a7c5","c2de918f","a68d0be2","62fbc33d","ccc50320","599586ba","10cc9f43","56396dc7","886fb8f4","b2f2c57d","ed2e0019","5731eead","318bbff9","61d1dec3","d9d97492","4ec1e4ed","0abc2fbd","812ea36e","2ea933cc","be4285ee","e0ec1629","7879750f","5b5854cb","a5f421cf","43c81301","2b7bfe02","413bd09d","8fd8e68c","17062c57","2b1c295e","50062b07","9f87b546","aa5b25e4","994dcbbf","6ce3546f","a5b07c02","c03907ec","075b99c1","fa9a058f","8a863b4c","111fd520","7aa85374","3a295194","f217ee62","2e2f6c27","f4091e86","e6795e27","806212e5","f0a95604","5238a3e1","d8a50772","84df5a0d","a4fa3ea8","5a099cbb","cc4bc612","57e9fd83","72a46e39","80c2060d","0ae48c4f","537a9d93","cd42dddf","b42b338b","2760fab8","454e145b","3b0c8a37","2ff29458","f86e2016","441c2439","19d93b76","7ccf01cb","698ce618","0147af9c","6cdc03bd","9d290872","221095bd","d35348ec","b742314b","5f1b6a6d","88de4cca","bf46ff8a","b830f469","34c34814","1dd0dd56","5d8efbe5","86c08e5d","095dd092","c43ebd26","b6d403fe","e79fbe29","95687ae9","f27c7677","7af41c05","fe3fdd01","d29e7ad6","cf4b4c28","0a0a5e82"],
+			"final": {
+				"turn": "61w",
+				"enPassant": {
+					"coords": [],
+					"color": ""
+				},
+				"potentialCheck": {
+					"king": -1,
+					"color": ""
+				},
+				"autoCheck": false,
+				"potCheck": false,
+				"white": [
+					"c4 cap38 moved1 0000000011000000",
+					"a2 cap-1 moved1 0000000000000001",
+					"d4 cap11 moved1 0000000000110000",
+					"d3 cap18 moved1 1111111100000000",
+					"e8 cap49 moved1 1111111100000000 promoted 0000000000000110",
+					"g7 cap56 moved1 0000000000001000",
+					"g7 cap9 moved1 0000000000000010",
+					"h7 cap4 moved1 0000000011000000",
+					"a5 cap-1 moved1 1111111100000000",
+					"e6 cap29 moved1 0000000000110000",
+					"c6 cap-1 moved1 1111111100000000",
+					"d4 cap44 moved1 1111111100000000",
+					"e1 cap-1 moved0 1111111100000000",
+					"g6 cap41 moved1 0000000000000100",
+					"g2 cap17 moved1 1111111100000000",
+					"h5 cap37 moved1 1111111100000000"
+				],
+				"black": [
+					"a6 cap-1 moved1 1111111100000000",
+					"g7 cap54 moved1 0000000000001000",
+					"c3 cap53 moved1 1111111100000000",
+					"d4 cap23 moved1 0000000011000000",
+					"e6 cap27 moved1 1111111100000000",
+					"f6 cap35 moved1 1111111100000000",
+					"g7 cap-1 moved1 0000000000000001",
+					"f1 cap-1 moved1 1111111100000000 promoted 0000000000000010",
+					"a3 cap14 moved1 1111111100000000",
+					"g4 cap-1 moved1 0000000000000100",
+					"g2 cap19 moved1 0000000000110000",
+					"b5 cap20 moved1 0000000000000010",
+					"d6 cap-1 moved1 0000000000110000",
+					"f6 cap7 moved1 1111111100000000",
+					"e6 cap39 moved1 0000000011000000",
+					"h7 cap1 moved0 1111111100000000"
+				]
+			}
+		},
+		"03_long_game.txt": {
+			"plyHashes": ["698be6e2","2e84aab4","54ffc9eb","db0ae8d9","d491105e","e7c0e0b9","6216f7c7","406c6e30","01e57cc0","48bb76c2","ff9787d2","4589057c","0e2e17e7","b774f019","612cb3bd","2f6c3fc8","81f63387","cb5af018","9a3b6f59","fe31065f","8382b5eb","0f698e4f","992693b9","0774dd72","a1367cde","6e454820","f4a8ef2a","23498dec","87fa8a09","0b4bae34","e77e1f66","f053b1b1","62af5668","b130aecc","2c4b86cd","22ebe3aa","122b1e8d","27f83b96","efb68a0e","3b62528e","2f1360e8","540c8ea7","e9a6fd00","8cebb469","4d5ab9a7","378cabd5","f9437059","d5af4b61","c854edba","439d7538","0ec3f42b","db4af611","ddbbd9ff","d967375f","b6c6e63c","52e48967","964bb5f9","fa3b6734","7ee69148","0635810a","09f95f53","39273b7d","edf4aa3c","1cd590d8","ef2c47fc","b5fd4b64","994c0493","b59caf69","130e2c8a","914e782c","dba09485","31359245","f31f53dc","ab02cf2d","5b85c95e","4f34ce72","cb8f4f27","06b9a92c","5666712a","a1fa157a","88b39a0f","de62f7ad","70eba207","907969b4","c2540bbc","e7a89528","32ee0e95","38a10e97","bbda1160","bbfa468c","cc7f89cb","81a1b45d","c3e9f3f1","c2d4e627","894d6f02","25f39e8b","1c1dced7","328eb27b","10f1b529","ae7d4889","6e86049a","60c7b097","a9ce5e8e","39c74205","9887f62e","9d4be432","a6078dc5","d0dda1f3","8a0b83af","e7faf979","2d14a89a","3fe1e9d4","ca0ffce5","e69b33bc","48847aa6","64070e84","8cab2982","c27a3871","18c12f12","99a3d0ce","ce594712"],
+			"final": {
+				"turn": "61w",
+				"enPassant": {
+					"coords": [],
+					"color": ""
+				},
+				"potentialCheck": {
+					"king": -1,
+					"color": ""
+				},
+				"autoCheck": false,
+				"potCheck": false,
+				"white": [
+					"a6 cap-1 moved1 1111111100000000",
+					"c6 cap34 moved1 1111111100000000",
+					"g8 cap-1 moved1 0000000011000000",
+					"c3 cap-1 moved1 0000000000001000",
+					"d5 cap17 moved1 0000000000110000",
+					"f6 cap-1 moved1 1111111100000000",
+					"g6 cap7 moved1 0000000011000000",
+					"c7 cap5 moved1 0000000000000010",
+					"a4 cap-1 moved1 1111111100000000",
+					"d7 cap-1 moved1 1111111100000000",
+					"b3 cap-1 moved1 0000000000000001",
+					"d5 cap46 moved1 1111111100000000",
+					"e2 cap32 moved1 1111111100000000",
+					"b1 cap40 moved1 0000000000110000",
+					"f4 cap-1 moved1 1111111100000000",
+					"e4 cap18 moved1 0000000000000100"
+				],
+				"black": [
+					"d2 cap20 moved1 0000000000000010",
+					"d4 cap48 moved1 1111111100000000",
+					"c6 cap28 moved1 1111111100000000",
+					"c2 cap34 moved1 0000000011000000",
+					"d5 cap24 moved1 0000000000110000",
+					"f8 cap52 moved0 1111111100000000",
+					"b1 cap41 moved1 0000000011000000",
+					"a5 cap58 moved1 1111111100000000 promoted 0000000000000010",
+					"a5 cap7 moved1 1111111100000000",
+					"b6 cap30 moved1 1111111100000000",
+					"c7 cap2 moved0 0000000000001000",
+					"c4 cap18 moved1 0000000000000100",
+					"f2 cap29 moved1 0000000000110000",
+					"f7 cap-1 moved0 1111111100000000",
+					"e6 cap-1 moved1 0000000000000001",
+					"e4 cap46 moved1 1111111100000000 promoted 0000000000000010"
+				]
+			}
+		},
+		"04_en_passant.txt": {
+			"plyHashes": ["698be6e2","bf843d52","81984819","0031b2ed","baaa1159","42a3e3d4","886ffd17","c78faccb","df5d9bc0","eca627ae","d87212c2","e19c9c08"],
+			"final": {
+				"turn": "6b",
+				"enPassant": {
+					"coords": [],
+					"color": ""
+				},
+				"potentialCheck": {
+					"king": -1,
+					"color": ""
+				},
+				"autoCheck": false,
+				"potCheck": false,
+				"white": [
+					"a4 cap-1 moved1 1111111111000011",
+					"b2 cap-1 moved0 1111111111111011",
+					"c2 cap-1 moved0 1111111111110111",
+					"d2 cap-1 moved0 1111111111111011",
+					"d6 cap-1 moved1 1111111100000000",
+					"f2 cap-1 moved0 1111111111111011",
+					"g4 cap-1 moved1 1111111111000010",
+					"h2 cap-1 moved0 1111111111111011",
+					"a1 cap-1 moved0 1111111111111011",
+					"b1 cap-1 moved0 1111111111110111",
+					"c1 cap-1 moved0 1111111111111011",
+					"d1 cap-1 moved0 1111111111110111",
+					"e1 cap-1 moved0 1111111111111011",
+					"f1 cap-1 moved0 1111111111110111",
+					"g1 cap-1 moved0 1111111111111011",
+					"h1 cap-1 moved0 1111111111110111"
+				],
+				"black": [
+					"a8 cap-1 moved0 1111111111110111",
+					"b8 cap-1 moved0 1111111111111011",
+					"c8 cap-1 moved0 1111111111110111",
+					"d8 cap-1 moved0 1111111111111011",
+					"e8 cap-1 moved0 1111111111110111",
+					"f8 cap-1 moved0 1111111111111011",
+					"g8 cap-1 moved0 1111111111110111",
+					"h8 cap-1 moved0 1111111111111011",
+					"a7 cap-1 moved0 1111111111111011",
+					"b7 cap-1 moved0 1111111111110111",
+					"c7 cap-1 moved0 1111111111111011",
+					"d5 cap3 moved1 1111111100000000",
+					"e7 cap-1 moved0 1111111111111011",
+					"f7 cap-1 moved0 1111111111110111",
+					"g7 cap-1 moved0 1111111111111011",
+					"g3 cap-1 moved1 0000000000000011"
+				]
+			}
+		},
+		"05_promotion.txt": {
+			"plyHashes": ["698be6e2","f48b7717","3cc499da","e77ddbbe","38e55d8f","3abadedd","58c23a2e","7ff793af","d4e70c83","f20f47b8","f79562fe","0aaa3874","e7fdc324","a60a6ec0","0af1e082","8ececbdb","788d2e33","9db6b776","45d863bd","823c139b","280bfb52","9536a848","469fb8ca","32607a25","dd344844","1398a3f9","4d939d38","05317c68","d5790317","a9226cbd","308a640f","e8189e6f","c24e19f8","992ab4b1","caf27e0c","b49dbe9d","3306a1eb","91f89a36","dc2ddd11","6672c05b","725260fa","08a49a9e","bd661f99","402110cb","90b14b9a","a7d61bca","6af768ef","b2cb5589","1c713929","287cc2ad","017296ae","53cb9fc6","f8f26223","d756cb5b","6e490a91","77b6a05c","f9af4a4e","a9158d1b","beebbd39","a9c8a975","081575a4","4f6ef856","cb37b2bd","063e260b","247049ef","aec8267e","0eb25eb1","2d5b28bd","9d181f6e","77573967","bf5fde49","3c2da281","ca51848b","d3682216","e161ddb5","af27fd97","00325444","d25e68f0","30b4c8d0","523d1af2","7d76fc34","ff519c0e","4bcfef1d","a9cf46b3","a4d385c7","0f79bccf","8cc3c4d0","c50e1640","777065cd","b950cb27","7aeb2c14","e6fde577","849be9ee","1c339a0c","f52771f5","75ab40eb","950147df","be345ff3","aceae8fd","35441b59","16e22c26","89508e62","cc445f2c","1085ccc2","84be42a4","3383d088","2f387df7","6f2107ee","3b777bca","ff750a88","1075c430","cce25146","3e741701","161eba3c","d5fcaa31","964c619b","46102b6c","92b45080","5ff0526a","3b08fb46","c811e407"],
+			"final": {
+				"turn": "61w",
+				"enPassant": {
+					"coords": [],
+					"color": ""
+				},
+				"potentialCheck": {
+					"king": -1,
+					"color": ""
+				},
+				"autoCheck": false,
+				"potCheck": false,
+				"white": [
+					"c5 cap-1 moved1 0000000011000000",
+					"b3 cap4 moved1 1111111100000000",
+					"f4 cap31 moved1 0000000000000010",
+					"f4 cap36 moved1 0000000000001000",
+					"d5 cap27 moved1 1111111100000000",
+					"g8 cap-1 moved1 1111111100000000 promoted 0000000000110000",
+					"a8 cap-1 moved1 1111111100000000 promoted 0000000011000010",
+					"h7 cap1 moved1 0000000011000000",
+					"d4 cap12 moved1 0000000000110000",
+					"b3 cap32 moved1 1111111100000000",
+					"c3 cap-1 moved1 0000000000000001",
+					"d1 cap9 moved0 0000000000000100",
+					"d4 cap19 moved1 0000000000110000",
+					"f3 cap10 moved1 1111111100000000",
+					"g3 cap39 moved1 1111111100000000",
+					"h7 cap-1 moved1 1111111100000000 promoted 0000000011000010"
+				],
+				"black": [
+					"f4 cap31 moved1 0000000000110000",
+					"c3 cap57 moved1 0000000000110000",
+					"c4 cap46 moved1 1111111100000000",
+					"d5 cap27 moved1 1111111100000000",
+					"d2 cap52 moved1 1111111100000000",
+					"f6 cap16 moved1 1111111100000000",
+					"g5 cap17 moved1 1111111100000000",
+					"g3 cap-1 moved1 0000000000000001",
+					"a6 cap42 moved1 1111111100000000",
+					"f4 cap37 moved1 0000000011000000",
+					"d4 cap18 moved1 0000000000001000",
+					"d1 cap10 moved1 0000000011000000",
+					"e5 cap14 moved1 1111111100000000",
+					"b3 cap9 moved1 0000000000000100",
+					"f3 cap11 moved1 0000000000000010",
+					"h7 cap1 moved0 1111111100000000"
+				]
+			}
+		},
+		"06_checkmate.txt": {
+			"plyHashes": ["698be6e2","9bfb785e","8164b11c","86053496","b9867671","f34d2cb8","01b3dd13","2837f828","ceeb25d6","8adc7401","b26ea867","9c326410","aa0762aa","aa8c0962","84145017","cf65ae1a","a882d51b","a5853889","882bbb31","9649e5e1","d8bda243","628dc3a3","12bd6ebb","d916be9c","f79e3e5a","06bc8643","58bebb1a","a845a4c7","2970c16a","5bde4791","2e33932d","95b25258","79d50ccf","31c970d2","4e412403","d02ed08f","71bdf486","210ffdb8","d672d0e9","015c3c0f","8a26beae","1af8fdaa","5009a78e","bec9db3b","5b91d3ec","42de8609","ee36b78c","dcce0e70","5e4a9bdd","c1e5b284","479d11be","a1ef916a","15cd795e","80723bdf","52c69561","d625890d","ede3357d","dda5de8a","0f74abfa","db06899f","4a0f2e58","d945f406","02d1ff52","73c1a25e","24778c21","8b61e2f2","7d193957","916453a6","819c8337","e55b72fe","203495dd","21b71dcc","16de5dcb","113bdf04","7b4826c5","8c6c59b2","a157be55","b032bae8","60741856","5be8fd37","767280ad","647c72fe","644d2947","80d98cd1","9f4555cc","602c0a46","0178398b","42acb7b9","1d6a9761","683519a4","98d033e3","db92faeb","821d0b5d","8b7811df","9406752c","b945622d","e3cc1138","c45da92b","7829c0e5","f0ec657a","d8046b24","3a166ddf"],
+			"final": {
+				"turn": "51b",
+				"enPassant": {
+					"coords": [],
+					"color": ""
+				},
+				"potentialCheck": {
+					"king": 1,
+					"color": "b"
+				},
+				"autoCheck": true,
+				"potCheck": false,
+				"white": [
+					"a3 cap40 moved1 1111111100000000",
+					"b7 cap8 moved1 0000000000000010",
+					"c4 cap-1 moved1 0000000000000100",
+					"h5 cap16 moved1 0000000000110000",
+					"h6 cap-1 moved1 0000000000000001",
+					"f2 cap1 moved0 1111111100000000",
+					"g3 cap17 moved1 1111111100000000",
+					"h2 cap5 moved0 0000000011000000",
+					"e5 cap-1 moved1 0000000000001000",
+					"b5 cap32 moved1 0000000000110000",
+					"c4 cap19 moved1 1111111100000000",
+					"d3 cap-1 moved1 1111111100000000",
+					"e5 cap47 moved1 1111111100000000",
+					"f6 cap6 moved1 0000000011000000",
+					"g5 cap-1 moved1 1111111100000000",
+					"h2 cap-1 moved1 1111111100000000"
+				],
+				"black": [
+					"a3 cap-1 moved1 1111111100000000",
+					"h8 cap-1 moved1 0000000000000001",
+					"c5 cap-1 moved1 1111111100000000",
+					"e5 cap51 moved1 1111111100000000",
+					"g3 cap21 moved1 0000000000110000",
+					"f6 cap43 moved1 1111111100000000",
+					"f4 cap19 moved1 0000000000110000",
+					"h6 cap44 moved1 1111111100000000",
+					"f2 cap2 moved1 0000000000001000",
+					"b7 cap3 moved0 1111111100000000",
+					"c4 cap50 moved1 1111111100000000 promoted 0000000011000010",
+					"d4 cap-1 moved1 1111111100000000",
+					"e4 cap4 moved1 0000000011000000",
+					"b5 cap29 moved1 0000000000000100",
+					"g3 cap24 moved1 0000000000000010",
+					"h4 cap30 moved1 0000000011000000"
+				]
+			}
+		}
+	}
+}

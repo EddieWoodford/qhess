@@ -1,0 +1,273 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Qhess regression tests</title>
+<style>
+	body { font-family: sans-serif; margin: 16px; }
+	table { border-collapse: collapse; margin: 12px 0; }
+	td, th { border: 1px solid #aaa; padding: 4px 8px; text-align: left; vertical-align: top; }
+	.pass { background: #c8f0c8; }
+	.fail { background: #f6c4c4; }
+	.new  { background: #f6ecb8; }
+	#summary { font-size: 1.3em; font-weight: bold; }
+	textarea { width: 100%; height: 200px; font-family: monospace; }
+	iframe { width: 1000px; height: 720px; border: 1px solid #888; }
+	pre { margin: 0; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Qhess regression tests</h1>
+<p>Replays every game in <code>example_games/</code> through the real game page and checks that:
+the game replays without errors, the move history it writes back matches the file exactly,
+and the board state after every move matches the snapshot recorded in <code>tests/snapshots.json</code>.</p>
+<p>
+	<button id="run">Run tests</button>
+	<button id="record">Record new snapshots</button>
+	(only record after checking that a change in behaviour is intended)
+</p>
+<div id="summary"></div>
+<table id="results"><thead><tr><th>Game</th><th>Plies</th><th>Result</th><th>Details</th></tr></thead><tbody></tbody></table>
+<div id="recordArea" style="display:none">
+	<p>Couldn't save automatically (is the page served by serve.ps1?). Save this as <code>tests/snapshots.json</code>:
+	<a id="download" download="snapshots.json">download</a></p>
+	<textarea id="recordOut"></textarea>
+</div>
+<iframe id="game"></iframe>
+
+<script>
+"use strict";
+
+// Games to test, in example_games/. Add new game files here.
+const GAMES = [
+	"01_short_opening.txt",
+	"02_potential_checks.txt",
+	"03_long_game.txt",
+	"04_en_passant.txt",
+	"05_promotion.txt",
+	"06_checkmate.txt",
+];
+
+////////////////////////////////
+// Adapter: the only part that knows how the game code is structured.
+// When script.js is split into modules, update these functions to call the new engine.
+////////////////////////////////
+
+// Load a fresh copy of the game page into the frame and return its window
+function loadGame() {
+	return new Promise(resolve => {
+		const frame = document.getElementById("game");
+		frame.onload = () => resolve(frame.contentWindow);
+		frame.src = "../index.html?t=" + Date.now();
+	});
+}
+
+// Split a history file into one string per ply
+function historyLines(g, text) {
+	return g.getHistoryLines(text);
+}
+
+// Replay the lines one ply at a time, calling onPly(i) after each one
+function replay(g, lines, onPly) {
+	g.setup();
+	for (let i = 0; i < lines.length; i++) {
+		g.doMoveFromText(lines[i]);
+		g.sideButton2Action(); // submit
+		onPly(i);
+	}
+}
+
+// Replay the whole history the way the "Restore History" button does
+function restoreAll(g, text) {
+	g.restoreGameHistory(text);
+}
+
+function writtenHistory(g) {
+	return g.eval("MOVEHISTORY");
+}
+
+// Everything about the game position that matters, as plain data
+function captureState(g) {
+	const E = expr => g.eval(expr);
+	const pieceState = p => [
+		String.fromCharCode(97 + p.c) + (8 - p.r),
+		"cap" + p.captured,
+		"moved" + p.hasmoved,
+		p.options.join(""),
+		p.promoted ? "promoted " + p.promotedOptions.join("") : "",
+	].join(" ").trim();
+	return {
+		turn: E("TURNNUMBER") + E("TURNCOLOR"),
+		enPassant: { coords: E("EPCOORDS").slice(), color: E("EPCOLOR") },
+		potentialCheck: { king: E("PCKING"), color: E("PCCOLOR") },
+		autoCheck: E("AUTOCHECK"),
+		potCheck: E("POTCHECK"),
+		white: E("WHITEPIECES").map(pieceState),
+		black: E("BLACKPIECES").map(pieceState),
+	};
+}
+
+////////////////////////////////
+// Test runner
+////////////////////////////////
+
+// FNV-1a hash, to keep a compact fingerprint of the state after every ply
+function hash(str) {
+	let h = 0x811c9dc5;
+	for (let i = 0; i < str.length; i++) {
+		h ^= str.charCodeAt(i);
+		h = Math.imul(h, 0x01000193);
+	}
+	return (h >>> 0).toString(16).padStart(8, "0");
+}
+
+async function fetchText(url) {
+	const res = await fetch(url, { cache: "no-store" });
+	if (!res.ok) { throw new Error(url + ": HTTP " + res.status); }
+	return res.text();
+}
+
+async function loadSnapshots() {
+	try {
+		return JSON.parse(await fetchText("snapshots.json"));
+	} catch (err) {
+		return { games: {} };
+	}
+}
+
+// Play one game file and return what happened
+async function playFile(name) {
+	const text = await fetchText("../example_games/" + name);
+	const g = await loadGame();
+	const lines = historyLines(g, text);
+	const plyHashes = [];
+	let error = null;
+	try {
+		replay(g, lines, i => plyHashes.push(hash(JSON.stringify(captureState(g)))));
+	} catch (err) {
+		error = "Error at ply " + plyHashes.length + " (" + lines[plyHashes.length] + "): " + err;
+	}
+	const result = {
+		lines,
+		plyHashes,
+		error,
+		history: writtenHistory(g),
+		final: captureState(g),
+	};
+	// Restore History should arrive at the same position as replaying one ply at a time
+	if (!error) {
+		try {
+			const g2 = await loadGame();
+			restoreAll(g2, text);
+			result.restoreMatches = JSON.stringify(captureState(g2)) === JSON.stringify(result.final);
+		} catch (err) {
+			result.restoreMatches = false;
+			result.error = "Error in Restore History: " + err;
+		}
+	}
+	return result;
+}
+
+function compare(result, snap) {
+	const problems = [];
+	if (result.error) { problems.push(result.error); }
+	// Compare line by line, ignoring leading/trailing spaces (the file reader trims each line)
+	const written = result.history.split(/\r?\n/).map(l => l.trim());
+	if (written.join("\n") !== result.lines.join("\n")) {
+		let i = result.lines.findIndex((l, k) => l !== written[k]);
+		if (i === -1) { i = result.lines.length; }
+		problems.push("Written history differs from the file at ply " + i +
+			":\n  file:    " + result.lines[i] + "\n  written: " + written[i]);
+	}
+	if (result.restoreMatches === false) {
+		problems.push("Restore History gives a different final position to replaying move by move");
+	}
+	if (!snap) {
+		return { status: "new", problems: problems.concat(["No snapshot recorded yet"]) };
+	}
+	const n = Math.max(snap.plyHashes.length, result.plyHashes.length);
+	for (let i = 0; i < n; i++) {
+		if (snap.plyHashes[i] !== result.plyHashes[i]) {
+			problems.push("Position differs from snapshot after ply " + i + " (" + result.lines[i] + ")");
+			break;
+		}
+	}
+	for (const key of Object.keys(snap.final)) {
+		const a = JSON.stringify(snap.final[key]);
+		const b = JSON.stringify(result.final[key]);
+		if (a !== b) {
+			if (Array.isArray(snap.final[key])) {
+				snap.final[key].forEach((v, i) => {
+					if (v !== result.final[key][i]) {
+						problems.push("Final " + key + "[" + i + "]: expected '" + v + "', got '" + result.final[key][i] + "'");
+					}
+				});
+			} else {
+				problems.push("Final " + key + ": expected " + a + ", got " + b);
+			}
+		}
+	}
+	return { status: problems.length ? "fail" : "pass", problems };
+}
+
+async function runAll(record) {
+	const tbody = document.querySelector("#results tbody");
+	tbody.innerHTML = "";
+	document.getElementById("summary").textContent = "Running...";
+	document.getElementById("recordArea").style.display = "none";
+	const snapshots = await loadSnapshots();
+	const newSnapshots = { games: {} };
+	let passed = 0;
+	for (const name of GAMES) {
+		const row = tbody.insertRow();
+		row.insertCell().textContent = name;
+		const pliesCell = row.insertCell();
+		const statusCell = row.insertCell();
+		const detailCell = row.insertCell();
+		statusCell.textContent = "running";
+		let outcome;
+		try {
+			const result = await playFile(name);
+			pliesCell.textContent = result.lines.length;
+			outcome = compare(result, snapshots.games[name]);
+			newSnapshots.games[name] = { plyHashes: result.plyHashes, final: result.final };
+		} catch (err) {
+			outcome = { status: "fail", problems: [String(err)] };
+		}
+		row.className = outcome.status;
+		statusCell.textContent = outcome.status.toUpperCase();
+		const pre = document.createElement("pre");
+		pre.textContent = outcome.problems.join("\n");
+		detailCell.appendChild(pre);
+		if (outcome.status === "pass") { passed++; }
+	}
+	const summary = passed + " / " + GAMES.length + " passed";
+	document.getElementById("summary").textContent = summary;
+	document.getElementById("summary").className = passed === GAMES.length ? "pass" : "fail";
+	if (record) {
+		// Pretty-print, but keep each game's list of ply hashes on one line
+		const json = JSON.stringify(newSnapshots, null, "\t")
+			.replace(/\[\s+(?:"[0-9a-f]{8}",?\s*)+\]/g, m => m.replace(/\s+/g, "")) + "\n";
+		// serve.ps1 accepts a PUT to this one file, so the snapshots can be saved straight to disk
+		let saved = false;
+		try {
+			const res = await fetch("snapshots.json", { method: "PUT", body: json });
+			saved = res.ok;
+		} catch (err) { }
+		if (saved) {
+			document.getElementById("summary").textContent = summary + " - snapshots saved to tests/snapshots.json";
+		} else {
+			document.getElementById("recordOut").value = json;
+			document.getElementById("download").href = "data:application/json;charset=utf-8," + encodeURIComponent(json);
+			document.getElementById("recordArea").style.display = "block";
+		}
+	}
+	window.testResults = { passed, total: GAMES.length, newSnapshots };
+	return window.testResults;
+}
+
+document.getElementById("run").onclick = () => runAll(false);
+document.getElementById("record").onclick = () => runAll(true);
+</script>
+</body>
+</html>
