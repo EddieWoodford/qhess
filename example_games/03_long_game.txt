@@ -1,0 +1,121 @@
+0b.
+1w. (KQBNRP)d2e3(KQB)
+1b. (KQBNRP)d7e6(KQB)<h2+ c7>
+2w. (KQBNRP)h2xc7(QB)<g7+ g2>
+2b. (KQBNRP)g7f6(KQB)<d1+ d8>
+3w. [d1](KQBNRP)b2b3(KQRP)<e7+ c7>
+3b. [e7](KQBNRP)b7b6(KQRP)
+4w. (KBNRP)c2c3(KRP)<g8+ g2>
+4b. [g8](QR)d8d7(QR)
+5w. (KRP)c3c5(R)
+5b. (KQBNRP)e8xc7(N)
+6w. (R)g2g6(R)
+6b. (KQBNRP)a7a5(QRP)<b3+ e6>
+7w. [b3](R)c5xa5(R)
+7b. (QBNRP)g8xg6(QR)<g1+ g6>
+8w. [g1](P)b3b4(P)<a8+ a5>
+8b. (KQBNRP)a8b7(KQB)
+9w. (KBNP)f2f4(P)
+9b. (NP)e7f5(N)<e3+ f5>
+10w. [e3](KBNP)a2a3(KP)
+10b. (KQB)b7c6(KQB)
+11w. (KBNP)b1b2(KP)
+11b. (KQB)c6d5(KQB)
+12w. (KP)a3a4(KP)<d5+ a5 h1>
+12b. (KQB)d5d2(Q)
+13w. (KP)b2b3(KP)
+13b. (B)e6c4(B)<e2+ d2 c4>
+14w. (KNP)e2c3(N)
+14b. (R)d7e7(R)
+15w. (KNP)a1a2(KP)
+15b. (Q)d2h2(Q)<a2+ h2>
+16w. [a2](B)h1e4(B)
+16b. (N)f5g3(N)<f1+ c4 g3>
+17w. [f1](N)c3d5(N)+
+17b. (N)c7xd5(N)<b3+ c4>
+18w. (KP)b3xc4(KP)
+18b. (R)e7xe4(R)<c4+ e4>
+19w. [c4](KNP)c1c2(KP)
+19b. (Q)h2d2(Q)<e1+ d2>
+20w. (NP)f1xd2(N)
+20b. (R)e4e8(R)
+21w. (KP)e1e2(KP)
+21b. (P)b8b7(P)<e2+ g3>
+22w. [e2](KP)c2c1(K)
+22b. (P)h7h5(P)
+23w. (B)e3c5(B)
+23b. (P)c8c6(P)
+24w. (P)c4xd5(P)
+24b. (N)g3h1(N)
+25w. (P)b4b5(P)
+25b. (R)g6g7(R)
+26w. (P)f4f5(P)
+26b. (P)h8h7(P)
+27w. (P)a2a3(P)
+27b. (N)h1f2(N)
+28w. (P)b5xc6(P)
+28b. (R)e8e4(R)
+29w. (P)g1xf2(P)
+29b. (P)h7h6(P)
+30w. (B)c5xb6(B)
+30b. (R)e4e7(R)
+31w. (N)d2b1(N)
+31b. (R)g7g4(R)
+32w. (P)f2f3(P)
+32b. (R)e7xe2(R)
+33w. (P)d1d3(P)
+33b. (R)e2c2(R)+
+34w. (K)c1xc2(K)
+34b. (P)b7xc6(P)
+35w. (P)f3f4(P)
+35b. (P)h5h4(P)
+36w. (P)d3d4(P)
+36b. (P)h6h5(P)
+37w. (R)a5c5(R)
+37b. (R)g4g1(R)
+38w. (R)c5c4(R)
+38b. (P)h4h3(P)
+39w. (B)b6c5(B)
+39b. (P)h5h4(P)
+40w. (P)a4a5(P)
+40b. (R)g1xb1(R)
+41w. (K)c2xb1(K)
+41b. (K)f6g7(K)
+42w. (P)f5f6(P)+
+42b. (K)g7g8(K)
+43w. (P)d5d6(P)
+43b. (P)h3h2(P)
+44w. (P)d4d5(P)
+44b. (P)h2h1(P)=(QRNB)+<b1+ h1>
+45w. (K)b1c2(K)
+45b. (QR)h1e4(Q)+<c2+ e4>
+46w. (R)c4xe4(R)
+46b. (P)c6xd5(P)
+47w. (P)a3a4(P)
+47b. (P)d5d4(P)
+48w. (B)c5xd4(B)
+48b. (K)g8h7(K)
+49w. (R)e4e1(R)
+49b. (P)h4h3(P)
+50w. (R)e1e8(R)
+50b. (P)h3h2(P)
+51w. (B)d4c3(B)
+51b. (P)h2h1(P)=(QRNB)
+52w. (R)e8xf8(R)
+52b. (QBNR)h1h3(QR)
+53w. (R)f8e8(R)
+53b. (QR)h3e3(QR)
+54w. (R)e8d8(R)
+54b. (QR)e3c5(Q)
+55w. (P)a5a6(P)
+55b. (Q)c5b5(Q)
+56w. (P)d6d7(P)
+56b. (Q)b5c5(Q)
+57w. (K)c2b3(K)
+57b. (Q)c5a5(Q)
+58w. (B)c3xa5(B)
+58b. (K)h7g6(K)
+59w. (B)a5c3(B)
+59b. (K)g6f5(K)
+60w. (R)d8g8(R)
+60b. (K)f5e6(K)

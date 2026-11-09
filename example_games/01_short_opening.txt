@@ -1,0 +1,21 @@
+0b.
+1w. (KQBNRP)d2e3(KQB)
+1b. (KQBNRP)c7c6(KQRP)<g2+ c6>
+2w. [g2](KQBNRP)d1d3(QRP)<b8+ h2>
+2b. (Q)c6d6(Q)<b2+ b7>
+3w. (KQBNRP)b2xb7(QR)
+3b. (Q)d6g6(Q)
+4w. (QR)b7xa7(QR)<a8+ a7 g2>
+4b. (KBNRP)a8b6(N)
+5w. (KQBNRP)a2a4(QRP)
+5b. (KBNRP)c8c7(KRP)
+6w. (KQBNRP)c1b3(N)
+6b. (KBNRP)g7b2(B)<c2+ c7>
+7w. [c2](QR)a7xb8(Q)<d8+ b8>
+7b. [d8](KBNP)g8g7(KP)
+8w. (RP)a4a5(RP)<f7+ f2>
+8b. [f7](N)b6a4(N)
+9w. (NRP)a1a3(RP)<d7+ d3>
+9b. [d7](KBNP)h7h5(P)
+10w. (NP)e1f3(N)
+10b. (KNP)f8e6(N)
