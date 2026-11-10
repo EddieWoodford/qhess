@@ -17,6 +17,7 @@
 //   "invalidMoveIntoCheck"     the move leaves the player in check; it can only be cancelled
 //   "selectPCKing"             choosing which opponent piece to declare potential check on
 //   "selectPCAttackers"        choosing which pieces attack it; then Submit
+//   "gameOver"                 checkmate or stalemate (the game state's result): nobody can move
 // and in a multiplayer game, while the player can't move:
 //   "waitJoin"                 the game is made, and waiting for the friend to join with the code
 //   "waitOpponent"             the opponent's turn
@@ -69,8 +70,8 @@ const ui = {
 	potentialCheck: true,
 };
 
-// The steps of a multiplayer turn when the player can't do anything (see the list at the top)
-const WAITING_STATES = ["waitJoin", "waitOpponent", "sendingMove", "multiplayerOver"];
+// The steps when the player can't do anything (see the list at the top): a multiplayer game's waits, and the end
+const WAITING_STATES = ["waitJoin", "waitOpponent", "sendingMove", "multiplayerOver", "gameOver"];
 
 // 8 x 8 array of SquareView objects (the board's buttons and their highlight flags). Made once, by init().
 let squares;
@@ -762,7 +763,7 @@ function setState(stateIn) {
 		stateIn = "move0";
 	}
 	if (stateIn == "clear" || stateIn == "move0") {
-		stateIn = multiplayerWait() ?? stateIn;
+		stateIn = game.result ? "gameOver" : multiplayerWait() ?? stateIn;
 	}
 	ui.state = stateIn;
 	if (ui.state == "clear" || ui.state == "move0" || WAITING_STATES.includes(ui.state)) {

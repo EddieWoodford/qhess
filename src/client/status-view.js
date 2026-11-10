@@ -54,6 +54,14 @@ const STEPS = {
 		button1: null,
 		button2: ctx => ctx.hasPCAttackers ? "Submit" : null, // once at least one attacker is chosen
 	},
+	// Checkmate or stalemate
+	gameOver: {
+		prompt: ctx => ctx.result == "checkmate"
+			? "Checkmate: " + (ctx.toMove == "w" ? "Black" : "White") + " wins"
+			: "Stalemate: the game is a draw",
+		button1: null,
+		button2: null,
+	},
 	// Multiplayer, while the player can't move
 	waitJoin: {
 		prompt: ctx => ctx.multiplayer?.phase == "playing" ? "Waiting for your friend to join" : "Connecting…",
@@ -94,6 +102,8 @@ function statusContext(game, state, multiplayer, pcRule) {
 	return {
 		multiplayer,
 		checks,
+		result: game.result,
+		toMove: game.turnColor,
 		pcRule,
 		inPotentialCheck: checks.potCheck,
 		canAddPC: pcRule && state == "showCompleteMove" && findPotentialKings(game).length > 0,
