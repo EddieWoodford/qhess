@@ -1,6 +1,6 @@
 "use strict";
 
-// Show/hide the modals: info, help and options (from the header) and import (from the History tab).
+// Show/hide the modals: Edit / Import (from the History tab), and the choice dialog below.
 // Each modal is a full-screen wrapper (click it to close) holding a content box (clicks inside don't close it),
 // opened by the button with id name + "Button".
 

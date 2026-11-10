@@ -4,8 +4,9 @@
 // Loaded from index.html as <script type="module">, which runs after the page has been parsed.
 
 import * as game from "./controller.js";
-import { toggleFlippedBoard } from "./board-view.js";
+import { setFlippedBoard } from "./board-view.js";
 import { setupModals, hideModal } from "./modals.js";
+import { dom } from "./dom.js";
 import { normalizeCode } from "../shared/protocol.js";
 
 function onClick(id, handler) {
@@ -14,8 +15,8 @@ function onClick(id, handler) {
 
 setupModals();
 
-// Options modal
-onClick("toggleFlippedBoard", () => toggleFlippedBoard());
+// Settings tab: each switch's "change" event applies its setting
+dom.settings.blackView.addEventListener("change", e => setFlippedBoard(e.target.checked));
 
 // Side panel: hidden until the menu button (☰) opens it.
 // style.css shows it when <body> has .panel-open: beside the board on wide screens, over it on tall ones.

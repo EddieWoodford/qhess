@@ -17,6 +17,7 @@
         6.6 Debug messages
         6.7 Multiplayer tab and badge
         6.8 Info tab
+        6.9 Settings tab
      7. Board
         7.1 Size and structure
         7.2 Square states        (order matters)
@@ -478,7 +479,7 @@ body {
    To add a tab: add the radio, label and panel in index.html, raise --tabs
    below, and add the radio and panel to "Which panel each tab reveals". */
 .panels {
-    --tabs: 4;  /* the number of tabs */
+    --tabs: 5;  /* the number of tabs */
     flex: 1 1 auto;
     min-height: 0;
     display: grid;
@@ -569,7 +570,8 @@ input:checked + .tabTitle {
 #tabHistory:checked ~ #gameMetaTab,
 #tabCaptured:checked ~ #gameCapturedTab,
 #tabMultiplayer:checked ~ #multiplayerTab,
-#tabInfo:checked ~ #infoTab {
+#tabInfo:checked ~ #infoTab,
+#tabSettings:checked ~ #settingsTab {
     display: flex;
 }
 
@@ -877,6 +879,82 @@ p.mp-problem {
 
 .info-tab a {
     color: var(--accent);
+}
+
+/* ---------- 6.9 Settings tab ----------
+   One row per setting: its name and a note on the left, its switch on the
+   right. The whole row is the switch's label, so tapping anywhere on it
+   toggles it. */
+.settings-tab {
+    gap: 0;
+    overflow-y: auto;
+    text-align: left;
+}
+
+.setting {
+    display: flex;
+    align-items: center;
+    gap: 0.75em;
+    padding: 0.6em 0.5em;
+    border-bottom: 1px solid var(--border-faint);
+    cursor: pointer;
+}
+
+.setting-text {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15em;
+}
+
+.setting-name {
+    color: var(--text-strong);
+}
+
+.setting-note {
+    font-size: 0.85em;
+    line-height: 1.35;
+    color: var(--text-muted);
+}
+
+/* A checkbox drawn as a sliding switch: a track with a knob that moves
+   right, and turns the accent colour, when it is on */
+input.switch {
+    appearance: none;
+    flex: none;
+    position: relative;
+    width: 2.75em;
+    height: 1.5em;
+    margin: 0;
+    border-radius: 0.75em;
+    background-color: var(--bg-control-active);
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+}
+
+input.switch::before {
+    content: '';
+    position: absolute;
+    top: 0.15em;
+    left: 0.15em;
+    width: 1.2em;
+    height: 1.2em;
+    border-radius: 50%;
+    background-color: var(--text);
+    transition: transform 0.2s ease;
+}
+
+input.switch:checked {
+    background-color: var(--accent);
+}
+
+input.switch:checked::before {
+    transform: translateX(1.25em);
+}
+
+input.switch:focus-visible {
+    outline: 2px solid var(--text-strong);
+    outline-offset: 2px;
 }
 
 

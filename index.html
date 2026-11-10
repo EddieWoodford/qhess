@@ -15,13 +15,6 @@
             aria-controls="sidePanel" aria-expanded="false"><span aria-hidden="true">☰</span></button>
 
     <!-- MODALS: shown and hidden by src/client/modals.js -->
-    <!-- options modal -->
-    <div id="optionsWrapper" class="modalWrapper">
-        <div id="optionsDiv" class="modalData">
-            <h2>Options</h2>
-            <button id="toggleFlippedBoard">Toggle player view</button>
-        </div>
-    </div>
     <!-- edit / import modal - change the moves, or paste in a game, then load it -->
     <div id="importWrapper" class="modalWrapper">
         <div id="importDiv" class="modalData">
@@ -95,6 +88,10 @@
                     <input class="hidden" id="tabInfo" type="radio" name="tabs">
                     <label class="tabTitle" for="tabInfo" title="Info">
                         <span class="tab-icon" aria-hidden="true">ℹ️</span><span class="tab-name">Info</span></label>
+
+                    <input class="hidden" id="tabSettings" type="radio" name="tabs">
+                    <label class="tabTitle" for="tabSettings" title="Settings">
+                        <span class="tab-icon" aria-hidden="true">⚙️</span><span class="tab-name">Settings</span></label>
 
                     <!-- history tab - move history and controls -->
                     <div class="tab-panel" id="gameMetaTab">
@@ -192,6 +189,20 @@
                             <li>Nemo Thorx</li>
                             <li>Eddie Woodford</li>
                         </ul>
+                    </div>
+
+                    <!-- settings tab - switches that change how the game works.
+                         Each is a .setting label around its text and a checkbox drawn as a switch (style.css 6.9);
+                         main.js listens for its "change" event, and dom.js settings lists it. -->
+                    <div class="tab-panel settings-tab" id="settingsTab">
+                        <label class="setting">
+                            <span class="setting-text">
+                                <span class="setting-name">Black's view</span>
+                                <span class="setting-note">Black at the bottom of the board. A multiplayer game
+                                    sets this to your own side.</span>
+                            </span>
+                            <input class="switch" id="settingBlackView" type="checkbox" role="switch">
+                        </label>
                     </div>
                 </div>
             </div>

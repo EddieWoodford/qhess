@@ -44,6 +44,11 @@ const dom = {
 		tabTitle: $("mpTabTitle"),
 	},
 
+	// Settings tab: one switch (checkbox) per setting
+	settings: {
+		blackView: $("settingBlackView"),
+	},
+
 	debug: $("debug"),
 };
 

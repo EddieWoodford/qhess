@@ -157,14 +157,11 @@ function drawBoard(view) {
 	}
 }
 
-// Switch between White's view and Black's view of the board (the CSS for .flipped reverses the rows and columns)
-function toggleFlippedBoard() {
-	dom.board.classList.toggle("flipped");
-}
-
-// Show Black's view (flipped true: Black at the bottom) or White's view
+// Show Black's view (flipped true: Black at the bottom) or White's view. The CSS for .flipped reverses the rows
+// and columns. The Settings tab's switch always shows which view it is, whether it or a multiplayer game set it.
 function setFlippedBoard(flipped) {
 	dom.board.classList.toggle("flipped", flipped);
+	dom.settings.blackView.checked = flipped;
 }
 
-export { SquareView, buildBoard, drawBoard, toggleFlippedBoard, setFlippedBoard };
+export { SquareView, buildBoard, drawBoard, setFlippedBoard };
