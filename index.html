@@ -103,18 +103,13 @@
                         </div>
                         <!-- one line per ply: drawn by src/client/history-view.js -->
                         <div class="movehistory" id="movehistory"></div>
-                        <div class="button-row">
-                            <button class="historyButton" id="reset">Reset Game</button>
-                            <button class="historyButton" id="importButton">Edit / Import</button>
+                        <div class="button-row history-buttons">
+                            <button class="historyButton" id="reset">Reset</button>
+                            <button class="historyButton" id="exportButton">Export</button>
+                            <button class="historyButton" id="importButton">Import</button>
                         </div>
-                        <div class="button-row">
-                            <button class="historyButton" id="copyallhistory">Copy All</button>
-                            <button class="historyButton" id="copylastmove">Copy Last Move</button>
-                        </div>
-                        <div class="button-row">
-                            <button class="historyButton" id="pasteallrestore">Paste All &amp; Reset</button>
-                            <button class="historyButton" id="pastelinerestore">Paste Move</button>
-                        </div>
+                        <p class="history-note">To save a game, press Export: it copies the moves as text you can
+                            keep anywhere. To carry on later, press Import, paste them in and load them.</p>
                     </div>
 
                     <!-- captured tab - each side's captured pieces (src/client/panels-view.js) -->

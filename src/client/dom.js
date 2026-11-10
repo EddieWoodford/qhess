@@ -20,7 +20,8 @@ const dom = {
 	stepButtons: { back2: $("back2"), back1: $("back1"), forward1: $("forward1"), forward2: $("forward2") },
 	historyButtons: [...document.querySelectorAll("#gameMetaTab .historyButton")],
 	// the history buttons that would change the game: hidden in a multiplayer game
-	localOnlyButtons: ["reset", "importButton", "pasteallrestore", "pastelinerestore"].map($),
+	localOnlyButtons: ["reset", "importButton"].map($),
+	exportButton: $("exportButton"),
 	importText: $("importText"), // the Edit / Import dialog's text box
 
 	// Captured tab

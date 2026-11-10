@@ -152,7 +152,8 @@ Tools for the history:
 
 - **Step back and forward** through the game with the replay buttons. While replaying, the board is view-only.
 - **Resume from here** continues the game from the position you are viewing. Later moves are discarded.
-- **Copy and paste** the full history, copy just the last move, or paste a history to restore a game. You can also paste a single move line to add it to the current game, which makes it easy to play by message.
+- **Save and restore a game:** **Export** copies the whole history as text, which you can keep anywhere. **Import** opens the history for editing: paste in a saved game (or add a move line someone sent you, to play by message) and press **Load these moves**.
+- **Reset** starts a new game.
 
 ## Quick reference: buttons and prompts
 

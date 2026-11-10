@@ -5,8 +5,9 @@
 
 import * as game from "./controller.js";
 import { setFlippedBoard } from "./board-view.js";
-import { setupModals, hideModal } from "./modals.js";
+import { setupModals, showModal, hideModal } from "./modals.js";
 import { setupSettings } from "./settings.js";
+import { dom } from "./dom.js";
 import { normalizeCode } from "../shared/protocol.js";
 
 function onClick(id, handler) {
@@ -52,10 +53,22 @@ onClick("forward2", () => game.stepForwardAll());
 // History buttons. Wrapped in arrow functions so the click event isn't passed in as an argument
 // (restoreGameHistory, for example, would treat it as the history text).
 onClick("reset", () => game.newGame());
-onClick("copyallhistory", () => game.copyAllHistory());
-onClick("copylastmove", () => game.copyLastMove());
-onClick("pasteallrestore", () => game.pasteAllRestore());
-onClick("pastelinerestore", () => game.pasteLineRestore());
+
+// Export copies the moves, and says so on the button for a moment. Where the page can't use the clipboard,
+// it opens the Edit / Import dialog with the moves selected instead, to copy by hand.
+const EXPORT_LABEL = dom.exportButton.textContent;
+let exportTimer;
+onClick("exportButton", async () => {
+	if (await game.exportMoves()) {
+		dom.exportButton.textContent = "Copied ✓";
+		clearTimeout(exportTimer);
+		exportTimer = setTimeout(() => { dom.exportButton.textContent = EXPORT_LABEL; }, 1500);
+	} else {
+		game.openImport();
+		showModal("import");
+		dom.importText.select();
+	}
+});
 
 // Edit / Import dialog (modals.js opens it; this fills it with the current moves first)
 onClick("importButton", () => game.openImport());

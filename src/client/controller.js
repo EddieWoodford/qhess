@@ -563,23 +563,15 @@ function doMoveFromText(moveText) {
 	return true;
 }
 
-function copyAllHistory() {
-	navigator.clipboard.writeText(ui.record.join("\r\n"));
-}
-
-function copyLastMove() {
-	if (ui.record.length > 0) {
-		navigator.clipboard.writeText(ui.record[ui.record.length-1]);
+// Export: copy the whole record to the clipboard, one ply per line. Resolves to false if it couldn't be copied
+// (there's no clipboard on a page opened from another device's http:// address, for example).
+async function exportMoves() {
+	try {
+		await navigator.clipboard.writeText(ui.record.join("\r\n"));
+		return true;
+	} catch {
+		return false;
 	}
-}
-
-function pasteAllRestore() {
-	navigator.clipboard.readText().then(clipText => restoreGameHistory(clipText));
-}
-
-function pasteLineRestore() {
-	const historyText = ui.record.join("\r\n");
-	navigator.clipboard.readText().then(clipText => restoreGameHistory(historyText + "\r\n" + clipText));
 }
 
 // The Edit / Import dialog: it opens with the record to edit (or replace with pasted moves), and Load plays it
@@ -874,10 +866,7 @@ export {
 	stepForwardMove,
 	stepForwardAll,
 	restoreGameHistory,
-	copyAllHistory,
-	copyLastMove,
-	pasteAllRestore,
-	pasteLineRestore,
+	exportMoves,
 	openImport,
 	importMoves,
 	startMultiplayer,

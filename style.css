@@ -397,7 +397,7 @@ body {
 }
 
 /* Look shared by the three button types: side buttons (Submit etc.),
-   history buttons (Reset Game, Copy All, ...) and the step buttons (<< < > >>).
+   history buttons (Reset, Export, Import) and the step buttons (<< < > >>).
    Height and cursor come from the base `button` rule. */
 .sidebutton,
 .historyButton,
@@ -597,6 +597,20 @@ input:checked + .tabTitle {
     color: var(--text);
     padding: 0.5em;
     border-radius: var(--radius-md);
+}
+
+/* Reset, Export and Import (in a multiplayer game, only Export: history-view.js) */
+.history-buttons {
+    gap: var(--gap);
+}
+
+/* How to save and restore a game, under the buttons */
+.history-note {
+    margin: 0;
+    font-size: 0.85em;
+    line-height: 1.35;
+    text-align: left;
+    color: var(--text-muted);
 }
 
 /* While replaying, the ply for the position being shown (history-view.js) */

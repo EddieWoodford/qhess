@@ -1,7 +1,7 @@
 "use strict";
 
 // The History tab: the game record (one line per ply), the replay step buttons (<< < > >>) and the history
-// buttons (Reset Game, Edit / Import, Copy All, ...).
+// buttons (Reset, Export, Import).
 
 import { dom, setVisible } from "./dom.js";
 
@@ -18,9 +18,10 @@ function drawHistory(view) {
 	setVisible(steps.back1, replaying || view.game.turnNumber > 0);
 	setVisible(steps.forward1, replaying);
 	setVisible(steps.forward2, replaying);
-	// A multiplayer game can't be reset, edited or replaced from one side
+	// A multiplayer game can't be reset or replaced from one side: those buttons go, and Export takes the row
 	for (const button of dom.historyButtons) {
-		setVisible(button, !replaying && !(view.multiplayer && dom.localOnlyButtons.includes(button)));
+		button.hidden = view.multiplayer !== null && dom.localOnlyButtons.includes(button);
+		setVisible(button, !replaying);
 	}
 }
 
