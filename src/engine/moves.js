@@ -87,13 +87,13 @@ function getPotentialMoves(state, coords,waves) {
 		
 		newcoords = [coords[0]-direction,coords[1]-1]
 		if (isValidCoord(newcoords)) {
-			if (isequal(newcoords,state.epCoords) || state.board[newcoords[0]][newcoords[1]]?.color == opponentColor) {
+			if (enPassantVictim(state, newcoords, piece.color) !== null || state.board[newcoords[0]][newcoords[1]]?.color == opponentColor) {
 				moves.push(newcoords)
 			}
 		}
 		newcoords = [coords[0]-direction,coords[1]+1]
 		if (isValidCoord(newcoords)) {
-			if (isequal(newcoords,state.epCoords) || state.board[newcoords[0]][newcoords[1]]?.color == opponentColor) {
+			if (enPassantVictim(state, newcoords, piece.color) !== null || state.board[newcoords[0]][newcoords[1]]?.color == opponentColor) {
 				moves.push(newcoords)
 			}
 		}
@@ -192,4 +192,17 @@ function getPotentialMoves(state, coords,waves) {
 	return moves
 }
 
-export { getPotentialMoves, getCertainMoves };
+// The piece a pawn of `color` would take en passant by landing on `coords`, or null if there isn't one.
+// That is the opponent's piece that has just stepped two squares forward over `coords`, as long as it could
+// still be a pawn: a potential check declared on the same move can rule its pawn out.
+function enPassantVictim(state, coords, color) {
+	if (state.epColor == "" || state.epColor == color || !isequal(coords, state.epCoords)) {
+		return null;
+	}
+	// It stands one square on from the square it passed over, in its own direction of travel
+	const r = coords[0] + (state.epColor == "w" ? -1 : 1);
+	const piece = state.board[r][coords[1]];
+	return piece !== null && piece.color == state.epColor && piece.waves().includes("P") ? piece : null;
+}
+
+export { getPotentialMoves, getCertainMoves, enPassantVictim };

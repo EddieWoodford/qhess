@@ -8,26 +8,8 @@ import { getCastlingMoves, getMoveDestinations } from "../../src/engine/castling
 import { updateOptionsFromEntanglement } from "../../src/engine/entanglement.js";
 import { getHistoryLines, parseMoveText } from "../../src/engine/notation.js";
 import { positionHash } from "../../src/engine/fingerprint.js";
-import { coordstext2coords as sq, ismember } from "../../src/engine/utils.js";
-
-// A move as applyMove takes it, from "e2" style squares
-function move(from, to, extra = {}) {
-	return { notAKing: null, from: from ? sq(from) : null, to: to ? sq(to) : null,
-		enPassant: false, promotion: false, castle: false, pcKing: null, pcAttackers: [], ...extra };
-}
-
-// The position after Black's move 0 (a pass) and then the given plies, alternately White and Black
-function play(...plies) {
-	const state = createInitialState();
-	assert.deepEqual(applyMove(state, move(null, null)), { ok: true });
-	for (const ply of plies) {
-		const [from, to, extra] = ply;
-		assert.deepEqual(applyMove(state, move(from, to, extra)), { ok: true }, from + to);
-	}
-	return state;
-}
-
-const at = (state, square) => { const [r, c] = sq(square); return state.board[r][c]; };
+import { ismember } from "../../src/engine/utils.js";
+import { move, play, at, sq } from "./helpers.js";
 
 // White clears f1 and g1; Black shuffles on the h- and a-files, away from White's back rank
 const kingsideReady = () => play(

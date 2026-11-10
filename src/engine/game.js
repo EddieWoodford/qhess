@@ -14,7 +14,7 @@
 
 import { isequal, ismember, coords2text } from "./utils.js";
 import { cloneState, oppColor, getPieces, defPiece, attPiece } from "./state.js";
-import { getPotentialMoves } from "./moves.js";
+import { getPotentialMoves, enPassantVictim } from "./moves.js";
 import { findChecks, findPotentialKings, findPCAttackers } from "./check.js";
 import { updateOptionsFromEntanglement } from "./entanglement.js";
 import { getCastlingMoves, getMoveDestinations } from "./castling.js";
@@ -93,6 +93,8 @@ function startMove(state, from, to, choices = {}) {
 		// The mover decides whether they meant to castle, unless only a castle can make this move
 		doCastle = ordinary ? choose(choices.castle, "Castle?") : true;
 	}
+	// The piece this move could take en passant (looked for before anything on the board changes)
+	const epVictim = doCastle ? null : enPassantVictim(state, to, movingPiece.color);
 
 	state.thisMove = state.thisMove + "(" + movingPiece.waves() + ")" + coords2text(from);
 
@@ -135,7 +137,7 @@ function startMove(state, from, to, choices = {}) {
 	}
 
 	// Check for en passant:
-	if (isequal(to, state.epCoords) && movingPiece.waves().includes("P")) {
+	if (epVictim !== null && movingPiece.waves().includes("P")) {
 		if (movingPiece.waves().length > 1) {
 			// The mover needs to decide if they meant to do an en passant. If they do it collapses their piece to a pawn.
 			doEP = choose(doEP, "En passant?");
@@ -145,10 +147,10 @@ function startMove(state, from, to, choices = {}) {
 		if (doEP) {
 			state.thisMove = state.thisMove + "x";
 			movingPiece.removewaves("KQNRB");
-			state.takenPiece = state.board[to[0]+direction][to[1]];
-			state.takenPiece.captured = state.turnNumber;
-			state.takenPiece.removewaves("KQNRB");
-			state.board[to[0]+direction][to[1]] = null;
+			state.takenPiece = epVictim;
+			epVictim.captured = state.turnNumber;
+			epVictim.removewaves("KQNRB");
+			state.board[epVictim.r][epVictim.c] = null;
 			// update all the collapses again!
 			updateOptionsFromEntanglement(state);
 		} else {

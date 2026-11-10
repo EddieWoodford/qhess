@@ -3,7 +3,11 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import assert from "node:assert/strict";
 import { getHistoryLines, parseMoveText } from "../../src/engine/notation.js";
+import { createInitialState } from "../../src/engine/state.js";
+import { applyMove } from "../../src/engine/game.js";
+import { coordstext2coords as sq } from "../../src/engine/utils.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -32,4 +36,28 @@ function historyAsLines(history) {
 	return history.split(/\r?\n/).map(l => l.trim());
 }
 
-export { ROOT, exampleGames, snapshots, moveFromLine, historyAsLines };
+// A move as applyMove takes it, from "e2" style squares (null for no move: Black's move 0)
+function move(from, to, extra = {}) {
+	return { notAKing: null, from: from ? sq(from) : null, to: to ? sq(to) : null,
+		enPassant: false, promotion: false, castle: false, pcKing: null, pcAttackers: [], ...extra };
+}
+
+// The position after Black's move 0 (a pass) and then the given plies, alternately White and Black.
+// Each ply is [from, to] or [from, to, extra] (extra as for move()).
+function play(...plies) {
+	const state = createInitialState();
+	assert.deepEqual(applyMove(state, move(null, null)), { ok: true });
+	for (const ply of plies) {
+		const [from, to, extra] = ply;
+		assert.deepEqual(applyMove(state, move(from, to, extra)), { ok: true }, from + to);
+	}
+	return state;
+}
+
+// The piece on a square, given as "e2"
+function at(state, square) {
+	const [r, c] = sq(square);
+	return state.board[r][c];
+}
+
+export { ROOT, exampleGames, snapshots, moveFromLine, historyAsLines, move, play, at, sq };
