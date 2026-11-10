@@ -89,8 +89,10 @@ function historyLines(ctx, text) {
 function replay(ctx, lines, onPly) {
 	ctx.game.setup();
 	for (let i = 0; i < lines.length; i++) {
-		ctx.game.doMoveFromText(lines[i]);
-		ctx.game.sideButton2Action(); // submit
+		// Plays the ply through the engine's applyMove and redraws the page
+		if (!ctx.game.doMoveFromText(lines[i])) {
+			throw new Error(ctx.win.document.getElementById("debug").innerText);
+		}
 		onPly(i);
 	}
 }
