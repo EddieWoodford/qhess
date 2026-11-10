@@ -67,8 +67,10 @@ const GENERATED = [
 // other through the server. creator: the colour the page that starts the game picks. reloadAt: the joining
 // page is reloaded before this ply, and must resume the game.
 const MULTIPLAYER = [
-	{ file: "02_potential_checks.txt", creator: "b", reloadAt: 40 },
+	{ file: "02_potential_checks.txt", creator: "b", reloadAt: 40, dropAt: 61 },
 ];
+// dropAt: before this ply the mover picks the piece to move, then its connection drops. Once it has
+// reconnected the piece must still be picked.
 
 ////////////////////////////////
 // Adapter: the only part that knows how the game code is structured.
@@ -355,6 +357,17 @@ async function playMultiplayer(spec, snap) {
 			const waiter = byColor()[color == "w" ? "b" : "w"];
 			if (turnStep(waiter) != "waitOpponent") {
 				problems.push("Before ply " + i + " the waiting page is at '" + turnStep(waiter) + "', not waitOpponent");
+			}
+			if (i == spec.dropAt) {
+				// "(waves)e2e4" -> pick the piece on e2
+				const m = /\)([a-h])([1-8])x?[a-h][1-8]/.exec(lines[i]);
+				mover.game.showPartialMove([8 - Number(m[2]), m[1].charCodeAt(0) - 97]);
+				mover.game.dropConnection();
+				await until("the other page to see the drop", () => multiplayerInfo(waiter).opponent == "disconnected");
+				await until("the page to reconnect", () => multiplayerInfo(mover).connection == "connected" && multiplayerInfo(waiter).opponent == "connected");
+				if (turnStep(mover) != "showPartialMove") {
+					problems.push("Reconnecting lost the piece picked before ply " + i + " (now at '" + turnStep(mover) + "')");
+				}
 			}
 			if (!mover.game.doMoveFromText(lines[i])) {
 				throw new Error(mover.win.document.getElementById("debug").innerText);

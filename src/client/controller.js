@@ -685,11 +685,22 @@ function liveChanged(state) {
 		draw();
 		return;
 	}
+	if (state.history == committed.history && !WAITING_STATES.includes(ui.state)) {
+		// The game hasn't changed (a catch-up after a reconnect): keep the move the player is making
+		committed = state;
+		draw();
+		return;
+	}
 	adopt(state);
 	ui.record = parseRecord(game.history);
 	showLastMove();
 	clearFindPotentialCheckPieces();
 	setState("clear");
+}
+
+// For tests: close the multiplayer connection as if the network had dropped
+function dropConnection() {
+	session.ws?.close();
 }
 
 // Highlight the last move played in the multiplayer game
@@ -849,6 +860,7 @@ export {
 	selectPCAttackers,
 	getPotentialMoves,
 	setChoiceHandler,   // answer en passant / promotion questions without the dialog
+	dropConnection,     // multiplayer: drop the connection, as a network blip would (it reconnects by itself)
 	squares as SQUARES, // the highlight flags (e.g. which squares are potential-check candidates)
 	ui,                 // page state: ui.state is the step of the turn
 };
