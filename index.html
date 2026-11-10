@@ -103,14 +103,17 @@
 
                 <!-- tabbed panels: a hidden radio and its label per tab; the checked one shows its panel -->
                 <div class="panels">
-                    <input class="hidden" id="tab2" type="radio" name="tabs" checked>
-                    <label class="tabTitle" for="tab2">History</label>
+                    <input class="hidden" id="tabHistory" type="radio" name="tabs" checked>
+                    <label class="tabTitle" for="tabHistory" title="History">
+                        <span class="tab-icon" aria-hidden="true">📝</span><span class="tab-name">History</span></label>
 
-                    <input class="hidden" id="tab3" type="radio" name="tabs">
-                    <label class="tabTitle" for="tab3">Captured</label>
+                    <input class="hidden" id="tabCaptured" type="radio" name="tabs">
+                    <label class="tabTitle" for="tabCaptured" title="Captured">
+                        <span class="tab-icon" aria-hidden="true">⚔️</span><span class="tab-name">Captured</span></label>
 
-                    <input class="hidden" id="tab4" type="radio" name="tabs">
-                    <label class="tabTitle" for="tab4" id="mpTabTitle">Multiplayer</label>
+                    <input class="hidden" id="tabMultiplayer" type="radio" name="tabs">
+                    <label class="tabTitle" for="tabMultiplayer" id="mpTabTitle" title="Multiplayer">
+                        <span class="tab-icon" aria-hidden="true">🌐</span><span class="tab-name">Multiplayer</span></label>
 
                     <!-- history tab - move history and controls -->
                     <div class="tab-panel" id="gameMetaTab">

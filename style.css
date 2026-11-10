@@ -470,17 +470,20 @@ body {
 
 /* ---------- 6.3 Tabs ----------
    Pure-CSS tabs: a hidden radio input, then its label, and a .tab-panel
-   that is shown when the radio is checked. In index.html: tab2 (History),
-   tab3 (Captured) and tab4 (Multiplayer). The labels share the top row; the shown panel fills
-   the rest of the height. */
+   that is shown when the radio is checked. Each label is an icon; the
+   checked one also shows the tab's name beneath it (there isn't room for
+   every name on a phone). The labels share the top row; the shown panel
+   fills the rest of the height.
+   To add a tab: add the radio, label and panel in index.html, raise --tabs
+   below, and add the radio and panel to "Which panel each tab reveals". */
 .panels {
+    --tabs: 3;  /* the number of tabs */
     flex: 1 1 auto;
     min-height: 0;
     display: grid;
-    /* the tab labels shrink if they must (on a phone); the last column keeps clear of the close button */
-    grid-template-columns: repeat(3, minmax(0, auto)) minmax(2.5em, 1fr);
+    /* the labels share out the spare width; the last column keeps clear of the close button */
+    grid-template-columns: repeat(var(--tabs), minmax(0, auto)) 2.75em;
     grid-template-rows: auto minmax(0, 1fr);
-    justify-items: start;
 }
 
 .tab-panel {
@@ -489,6 +492,7 @@ body {
     grid-row: 2;
     justify-self: stretch;
     min-height: 0;
+    contain: inline-size;  /* its contents don't widen the tab labels' columns: only the labels size them */
     flex-direction: column;
     gap: var(--gap);
     padding: 0.75em 0 0;
@@ -502,18 +506,17 @@ input.hidden {
 }
 
 .tabTitle {
-    display: inline-block;
-    margin: 0 0 -1px;
+    position: relative;  /* for the multiplayer tab's live dot (6.7) */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2em;
+    margin: 0 1px -1px 0;
     min-width: 0;
-    max-width: 100%;
     box-sizing: border-box;
-    padding: 0.75em 0.6em;
-    font-size: min(1em, 3.8vw); /* three tabs fit on a phone */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    padding: 0.6em 0.2em;
+    border: 1px solid transparent;  /* the checked tab's border (below) doesn't change its size */
     font-weight: 500;
-    text-align: center;
     color: var(--text-muted);
     border-radius: var(--radius-md) var(--radius-md) 0 0;
     background-color: #2a2a2a;
@@ -521,11 +524,31 @@ input.hidden {
     cursor: pointer;
 }
 
-/* Tab icons */
-.tabTitle::before { display: block; }   /* icon above the name */
-.tabTitle[for='tab2']::before { content: '📝'; }   /* History */
-.tabTitle[for='tab3']::before { content: '⚔️'; }   /* Captured */
-.tabTitle[for='tab4']::before { content: '🌐'; }   /* Multiplayer */
+.tab-icon {
+    font-size: 1.2em;
+    line-height: 1;
+}
+
+/* The tab's name: only the checked tab shows it. The others' names are still
+   read out by screen readers, and show as a tooltip (the label's title). */
+.tab-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+input:checked + .tabTitle .tab-name {
+    position: static;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    clip-path: none;
+    font-size: 0.75em;
+    text-overflow: ellipsis;
+}
 
 @media (hover: hover) {
     .tabTitle:hover {
@@ -537,14 +560,14 @@ input.hidden {
 input:checked + .tabTitle {
     color: var(--text-strong);
     background-color: var(--bg-control-hover);
-    border: 1px solid #666;
-    border-bottom: 1px solid var(--bg-raised); /* hides the border between tab and content */
+    border-color: #666;
+    border-bottom-color: var(--bg-raised); /* hides the border between tab and content */
 }
 
 /* Which panel each tab reveals */
-#tab2:checked ~ #gameMetaTab,
-#tab3:checked ~ #gameCapturedTab,
-#tab4:checked ~ #multiplayerTab {
+#tabHistory:checked ~ #gameMetaTab,
+#tabCaptured:checked ~ #gameCapturedTab,
+#tabMultiplayer:checked ~ #multiplayerTab {
     display: flex;
 }
 
@@ -795,9 +818,14 @@ p.mp-problem {
     font-size: 0.9em;
 }
 
-/* The tab title while a game is on */
+/* The tab title while a game is on: a dot in its top-right corner */
 .tabTitle.mp-live::after {
-    content: ' ●';
+    content: '●';
+    position: absolute;
+    top: 0.2em;
+    right: 0.3em;
+    font-size: 0.7em;
+    line-height: 1;
     color: var(--piece-wP);
 }
 
@@ -1079,7 +1107,8 @@ p.mp-problem {
         min-height: var(--button-height);
     }
     .tabTitle {
-        padding: 0.9em 1.25em;
+        padding-top: 0.9em;
+        padding-bottom: 0.9em;
     }
     /* No grey flash over a tapped square: the board's own highlights show what happened */
     .boardsquare {
