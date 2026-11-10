@@ -18,8 +18,9 @@ function drawHistory(view) {
 	setVisible(steps.back1, replaying || view.game.turnNumber > 0);
 	setVisible(steps.forward1, replaying);
 	setVisible(steps.forward2, replaying);
+	// A multiplayer game can't be reset, edited or replaced from one side
 	for (const button of dom.historyButtons) {
-		setVisible(button, !replaying);
+		setVisible(button, !replaying && !(view.multiplayer && dom.localOnlyButtons.includes(button)));
 	}
 }
 

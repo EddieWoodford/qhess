@@ -76,6 +76,8 @@ function loadGame() {
 			const game = await win.eval("import('" + GAME_MODULE_URL + "')");
 			resolve({ game, win });
 		};
+		// A multiplayer game saved in this tab would be resumed by the page: tests always start in single player
+		sessionStorage.removeItem("qhess.multiplayer");
 		frame.src = "../index.html?t=" + Date.now();
 	});
 }

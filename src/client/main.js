@@ -6,6 +6,7 @@
 import * as game from "./controller.js";
 import { toggleFlippedBoard } from "./board-view.js";
 import { setupModals, hideModal } from "./modals.js";
+import { normalizeCode } from "../shared/protocol.js";
 
 function onClick(id, handler) {
 	document.getElementById(id).addEventListener("click", handler);
@@ -50,6 +51,39 @@ onClick("pastelinerestore", () => game.pasteLineRestore());
 onClick("importButton", () => game.openImport());
 onClick("importLoad", () => { game.importMoves(); hideModal("import"); });
 onClick("importCancel", () => hideModal("import"));
+
+// Multiplayer tab
+onClick("mpCreate", () => {
+	const color = document.querySelector("input[name=mpColor]:checked")?.value ?? "random";
+	game.startMultiplayer({ create: color });
+});
+function joinFromInput() {
+	const input = document.getElementById("mpCodeInput");
+	const error = document.getElementById("mpJoinError");
+	const code = normalizeCode(input.value);
+	if (code === null) {
+		error.textContent = "Codes look like TIGER-42";
+		input.focus();
+		return;
+	}
+	error.textContent = "";
+	input.value = "";
+	game.startMultiplayer({ join: code });
+}
+onClick("mpJoin", joinFromInput);
+document.getElementById("mpCodeInput").addEventListener("keydown", e => {
+	if (e.key == "Enter") {joinFromInput();}
+});
+onClick("mpCopyCode", () => {
+	const code = document.getElementById("mpCode").textContent;
+	navigator.clipboard?.writeText(code).catch(() => {});
+});
+onClick("mpLeave", () => {
+	if (confirm("Leave this game? It ends the game for your opponent too.")) {
+		game.leaveMultiplayer();
+	}
+});
+onClick("mpBack", () => game.backToSinglePlayer());
 
 // Make the board's squares and start the first game
 game.init();

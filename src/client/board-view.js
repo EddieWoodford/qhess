@@ -115,8 +115,8 @@ function drawBoard(view) {
 			} else if (STATE == "showCompleteMove" || STATE == "invalidMoveIntoCheck") {
 				classes.add("cancelOnClick");
 			}
-			if (view.replayNumber > -1) {
-				// In replay, show the move that led to this position
+			if (view.replayNumber > -1 || (view.multiplayer && STATE != "showPartialMove" && STATE != "showCompleteMove")) {
+				// In replay, show the move that led to this position (and in multiplayer, the last move played)
 				if (isequal([r,c], view.lastStart)) {
 					classes.add("selectedStart");
 				}
@@ -162,4 +162,9 @@ function toggleFlippedBoard() {
 	dom.board.classList.toggle("flipped");
 }
 
-export { SquareView, buildBoard, drawBoard, toggleFlippedBoard };
+// Show Black's view (flipped true: Black at the bottom) or White's view
+function setFlippedBoard(flipped) {
+	dom.board.classList.toggle("flipped", flipped);
+}
+
+export { SquareView, buildBoard, drawBoard, toggleFlippedBoard, setFlippedBoard };

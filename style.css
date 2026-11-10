@@ -15,6 +15,7 @@
         6.4 History tab
         6.5 Captured tab
         6.6 Debug messages
+        6.7 Multiplayer tab and badge
      7. Board
         7.1 Size and structure
         7.2 Square states        (order matters)
@@ -475,14 +476,14 @@ header {
 
 /* ---------- 6.3 Tabs ----------
    Pure-CSS tabs: a hidden radio input, then its label, and a .tab-panel
-   that is shown when the radio is checked. In index.html: tab2 (History)
-   and tab3 (Captured). The labels share the top row; the shown panel fills
+   that is shown when the radio is checked. In index.html: tab2 (History),
+   tab3 (Captured) and tab4 (Multiplayer). The labels share the top row; the shown panel fills
    the rest of the height. */
 .panels {
     flex: 1 1 auto;
     min-height: 0;
     display: grid;
-    grid-template-columns: auto auto 1fr;
+    grid-template-columns: auto auto auto minmax(2.5em, 1fr); /* the last column keeps clear of the close button */
     grid-template-rows: auto minmax(0, 1fr);
     justify-items: start;
 }
@@ -508,7 +509,7 @@ input.hidden {
 .tabTitle {
     display: inline-block;
     margin: 0 0 -1px;
-    padding: 0.75em 1.25em;
+    padding: 0.75em 0.9em;
     font-weight: 500;
     text-align: center;
     color: var(--text-muted);
@@ -521,6 +522,7 @@ input.hidden {
 /* Tab icons */
 .tabTitle[for='tab2']::before { content: '📝'; }   /* History */
 .tabTitle[for='tab3']::before { content: '⚔️'; }   /* Captured */
+.tabTitle[for='tab4']::before { content: '🌐'; }   /* Multiplayer */
 
 @media (hover: hover) {
     .tabTitle:hover {
@@ -538,7 +540,8 @@ input:checked + .tabTitle {
 
 /* Which panel each tab reveals */
 #tab2:checked ~ #gameMetaTab,
-#tab3:checked ~ #gameCapturedTab {
+#tab3:checked ~ #gameCapturedTab,
+#tab4:checked ~ #multiplayerTab {
     display: flex;
 }
 
@@ -677,6 +680,134 @@ input:checked + .tabTitle {
 
 .debug:empty {
     display: none;
+}
+
+
+/* ---------- 6.7 Multiplayer tab and badge ----------
+   The tab shows one of its sections at a time (multiplayer-view.js sets
+   hidden on the others). The badge is the line above the prompt during a
+   multiplayer game. */
+.mp-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+    text-align: left;
+    padding: 0 0.25em;
+}
+
+.mp-section[hidden],
+.mp-badge[hidden] {
+    display: none;
+}
+
+.mp-section h3 {
+    margin: 0.5em 0 0;
+    font-size: 1em;
+    color: var(--text-strong);
+}
+
+.mp-note {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9em;
+    line-height: 1.35;
+}
+
+.mp-colors {
+    display: flex;
+    gap: 1em;
+}
+
+.mp-colors label {
+    cursor: pointer;
+}
+
+.mp-join {
+    display: flex;
+    gap: var(--gap);
+}
+
+.mp-code-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0 0.6em;
+    font-family: var(--font-mono);
+    font-size: 1em;
+    text-transform: uppercase;
+    color: var(--text);
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-main);
+    border-radius: var(--radius-md);
+}
+
+.mp-code-input::placeholder {
+    text-transform: none;
+    color: #888;
+}
+
+.mp-join .historyButton {
+    flex: 0 0 5em;
+}
+
+.mp-code-label {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* The game code, big enough to read out to a friend */
+.mp-code {
+    font-family: var(--font-mono);
+    font-size: 2em;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-align: center;
+    color: var(--accent);
+    user-select: all;
+}
+
+.mp-facts {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.3em 1em;
+    margin: 0;
+    font-size: 0.9em;
+}
+
+.mp-facts dt {
+    color: var(--text-muted);
+}
+
+.mp-facts dd {
+    margin: 0;
+}
+
+.mp-problem {
+    color: #ff8a65;
+}
+
+p.mp-problem {
+    margin: 0;
+    min-height: 1.2em;
+    font-size: 0.9em;
+}
+
+/* The tab title while a game is on */
+.tabTitle.mp-live::after {
+    content: ' ●';
+    color: var(--piece-wP);
+}
+
+.mp-badge {
+    font-size: 0.8em;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mp-badge.mp-badge-problem {
+    color: #ff8a65;
 }
 
 

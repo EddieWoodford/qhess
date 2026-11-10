@@ -54,13 +54,36 @@ const STEPS = {
 		button1: null,
 		button2: ctx => ctx.hasPCAttackers ? "Submit" : null, // once at least one attacker is chosen
 	},
+	// Multiplayer, while the player can't move
+	waitJoin: {
+		prompt: ctx => ctx.multiplayer?.phase == "playing" ? "Waiting for your friend to join" : "Connecting…",
+		button1: null,
+		button2: null,
+	},
+	waitOpponent: {
+		prompt: ctx => ctx.multiplayer?.opponent == "disconnected" ? "Opponent disconnected, waiting for them to come back" : "Waiting for your opponent",
+		button1: null,
+		button2: null,
+	},
+	sendingMove: {
+		prompt: "Sending your move…",
+		button1: null,
+		button2: null,
+	},
+	multiplayerOver: {
+		prompt: ctx => ctx.multiplayer?.message || "The game has ended",
+		button1: null,
+		button2: null,
+	},
 };
 
 // While stepping through the history, the buttons are replaced by this
 const REPLAY = { button1: "Resume from here", button2: null };
+// ... and in a multiplayer game, where the game can't be taken back
+const REPLAY_MULTIPLAYER = { button1: "Back to game", button2: null };
 
 // The facts about the position that the prompt and buttons depend on
-function statusContext(game, state) {
+function statusContext(game, state, multiplayer) {
 	// The checks to describe in the prompt. While the side to move is declaring a potential check, these
 	// describe the side being checked.
 	let checks = { autoCheck: game.autoCheck, potCheck: game.potCheck };
@@ -68,6 +91,7 @@ function statusContext(game, state) {
 		checks = findChecks(game, game.pcColor);
 	}
 	return {
+		multiplayer,
 		checks,
 		inPotentialCheck: checks.potCheck,
 		canAddPC: state == "showCompleteMove" && findPotentialKings(game).length > 0,
@@ -102,16 +126,51 @@ function setButton(button, label) {
 function drawStatus(view) {
 	const game = view.game;
 	const step = STEPS[view.state];
-	const ctx = statusContext(game, view.state);
+	const ctx = statusContext(game, view.state, view.multiplayer);
 	const value = v => typeof v == "function" ? v(ctx) : v;
 
-	dom.prompt.innerHTML = '<span class="prompt-who">' + promptHeading(game, ctx.checks) + "</span> — " + value(step.prompt);
+	let heading = promptHeading(game, ctx.checks);
+	if (view.multiplayer?.color && view.replayNumber == -1) {
+		heading += game.turnColor == view.multiplayer.color ? " (you)" : " (opponent)";
+	}
+	const prompt = document.createElement("span");
+	prompt.className = "prompt-who";
+	prompt.textContent = heading;
+	dom.prompt.replaceChildren(prompt, " — " + value(step.prompt));
 
-	const buttons = view.replayNumber > -1 ? REPLAY : step;
+	drawMultiplayerBadge(view.multiplayer);
+
+	const buttons = view.replayNumber > -1 ? (view.multiplayer ? REPLAY_MULTIPLAYER : REPLAY) : step;
 	setButton(dom.sideButton1, value(buttons.button1));
 	setButton(dom.sideButton2, value(buttons.button2));
 
 	dom.stagedMove.textContent = game.thisMove + pcMoveText(game);
+}
+
+// The line above the prompt in a multiplayer game: the code, your colour, and how the connections are
+function drawMultiplayerBadge(mp) {
+	const badge = dom.mpBadge;
+	badge.hidden = !mp;
+	if (!mp) { return; }
+	const parts = ["Multiplayer"];
+	if (mp.code) { parts.push(mp.code); }
+	if (mp.color) { parts.push("you are " + (mp.color == "w" ? "White" : "Black")); }
+	let problem = "";
+	if (mp.phase == "playing") {
+		if (mp.connection == "reconnecting") {
+			problem = "reconnecting…";
+		} else if (mp.opponent == "disconnected") {
+			problem = "opponent disconnected";
+		} else if (mp.opponent == "waiting") {
+			problem = "waiting for opponent";
+		}
+	} else if (mp.phase == "connecting") {
+		problem = "connecting…";
+	} else {
+		problem = "game over";
+	}
+	badge.textContent = parts.join(" · ") + (problem ? " · " + problem : "");
+	badge.classList.toggle("mp-badge-problem", problem !== "");
 }
 
 export { drawStatus };

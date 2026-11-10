@@ -156,7 +156,7 @@ class GameServer {
 	async resume(conn, { code, token }) {
 		const room = await this.findRoom(code);
 		if (!room) {
-			return this.error(conn, ERRORS.NOT_FOUND, "That game has ended");
+			return this.error(conn, ERRORS.NOT_FOUND, "That game no longer exists (it ended, or the server was restarted)");
 		}
 		const color = COLORS.find(c => room.record.seats[c] !== null && room.record.seats[c].token === token);
 		if (!color) {

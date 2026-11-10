@@ -6,12 +6,14 @@
 //   status-view.js   the status bar under the board: prompt, staged move and the two side buttons
 //   history-view.js  the History tab
 //   panels-view.js   the Captured tab
+//   multiplayer-view.js  the Multiplayer tab
 // and dom.js finds the page's elements for them.
 
 import { drawBoard } from "./board-view.js";
 import { drawStatus } from "./status-view.js";
 import { drawHistory } from "./history-view.js";
 import { drawPanels } from "./panels-view.js";
+import { drawMultiplayer } from "./multiplayer-view.js";
 import { dom } from "./dom.js";
 
 // Redraw everything. view = {
@@ -22,12 +24,15 @@ import { dom } from "./dom.js";
 //   lastStart, lastEnd: [r,c] of the last submitted move (highlighted during replay)
 //   replayNumber: -1, or the replay position (see controller.js)
 //   record:      the game record for the History tab, one ply per line (array of strings)
+//   multiplayer: null in single player; in a multiplayer game, its code, your colour and the connections
+//                (controller.js ui.multiplayer)
 // }
 function render(view) {
 	drawStatus(view);
 	drawHistory(view);
 	drawBoard(view);
 	drawPanels(view);
+	drawMultiplayer(view);
 }
 
 // Show a message just above the status bar for a few seconds (style.css hides the element while it is empty)

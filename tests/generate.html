@@ -46,6 +46,7 @@ function loadFrame() {
 			const game = await win.eval("import('" + GAME_MODULE_URL + "')");
 			resolve({ win, game });
 		};
+		sessionStorage.removeItem("qhess.multiplayer"); // always single player (see test.html loadGame)
 		frame.src = "../index.html?t=" + Date.now();
 	});
 }

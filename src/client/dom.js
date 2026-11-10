@@ -19,11 +19,30 @@ const dom = {
 	history: $("movehistory"),
 	stepButtons: { back2: $("back2"), back1: $("back1"), forward1: $("forward1"), forward2: $("forward2") },
 	historyButtons: [...document.querySelectorAll("#gameMetaTab .historyButton")],
+	// the history buttons that would change the game: hidden in a multiplayer game
+	localOnlyButtons: ["reset", "importButton", "pasteallrestore", "pastelinerestore"].map($),
 	importText: $("importText"), // the Edit / Import dialog's text box
 
 	// Captured tab
 	whiteCaptured: $("whitecaptured"),
 	blackCaptured: $("blackcaptured"),
+
+	// Multiplayer tab (multiplayer-view.js), and the line above the prompt in a multiplayer game
+	mpBadge: $("mpBadge"),
+	mp: {
+		start: $("mpStart"),
+		game: $("mpGame"),
+		ended: $("mpEnded"),
+		code: $("mpCode"),
+		codeInput: $("mpCodeInput"),
+		joinError: $("mpJoinError"),
+		message: $("mpMessage"),
+		color: $("mpColor"),
+		opponent: $("mpOpponent"),
+		connection: $("mpConnection"),
+		endedText: $("mpEndedText"),
+		tabTitle: $("mpTabTitle"),
+	},
 
 	debug: $("debug"),
 };

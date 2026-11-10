@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Qhess</title>
     <link rel="stylesheet" href="style.css">
-    <!-- <script src="socket.io/socket.io.js"></script> -->
     <script type="module" src="src/client/main.js"></script>
 </head>
 
@@ -91,6 +90,8 @@
                  (src/client/status-view.js) -->
             <div class="status-bar">
                 <div class="status-text">
+                    <!-- multiplayer only: the game code, your colour and the connections -->
+                    <div class="mp-badge" id="mpBadge" hidden></div>
                     <div class="prompt" id="prompt"></div>
                     <div class="staged" id="thismove"></div>
                 </div>
@@ -116,6 +117,9 @@
 
                     <input class="hidden" id="tab3" type="radio" name="tabs">
                     <label class="tabTitle" for="tab3">Captured</label>
+
+                    <input class="hidden" id="tab4" type="radio" name="tabs">
+                    <label class="tabTitle" for="tab4" id="mpTabTitle">Multiplayer</label>
 
                     <!-- history tab - move history and controls -->
                     <div class="tab-panel" id="gameMetaTab">
@@ -146,6 +150,58 @@
                         <div class="captured-pieces">
                             <div class="column" id="whitecaptured"><strong>White Captured</strong></div>
                             <div class="column" id="blackcaptured"><strong>Black Captured</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- multiplayer tab - start or join a game against a friend (src/client/multiplayer-view.js) -->
+                    <div class="tab-panel" id="multiplayerTab">
+                        <!-- not in a multiplayer game -->
+                        <div class="mp-section" id="mpStart">
+                            <p class="mp-note">You're playing both sides on this screen. To play a friend on
+                                their own device, start a game and send them its code, or join theirs.</p>
+                            <h3>Start a game</h3>
+                            <div class="mp-colors" role="radiogroup" aria-label="Your colour">
+                                <label><input type="radio" name="mpColor" value="w"> White</label>
+                                <label><input type="radio" name="mpColor" value="b"> Black</label>
+                                <label><input type="radio" name="mpColor" value="random" checked> Random</label>
+                            </div>
+                            <div class="button-row">
+                                <button class="historyButton" id="mpCreate">Create game</button>
+                            </div>
+                            <h3>Join a game</h3>
+                            <div class="mp-join">
+                                <input class="mp-code-input" id="mpCodeInput" placeholder="e.g. TIGER-42"
+                                       autocomplete="off" autocapitalize="characters" spellcheck="false"
+                                       aria-label="Game code">
+                                <button class="historyButton" id="mpJoin">Join</button>
+                            </div>
+                            <p class="mp-problem" id="mpJoinError" role="alert"></p>
+                        </div>
+
+                        <!-- in a game (or connecting to one) -->
+                        <div class="mp-section" id="mpGame" hidden>
+                            <div class="mp-code-label">Game code</div>
+                            <div class="mp-code" id="mpCode"></div>
+                            <div class="button-row">
+                                <button class="historyButton" id="mpCopyCode">Copy code</button>
+                            </div>
+                            <p class="mp-note" id="mpMessage"></p>
+                            <dl class="mp-facts">
+                                <dt>You play</dt><dd id="mpColor"></dd>
+                                <dt>Opponent</dt><dd id="mpOpponent"></dd>
+                                <dt>Connection</dt><dd id="mpConnection"></dd>
+                            </dl>
+                            <div class="button-row">
+                                <button class="historyButton" id="mpLeave">Leave game</button>
+                            </div>
+                        </div>
+
+                        <!-- the game has ended, or couldn't be joined -->
+                        <div class="mp-section" id="mpEnded" hidden>
+                            <p id="mpEndedText"></p>
+                            <div class="button-row">
+                                <button class="historyButton" id="mpBack">Back to single player</button>
+                            </div>
                         </div>
                     </div>
                 </div>

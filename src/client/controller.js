@@ -17,6 +17,16 @@
 //   "invalidMoveIntoCheck"     the move leaves the player in check; it can only be cancelled
 //   "selectPCKing"             choosing which opponent piece to declare potential check on
 //   "selectPCAttackers"        choosing which pieces attack it; then Submit
+// and in a multiplayer game, while the player can't move:
+//   "waitJoin"                 the game is made, and waiting for the friend to join with the code
+//   "waitOpponent"             the opponent's turn
+//   "sendingMove"              the player's move is on its way to the server
+//   "multiplayerOver"          the game has ended (the opponent left, or it couldn't be joined)
+//
+// Multiplayer: the session is a SocketSession (socket-session.js) instead of a LocalSession, and ui.multiplayer
+// says what the Multiplayer tab and status bar show. Moves arrive from the server at any time, so its onChange
+// redraws the page itself. Stepping back through the history then uses its own LocalSession (viewSession), so
+// the real game is never rewound; stepping forward to the end returns to it.
 
 import { isequal, ismember } from "../engine/utils.js";
 import { cloneState, getPieces } from "../engine/state.js";
@@ -24,13 +34,15 @@ import { getPotentialMoves } from "../engine/moves.js";
 import { findPotentialKings, findPCAttackers } from "../engine/check.js";
 import { declareNotAKing as engineDeclareNotAKing, startMove, choosePCKing, addPCAttacker } from "../engine/game.js";
 import { getHistoryLines, parseMoveText } from "../engine/notation.js";
-import { SquareView, buildBoard } from "./board-view.js";
+import { SquareView, buildBoard, setFlippedBoard } from "./board-view.js";
 import { render, debugPrint } from "./render.js";
 import { dom } from "./dom.js";
 import { showChoice } from "./modals.js";
 import { LocalSession } from "./session.js";
+import { SocketSession, savedSeat } from "./socket-session.js";
 
-const session = new LocalSession();
+let session;            // the official game: a LocalSession, or a SocketSession in a multiplayer game
+let viewSession = null; // multiplayer only: a LocalSession for stepping through the history (see boardSession)
 let committed; // the session's game state at the start of the current turn: see src/engine/state.js
 let game;      // the game state being shown and changed by clicks: a working copy of `committed`
 let turnMove;  // the turn being made, as a move for session.submitMove (see newTurnMove)
@@ -48,7 +60,13 @@ const ui = {
 	// -1 when not replaying. While stepping through the history, the position being shown, in moves:
 	// 0.5 = after Black's move 0, 1 = after White's move 1, 1.5 = after Black's move 1, ...
 	replay: -1,
+	// null in a single-player game. In a multiplayer game, what the page shows about it: SocketSession info()
+	// ({ phase, code, color, opponent, connection, pending, endedReason }) and message (why it ended, or "").
+	multiplayer: null,
 };
+
+// The steps of a multiplayer turn when the player can't do anything (see the list at the top)
+const WAITING_STATES = ["waitJoin", "waitOpponent", "sendingMove", "multiplayerOver"];
 
 // 8 x 8 array of SquareView objects (the board's buttons and their highlight flags). Made once, by init().
 let squares;
@@ -109,12 +127,46 @@ function newTurnMove() {
 	return { notAKing: null, from: null, to: null, enPassant: false, promotion: false, pcKing: null, pcAttackers: [] };
 }
 
-// Whenever the session's game state changes (a new game, or an accepted move), start a fresh turn from it
-session.onChange(state => {
+// Start a fresh turn from this game state
+function adopt(state) {
 	committed = state;
 	game = cloneState(committed);
 	turnMove = newTurnMove();
-});
+}
+
+// Make s the official game. Whenever its state changes (a new game, or an accepted move), a fresh turn starts
+// from it. In single player that happens inside the call that changed it, which then redraws; in multiplayer
+// it can happen at any time (the opponent's move arriving), so liveChanged redraws.
+function useSession(s) {
+	session = s;
+	s.onChange(state => {
+		if (session !== s) { return; } // an old session
+		if (isMultiplayer()) {
+			liveChanged(state);
+		} else {
+			adopt(state);
+		}
+	});
+}
+
+// The session the board is replaying moves into: the official one, except while stepping through a
+// multiplayer game's history, which mustn't rewind the real game
+function boardSession() {
+	if (isMultiplayer() && ui.replay > -1) {
+		if (!viewSession) {
+			viewSession = new LocalSession();
+			viewSession.onChange(adopt);
+		}
+		return viewSession;
+	}
+	return session;
+}
+
+function isMultiplayer() {
+	return ui.multiplayer !== null;
+}
+
+useSession(new LocalSession());
 
 // Throw away the move being made and go back to the start of the turn
 function cancelTurn() {
@@ -127,7 +179,10 @@ function cancelTurn() {
 // Button Actions
 ////////////////////////////////
 function sideButton1Click() {
-	if (ui.replay > -1) {
+	if (ui.replay > -1 && isMultiplayer()) {
+		// In a multiplayer game, sideButton1 is 'Back to game' while replaying
+		exitReplay();
+	} else if (ui.replay > -1) {
 		// When in replay mode, sideButton1 is 'Resume Game From Here'
 		let foo = ui.replay;
 		ui.replay = -1;
@@ -174,13 +229,16 @@ function declareNotAKing() {
 function submitMove() {
 	// Here after clicking Submit (or "Pass to white" on move 0) when a valid move is staged.
 	// The session plays the recorded turn on the official game state; its onChange starts the next turn.
+	// In multiplayer the answer comes later (result.pending): the move stays on the board meanwhile.
 	const result = session.submitMove(turnMove);
 	if (!result.ok) {
 		debugPrint("Move not accepted: " + result.error);
 		cancelTurn();
 		return;
 	}
-	followRecord();
+	if (!result.pending) {
+		followRecord();
+	}
 	// Remember this move's squares so replay can highlight the last move
 	ui.lastStart = ui.start;
 	ui.lastEnd = ui.end;
@@ -208,6 +266,7 @@ function squareLeave(coords, event) {
 
 function squareClick(coords) {
 	if (ui.replay > -1) {return}
+	if (WAITING_STATES.includes(ui.state)) {return}
 	if (ui.state == "highlightPotentialMoves" || ui.state == "clear") {
 		pickPiece(coords);
 	} else if (ui.state == "showPartialMove") {
@@ -420,6 +479,10 @@ function followRecord() {
 function restoreGameHistory(historyText,nMoves) {
 	// Restore a game from historyText, or if that's left out, from the record in the History tab.
 	// nMoves: only replay the first nMoves plies (used when stepping through a replay).
+	if (isMultiplayer() && ui.replay == -1) {
+		debugPrint("A multiplayer game can't be replaced");
+		return;
+	}
 	let historyLines;
 	if (historyText != null) {
 		historyLines = parseRecord(historyText);
@@ -450,7 +513,7 @@ function replayPly(moveText) {
 	if (move.turn != game.turnNumber.toString() + game.turnColor) {
 		debugPrint("Move text number + colour did not match expected");
 	}
-	const result = session.submitMove(move);
+	const result = boardSession().submitMove(move);
 	if (!result.ok) {
 		debugPrint("Couldn't replay '" + moveText + "': " + result.error);
 		cancelTurn();
@@ -524,13 +587,129 @@ function stepForwardMove() {
 	if (ui.replay < ui.record.length/2) {
 		let moveText = ui.record[2*ui.replay];
 		ui.replay = ui.replay + 0.5;
+		if (isMultiplayer() && ui.replay >= ui.record.length/2) {
+			// Stepped forward to the latest move: back to the game
+			exitReplay();
+			return;
+		}
 		doMoveFromText(moveText);
 	}
 }
 
 function stepForwardAll() {
+	if (isMultiplayer()) {
+		exitReplay();
+		return;
+	}
 	ui.replay = ui.record.length/2;
 	restoreGameHistory(null, 2*ui.replay);
+}
+
+// Multiplayer: stop stepping through the history and show the game as it is now
+function exitReplay() {
+	ui.replay = -1;
+	adopt(session.getState());
+	ui.record = parseRecord(game.history);
+	showLastMove();
+	setState("clear");
+}
+
+////////////////////////////////
+// Multiplayer
+////////////////////////////////
+
+// Start a multiplayer game. request: { create: "w" | "b" | "random" }, { join: code } or
+// { resume: { code, token } } (see SocketSession start)
+function startMultiplayer(request, options = {}) {
+	if (isMultiplayer()) {
+		if (ui.multiplayer.phase == "playing" || ui.multiplayer.phase == "connecting") { return; }
+		session.leave();
+	}
+	const s = new SocketSession(options);
+	ui.replay = -1;
+	ui.multiplayer = { ...s.info(), message: "" };
+	s.onEvent(event => multiplayerEvent(s, event));
+	useSession(s);
+	adopt(s.getState());
+	ui.record = [];
+	ui.lastStart = [];
+	ui.lastEnd = [];
+	dom.stagedMove.textContent = "";
+	s.start(request);
+	setState("clear");
+}
+
+// Leave the multiplayer game (the opponent is told) and go back to a new single-player game
+function leaveMultiplayer() {
+	if (isMultiplayer()) {
+		session.leave();
+	}
+	backToSinglePlayer();
+}
+
+function backToSinglePlayer() {
+	ui.multiplayer = null;
+	viewSession = null;
+	ui.replay = -1;
+	setFlippedBoard(false);
+	useSession(new LocalSession());
+	setup();
+}
+
+// The session's connection or game changed: update what the page shows
+function multiplayerEvent(s, event) {
+	if (session !== s) { return; }
+	let message = ui.multiplayer.message;
+	if (event.type == "error") {
+		debugPrint(event.message);
+		if (event.fatal) { message = event.message; }
+	}
+	const wasColor = ui.multiplayer.color;
+	ui.multiplayer = { ...s.info(), message };
+	if (s.color && s.color != wasColor) {
+		// Your own side at the bottom of the board
+		setFlippedBoard(s.color == "b");
+	}
+	if (ui.replay == -1 && (WAITING_STATES.includes(ui.state) || ui.state == "clear" || ui.state == "move0" || ui.multiplayer.phase != "playing")) {
+		setState("clear"); // works out again whether the player can move
+	} else {
+		draw();
+	}
+}
+
+// A new state from the server (the opponent's move, the answer to this player's move, or a catch-up)
+function liveChanged(state) {
+	if (ui.replay > -1) {
+		// Stepping through the history: leave the board alone, but let the record grow
+		ui.record = parseRecord(state.history);
+		draw();
+		return;
+	}
+	adopt(state);
+	ui.record = parseRecord(game.history);
+	showLastMove();
+	clearFindPotentialCheckPieces();
+	setState("clear");
+}
+
+// Highlight the last move played in the multiplayer game
+function showLastMove() {
+	const last = session.moves?.at(-1);
+	ui.lastStart = last?.from ?? [];
+	ui.lastEnd = last?.to ?? [];
+}
+
+// In a multiplayer game, the step to show instead of letting the player move (see the list at the top), or
+// null if they can move
+function multiplayerWait() {
+	if (!isMultiplayer() || ui.replay > -1) { return null; }
+	const mp = ui.multiplayer;
+	if (mp.phase == "ended" || mp.phase == "left") { return "multiplayerOver"; }
+	if (mp.phase != "playing") { return "waitJoin"; }
+	if (mp.pending) { return "sendingMove"; }
+	if (mp.opponent == "waiting") { return "waitJoin"; }
+	if (game.turnColor != mp.color) { return "waitOpponent"; }
+	return null;
 }
 
 ////////////////////////////////
@@ -542,8 +721,11 @@ function setState(stateIn) {
 	if (stateIn == "clear" && game.turnNumber == 0) {
 		stateIn = "move0";
 	}
+	if (stateIn == "clear" || stateIn == "move0") {
+		stateIn = multiplayerWait() ?? stateIn;
+	}
 	ui.state = stateIn;
-	if (ui.state == "clear" || ui.state == "move0") {
+	if (ui.state == "clear" || ui.state == "move0" || WAITING_STATES.includes(ui.state)) {
 		ui.start = [];
 		ui.end = [];
 	}
@@ -552,7 +734,7 @@ function setState(stateIn) {
 	}
 	for (const row of squares) {
 		for (const sqr of row) {
-			if (ui.state == "clear" || ui.state == "move0") {
+			if (ui.state == "clear" || ui.state == "move0" || WAITING_STATES.includes(ui.state)) {
 				// For other states, the properties are set in calling functions, but you can always reset to clear by
 				// just calling setState("clear")
 				sqr.highlighted = 0;
@@ -572,6 +754,11 @@ function setState(stateIn) {
 			}
 		}
 	}
+	draw();
+}
+
+// Redraw the page as it is
+function draw() {
 	render({
 		game,
 		state: ui.state,
@@ -582,6 +769,7 @@ function setState(stateIn) {
 		lastEnd: ui.lastEnd,
 		replayNumber: ui.replay,
 		record: ui.record,
+		multiplayer: ui.multiplayer,
 	});
 }
 
@@ -602,12 +790,17 @@ function init() {
 		squares.push(viewRow);
 	}
 	setup();
+	// Reloading the page during a multiplayer game goes back into it
+	const seat = savedSeat();
+	if (seat) {
+		startMultiplayer({ resume: seat });
+	}
 }
 
 // Start a new game (also used to rewind before replaying a history). The squares' highlight flags are
 // cleared by setState("move0").
 function setup() {
-	session.reset(); // its onChange sets committed, game and turnMove
+	boardSession().reset(); // its onChange sets committed, game and turnMove
 	ui.start = [];
 	ui.end = [];
 	ui.lastStart = [];
@@ -640,6 +833,9 @@ export {
 	pasteLineRestore,
 	openImport,
 	importMoves,
+	startMultiplayer,
+	leaveMultiplayer,
+	backToSinglePlayer,
 
 	// Used by tests/test.html and tests/generate.html to drive and inspect the game
 	game,
