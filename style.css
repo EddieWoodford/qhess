@@ -483,7 +483,8 @@ header {
     flex: 1 1 auto;
     min-height: 0;
     display: grid;
-    grid-template-columns: auto auto auto minmax(2.5em, 1fr); /* the last column keeps clear of the close button */
+    /* the tab labels shrink if they must (on a phone); the last column keeps clear of the close button */
+    grid-template-columns: repeat(3, minmax(0, auto)) minmax(2.5em, 1fr);
     grid-template-rows: auto minmax(0, 1fr);
     justify-items: start;
 }
@@ -509,7 +510,14 @@ input.hidden {
 .tabTitle {
     display: inline-block;
     margin: 0 0 -1px;
-    padding: 0.75em 0.9em;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 0.75em 0.6em;
+    font-size: min(1em, 3.8vw); /* three tabs fit on a phone */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-weight: 500;
     text-align: center;
     color: var(--text-muted);
@@ -520,6 +528,7 @@ input.hidden {
 }
 
 /* Tab icons */
+.tabTitle::before { display: block; }   /* icon above the name */
 .tabTitle[for='tab2']::before { content: '📝'; }   /* History */
 .tabTitle[for='tab3']::before { content: '⚔️'; }   /* Captured */
 .tabTitle[for='tab4']::before { content: '🌐'; }   /* Multiplayer */
