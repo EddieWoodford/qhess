@@ -42,7 +42,6 @@ const ui = {
 	end: [],
 	lastStart: [],   // start square of the last submitted move, for replay highlighting
 	lastEnd: [],     // end square of the last submitted move
-	findPiece: "",   // piece type the Find Pieces buttons are highlighting, or ""
 	// The game record shown in the History tab, one ply per line. It follows the game as moves are made, and
 	// stays as it is while replaying (so the later moves can be stepped forward through).
 	record: [],
@@ -188,12 +187,6 @@ function submitMove() {
 	clearFindPotentialCheckPieces();
 }
 
-function findPiecesClick(wave) {
-	// Clicking the active one again turns it off. render() highlights the button and the squares.
-	ui.findPiece = (wave == ui.findPiece) ? "" : wave;
-	setState(ui.state);
-}
-
 ////////////////////////////////
 // Squares
 ////////////////////////////////
@@ -215,7 +208,6 @@ function squareLeave(coords, event) {
 
 function squareClick(coords) {
 	if (ui.replay > -1) {return}
-	ui.findPiece = "";
 	if (ui.state == "highlightPotentialMoves" || ui.state == "clear") {
 		pickPiece(coords);
 	} else if (ui.state == "showPartialMove") {
@@ -588,7 +580,6 @@ function setState(stateIn) {
 		end: ui.end,
 		lastStart: ui.lastStart,
 		lastEnd: ui.lastEnd,
-		findPiece: ui.findPiece,
 		replayNumber: ui.replay,
 		record: ui.record,
 	});
@@ -621,9 +612,8 @@ function setup() {
 	ui.end = [];
 	ui.lastStart = [];
 	ui.lastEnd = [];
-	ui.findPiece = "";
 
-	dom.stagedMove.value = "";
+	dom.stagedMove.textContent = "";
 	if (ui.replay == -1) {
 		ui.record = [];
 	}
@@ -639,7 +629,6 @@ export {
 	setup,
 	sideButton1Click,
 	sideButton2Click,
-	findPiecesClick,
 	stepBackAll,
 	stepBackMove,
 	stepForwardMove,

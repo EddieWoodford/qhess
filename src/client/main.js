@@ -16,6 +16,18 @@ setupModals();
 // Options modal
 onClick("toggleFlippedBoard", () => toggleFlippedBoard());
 
+// Side panel (history and captured pieces): hidden until the header's panel button opens it.
+// style.css shows it when <body> has .panel-open: beside the board on wide screens, over it on tall ones.
+function setPanelOpen(open) {
+	document.body.classList.toggle("panel-open", open);
+	document.getElementById("panelButton").setAttribute("aria-expanded", open);
+}
+onClick("panelButton", () => setPanelOpen(!document.body.classList.contains("panel-open")));
+onClick("panelClose", () => setPanelOpen(false));
+document.addEventListener("keydown", e => {
+	if (e.key == "Escape") {setPanelOpen(false);}
+});
+
 // Side buttons
 onClick("sideButton1", () => game.sideButton1Click());
 onClick("sideButton2", () => game.sideButton2Click());
@@ -38,11 +50,6 @@ onClick("pastelinerestore", () => game.pasteLineRestore());
 onClick("importButton", () => game.openImport());
 onClick("importLoad", () => { game.importMoves(); hideModal("import"); });
 onClick("importCancel", () => hideModal("import"));
-
-// Find-piece buttons
-for (const wave of "KQRBNP") {
-	onClick("find" + wave, () => game.findPiecesClick(wave));
-}
 
 // Make the board's squares and start the first game
 game.init();

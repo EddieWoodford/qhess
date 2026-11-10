@@ -9,7 +9,7 @@ const $ = id => document.getElementById(id);
 const dom = {
 	board: $("board"),
 
-	// Status area
+	// Status bar, under the board
 	prompt: $("prompt"),
 	sideButton1: $("sideButton1"),
 	sideButton2: $("sideButton2"),
@@ -21,8 +21,7 @@ const dom = {
 	historyButtons: [...document.querySelectorAll("#gameMetaTab .historyButton")],
 	importText: $("importText"), // the Edit / Import dialog's text box
 
-	// Find Pieces tab: for each piece type, its button and the element holding its symbol
-	findButtons: Object.fromEntries([..."KQRBNP"].map(w => [w, { button: $("find" + w), symbol: $("find" + w + "piece") }])),
+	// Captured tab
 	whiteCaptured: $("whitecaptured"),
 	blackCaptured: $("blackcaptured"),
 

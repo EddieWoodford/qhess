@@ -107,7 +107,7 @@ function writtenHistory(ctx) {
 }
 
 // What the page is showing: every square's classes and contents, the prompt, buttons,
-// staged move, captured lists, find-piece buttons and history panel, as one string
+// staged move, captured lists and history panel, as one string
 function captureView(ctx) {
 	const doc = ctx.win.document;
 	const el = id => doc.getElementById(id);
@@ -119,11 +119,8 @@ function captureView(ctx) {
 	for (const id of ["sideButton1", "sideButton2", "back2", "back1", "forward1", "forward2"]) {
 		parts.push(id + "|" + el(id).innerText + "|" + visibility(el(id)));
 	}
-	parts.push(el("thismove").value);
+	parts.push(el("thismove").textContent);
 	parts.push(el("whitecaptured").innerHTML, el("blackcaptured").innerHTML);
-	for (const w of "KQRBNP") {
-		parts.push(el("find" + w).className + "|" + el("find" + w + "piece").className + "|" + el("find" + w + "piece").innerHTML);
-	}
 	parts.push(el("movehistory").innerHTML);
 	return parts.join("\n");
 }

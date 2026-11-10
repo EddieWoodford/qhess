@@ -8,12 +8,12 @@
      3. Page layout              (the grid: change layouts here and in 8)
      4. Header
      5. Modals
-     6. Control panel
-        6.1 Prompt and action buttons
-        6.2 Staged move
+     6. Status bar and side panel
+        6.1 Status bar: prompt, staged move and action buttons
+        6.2 Side panel
         6.3 Tabs
         6.4 History tab
-        6.5 Find Pieces tab and captured lists
+        6.5 Captured tab
         6.6 Debug messages
      7. Board
         7.1 Size and structure
@@ -32,6 +32,8 @@
    - Sizes: panel text is in em, from --ui-font (clamped, so it stays readable
      on small screens). Everything on the board is in em, from --square (see
      7.1), so the board scales to whatever space its grid area gets.
+   - The page never scrolls: the board takes whatever height is left after
+     the header and the status bar. Only the move history list scrolls.
    ========================================================================== */
 
 
@@ -56,7 +58,7 @@
     --bg-container: #181818;
     --bg-inset: #1a1a1a;          /* board frame, modal box */
     --bg-raised: #1e1e1e;         /* header, tab content */
-    --bg-panel: #1f1f1f;          /* control panel */
+    --bg-panel: #1f1f1f;          /* side panel */
     --bg-input: #222;             /* move history, staged move */
 
     /* ---- Interactive controls: resting, hover, pressed ---- */
@@ -71,7 +73,6 @@
 
     /* ---- Accent ---- */
     --accent: #ff9500;
-    --prompt-bg: #66ff66aa;
 
     /* ---- Shape, depth and motion ---- */
     --radius-sm: 4px;
@@ -83,7 +84,8 @@
 
     /* ---- Sizing ---- */
     --ui-font: clamp(0.875rem, 2dvmin, 1.25rem);  /* base size of all text outside the board */
-    --panel-width: clamp(18rem, 42dvmin, 28rem);  /* control panel width beside the board */
+    --panel-width: clamp(18rem, 42dvmin, 28rem);  /* side panel width beside the board */
+    --panel-slide: 0.25s ease;                    /* how the side panel opens and closes */
     --button-height: 2.5em;
     --gap: 0.5rem;                                /* padding around and between the page areas */
 
@@ -95,7 +97,6 @@
     --piece-dest-col: #4f8f5a;              /* green */
     --piece-checkKing-col: #7a1f1f;         /* dark oxblood */
     --piece-checkAttacker-col: #5a8fb5;     /* blue */
-    --findpiece-highlight-col: #5f4a82;     /* more visible highlight */
     --marker-clear: rgba(255,0,0,0);        /* transparent stop used by the move markers */
 
     /* ---- Piece colours (section 7.4) ---- */
@@ -122,7 +123,7 @@
 html, body {
     margin: 0;
     padding: 0;
-    overflow: hidden; /* the page never scrolls; the control panel scrolls instead */
+    overflow: hidden; /* the page never scrolls (see 3) */
 }
 
 body {
@@ -169,8 +170,10 @@ button {
 /* ==========================================================================
    3. PAGE LAYOUT
    The body is the header above the main area. The main area (.container) is
-   a grid of named areas: "board" and "panel". Rearranging the page is just a
-   matter of changing grid-template-areas / columns / rows, here and in 8.
+   a grid of named areas: "play" (the board with the status bar beneath it)
+   and "panel" (the side panel). The panel's column is 0 wide until <body>
+   gets .panel-open (main.js); then the board shrinks and recentres beside
+   it. Tall screens put the panel over the board instead (see 8).
    ========================================================================== */
 body {
     display: grid;
@@ -180,19 +183,33 @@ body {
 
 .container {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) var(--panel-width);
+    grid-template-columns: minmax(0, 1fr) 0px;
     grid-template-rows: minmax(0, 1fr);
-    grid-template-areas: "board panel";
-    gap: var(--gap);
+    grid-template-areas: "play panel";
     padding: var(--gap);
     min-height: 0;
     background-color: var(--bg-container);
+    transition: grid-template-columns var(--panel-slide);
+}
+
+.panel-open .container {
+    grid-template-columns: minmax(0, 1fr) calc(var(--panel-width) + var(--gap));
+}
+
+/* The board above the status bar. The board gets all the height the status
+   bar doesn't need. */
+.play-area {
+    grid-area: play;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: var(--gap);
+    min-width: 0;
+    min-height: 0;
 }
 
 /* The board's area. Its size decides the board's size (see 7.1), so it is a
    size container, and its own size comes only from the grid. */
 .board-area {
-    grid-area: board;
     container-type: size;
     display: flex;
     align-items: center;
@@ -201,17 +218,20 @@ body {
     min-height: 0;
 }
 
-.game-control {
+/* The side panel's grid cell. It clips the panel while the column opens and
+   closes; the panel itself keeps its full width throughout (see 6.2). */
+.side-panel {
     grid-area: panel;
     min-width: 0;
     min-height: 0;
-    overflow-y: auto; /* scrolls when its content is taller than the space */
-    box-sizing: border-box;
-    text-align: center;
-    background-color: var(--bg-panel);
-    border-radius: var(--radius-lg);
-    padding: 1em;
-    color: var(--text);
+    overflow: hidden;
+    visibility: hidden;   /* closed: out of the tab order too */
+    transition: visibility 0s var(--panel-slide);
+}
+
+.panel-open .side-panel {
+    visibility: visible;
+    transition: visibility 0s;
 }
 
 
@@ -282,7 +302,7 @@ header {
 .modalWrapper {
     display: none;
     position: fixed;
-    z-index: 1;
+    z-index: 2;           /* above the side panel (8), so Edit / Import opens over it */
     padding-top: 4em;
     left: 0;
     top: 0;
@@ -310,17 +330,56 @@ header {
 
 
 /* ==========================================================================
-   6. CONTROL PANEL
+   6. STATUS BAR AND SIDE PANEL
    ========================================================================== */
 
-/* ---------- 6.1 Prompt and action buttons ---------- */
+/* ---------- 6.1 Status bar: prompt, staged move and action buttons ----------
+   Under the board, always showing. The text sits beside the two buttons when
+   there is room, and above them when there isn't. Its height doesn't change
+   as the wording does, so the board doesn't jump. */
+.status-bar {
+    position: relative;  /* for the debug message (6.6) */
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25em var(--gap);
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 48rem;
+    margin: 0 auto;
+}
+
+.status-text {
+    flex: 1 1 16em;
+    min-width: 0;
+    text-align: left;
+    line-height: 1.3;
+}
+
 .prompt {
-    background-color: var(--prompt-bg);
-    color: #000;                 /* dark text for contrast */
-    border-radius: var(--radius-sm);
-    padding: 0.3em 0.5em;
-    box-shadow: 0 0 4px 1px #0008 inset; /* subtle inner shadow for depth */
-    min-height: 3.6em; /* room for 3 lines, so the buttons below don't move as the wording changes */
+    min-height: 2.6em;   /* room for 2 lines, so the bar doesn't change height as the wording changes */
+    font-size: 0.95em;
+    color: var(--text-muted);
+}
+
+.prompt-who {
+    color: var(--text-strong);
+}
+
+/* The notation of the move being made: blank until a piece is picked */
+.staged {
+    min-height: 1.3em;
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    color: var(--accent);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.status-buttons {
+    flex: 1 1 18em;
+    gap: var(--gap);
 }
 
 /* A row of buttons sharing the width equally: two side buttons, two history
@@ -388,25 +447,55 @@ header {
 }
 
 
-/* ---------- 6.2 Staged move ---------- */
-#thismove {
-    width: 100%;
+/* ---------- 6.2 Side panel ----------
+   History and captured pieces. Fills the height of its grid cell (3), or of
+   the screen on tall screens (8). The tabs fill the height, and the move
+   history list takes the spare height (6.4). */
+.game-control {
+    position: relative;  /* for the close button */
     box-sizing: border-box;
-    background-color: var(--bg-input);
+    width: var(--panel-width);
+    height: 100%;
+    margin-left: var(--gap);
+    overflow-y: auto;    /* only if even a short history list can't fit */
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    background-color: var(--bg-panel);
+    border-radius: var(--radius-lg);
+    padding: 0.75em;
     color: var(--text);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 0.4em;
 }
 
+.panel-close {
+    position: absolute;
+    top: 0.75em;
+    right: 0.75em;
+}
 
 /* ---------- 6.3 Tabs ----------
    Pure-CSS tabs: a hidden radio input, then its label, and a .tab-panel
    that is shown when the radio is checked. In index.html: tab2 (History)
-   and tab3 (Find Pieces). */
+   and tab3 (Captured). The labels share the top row; the shown panel fills
+   the rest of the height. */
+.panels {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    justify-items: start;
+}
+
 .tab-panel {
     display: none;
-    padding: 1em 0 0;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: stretch;
+    min-height: 0;
+    flex-direction: column;
+    gap: var(--gap);
+    padding: 0.75em 0 0;
     border-top: 1px solid var(--border-subtle);
     background-color: var(--bg-raised);
     color: var(--text);
@@ -431,7 +520,7 @@ input.hidden {
 
 /* Tab icons */
 .tabTitle[for='tab2']::before { content: '📝'; }   /* History */
-.tabTitle[for='tab3']::before { content: '👀'; }   /* Find Pieces */
+.tabTitle[for='tab3']::before { content: '⚔️'; }   /* Captured */
 
 @media (hover: hover) {
     .tabTitle:hover {
@@ -449,17 +538,18 @@ input:checked + .tabTitle {
 
 /* Which panel each tab reveals */
 #tab2:checked ~ #gameMetaTab,
-#tab3:checked ~ #gameFindpiecesTab {
-    display: block;
+#tab3:checked ~ #gameCapturedTab {
+    display: flex;
 }
 
 
 /* ---------- 6.4 History tab ----------
    The buttons are styled in 6.1. */
 .movehistory {
+    flex: 1 1 0;         /* takes the panel's spare height */
+    min-height: 4em;
     border: 1px solid var(--border-subtle);
-    max-height: 8em;
-    overflow: auto;
+    overflow: auto;      /* the one place on the page that scrolls */
     white-space: nowrap; /* one ply per line; long lines scroll sideways rather than widen the panel */
     font-family: var(--font-mono);
     text-align: left;
@@ -496,38 +586,8 @@ input:checked + .tabTitle {
 }
 
 
-/* ---------- 6.5 Find Pieces tab and captured lists ---------- */
-/* The K Q R / B N P buttons, in two rows of three */
-.find-grid {
-    display: grid;
-    grid-template-columns: repeat(3, auto);
-    justify-content: center;
-    padding-bottom: 1em;
-}
-
-/* render.js adds .findHighlight (section 7.2) to the active one */
-.findpiecebutton {
-    color: var(--text-strong);
-    font-size: 2em;
-    height: 3em;
-    width: 3em;
-    line-height: 1;
-    border: 1px solid var(--border-main);
-    padding: 0;
-    margin: 2px;
-    background-color: #888;
-}
-
-@media (hover: hover) {
-    .findpiecebutton:hover {
-        background-color: var(--accent);
-        box-shadow: var(--shadow-button-hover);
-        transform: scale(1.05);
-    }
-}
-
+/* ---------- 6.5 Captured tab ---------- */
 .captured-pieces {
-    border-top: 1px solid var(--border-main);
     display: flex;
     justify-content: space-between;
     padding: 0.5em 0;
@@ -541,11 +601,27 @@ input:checked + .tabTitle {
 
 
 /* ---------- 6.6 Debug messages ---------- */
-/* Messages from debugPrint(), under the tabs */
+/* Messages from debugPrint() (render.js): shown for a few seconds just above
+   the status bar, over the bottom of the board, so nothing moves */
 .debug {
-    margin-top: 1em;
-    padding-top: 0.5em;
-    border-top: 1px solid var(--border-subtle);
+    position: absolute;
+    bottom: calc(100% + var(--gap));
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 0.4em 0.8em;
+    border-radius: var(--radius-md);
+    background-color: var(--bg-control);
+    border: 1px solid var(--accent);
+    box-shadow: var(--shadow-button-hover);
+    color: var(--text-strong);
+    font-size: 0.9em;
+    pointer-events: none;
+}
+
+.debug:empty {
+    display: none;
 }
 
 
@@ -664,10 +740,6 @@ input:checked + .tabTitle {
                 0 0 0 12px var(--piece-dest-col) inset;
 }
 
-.findHighlight { /* a Find Pieces button is active (also used on its button) */
-    background-color: var(--findpiece-highlight-col);
-}
-
 
 /* ---------- 7.3 Move markers ----------
    render.js adds .destination1 to .destination16 to every square a piece can
@@ -763,19 +835,35 @@ input:checked + .tabTitle {
    8. RESPONSIVE OVERRIDES
    ORDER MATTERS: these override the tokens and rules above.
    ========================================================================== */
-@media (max-aspect-ratio: 1) { /* Tall screens: board above the panel */
-    .container {
+@media (max-aspect-ratio: 1) { /* Tall screens: the side panel opens over the board */
+    .container,
+    .panel-open .container {
         grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: auto minmax(0, 1fr);
-        grid-template-areas:
-            "board"
-            "panel";
+        grid-template-areas: "play";
     }
-    /* The full width, and tall enough for a board that wide, but leaving at
-       least a third of the height for the panel. (It needs a set height: as a
-       size container its height can't come from the board inside it.) */
-    .board-area {
-        height: min(100dvw - 2 * var(--gap), 62dvh);
+    /* The board is only as tall as it is wide, so the spare height goes
+       above and below the board and status bar together, not between them */
+    .play-area {
+        grid-template-rows: minmax(0, calc(100dvw - 2 * var(--gap))) auto;
+        align-content: center;
+    }
+    .side-panel {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        padding: var(--gap);
+        background-color: rgba(0, 0, 0, 0.6);
+        opacity: 0;
+        transition: opacity var(--panel-slide), visibility 0s var(--panel-slide);
+    }
+    .panel-open .side-panel {
+        opacity: 1;
+        transition: opacity var(--panel-slide), visibility 0s;
+    }
+    .game-control {
+        width: 100%;
+        max-width: 32rem;
+        margin: 0 auto;
     }
 }
 
@@ -802,5 +890,6 @@ input:checked + .tabTitle {
 /* Debug outlines. Uncomment to see the main areas.
 .container    { outline: 3px solid red; }
 .board-area   { outline: 3px solid blue; }
+.status-bar   { outline: 3px solid yellow; }
 .game-control { outline: 3px solid green; }
 */

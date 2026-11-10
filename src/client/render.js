@@ -3,9 +3,9 @@
 // Drawing the page. Everything here only reads the game state and the page state it is given;
 // what happens on clicks lives in controller.js. Each part of the page has its own module:
 //   board-view.js    the board's squares, pieces and highlights
-//   status-view.js   the prompt, the two side buttons and the staged move
+//   status-view.js   the status bar under the board: prompt, staged move and the two side buttons
 //   history-view.js  the History tab
-//   panels-view.js   the Find Pieces tab (find buttons and captured lists)
+//   panels-view.js   the Captured tab
 // and dom.js finds the page's elements for them.
 
 import { drawBoard } from "./board-view.js";
@@ -20,7 +20,6 @@ import { dom } from "./dom.js";
 //   squares:     8 x 8 SquareViews
 //   start, end:  [r,c] of the move being made, or []
 //   lastStart, lastEnd: [r,c] of the last submitted move (highlighted during replay)
-//   findPiece:   piece type the find buttons are highlighting, or ""
 //   replayNumber: -1, or the replay position (see controller.js)
 //   record:      the game record for the History tab, one ply per line (array of strings)
 // }
@@ -31,8 +30,13 @@ function render(view) {
 	drawPanels(view);
 }
 
+// Show a message just above the status bar for a few seconds (style.css hides the element while it is empty)
+const DEBUG_SHOW_MS = 6000;
+let debugTimer;
 function debugPrint(txt) {
 	dom.debug.innerText = txt;
+	clearTimeout(debugTimer);
+	debugTimer = setTimeout(() => { dom.debug.innerText = ""; }, DEBUG_SHOW_MS);
 }
 
 export { render, debugPrint };

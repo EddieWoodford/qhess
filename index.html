@@ -19,6 +19,8 @@
         <h1 class="title">Qhess</h1>
         <div class="header-group">
             <button class="icon-button" id="optionsButton" title="Options">⚙️</button>
+            <button class="icon-button" id="panelButton" title="Move history and captures"
+                    aria-controls="sidePanel" aria-expanded="false">📜</button>
         </div>
     </header>
 
@@ -78,80 +80,76 @@
     <!-- END MODALS -->
 
     <main class="container">
-        <!-- BOARD: the rows and squares are made by buildBoard() in src/client/render.js -->
-        <div class="board-area" id="gameArea">
-            <div id="board" class="board"></div>
-        </div>
+        <!-- PLAY AREA: the board, with the status bar beneath it -->
+        <div class="play-area">
+            <!-- BOARD: the rows and squares are made by buildBoard() in src/client/board-view.js -->
+            <div class="board-area" id="gameArea">
+                <div id="board" class="board"></div>
+            </div>
 
-        <!-- CONTROL PANEL -->
-        <aside class="game-control">
-            <!-- whose turn it is, what to do next, and the buttons for it -->
-            <div class="status">
-                <h3 class="prompt" id="prompt">Prompt Text</h3>
-                <div class="button-row">
+            <!-- STATUS BAR: whose turn it is, what to do next, the move being made, and the buttons for it
+                 (src/client/status-view.js) -->
+            <div class="status-bar">
+                <div class="status-text">
+                    <div class="prompt" id="prompt"></div>
+                    <div class="staged" id="thismove"></div>
+                </div>
+                <div class="button-row status-buttons">
                     <button class="sidebutton" id="sideButton1"></button>
                     <button class="sidebutton" id="sideButton2"></button>
                 </div>
+                <!-- messages from debugPrint() in src/client/render.js: shown briefly above the status bar -->
+                <div class="debug" id="debug" role="status"></div>
             </div>
+        </div>
 
-            <!-- notation for the move being made -->
-            <div class="staged">
-                <h3>Staged Move:</h3>
-                <input id="thismove">
-            </div>
+        <!-- SIDE PANEL: hidden until the header's panel button opens it (src/client/main.js).
+             Beside the board on wide screens, over it on tall ones. -->
+        <aside class="side-panel" id="sidePanel">
+            <div class="game-control">
+                <button class="icon-button panel-close" id="panelClose" title="Close">✕</button>
 
-            <!-- tabbed panels: a hidden radio and its label per tab; the checked one shows its panel -->
-            <div class="panels">
-                <input class="hidden" id="tab2" type="radio" name="tabs" checked>
-                <label class="tabTitle" for="tab2">History</label>
+                <!-- tabbed panels: a hidden radio and its label per tab; the checked one shows its panel -->
+                <div class="panels">
+                    <input class="hidden" id="tab2" type="radio" name="tabs" checked>
+                    <label class="tabTitle" for="tab2">History</label>
 
-                <input class="hidden" id="tab3" type="radio" name="tabs">
-                <label class="tabTitle" for="tab3">Find Pieces</label>
+                    <input class="hidden" id="tab3" type="radio" name="tabs">
+                    <label class="tabTitle" for="tab3">Captured</label>
 
-                <!-- history tab - move history and controls -->
-                <div class="tab-panel" id="gameMetaTab">
-                    <h4>Move History:</h4>
-                    <div class="button-row">
-                        <button class="stepHistoryButton" id="back2">&lt;&lt;</button>
-                        <button class="stepHistoryButton" id="back1">&lt;</button>
-                        <button class="stepHistoryButton" id="forward1">&gt;</button>
-                        <button class="stepHistoryButton" id="forward2">&gt;&gt;</button>
+                    <!-- history tab - move history and controls -->
+                    <div class="tab-panel" id="gameMetaTab">
+                        <div class="button-row">
+                            <button class="stepHistoryButton" id="back2">&lt;&lt;</button>
+                            <button class="stepHistoryButton" id="back1">&lt;</button>
+                            <button class="stepHistoryButton" id="forward1">&gt;</button>
+                            <button class="stepHistoryButton" id="forward2">&gt;&gt;</button>
+                        </div>
+                        <!-- one line per ply: drawn by src/client/history-view.js -->
+                        <div class="movehistory" id="movehistory"></div>
+                        <div class="button-row">
+                            <button class="historyButton" id="reset">Reset Game</button>
+                            <button class="historyButton" id="importButton">Edit / Import</button>
+                        </div>
+                        <div class="button-row">
+                            <button class="historyButton" id="copyallhistory">Copy All</button>
+                            <button class="historyButton" id="copylastmove">Copy Last Move</button>
+                        </div>
+                        <div class="button-row">
+                            <button class="historyButton" id="pasteallrestore">Paste All &amp; Reset</button>
+                            <button class="historyButton" id="pastelinerestore">Paste Move</button>
+                        </div>
                     </div>
-                    <!-- one line per ply: drawn by src/client/history-view.js -->
-                    <div class="movehistory" id="movehistory"></div>
-                    <div class="button-row">
-                        <button class="historyButton" id="reset">Reset Game</button>
-                        <button class="historyButton" id="importButton">Edit / Import</button>
-                    </div>
-                    <div class="button-row">
-                        <button class="historyButton" id="copyallhistory">Copy All</button>
-                        <button class="historyButton" id="copylastmove">Copy Last Move</button>
-                    </div>
-                    <div class="button-row">
-                        <button class="historyButton" id="pasteallrestore">Paste All &amp; Reset</button>
-                        <button class="historyButton" id="pastelinerestore">Paste Move</button>
-                    </div>
-                </div>
 
-                <!-- find pieces tab - for game assistance -->
-                <div class="tab-panel" id="gameFindpiecesTab">
-                    <div class="find-grid">
-                        <button class="findpiecebutton" id="findK"><div class="findpiece" id="findKpiece"></div></button>
-                        <button class="findpiecebutton" id="findQ"><div class="findpiece" id="findQpiece"></div></button>
-                        <button class="findpiecebutton" id="findR"><div class="findpiece" id="findRpiece"></div></button>
-                        <button class="findpiecebutton" id="findB"><div class="findpiece" id="findBpiece"></div></button>
-                        <button class="findpiecebutton" id="findN"><div class="findpiece" id="findNpiece"></div></button>
-                        <button class="findpiecebutton" id="findP"><div class="findpiece" id="findPpiece"></div></button>
-                    </div>
-                    <div class="captured-pieces">
-                        <div class="column" id="whitecaptured"><strong>White Captured</strong></div>
-                        <div class="column" id="blackcaptured"><strong>Black Captured</strong></div>
+                    <!-- captured tab - each side's captured pieces (src/client/panels-view.js) -->
+                    <div class="tab-panel" id="gameCapturedTab">
+                        <div class="captured-pieces">
+                            <div class="column" id="whitecaptured"><strong>White Captured</strong></div>
+                            <div class="column" id="blackcaptured"><strong>Black Captured</strong></div>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <!-- messages from debugPrint() in src/client/render.js -->
-            <div class="debug" id="debug"></div>
         </aside>
     </main>
 </body>

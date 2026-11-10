@@ -1,28 +1,8 @@
 "use strict";
 
-// The Find Pieces tab: the K Q R B N P buttons, and the lists of captured pieces.
+// The Captured tab: each side's captured pieces.
 
-import { glyphHTML } from "./glyphs.js";
 import { dom } from "./dom.js";
-
-// view: see render.js
-function drawPanels(view) {
-	drawFindButtons(view.game.turnColor, view.findPiece);
-	drawCaptured(view.game);
-}
-
-// The find buttons show the side to move's pieces, and the one being searched for is highlighted
-function drawFindButtons(turnColor, findPiece) {
-	const removeClass = turnColor == "w" ? "blackpiececollapsed" : "whitepiececollapsed";
-	const addClass = turnColor == "w" ? "whitepiececollapsed" : "blackpiececollapsed";
-	for (const wave of "KQRNBP") {
-		const { button, symbol } = dom.findButtons[wave];
-		button.classList.toggle("findHighlight", wave == findPiece);
-		symbol.classList.remove(removeClass);
-		symbol.classList.add(addClass);
-		symbol.innerHTML = glyphHTML(wave, turnColor);
-	}
-}
 
 // Each side's captured pieces, in the order they were taken, numbered by the turn they were taken on
 function drawCaptured(game) {
@@ -38,6 +18,11 @@ function drawCaptured(game) {
 	}
 	dom.whiteCaptured.innerHTML = whitecaptured;
 	dom.blackCaptured.innerHTML = blackcaptured;
+}
+
+// view: see render.js
+function drawPanels(view) {
+	drawCaptured(view.game);
 }
 
 export { drawPanels };

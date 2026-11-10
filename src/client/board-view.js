@@ -153,11 +153,6 @@ function drawBoard(view) {
 			if (sqr.potentialMove > 0) {
 				classes.add("destination" + sqr.potentialMove);
 			}
-
-			// Find Pieces
-			if (piece !== null && view.findPiece != "" && piece.waves().includes(view.findPiece)) {
-				classes.add("findHighlight");
-			}
 		}
 	}
 }
