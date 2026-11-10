@@ -156,6 +156,7 @@ button, input, textarea {
 button {
     cursor: pointer;
     height: var(--button-height);
+    touch-action: manipulation; /* no double-tap-to-zoom delay on touch screens */
 }
 
 /* Hidden but keeping its place, so the things around it don't move
@@ -251,11 +252,15 @@ header {
     color: var(--text-muted);
 }
 
-.icon-button:hover {
-    background-color: var(--bg-control-hover);
-    transform: scale(1.1);
-    box-shadow: 0 0 8px #fff4;  /* subtle glow */
-    color: var(--text-strong);
+/* Hover effects are only for devices that can hover: on a touch screen they
+   would stick after a tap. (The same goes for every :hover rule below.) */
+@media (hover: hover) {
+    .icon-button:hover {
+        background-color: var(--bg-control-hover);
+        transform: scale(1.1);
+        box-shadow: 0 0 8px #fff4;  /* subtle glow */
+        color: var(--text-strong);
+    }
 }
 
 /* The "Qhess" title */
@@ -349,12 +354,21 @@ header {
     box-shadow: var(--shadow-button);
 }
 
-.sidebutton:hover,
-.historyButton:hover {
+@media (hover: hover) {
+    .sidebutton:hover,
+    .historyButton:hover {
+        background-color: var(--accent);
+        color: var(--text-strong);
+        transform: scale(1.05);
+        box-shadow: var(--shadow-button-hover);
+    }
+}
+
+/* Pressed (also gives feedback on touch screens, which have no hover) */
+.sidebutton:active,
+.historyButton:active {
     background-color: var(--accent);
     color: var(--text-strong);
-    transform: scale(1.05);
-    box-shadow: var(--shadow-button-hover);
 }
 
 /* Step buttons: flat */
@@ -363,7 +377,13 @@ header {
     transition: background 0.2s ease;
 }
 
-.stepHistoryButton:hover {
+@media (hover: hover) {
+    .stepHistoryButton:hover {
+        background-color: var(--bg-control-active);
+    }
+}
+
+.stepHistoryButton:active {
     background-color: var(--bg-control-active);
 }
 
@@ -413,9 +433,11 @@ input.hidden {
 .tabTitle[for='tab2']::before { content: '📝'; }   /* History */
 .tabTitle[for='tab3']::before { content: '👀'; }   /* Find Pieces */
 
-.tabTitle:hover {
-    color: var(--text-strong);
-    background-color: var(--bg-control);
+@media (hover: hover) {
+    .tabTitle:hover {
+        color: var(--text-strong);
+        background-color: var(--bg-control);
+    }
 }
 
 input:checked + .tabTitle {
@@ -451,6 +473,11 @@ input:checked + .tabTitle {
 .historyLine.replayLine {
     background-color: lightgrey;
     color: #000;
+}
+
+/* The choice dialog (en passant / promotion): narrower than the other modals */
+.modalData.choice {
+    max-width: 28em;
 }
 
 /* The Edit / Import dialog's text box */
@@ -491,10 +518,12 @@ input:checked + .tabTitle {
     background-color: #888;
 }
 
-.findpiecebutton:hover {
-    background-color: var(--accent);
-    box-shadow: var(--shadow-button-hover);
-    transform: scale(1.05);
+@media (hover: hover) {
+    .findpiecebutton:hover {
+        background-color: var(--accent);
+        box-shadow: var(--shadow-button-hover);
+        transform: scale(1.05);
+    }
 }
 
 .captured-pieces {
@@ -753,6 +782,20 @@ input:checked + .tabTitle {
 @media (pointer: coarse) { /* Touch screens: bigger text and buttons */
     :root {
         --ui-font: clamp(1rem, 3dvmin, 1.375rem);
+        --button-height: 2.75em;    /* at least 44px to tap */
+    }
+    /* The header's icon buttons and the tab labels are smaller than the others,
+       so give them the same minimum tap size */
+    .icon-button {
+        min-width: var(--button-height);
+        min-height: var(--button-height);
+    }
+    .tabTitle {
+        padding: 0.9em 1.25em;
+    }
+    /* No grey flash over a tapped square: the board's own highlights show what happened */
+    .boardsquare {
+        -webkit-tap-highlight-color: transparent;
     }
 }
 

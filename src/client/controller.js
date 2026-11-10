@@ -11,7 +11,7 @@
 // ui.state, the step of the turn the player is on:
 //   "move0"                    Black's move 0: optionally add a potential check, then pass to White
 //   "clear"                    waiting for the player to pick a piece
-//   "highlightPotentialMoves"  hovering over one of their pieces (its moves are shown)
+//   "highlightPotentialMoves"  a mouse is hovering over one of their pieces (its moves are shown); touch skips this
 //   "showPartialMove"          a piece is picked; waiting for its destination
 //   "showCompleteMove"         the move is made; Submit, or Add PC (potential check)
 //   "invalidMoveIntoCheck"     the move leaves the player in check; it can only be cancelled
@@ -27,6 +27,7 @@ import { getHistoryLines, parseMoveText } from "../engine/notation.js";
 import { SquareView, buildBoard } from "./board-view.js";
 import { render, debugPrint } from "./render.js";
 import { dom } from "./dom.js";
+import { showChoice } from "./modals.js";
 import { LocalSession } from "./session.js";
 
 const session = new LocalSession();
@@ -53,7 +54,52 @@ const ui = {
 // 8 x 8 array of SquareView objects (the board's buttons and their highlight flags). Made once, by init().
 let squares;
 
-const ask = question => confirm(question);
+////////////////////////////////
+// Questions during a move
+////////////////////////////////
+// When a move is ambiguous, the engine (startMove) asks one of these and needs a true/false answer straight away.
+// The page asks in a dialog instead, which answers later: see showCompleteMove.
+const QUESTION_EN_PASSANT = "En passant?";
+const QUESTION_PROMOTION = "Promote Pawn?";
+
+// How each question is put to the player
+const CHOICES = {
+	[QUESTION_EN_PASSANT]: {
+		text: "This piece could be a pawn. Take en passant? (It will be a pawn if you do, and not a pawn if you don't.)",
+		yes: "Take en passant",
+		no: "Normal move",
+	},
+	[QUESTION_PROMOTION]: {
+		text: "This piece could be a pawn. Promote it? (It will be a promoted pawn if you do, and not a pawn if you don't.)",
+		yes: "Promote",
+		no: "Don't promote",
+	},
+};
+
+// Thrown by askInPage to stop the engine part-way through a move until the player has answered
+class ChoiceNeeded extends Error {
+	constructor(question) {
+		super("Needs an answer: " + question);
+		this.question = question;
+	}
+}
+
+function askInPage(question) {
+	throw new ChoiceNeeded(question);
+}
+
+// Show the question in the choice dialog; onAnswer(true / false), or onAnswer(null) if it's closed without answering
+function askChoice(question, onAnswer) {
+	const choice = CHOICES[question] ?? { text: question, yes: "Yes", no: "No" };
+	showChoice(choice, onAnswer);
+}
+
+// For tests and automation: answer the questions straight away with handler(question) => true / false, instead
+// of asking in the page. null puts the dialog back.
+let choiceHandler = null;
+function setChoiceHandler(handler) {
+	choiceHandler = handler;
+}
 
 ////////////////////////////////
 // Turns
@@ -151,13 +197,17 @@ function findPiecesClick(wave) {
 ////////////////////////////////
 // Squares
 ////////////////////////////////
-function squareEnter(coords) {
+// Hovering is only a preview, for a mouse (or pen): a piece's moves are shown while the pointer is over it.
+// Nothing depends on it. A tap (or a click without hovering first) picks the piece straight away.
+function squareEnter(coords, event) {
+	if (event.pointerType == "touch") {return}
 	if (ui.state == "clear") {
 		highlightPotentialMoves(coords);
 	}
 }
 
-function squareLeave(coords) {
+function squareLeave(coords, event) {
+	if (event.pointerType == "touch") {return}
 	if (ui.state == "highlightPotentialMoves") {
 		setState("clear");
 	}
@@ -166,10 +216,10 @@ function squareLeave(coords) {
 function squareClick(coords) {
 	if (ui.replay > -1) {return}
 	ui.findPiece = "";
-	if (ui.state == "highlightPotentialMoves") {
-		showPartialMove(coords);
+	if (ui.state == "highlightPotentialMoves" || ui.state == "clear") {
+		pickPiece(coords);
 	} else if (ui.state == "showPartialMove") {
-		showCompleteMove(coords);
+		chooseDestination(coords);
 	} else if (ui.state == "selectPCKing") {
 		selectPCKing(coords);
 	} else if (ui.state == "selectPCAttackers") {
@@ -209,6 +259,32 @@ function highlightPotentialMoves(coords) {
 	}
 }
 
+// A click while no piece is picked: pick it if it's one of the mover's pieces, otherwise do nothing
+function pickPiece(coords) {
+	const piece = game.board[coords[0]][coords[1]];
+	if (piece !== null && piece.color == game.turnColor) {
+		setState("clear"); // drop any hover preview
+		showPartialMove(coords);
+	} else {
+		cancelTurn();
+		setState("clear");
+	}
+}
+
+// A click while a piece is picked: move it there if it can go there. Clicking another of the mover's pieces
+// picks that one instead; clicking the picked piece again, or anywhere else, puts it back.
+function chooseDestination(coords) {
+	const piece = game.board[coords[0]][coords[1]];
+	if (ismember(coords, getPotentialMoves(game, ui.start))) {
+		showCompleteMove(coords);
+	} else if (piece !== null && piece.color == game.turnColor && !isequal(coords, ui.start)) {
+		setState("clear");
+		showPartialMove(coords);
+	} else {
+		setState("clear");
+	}
+}
+
 function showPartialMove(coords) {
 	// Show potential moves after clicking on start location
 	let piece = game.board[coords[0]][coords[1]];
@@ -222,11 +298,31 @@ function showPartialMove(coords) {
 function showCompleteMove(endCoords,doEP,doPromotion) {
 	// After clicking on destination. doEP / doPromotion (do en passant / promotion) are normally left out, and the
 	// player is asked if the move is ambiguous.
-	const result = startMove(game, ui.start, endCoords, { enPassant: doEP, promotion: doPromotion, ask });
+	// The move is tried on a copy of the working state, because the engine asks part-way through the move: if a
+	// question comes up, the copy is thrown away, the player is asked in the page, and the move is tried again
+	// with the answer.
+	const trial = cloneState(game);
+	let result;
+	try {
+		result = startMove(trial, ui.start, endCoords, { enPassant: doEP, promotion: doPromotion, ask: choiceHandler ?? askInPage });
+	} catch (err) {
+		if (!(err instanceof ChoiceNeeded)) { throw err; }
+		askChoice(err.question, answer => {
+			if (answer === null) {
+				setState("clear"); // cancelled
+			} else if (err.question == QUESTION_EN_PASSANT) {
+				showCompleteMove(endCoords, answer, doPromotion);
+			} else {
+				showCompleteMove(endCoords, doEP, answer);
+			}
+		});
+		return;
+	}
 	if (!result.ok) {
 		setState("clear");
 		return;
 	}
+	game = trial;
 	ui.end = endCoords;
 	turnMove.from = ui.start;
 	turnMove.to = endCoords;
@@ -507,8 +603,8 @@ function init() {
 		for (let c = 0; c <= 7; c++) {
 			const sqr = new SquareView(r, c, document.getElementById("square" + r + c));
 			const coords = [r, c];
-			sqr.button.addEventListener("mouseenter", () => squareEnter(coords));
-			sqr.button.addEventListener("mouseleave", () => squareLeave(coords));
+			sqr.button.addEventListener("pointerenter", event => squareEnter(coords, event));
+			sqr.button.addEventListener("pointerleave", event => squareLeave(coords, event));
 			sqr.button.addEventListener("click", () => squareClick(coords));
 			viewRow.push(sqr);
 		}
@@ -567,6 +663,7 @@ export {
 	selectPCKing,
 	selectPCAttackers,
 	getPotentialMoves,
+	setChoiceHandler,   // answer en passant / promotion questions without the dialog
 	squares as SQUARES, // the highlight flags (e.g. which squares are potential-check candidates)
 	ui,                 // page state: ui.state is the step of the turn
 };

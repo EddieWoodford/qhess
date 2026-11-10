@@ -73,8 +73,8 @@ async function playGame(seed, maxPlies, pawnBias = 1) {
 	const S = () => g.game; // the current game state object (replaced on every reset)
 	const sideButtonVisible = n => win.getComputedStyle(win.document.getElementById("sideButton" + n)).visibility === "visible";
 
-	// When a move is ambiguous (en passant / promotion), the game asks with confirm(). Answer randomly.
-	win.confirm = () => rng() < 0.5;
+	// When a move is ambiguous (en passant / promotion), the game asks. Answer randomly, straight away.
+	g.setChoiceHandler(() => rng() < 0.5);
 
 	// Move 0: black passes (no potential check is possible yet)
 	g.sideButton2Action();

@@ -23,4 +23,24 @@ function setupModals() {
 	}
 }
 
-export { setupModals, showModal, hideModal };
+// The choice dialog: a question with two answers, e.g. "Take en passant?" (controller.js askChoice).
+// choice = { text, yes, no }: the question and the two buttons' labels.
+// Calls onAnswer(true) or onAnswer(false), or onAnswer(null) if it's closed by clicking outside the box.
+function showChoice(choice, onAnswer) {
+	const $ = id => document.getElementById(id);
+	$("choiceText").textContent = choice.text;
+	$("choiceYes").textContent = choice.yes;
+	$("choiceNo").textContent = choice.no;
+	const answer = value => {
+		hideModal("choice");
+		onAnswer(value);
+	};
+	$("choiceYes").onclick = () => answer(true);
+	$("choiceNo").onclick = () => answer(false);
+	$("choiceWrapper").onclick = () => answer(null);
+	$("choiceDiv").onclick = e => e.stopPropagation();
+	showModal("choice");
+	$("choiceYes").focus();
+}
+
+export { setupModals, showModal, hideModal, showChoice };
