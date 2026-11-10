@@ -50,10 +50,6 @@ function loadFrame() {
 	});
 }
 
-function squareID(coords) {
-	return "square" + coords[0] + coords[1];
-}
-
 function historyFeatures(history) {
 	const lines = history.split(/\r?\n/);
 	const count = re => lines.filter(l => re.test(l)).length;
@@ -107,7 +103,7 @@ async function playGame(seed, maxPlies, pawnBias = 1) {
 			if (p.captured > -1) { continue; }
 			const canBePawn = p.waves().includes("P");
 			for (const to of g.getPotentialMoves([p.r, p.c])) {
-				let weight = board[to[0]][to[1]].piece !== "" ? 4 : 1;
+				let weight = board[to[0]][to[1]] !== null ? 4 : 1;
 				if (canBePawn && to[1] === p.c && to[0] - p.r === forward) { weight *= 2 * pawnBias; }
 				if (canBePawn && to[1] === p.c && to[0] - p.r === 2 * forward) { weight *= 2 * pawnBias; }
 				if (canBePawn && to[0] === lastRank && to[0] - p.r === forward) { weight *= 30 * pawnBias; }
@@ -120,30 +116,30 @@ async function playGame(seed, maxPlies, pawnBias = 1) {
 		// Try to play one candidate. Returns true if the move was submitted.
 		const attempt = (cand, withPC) => {
 			try {
-				g.showPartialMove(squareID(cand.from));
-				g.showCompleteMove(squareID(cand.to));
+				g.showPartialMove(cand.from);
+				g.showCompleteMove(cand.to);
 				if (E("STATE") !== "showCompleteMove") { return false; }
 
 				if (withPC) {
 					if (!sideButtonVisible(1)) { return false; }
 					g.sideButton1Action(); // Add PC
 					const kings = [];
-					const b = E("BOARD");
+					const b = E("SQUARES"); // highlight flags live on the page view
 					for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
 						if (b[r][c].highlightPotKing === 1) { kings.push([r, c]); }
 					}
 					if (kings.length === 0) { return false; }
-					g.selectPCKing(squareID(pick(kings)));
+					g.selectPCKing(pick(kings));
 					let extra = 0;
 					while (E("STATE") === "selectPCAttackers" && extra < 3) {
 						const attackers = [];
-						const b2 = E("BOARD");
+						const b2 = E("SQUARES");
 						for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
 							if (b2[r][c].highlightPotAttacker === 1) { attackers.push([r, c]); }
 						}
 						if (sideButtonVisible(2) && (attackers.length === 0 || rng() < 0.6)) { break; }
 						if (attackers.length === 0) { return false; }
-						g.selectPCAttackers(squareID(pick(attackers)));
+						g.selectPCAttackers(pick(attackers));
 						extra++;
 					}
 					if (E("STATE") !== "selectPCAttackers" || !sideButtonVisible(2)) { return false; }

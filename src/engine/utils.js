@@ -26,6 +26,11 @@ function coordstext2coords(coordstext) {
 	return [r, c];
 }
 
+// [4, 4] -> "e4"
+function coords2text(coords) {
+	return String.fromCharCode(coords[1] + 97) + (8 - coords[0]);
+}
+
 function isValidCoord(coords) {
 	return coords[0] >= 0 && coords[0] <= 7 && coords[1] >= 0 && coords[1] <= 7;
 }
@@ -44,4 +49,4 @@ function sum(x) {
 	return x.reduce((a, b) => a + b, 0);
 }
 
-export { isequal, clone2DArray, coordstext2coords, isValidCoord, ismember, sum };
+export { isequal, clone2DArray, coordstext2coords, coords2text, isValidCoord, ismember, sum };

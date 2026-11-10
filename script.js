@@ -1,54 +1,50 @@
 "use strict";
 
-import { isequal, clone2DArray, isValidCoord, ismember, sum } from "./src/engine/utils.js";
+import { isequal, clone2DArray, coords2text, isValidCoord, ismember, sum } from "./src/engine/utils.js";
 import { wave2optidxs } from "./src/engine/constants.js";
 import { filterOptionMatrix, getOM } from "./src/engine/entanglement.js";
 import { getHistoryLines, parseMoveText } from "./src/engine/notation.js";
 import { WK, WQ, WR, WB, WN, WP, BK, BQ, BR, BB, BN, BP, waveHTML } from "./src/client/glyphs.js";
 
 // Classes
-class Square {
-    constructor(r, c, buttonID) {
-        this.r = r;
-        this.c = c;
-		this.piece = "";
+
+// One board square on the page: its button, what happens when it is hovered or clicked,
+// and the highlight flags used when drawing it. The piece on the square lives in BOARD.
+class SquareView {
+	constructor(r, c, button) {
+		this.r = r;
+		this.c = c;
+		this.button = button;
 		this.highlighted = 0;
 		// 0 = not a potential move; 1-16 = bearing of potential move where 1=NNE, 2=NE, 3=ENE, 3=E, 5=ESE, etc.
-		this.potentialMove = 0; 
-		this.highlightPotKing = 0; // 0 = not a PK; 1 = candidate for PK; 
+		this.potentialMove = 0;
+		this.highlightPotKing = 0; // 0 = not a PK; 1 = candidate for PK;
 		this.highlightPotAttacker = 0; // 0 = not a PA; 1 = candidate for PA;
-		
-		let x = r+c;
-		if (x%2 == 0) {
-			this.color = "w";
-		} else {
-			this.color = "b";
-		}
-		this.chesscoords = String.fromCharCode(c+97) + (8-r);
-		
-        this.button = document.getElementById(buttonID);
-        this.button.onmouseenter = () => {
+		this.color = (r + c) % 2 == 0 ? "w" : "b"; // square colour
+
+		const coords = [r, c];
+		this.button.onmouseenter = () => {
 			if (STATE == "clear") {
-				highlightPotentialMoves(buttonID);
+				highlightPotentialMoves(coords);
 			}
-        }
+		}
 		this.button.onmouseleave = () => {
 			if (STATE == "highlightPotentialMoves") {
 				setState("clear");
 			}
-        }
+		}
 		this.button.onclick = () => {
 			if (REPLAYNUMBER > -1) {return}
 			FINDPIECE = "";
 			clearFindPieces();
 			if (STATE == "highlightPotentialMoves") {
-				showPartialMove(buttonID);
+				showPartialMove(coords);
 			} else if (STATE == "showPartialMove") {
-				showCompleteMove(buttonID);
+				showCompleteMove(coords);
 			} else if (STATE == "selectPCKing") {
-				selectPCKing(buttonID);
+				selectPCKing(coords);
 			} else if (STATE == "selectPCAttackers") {
-				selectPCAttackers(buttonID);
+				selectPCAttackers(coords);
 			} else if (STATE == "move0") {
 				setState("move0");
 			} else {
@@ -56,31 +52,25 @@ class Square {
 				setState("clear");
 			}
 		}
-    }
+	}
 	resetButtonClasses() {
-			let prevClasses = this.button.className;
-			prevClasses = prevClasses.split(" ");
-			this.button.classList.remove(...prevClasses);
-			this.button.classList.add("boardsquare");
-			if (this.color == "w") {
-				this.button.classList.add("whitesquare");
-			} else {
-				this.button.classList.add("blacksquare");
-			}
-		}
-		// this.button.addEventListener("click",this.set(buttonID))
-		// this.button.addEventListener("mouseout",this.clear(buttonID))
-	
-	setWavetext() {
-		if (this.piece == "") {
-			this.button.innerHTML = "";
+		let prevClasses = this.button.className;
+		prevClasses = prevClasses.split(" ");
+		this.button.classList.remove(...prevClasses);
+		this.button.classList.add("boardsquare");
+		if (this.color == "w") {
+			this.button.classList.add("whitesquare");
 		} else {
-			this.button.innerHTML = waveHTML(this.piece.waves(), this.piece.color);
+			this.button.classList.add("blacksquare");
 		}
 	}
-    reset() {
-        this.button.innerText = "";
-    }
+	setWavetext(piece) {
+		if (piece === null) {
+			this.button.innerHTML = "";
+		} else {
+			this.button.innerHTML = waveHTML(piece.waves(), piece.color);
+		}
+	}
 }
 
 class Piece {
@@ -208,10 +198,10 @@ function sideButton2Action() {
 
 function declareNotAKing() {
 	let defKing = attPiece(PCKING);
-	// THISMOVE = "[(" + defKing.waves() + ")" + BOARD[defKing.r][defKing.c].chesscoords;
+	// THISMOVE = "[(" + defKing.waves() + ")" + coords2text([defKing.r, defKing.c]);
 	defKing.removewaves("K");
 	// THISMOVE = THISMOVE + "(" + defKing.waves() + ")]";
-	THISMOVE = THISMOVE + "[" + BOARD[defKing.r][defKing.c].chesscoords + "]";
+	THISMOVE = THISMOVE + "[" + coords2text([defKing.r, defKing.c]) + "]";
 	updateOptionsFromEntanglement(TURNCOLOR);
 	PCKING = -1; 
 	PCCOLOR = "";
@@ -241,13 +231,13 @@ function submitMove() {
 	}
 	
 
-	if (TAKENPIECE != "") {
+	if (TAKENPIECE !== null) {
 		TAKENPIECE.captured = TURNNUMBER;
 	}
 
 	// Remember this move's squares so replay can highlight the last move
-	LASTSTARTID = STARTID;
-	LASTENDID = ENDID;
+	LASTSTARTCOORDS = STARTCOORDS;
+	LASTENDCOORDS = ENDCOORDS;
 
 	if (TURNCOLOR == "w") {
 		TURNCOLOR =	"b";
@@ -298,13 +288,12 @@ function clearFindPieces() {
 	document.getElementById("findP").classList.remove("findHighlight");
 }
 
-function highlightPotentialMoves(buttonID) {
+function highlightPotentialMoves(coords) {
 	// Highlight potential moves temporarily while mouse is over square
-	let coords = buttonID2coords(buttonID);
-	if (BOARD[coords[0]][coords[1]].piece == "") {return;}
-	if (BOARD[coords[0]][coords[1]].piece.captured > -1) {return;}
-	if (BOARD[coords[0]][coords[1]].piece.color == TURNCOLOR) {
-		BOARD[coords[0]][coords[1]].highlighted = 1;
+	if (BOARD[coords[0]][coords[1]] === null) {return;}
+	if (BOARD[coords[0]][coords[1]].captured > -1) {return;}
+	if (BOARD[coords[0]][coords[1]].color == TURNCOLOR) {
+		SQUARES[coords[0]][coords[1]].highlighted = 1;
 
 		let moves = getPotentialMoves(coords);
 		for (let i=0; i < moves.length; i++) {
@@ -312,44 +301,42 @@ function highlightPotentialMoves(buttonID) {
 			let delX = moves[i][1] - coords[1];
 			// returns 1-16 = bearing of potential move where 1=NNE, 2=NE, 3=ENE, 3=E, 5=ESE, etc.
 			let bearing = (Math.round(((Math.atan2(delX, delY) * 180) / Math.PI)/22.5) + 16 - 1) % 16 + 1;
-			BOARD[moves[i][0]][moves[i][1]].potentialMove = bearing;
+			SQUARES[moves[i][0]][moves[i][1]].potentialMove = bearing;
 		}
 		setState("highlightPotentialMoves");
 	}
 }
 
-function showPartialMove(buttonID) {
+function showPartialMove(coords) {
 	// Show potential moves after clicking on start location
-	let coords = buttonID2coords(buttonID);
 	let piece = coords2piece(coords);
-	if (piece.color == TURNCOLOR) {
+	if (piece !== null && piece.color == TURNCOLOR) {
 		
-		STARTID = buttonID;
+		STARTCOORDS = coords;
 		let moves = getPotentialMoves(coords);
 		for (let i=0; i<moves.length; i++) {
 			let delY = coords[0] - moves[i][0];
 			let delX = moves[i][1] - coords[1];
 			// returns 1-16 = bearing of potential move where 1=NNE, 2=NE, 3=ENE, 3=E, 5=ESE, etc.
 			let bearing = (Math.round(((Math.atan2(delX, delY) * 180) / Math.PI)/22.5) + 16 - 1) % 16 + 1;
-			BOARD[moves[i][0]][moves[i][1]].potentialMove = bearing;
+			SQUARES[moves[i][0]][moves[i][1]].potentialMove = bearing;
 		}
 		setState("showPartialMove");
 	}
 }
 
-function showCompleteMove(buttonID,doEP,doPromotion) {
+function showCompleteMove(endCoords,doEP,doPromotion) {
 	// Input doEP (do en passant) is optional and typically empty, except for when restoring a move history
 	
 	// After clicking on destination:
-	let startCoords = buttonID2coords(STARTID);
+	let startCoords = STARTCOORDS;
 	let validDestinations = getPotentialMoves(startCoords);
-	let endCoords = buttonID2coords(buttonID)
 	if (!ismember(endCoords,validDestinations)) {
 		setState("clear");
 		return;
 	}
-	let movingPiece = BOARD[startCoords[0]][startCoords[1]].piece;
-	THISMOVE = THISMOVE + "(" + movingPiece.waves() + ")" + BOARD[startCoords[0]][startCoords[1]].chesscoords;
+	let movingPiece = BOARD[startCoords[0]][startCoords[1]];
+	THISMOVE = THISMOVE + "(" + movingPiece.waves() + ")" + coords2text(startCoords);
 	
 	// Remove the options from this piece based on movement:
 	movingPiece.updateOptionsByDest(endCoords);
@@ -360,15 +347,15 @@ function showCompleteMove(buttonID,doEP,doPromotion) {
 	movingPiece.c = endCoords[1];
 	
 	// Move the piece:
-	ENDID = buttonID;
-	TAKENPIECE = BOARD[endCoords[0]][endCoords[1]].piece;
-	if (TAKENPIECE != "") {
+	ENDCOORDS = endCoords;
+	TAKENPIECE = BOARD[endCoords[0]][endCoords[1]];
+	if (TAKENPIECE !== null) {
 		TAKENPIECE.captured = TURNNUMBER;
 		TAKENPIECE.removewaves('K');
 		THISMOVE = THISMOVE + "x";
 	}
-	BOARD[endCoords[0]][endCoords[1]].piece = movingPiece;
-	BOARD[startCoords[0]][startCoords[1]].piece = "";
+	BOARD[endCoords[0]][endCoords[1]] = movingPiece;
+	BOARD[startCoords[0]][startCoords[1]] = null;
 	
 	
 	// Collapse the pieces
@@ -393,10 +380,10 @@ function showCompleteMove(buttonID,doEP,doPromotion) {
 		if (doEP) {
 			THISMOVE = THISMOVE + "x";
 			movingPiece.removewaves("KQNRB");
-			TAKENPIECE = BOARD[endCoords[0]+direction][endCoords[1]].piece;
+			TAKENPIECE = BOARD[endCoords[0]+direction][endCoords[1]];
 			TAKENPIECE.captured = TURNNUMBER;
 			TAKENPIECE.removewaves("KQNRB");
-			BOARD[endCoords[0]+direction][endCoords[1]].piece = "";
+			BOARD[endCoords[0]+direction][endCoords[1]] = null;
 			// update all the collpases again!
 			updateOptionsFromEntanglement();
 		} else {
@@ -449,13 +436,13 @@ function showCompleteMove(buttonID,doEP,doPromotion) {
 	
 	// Finish move annotation
 	if (doEP) {
-		THISMOVE = THISMOVE + BOARD[endCoords[0]][endCoords[1]].chesscoords + "(" + movingPiece.waves() + ")";
+		THISMOVE = THISMOVE + coords2text(endCoords) + "(" + movingPiece.waves() + ")";
 		THISMOVE = THISMOVE + " e.p.";
 	} else if (doPromotion) {
-		THISMOVE = THISMOVE + BOARD[endCoords[0]][endCoords[1]].chesscoords + "(P)";
+		THISMOVE = THISMOVE + coords2text(endCoords) + "(P)";
 		THISMOVE = THISMOVE + "=(QRNB)";
 	} else {
-		THISMOVE = THISMOVE + BOARD[endCoords[0]][endCoords[1]].chesscoords + "(" + movingPiece.waves() + ")"
+		THISMOVE = THISMOVE + coords2text(endCoords) + "(" + movingPiece.waves() + ")"
 	}
 	
 	// Now, look to see if attacker has put themselves in automatic check. If so, it's an invalid move
@@ -519,14 +506,14 @@ function doMoveFromText(moveText) {
 	}
 	if (TURNNUMBER > 0) {
 		// The ply should include an actual move
-		showPartialMove(coords2buttonID(move.from));
-		showCompleteMove(coords2buttonID(move.to), move.enPassant, move.promotion);
+		showPartialMove(move.from);
+		showCompleteMove(move.to, move.enPassant, move.promotion);
 	}
 	if (move.pcKing) {
 		sideButton1Action(); // "Add Potential Check" button
-		selectPCKing(coords2buttonID(move.pcKing));
+		selectPCKing(move.pcKing);
 		for (const attacker of move.pcAttackers) {
-			selectPCAttackers(coords2buttonID(attacker));
+			selectPCAttackers(attacker);
 		}
 	}
 	return THISMOVE
@@ -622,9 +609,9 @@ function findPotentialKingsToAttack() {
 	
 	for (let r=0; r<8; r++) {
 		for (let c=0; c<8; c++) {
-			if (BOARD[r][c].piece == "") {continue};
-			if (BOARD[r][c].piece.color == TURNCOLOR) {continue};
-			if (!BOARD[r][c].piece.waves().includes("K")) {continue};
+			if (BOARD[r][c] === null) {continue};
+			if (BOARD[r][c].color == TURNCOLOR) {continue};
+			if (!BOARD[r][c].waves().includes("K")) {continue};
 			// Now we know the square has an opponent king-wave on it
 			// If the square is being attacked by any piece then it is a valid candidate for a PC King, and then we want to
 			// highlight it.
@@ -633,7 +620,7 @@ function findPotentialKingsToAttack() {
 				if (piece.captured > -1) {continue}
 				moves = getPotentialMoves([piece.r,piece.c]);
 				if (ismember([r,c],moves)) {
-					BOARD[r][c].highlightPotKing = 1;
+					SQUARES[r][c].highlightPotKing = 1;
 					nPotKings++;
 				}
 			}
@@ -658,10 +645,10 @@ function findPCAttackers() {
 		if (piece.captured > -1) {continue}
 		moves = getPotentialMoves(piece.coords());
 		if (ismember(defKing.coords(),moves)) { 
-			BOARD[piece.r][piece.c].highlightPotAttacker = 1;
+			SQUARES[piece.r][piece.c].highlightPotAttacker = 1;
 			potAttackerCoords.push([piece.r,piece.c]);
 		} else {
-			BOARD[piece.r][piece.c].highlightPotAttacker = 0;
+			SQUARES[piece.r][piece.c].highlightPotAttacker = 0;
 		}
 	}
 	return potAttackerCoords;
@@ -670,16 +657,15 @@ function findPCAttackers() {
 function clearFindPotentialCheckPieces() {
 	for (let r=0; r<8; r++) {
 		for (let c=0; c<8; c++) {
-			BOARD[r][c].highlightPotKing = 0;
-			BOARD[r][c].highlightPotAttacker = 0;
+			SQUARES[r][c].highlightPotKing = 0;
+			SQUARES[r][c].highlightPotAttacker = 0;
 		}
 	}
 }
 
-function selectPCKing(buttonID) {
+function selectPCKing(kingCoords) {
 	// Get here after clicking on a square in "selectPCKing" state
-	let kingCoords = buttonID2coords(buttonID);
-	if (BOARD[kingCoords[0]][kingCoords[1]].highlightPotKing == 0) {
+	if (SQUARES[kingCoords[0]][kingCoords[1]].highlightPotKing == 0) {
 		restoreGameHistory();
 		setState("clear");
 		return
@@ -687,23 +673,21 @@ function selectPCKing(buttonID) {
 	clearFindPotentialCheckPieces(); // stop highlighting the potential kings
 	
 	// Make this piece the PC King
-	PCKING = BOARD[kingCoords[0]][kingCoords[1]].piece.i;
-	PCCOLOR = BOARD[kingCoords[0]][kingCoords[1]].piece.color;
+	PCKING = BOARD[kingCoords[0]][kingCoords[1]].i;
+	PCCOLOR = BOARD[kingCoords[0]][kingCoords[1]].color;
 	let potAttackerCoords = findPCAttackers();
 	if (potAttackerCoords.length == 1) {
-		let buttonID = coords2buttonID(potAttackerCoords[0]);
-		selectPCAttackers(buttonID);
+		selectPCAttackers(potAttackerCoords[0]);
 	} else {
 		setState("selectPCAttackers");
 	}
 }
 
-function selectPCAttackers(buttonID) {
+function selectPCAttackers(attackerCoords) {
 	// Get here when a PC attacker is selected by clicking on its square
 	
-	let attackerCoords = buttonID2coords(buttonID);
 	let attackerPiece = coords2piece(attackerCoords);
-	if (attackerPiece == "" || attackerPiece.color != TURNCOLOR) {
+	if (attackerPiece === null || attackerPiece.color != TURNCOLOR) {
 		// clicked on an empty square
 		restoreGameHistory();
 		setState("clear");
@@ -814,13 +798,13 @@ function pcMoveText() {
 	let txt = "";
 	if (PCKING >= 0 && PCCOLOR == oppColor()) {
 		let piece = defPiece(PCKING);
-		txt = "<" + BOARD[piece.r][piece.c].chesscoords + "+";
+		txt = "<" + coords2text([piece.r, piece.c]) + "+";
 		
 		let kingCoords;
 		let attackerCoords;
 		[kingCoords,attackerCoords] = findChecks(PCCOLOR);
 		for (let ai=0; ai < attackerCoords.length; ai++) {
-			txt = txt + " " + BOARD[attackerCoords[ai][0]][attackerCoords[ai][1]].chesscoords;
+			txt = txt + " " + coords2text([attackerCoords[ai][0], attackerCoords[ai][1]]);
 		}
 		txt = txt + ">";
 	}
@@ -858,8 +842,8 @@ function updateOptionsFromEntanglement(colors) {
 function getCertainMoves(coords) {
 	// Get a list of the certain move destinations. That is - the desinations that a piece can definitely move to in all of their available waves.
 	
-	let piece = BOARD[coords[0]][coords[1]].piece; // Find the source pieceID
-	if (piece=="") {
+	let piece = BOARD[coords[0]][coords[1]]; // Find the source pieceID
+	if (piece === null) {
 		return [];
 	}
 	let waves = piece.waves();
@@ -892,11 +876,11 @@ function getPotentialMoves(coords,waves) {
 	// Get a list of all potential destination coordinates.
 	// Optional input waves only returns destination for those passed in, otherwise use waves available to piece
 	
-	let piece = BOARD[coords[0]][coords[1]].piece; // Find the source pieceID
-	if (piece.captured > -1) {
+	let piece = BOARD[coords[0]][coords[1]]; // Find the source pieceID
+	if (piece === null) {
 		return []
 	}
-	if (piece=="") {
+	if (piece.captured > -1) {
 		return []
 	}
 	if (waves == undefined) {
@@ -917,7 +901,7 @@ function getPotentialMoves(coords,waves) {
 		for (let r=-1; r<=1; r++) {
 			for (let c=-1; c<=1; c++) {
 				newcoords = [coords[0]+r,coords[1]+c];
-				if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]].piece.color != piece.color) {moves.push(newcoords)};
+				if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
 			}	
 		}
 	}
@@ -925,12 +909,12 @@ function getPotentialMoves(coords,waves) {
 	// Pawn:
 	if (waves.includes("P")) {
 		newcoords = [coords[0]-direction,coords[1]]
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]].piece=="") {
+		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]] === null) {
 			moves.push(newcoords)
 			// if it can go 1 forward then it might be able to go 2 on its first move:
 			if (piece.hasmoved == 0) {
 				newcoords = [coords[0]-2*direction,coords[1]]
-				if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]].piece=="") {
+				if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]] === null) {
 					moves.push(newcoords)
 				}
 			}
@@ -938,13 +922,13 @@ function getPotentialMoves(coords,waves) {
 		
 		newcoords = [coords[0]-direction,coords[1]-1]
 		if (isValidCoord(newcoords)) {
-			if (isequal(newcoords,EPCOORDS) || BOARD[newcoords[0]][newcoords[1]].piece.color == opponentColor) {
+			if (isequal(newcoords,EPCOORDS) || BOARD[newcoords[0]][newcoords[1]]?.color == opponentColor) {
 				moves.push(newcoords)
 			}
 		}
 		newcoords = [coords[0]-direction,coords[1]+1]
 		if (isValidCoord(newcoords)) {
-			if (isequal(newcoords,EPCOORDS) || BOARD[newcoords[0]][newcoords[1]].piece.color == opponentColor) {
+			if (isequal(newcoords,EPCOORDS) || BOARD[newcoords[0]][newcoords[1]]?.color == opponentColor) {
 				moves.push(newcoords)
 			}
 		}
@@ -954,27 +938,27 @@ function getPotentialMoves(coords,waves) {
 	if (waves.includes("R") || waves.includes("Q")) {
 		for (let i=coords[0]+1; i<=7; i++) {
 			newcoords = [i,coords[1]]
-			if (BOARD[newcoords[0]][newcoords[1]].piece.color == piece.color) {break;}
+			if (BOARD[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
 			moves.push(newcoords)
-			if (BOARD[newcoords[0]][newcoords[1]].piece!="") {break;}
+			if (BOARD[newcoords[0]][newcoords[1]] !== null) {break;}
 		}
 		for (let i=coords[0]-1; i>=0; i--) {
 			newcoords = [i,coords[1]]
-			if (BOARD[newcoords[0]][newcoords[1]].piece.color == piece.color) {break;}
+			if (BOARD[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
 			moves.push(newcoords)
-			if (BOARD[newcoords[0]][newcoords[1]].piece!="") {break;}
+			if (BOARD[newcoords[0]][newcoords[1]] !== null) {break;}
 		}
 		for (let i=coords[1]+1; i<=7; i++) {
 			newcoords = [coords[0],i]
-			if (BOARD[newcoords[0]][newcoords[1]].piece.color == piece.color) {break;}
+			if (BOARD[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
 			moves.push(newcoords)
-			if (BOARD[newcoords[0]][newcoords[1]].piece!="") {break;}
+			if (BOARD[newcoords[0]][newcoords[1]] !== null) {break;}
 		}
 		for (let i=coords[1]-1; i>=0; i--) {
 			newcoords = [coords[0],i]
-			if (BOARD[newcoords[0]][newcoords[1]].piece.color == piece.color) {break;}
+			if (BOARD[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
 			moves.push(newcoords)
-			if (BOARD[newcoords[0]][newcoords[1]].piece!="") {break;}
+			if (BOARD[newcoords[0]][newcoords[1]] !== null) {break;}
 		}
 	}
 	
@@ -983,33 +967,33 @@ function getPotentialMoves(coords,waves) {
 		for (let i=1; i<=7; i++) {
 			newcoords = [coords[0]+i,coords[1]+i]
 			if (isValidCoord(newcoords)) {
-				if (BOARD[newcoords[0]][newcoords[1]].piece.color == piece.color) {break;}
+				if (BOARD[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
 				moves.push(newcoords)
-				if (BOARD[newcoords[0]][newcoords[1]].piece!="") {break;}
+				if (BOARD[newcoords[0]][newcoords[1]] !== null) {break;}
 			}
 		}
 		for (let i=1; i<=7; i++) {
 			newcoords = [coords[0]+i,coords[1]-i]
 			if (isValidCoord(newcoords)) {
-				if (BOARD[newcoords[0]][newcoords[1]].piece.color == piece.color) {break;}
+				if (BOARD[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
 				moves.push(newcoords)
-				if (BOARD[newcoords[0]][newcoords[1]].piece!="") {break;}
+				if (BOARD[newcoords[0]][newcoords[1]] !== null) {break;}
 			}
 		}
 		for (let i=1; i<=7; i++) {
 			newcoords = [coords[0]-i,coords[1]-i]
 			if (isValidCoord(newcoords)) {
-				if (BOARD[newcoords[0]][newcoords[1]].piece.color == piece.color) {break;}
+				if (BOARD[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
 				moves.push(newcoords)
-				if (BOARD[newcoords[0]][newcoords[1]].piece!="") {break;}
+				if (BOARD[newcoords[0]][newcoords[1]] !== null) {break;}
 			}
 		}
 		for (let i=1; i<=7; i++) {
 			newcoords = [coords[0]-i,coords[1]+i]
 			if (isValidCoord(newcoords)) {
-				if (BOARD[newcoords[0]][newcoords[1]].piece.color == piece.color) {break;}
+				if (BOARD[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
 				moves.push(newcoords)
-				if (BOARD[newcoords[0]][newcoords[1]].piece!="") {break;}
+				if (BOARD[newcoords[0]][newcoords[1]] !== null) {break;}
 			}
 		}
 	}
@@ -1017,21 +1001,21 @@ function getPotentialMoves(coords,waves) {
 	// Knights:
 	if (waves.includes("N")) {
 		newcoords = [coords[0]+2,coords[1]+1];
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]].piece.color != piece.color) {moves.push(newcoords)};
+		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
 		newcoords = [coords[0]+2,coords[1]-1];
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]].piece.color != piece.color) {moves.push(newcoords)};
+		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
 		newcoords = [coords[0]-2,coords[1]+1];
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]].piece.color != piece.color) {moves.push(newcoords)};
+		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
 		newcoords = [coords[0]-2,coords[1]-1];
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]].piece.color != piece.color) {moves.push(newcoords)};
+		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
 		newcoords = [coords[0]+1,coords[1]+2];
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]].piece.color != piece.color) {moves.push(newcoords)};
+		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
 		newcoords = [coords[0]+1,coords[1]-2];
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]].piece.color != piece.color) {moves.push(newcoords)};
+		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
 		newcoords = [coords[0]-1,coords[1]+2];
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]].piece.color != piece.color) {moves.push(newcoords)};
+		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
 		newcoords = [coords[0]-1,coords[1]-2];
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]].piece.color != piece.color) {moves.push(newcoords)};
+		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
 	}
 	
 	for (let i=moves.length-1; i>=0; i--) {
@@ -1046,14 +1030,8 @@ function getPotentialMoves(coords,waves) {
 ////////////////////////////////
 // Utilities
 ////////////////////////////////
-function buttonID2coords(buttonID) {
-	return [+buttonID.substr(6,1),+buttonID.substr(7,2)]
-}
 function coords2piece(coords) {
-	return BOARD[coords[0]][coords[1]].piece;
-}
-function coords2buttonID(coords) {
-	return "square"+coords[0]+coords[1]
+	return BOARD[coords[0]][coords[1]];
 }
 function oppColor(color) {
 	if (color == undefined) {
@@ -1132,9 +1110,9 @@ function setState(stateIn) {
 	if (STATE == "clear") {
 		sideButton2.style.visibility = "hidden";
 		sideButton1.style.visibility = "hidden";
-		STARTID = "";
-		ENDID = "";
-		TAKENPIECE = "";
+		STARTCOORDS = [];
+		ENDCOORDS = [];
+		TAKENPIECE = null;
 		if (POTCHECK) {
 			sideButton1.style.visibility = "visible";
 			sideButton1.innerText = "Declare 'Not a King'";
@@ -1144,9 +1122,9 @@ function setState(stateIn) {
 		sideButton1.style.visibility = "visible";
 		sideButton1.innerText = "Add PC";
 		sideButton2.innerText = "Pass to white";
-		STARTID = "";
-		ENDID = "";
-		TAKENPIECE = "";
+		STARTCOORDS = [];
+		ENDCOORDS = [];
+		TAKENPIECE = null;
 	} else if (STATE == "highlightPotentialMoves") {
 		sideButton2.style.visibility = "hidden";
 		sideButton1.style.visibility = "hidden";
@@ -1233,8 +1211,8 @@ function setState(stateIn) {
 	let piece;
 	for (let r = 0; r <= 7; r++) {
 		for ( let c = 0; c <= 7; c++) {
-			sqr = BOARD[r][c];
-			piece = sqr.piece;
+			sqr = SQUARES[r][c];
+			piece = BOARD[r][c];
 			
 			if (STATE == "clear" || STATE == "move0") {
 				// For other states, the propertes are set in calling functions, but you can always reset to clear by 
@@ -1262,7 +1240,7 @@ function setState(stateIn) {
 			// Default border:
 			sqr.resetButtonClasses();
 			if (STATE == "clear" && REPLAYNUMBER == -1) {
-				if (piece != "" && piece.color == TURNCOLOR) {
+				if (piece !== null && piece.color == TURNCOLOR) {
 					sqr.button.classList.add("selectable");
 				}
 			}
@@ -1278,25 +1256,25 @@ function setState(stateIn) {
 			sqr.button.style.background = sqrcolor; */
 			
 			// Write text of pieces in sqaures:
-			sqr.setWavetext();
+			sqr.setWavetext(piece);
 
 			// Change formatting if in non-default state:
-			if (sqr.button.id == STARTID) {
+			if (isequal([r,c], STARTCOORDS)) {
 				// sqr.button.style.borderColor = "orange";
 				// sqr.button.style.borderWidth = "6px";
 				sqr.button.classList.add("selectedStart");
 			}
-			if (sqr.button.id == ENDID) {
+			if (isequal([r,c], ENDCOORDS)) {
 				// sqr.button.style.borderColor = "green";
 				// sqr.button.style.borderWidth = "6px";
 				sqr.button.classList.add("selectedEnd");
 			}
 			if (REPLAYNUMBER > -1) {
 				// In replay, show the move that led to this position
-				if (sqr.button.id == LASTSTARTID) {
+				if (isequal([r,c], LASTSTARTCOORDS)) {
 					sqr.button.classList.add("selectedStart");
 				}
-				if (sqr.button.id == LASTENDID) {
+				if (isequal([r,c], LASTENDCOORDS)) {
 					sqr.button.classList.add("selectedEnd");
 				}
 			}
@@ -1339,7 +1317,7 @@ function setState(stateIn) {
 				sqr.button.classList.add("destination" + sqr.potentialMove);
 				// sqr.button.style.background = 'green';
 			}
-			if (piece != "") {
+			if (piece !== null) {
 				let waves = piece.waves();
 				if (FINDPIECE != "" && waves.includes(FINDPIECE)) {
 					sqr.button.classList.add("findHighlight");
@@ -1439,12 +1417,13 @@ function highlightReplayLine() {
 function setup() {
 	TURNNUMBER = 0;
 	TURNCOLOR = "b";
-	TAKENPIECE = "";
-	BOARD = []; // 8 x 8 array of Square objects
-	STARTID = "";
-	DESTID = "";
-	LASTSTARTID = "";
-	LASTENDID = "";
+	TAKENPIECE = null;
+	BOARD = []; // 8 x 8 array: the Piece on each square, or null if empty
+	SQUARES = []; // 8 x 8 array of SquareView objects (the page's buttons)
+	STARTCOORDS = [];
+	ENDCOORDS = [];
+	LASTSTARTCOORDS = [];
+	LASTENDCOORDS = [];
 	WHITEPIECES = [];
 	BLACKPIECES = [];
 	MOVEHISTORY = "";
@@ -1466,30 +1445,27 @@ function setup() {
 	}
 	
 	
-    let squareButtons = document.querySelectorAll('[id^="square"]');
 	for (let r = 0; r <= 7; r++) {
-		let thisrow = [];
-		for ( let c = 0; c <= 7; c++) {
-			let i = r*8 + c
-			let square =new Square(r, c, squareButtons[i].id);
-			
-			thisrow.push(square)
+		BOARD.push(Array(8).fill(null));
+		let viewRow = [];
+		for (let c = 0; c <= 7; c++) {
+			viewRow.push(new SquareView(r, c, document.getElementById("square" + r + c)));
 		}
-		BOARD.push(thisrow)
+		SQUARES.push(viewRow);
 	}
 	for (let r = 0; r <= 1; r++) {
 		for (let c=0; c <= 7; c++) {
 			let i = r*8 + c
 			let piece = new Piece(i, r, c, 'b')
 			BLACKPIECES.push(piece)
-			BOARD[r][c].piece = BLACKPIECES[i]
+			BOARD[r][c] = BLACKPIECES[i]
 		}
 	}for (let r = 6; r <= 7; r++) {
 		for (let c=0; c <= 7; c++) {
 			let i = (r-6)*8 + c
 			let piece = new Piece(i, r, c, 'w')
 			WHITEPIECES.push(piece)
-			BOARD[r][c].piece = WHITEPIECES[i]
+			BOARD[r][c] = WHITEPIECES[i]
 		}
 	}
 	setState("move0");
@@ -1500,13 +1476,13 @@ function setup() {
 ////////////////////////////////
 let TURNNUMBER;
 let TURNCOLOR;
-let TAKENPIECE;
-let BOARD; // 8 x 8 array of Square objects
-let STARTID;
-let ENDID;
-let DESTID;
-let LASTSTARTID; // start square of the last submitted move, for replay highlighting
-let LASTENDID;   // end square of the last submitted move
+let TAKENPIECE; // the Piece captured by the move being made, or null
+let BOARD; // 8 x 8 array: the Piece on each square, or null if empty
+let SQUARES; // 8 x 8 array of SquareView objects (the page's buttons)
+let STARTCOORDS; // [r,c] of the move being made, or [] if none
+let ENDCOORDS;
+let LASTSTARTCOORDS; // start square of the last submitted move, for replay highlighting
+let LASTENDCOORDS;   // end square of the last submitted move
 let WHITEPIECES;
 let BLACKPIECES;
 let MOVEHISTORY;
@@ -1555,6 +1531,7 @@ export {
 	TURNNUMBER,
 	TURNCOLOR,
 	BOARD,
+	SQUARES,
 	WHITEPIECES,
 	BLACKPIECES,
 	MOVEHISTORY,
