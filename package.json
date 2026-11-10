@@ -1,0 +1,17 @@
+{
+  "name": "qhess",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Qhess (quantum chess) with local and websocket multiplayer play",
+  "type": "module",
+  "scripts": {
+    "start": "node server/server.js",
+    "test": "node --test --test-reporter=spec \"tests/node/*.test.js\""
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "ws": "^8.22.2"
+  }
+}
