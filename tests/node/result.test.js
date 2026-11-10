@@ -90,13 +90,37 @@ test("the example checkmate game ends in checkmate on its last move, and no move
 	assert.deepEqual(applyMove(state, moveFromLine("51b. (K)h8g8(K)")), { ok: false, error: "the game is over" });
 });
 
+test("the example stalemate game ends in stalemate on its last move", () => {
+	const { lines } = exampleGames().find(g => g.name == "08_stalemate.txt");
+	const state = createInitialState();
+	lines.forEach((line, i) => {
+		assert.deepEqual(applyMove(state, moveFromLine(line)), { ok: true }, line);
+		assert.equal(state.result, i == lines.length - 1 ? "stalemate" : null, line);
+	});
+	assert.equal(state.autoCheck, false);
+	assert.equal(state.pieces.b.filter(p => p.captured == -1).length, 1); // Black's lone king
+});
+
 test("no other example game ends", () => {
 	for (const { name, lines } of exampleGames()) {
-		if (name == "06_checkmate.txt") { continue; }
+		if (name == "06_checkmate.txt" || name == "08_stalemate.txt") { continue; }
 		const state = createInitialState();
 		for (const line of lines) {
 			applyMove(state, moveFromLine(line));
 			assert.equal(state.result, null, name + " " + line);
 		}
 	}
+});
+
+test("the example castling game castles on both sides", () => {
+	const { lines } = exampleGames().find(g => g.name == "07_castling.txt");
+	const state = createInitialState();
+	for (const line of lines) {
+		assert.deepEqual(applyMove(state, moveFromLine(line)), { ok: true }, line);
+	}
+	// White castled e1-g1 with h1 (rook to f1); Black e8-c8 with b8 next to c8 (rook to d8). Both kings moved on.
+	assert.equal(state.board[7][5].waves(), "R"); // f1
+	assert.equal(state.board[0][3].waves(), "R"); // d8
+	assert.equal(state.board[7][7].waves(), "K"); // h1
+	assert.equal(state.board[0][1].waves(), "K"); // b8
 });

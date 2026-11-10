@@ -1,0 +1,11 @@
+0b.
+1w. (KQBNRP)g1h3(N)
+1b. (KQBNRP)c8d6(N)
+2w. (KQBNRP)f1g3(N)
+2b. (KQBNRP)d8c6(N)
+3w. (KQBRP)e1g1(K) O-O
+3b. (KQBRP)e8c8(K) O-O-O
+4w. (QBRP)e2e3(QRP)
+4b. (QBRP)a7a6(QRP)
+5w. (K)g1h1(K)
+5b. (K)c8b8(K)

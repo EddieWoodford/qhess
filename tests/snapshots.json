@@ -317,6 +317,112 @@
 					"h4 cap30 moved1 0000000011000000"
 				]
 			}
+		},
+		"07_castling.txt": {
+			"plyHashes": ["698be6e2","97e65cb0","1fc0675f","c0d4b2e7","3f2cbf2a","eb40c06e","af6c2f2d","b3958557","aee1683a","07418aa2","93d326ff"],
+			"viewHashes": ["6ee27106","b2ccbe74","85b421a1","a7e9d7e8","980ae7fe","2fc67760","37f8b5b6","0fb56966","34481603","12b63917","0bc61b55"],
+			"final": {
+				"turn": "6w",
+				"enPassant": {
+					"coords": [],
+					"color": ""
+				},
+				"potentialCheck": {
+					"king": -1,
+					"color": ""
+				},
+				"autoCheck": false,
+				"potCheck": false,
+				"white": [
+					"a2 cap-1 moved0 1111111111000110",
+					"b2 cap-1 moved0 1111111111001010",
+					"c2 cap-1 moved0 1111111111000110",
+					"d2 cap-1 moved0 1111111111001010",
+					"e3 cap-1 moved1 1111111111000010",
+					"f2 cap-1 moved0 1111111111001010",
+					"g2 cap-1 moved0 1111111111000110",
+					"h2 cap-1 moved0 1111111111001010",
+					"a1 cap-1 moved0 1111111111001010",
+					"b1 cap-1 moved0 1111111111000110",
+					"c1 cap-1 moved0 1111111111001010",
+					"d1 cap-1 moved0 1111111111000110",
+					"h1 cap-1 moved1 0000000000000001",
+					"g3 cap-1 moved1 0000000000110000",
+					"h3 cap-1 moved1 0000000000110000",
+					"f1 cap-1 moved1 0000000011000000"
+				],
+				"black": [
+					"a8 cap-1 moved0 1111111111000110",
+					"d8 cap-1 moved1 0000000011000000",
+					"d6 cap-1 moved1 0000000000110000",
+					"c6 cap-1 moved1 0000000000110000",
+					"b8 cap-1 moved1 0000000000000001",
+					"f8 cap-1 moved0 1111111111001010",
+					"g8 cap-1 moved0 1111111111000110",
+					"h8 cap-1 moved0 1111111111001010",
+					"a6 cap-1 moved1 1111111111000010",
+					"b7 cap-1 moved0 1111111111000110",
+					"c7 cap-1 moved0 1111111111001010",
+					"d7 cap-1 moved0 1111111111000110",
+					"e7 cap-1 moved0 1111111111001010",
+					"f7 cap-1 moved0 1111111111000110",
+					"g7 cap-1 moved0 1111111111001010",
+					"h7 cap-1 moved0 1111111111000110"
+				]
+			}
+		},
+		"08_stalemate.txt": {
+			"plyHashes": ["698be6e2","244d14e5","cdab150b","4b1d2f6e","c56f0fbe","81d1240d","84ffc511","5c773af3","30629848","33acacf9","e386272c","c99ea67f","fd774663","ed9eb04c","8d676c26","4aa8c0d6","c116ba5b","a06ec16f","e717b429","8ff0ea76","9fa7c38f","4ff6f72f","c34f52e0","d11acda8","1f7668ec","bf7059ae","a63cf964","7a08432c","8bfc71cc","0a51665c","d4e2e7a3","0881fe85"],
+			"viewHashes": ["6ee27106","245cd8b9","cdd5d6d8","6ec80c89","f4d2b405","68e0cd4f","22eb80e5","d9e38665","7884e8a8","53c27e92","53b03c97","b2d73c6c","595c006b","49dcd9b3","cd6324e9","a7be01ef","ca72aecb","81d1c7da","e6aed395","7319b49d","0bd47405","36afe79c","cfe57d65","5bfaf2cc","ee0a9d65","115773ed","4572db33","68b71035","e0abeb6e","7fd2aee6","4a0b22b4","eb99affc"],
+			"final": {
+				"turn": "16b",
+				"enPassant": {
+					"coords": [],
+					"color": ""
+				},
+				"potentialCheck": {
+					"king": -1,
+					"color": ""
+				},
+				"autoCheck": false,
+				"potCheck": false,
+				"white": [
+					"a4 cap-1 moved1 0000000000000001",
+					"d5 cap-1 moved1 0000000011000000",
+					"h3 cap-1 moved1 0000000000000100",
+					"d2 cap-1 moved0 1111111100110000",
+					"e7 cap-1 moved1 0000000011000000",
+					"f6 cap-1 moved1 0000000000000010",
+					"g2 cap-1 moved0 1111111100110000",
+					"h2 cap-1 moved0 1111111100110000",
+					"b3 cap-1 moved1 0000000000110000",
+					"b1 cap-1 moved0 1111111100110000",
+					"c1 cap-1 moved0 1111111100110000",
+					"d1 cap-1 moved0 1111111100110000",
+					"e1 cap-1 moved0 1111111100110000",
+					"f1 cap-1 moved0 1111111100110000",
+					"b8 cap-1 moved1 0000000000001000",
+					"h1 cap-1 moved0 1111111100110000"
+				],
+				"black": [
+					"a3 cap13 moved1 0000000011000000",
+					"b8 cap4 moved0 1111111100110000",
+					"e6 cap12 moved1 0000000000000100",
+					"b3 cap11 moved1 0000000000000010",
+					"e8 cap3 moved0 1111111100110000",
+					"f8 cap9 moved0 1111111100110000",
+					"g8 cap10 moved0 1111111100110000",
+					"g8 cap-1 moved1 0000000000000001",
+					"a7 cap2 moved0 1111111100110000",
+					"b5 cap5 moved1 1111111100000000",
+					"h3 cap14 moved1 0000000011000000",
+					"d5 cap6 moved1 1111111100000000",
+					"e7 cap7 moved0 1111111100110000",
+					"f7 cap1 moved0 1111111100110000",
+					"f6 cap15 moved1 0000000000001000",
+					"h7 cap8 moved0 1111111100110000"
+				]
+			}
 		}
 	}
 }
