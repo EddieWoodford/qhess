@@ -43,6 +43,43 @@ class SquareView {
 	}
 }
 
+// Fill the empty board element with its rows: file letters along the top and bottom, rank numbers down
+// both sides, and the 64 square buttons (id "square{r}{c}", r = 0 for rank 8, c = 0 for file a).
+// Only builds the elements; controller.js attaches the handlers and render() draws into them.
+function buildBoard(boardEl) {
+	const FILES = "abcdefgh";
+	const cell = (tag, className, text = "") => {
+		const el = document.createElement(tag);
+		el.className = className;
+		el.textContent = text;
+		return el;
+	};
+	const row = cells => {
+		const el = cell("div", "boardrow");
+		el.append(...cells);
+		return el;
+	};
+	const fileRow = () => row([
+		cell("div", "cornercoord"),
+		...[...FILES].map(f => cell("div", "filecoord", f)),
+		cell("div", "cornercoord"),
+	]);
+
+	boardEl.replaceChildren();
+	boardEl.append(fileRow());
+	for (let r = 0; r <= 7; r++) {
+		const rank = String(8 - r);
+		const squares = [];
+		for (let c = 0; c <= 7; c++) {
+			const sq = cell("button", "boardsquare");
+			sq.id = "square" + r + c;
+			squares.push(sq);
+		}
+		boardEl.append(row([cell("div", "rankcoord", rank), ...squares, cell("div", "rankcoord", rank)]));
+	}
+	boardEl.append(fileRow());
+}
+
 // Redraw everything. view = {
 //   game:        the game state being shown
 //   state:       the click-flow state ("clear", "move0", "showPartialMove", ... see controller.js)
@@ -361,4 +398,4 @@ function debugPrint(txt) {
 	document.getElementById("debug").innerText = txt;
 }
 
-export { SquareView, render, clearFindPieces, toggleFlippedBoard, debugPrint };
+export { SquareView, buildBoard, render, clearFindPieces, toggleFlippedBoard, debugPrint };

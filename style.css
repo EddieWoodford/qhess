@@ -162,8 +162,8 @@ textarea {
 
 /* ==========================================================================
    3. PAGE LAYOUT
-   Two columns: board on the left (order 1), control panel on the right
-   (order 2). Tall screens stack them (see section 8).
+   Two columns: board area on the left, control panel on the right (their
+   order in index.html). Tall screens stack them (see section 8).
    ========================================================================== */
 .container {
     display: flex;
@@ -172,12 +172,17 @@ textarea {
     background-color: var(--bg-container);
     padding: 0.5em;
     gap: 1em; /* spacing between board and controls */
-    height: calc(100% - 4dvmin); /* fill vertical space */
+    height: calc(100% - 5dvmin); /* fill the space below the header (same as the header's height) */
     box-sizing: border-box;
 }
 
 .game-control {
-    order: 2;
+    /* A fixed width, so the panel doesn't resize as the prompt and history text change: with the
+       container's space-evenly, any change in its width would slide the board sideways. */
+    flex: 0 0 auto;
+    width: 42dvmin;
+    min-width: 0;
+    box-sizing: border-box;
     text-align: center;
     background-color: var(--bg-panel);
     border-radius: var(--radius-lg);
@@ -206,22 +211,21 @@ header {
     color: var(--text);
 }
 
-header .left,
-header .center,
-header .right {
+.header-group {
     display: flex;
     align-items: center;
-    gap: 0.5em; /* spacing between icons/text */
+    gap: 0.5em; /* spacing between icons */
 }
 
 /* Icon buttons (info, help, options) */
-header li.button {
-    list-style: none;
+.icon-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    height: auto;
     padding: 0.3em 0.6em;
     font-size: 2dvmin;
+    border: none;
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
@@ -229,27 +233,16 @@ header li.button {
     color: var(--text-muted);
 }
 
-header li.button:hover {
+.icon-button:hover {
     background-color: var(--bg-control-hover);
     transform: scale(1.1);
     box-shadow: 0 0 8px #fff4;  /* subtle glow */
     color: var(--text-strong);
 }
 
-/* NOTE: floats have no effect on flex items, so inside the header these only
-   contribute their padding. */
-.left {
-    float: left;
-    padding: 0em 0.1em 0em 0.2em;
-}
-
-.right {
-    float: right;
-    padding: 0em 0.2em 0em 0.1em;
-}
-
 /* The "Qhess" title */
-.center, .title {
+.title {
+    margin: 0;
     font-weight: 500;
     font-size: 4dvmin;          /* slightly bigger than header icons */
     letter-spacing: 0.05em;
@@ -303,6 +296,19 @@ header li.button:hover {
     border-radius: var(--radius-sm);
     padding: 0.3em 0.5em;
     box-shadow: 0 0 4px 1px #0008 inset; /* subtle inner shadow for depth */
+    min-height: 3.6em; /* room for 3 lines, so the buttons below don't move as the wording changes */
+}
+
+/* A row of buttons sharing the width equally: two side buttons, two history
+   buttons, or the four step buttons. A button hidden with visibility: hidden
+   keeps its place, so the others don't move. */
+.button-row {
+    display: flex;
+}
+
+.button-row > button {
+    flex: 1 1 0;
+    min-width: 0;
 }
 
 /* Look shared by the three button types: side buttons (Submit etc.),
@@ -311,17 +317,14 @@ header li.button:hover {
 .sidebutton,
 .historyButton,
 .stepHistoryButton {
-    float: left;
     color: var(--text);
     background-color: var(--bg-control);
     border: 1px solid var(--border-main);
 }
 
-/* Side and history buttons: half width, with depth and an accent hover */
+/* Side and history buttons: with depth and an accent hover */
 .sidebutton,
 .historyButton {
-    width: 50%;
-    vertical-align: top;
     border-radius: var(--radius-md);
     transition: var(--transition-button);
     box-shadow: var(--shadow-button);
@@ -335,9 +338,8 @@ header li.button:hover {
     box-shadow: var(--shadow-button-hover);
 }
 
-/* Step buttons: quarter width, flat */
+/* Step buttons: flat */
 .stepHistoryButton {
-    width: 25%;
     border-radius: var(--radius-sm);
     transition: background 0.2s ease;
 }
@@ -360,13 +362,13 @@ header li.button:hover {
 
 
 /* ---------- 6.3 Tabs ----------
-   Pure-CSS tabs: a hidden radio input, then its label, and a <section>
+   Pure-CSS tabs: a hidden radio input, then its label, and a .tab-panel
    that is shown when the radio is checked.
    Currently in index.html: tab2 (History) and tab3 (Find Pieces).
    tab1, tab4, tab11 and tab12 are UNUSED: they have no markup today. */
-section {
+.tab-panel {
     display: none;
-    padding: 20px 0 0;
+    padding: 1em 0 0;
     border-top: 1px solid var(--border-subtle);
     background-color: var(--bg-raised);
     color: var(--text);
@@ -396,8 +398,7 @@ label[for*='4']:before { content: '⛬'; }    /* UNUSED (tab4) */
 label[for*='11']:before { content: '<-'; }  /* UNUSED (tab11) */
 label[for*='12']:before { content: '->'; }  /* UNUSED (tab12) */
 
-/* NOTE: this applies to every <label>, including #debug */
-label:hover {
+.tabTitle:hover {
     color: var(--text-strong);
     background-color: var(--bg-control);
     cursor: pointer;
@@ -431,12 +432,21 @@ input:checked + label {
     border: 1px solid var(--border-subtle);
     max-height: 8em;
     overflow: auto;
+    white-space: nowrap; /* one ply per line; long lines scroll sideways rather than widen the panel */
     font-family: var(--font-mono);
     text-align: left;
     background-color: var(--bg-input);
     color: var(--text);
     padding: 0.5em;
     border-radius: var(--radius-md);
+}
+
+
+/* Messages from debugPrint(), under the tabs */
+.debug {
+    margin-top: 1em;
+    padding-top: 0.5em;
+    border-top: 1px solid var(--border-subtle);
 }
 
 
@@ -449,7 +459,6 @@ input:checked + label {
 }
 
 .column {
-    float: left;
     width: 50%;
     color: var(--text);    /* captured piece labels */
     font-weight: 500;
@@ -461,6 +470,14 @@ input:checked + label {
     display: flex;
     justify-content: center;
     padding: 0.5em 0;
+}
+
+/* The K Q R / B N P buttons, in two rows of three */
+.find-grid {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    justify-content: center;
+    padding-bottom: 1em;
 }
 
 /* The K Q R B N P buttons. script.js adds .findHighlight (section 7.2) to the
@@ -503,7 +520,6 @@ input:checked + label {
 .board {
     display: flex;
     flex-flow: var(--board-flex-flow);
-    order: 1;
     justify-content: center;
     background-color: var(--bg-inset);
     padding: 0.5em;
@@ -644,39 +660,33 @@ input:checked + label {
 
 
 /* ---------- 7.4 Coordinates and piece text ---------- */
-.rankcoord {
+/* The labels around the board: rank numbers down the sides, file letters
+   along the top and bottom, and the four empty corners */
+.rankcoord, .filecoord, .cornercoord {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
     color: var(--text-muted);
     background-color: var(--board-edge-col);
+    font-size: var(--board-font-size);
+    font-family: var(--font-mono);
+    line-height: 1;
+}
+
+.rankcoord {
     width: 1em;
     height: 3em;
-    font-size: var(--board-font-size);
-    border: none;
-    line-height: 1;
-    text-align: center;
-    padding: 0px;
 }
 
 .filecoord {
-    color: var(--text-muted);
-    background-color: var(--board-edge-col);
     width: 3em;
     height: 1em;
-    font-size: var(--board-font-size);
-    border: none;
-    font-family: var(--font-mono);
-    text-align: center;
-    line-height: 1;
-    padding: 0px;
 }
 
-.cornerbutton {
-    background-color: var(--board-edge-col);
+.cornercoord {
     width: 1em;
     height: 1em;
-    font-size: var(--board-font-size);
-    border: none;
-    padding: 0px;
-    cursor: default;
 }
 
 /* Piece text inside a square. "collapsed" means only one possibility is left,
@@ -713,6 +723,10 @@ input:checked + label {
     .container {
         flex-flow: column nowrap;
         align-items: stretch;
+    }
+    /* full width under the board */
+    .game-control {
+        width: auto;
     }
 }
 

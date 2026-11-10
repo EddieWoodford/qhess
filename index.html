@@ -2,42 +2,44 @@
 <html lang="en">
 
 <head>
-<!-- <script src="socket.io/socket.io.js"></script> -->
-    <script type="module" src="src/client/main.js"></script>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Qhess</title>
     <link rel="stylesheet" href="style.css">
+    <!-- <script src="socket.io/socket.io.js"></script> -->
+    <script type="module" src="src/client/main.js"></script>
 </head>
 
 <body>
     <header>
-        <div class=left>
-            <li class="button" id="infoButton" title="Information"> ℹ️
-            <li class="button" id="helpButton" title="Game Help"> ❔
+        <div class="header-group">
+            <button class="icon-button" id="infoButton" title="Information">ℹ️</button>
+            <button class="icon-button" id="helpButton" title="Game Help">❔</button>
         </div>
-        <div class="center title">Qhess</div>
-        <div class=right>
-            <li class="button" id="optionsButton" title=Options> ⚙️
+        <h1 class="title">Qhess</h1>
+        <div class="header-group">
+            <button class="icon-button" id="optionsButton" title="Options">⚙️</button>
         </div>
     </header>
 
-    <!-- MODALS -->
+    <!-- MODALS: shown and hidden by src/client/modals.js -->
     <!-- information modal - credits, rules? -->
-    <div id='infoWrapper' class=modalWrapper>
-        <div id=infoDiv class=modalData>
-            <H2>What is Qhess?</h2>
+    <div id="infoWrapper" class="modalWrapper">
+        <div id="infoDiv" class="modalData">
+            <h2>What is Qhess?</h2>
             Simply: it is your daily insanity chess!<br>
             <h3>Credit:</h3>
             <ul>
-                <li>Thomas Bremner
-                <li>Nemo Thorx
-                <li>Eddie Woodford
+                <li>Thomas Bremner</li>
+                <li>Nemo Thorx</li>
+                <li>Eddie Woodford</li>
             </ul>
             <a href="http://wiki.thorx.net/wiki/QuantumChess">Qhess on ThorxWiki</a>
         </div>
     </div>
     <!-- help modal - game UI help -->
-    <div id='helpWrapper' class=modalWrapper>
-        <div id=helpDiv class=modalData>
+    <div id="helpWrapper" class="modalWrapper">
+        <div id="helpDiv" class="modalData">
             <h2>Help!</h2>
             Explain the game UI here<br>
             <br>
@@ -45,216 +47,90 @@
         </div>
     </div>
     <!-- options modal -->
-    <div id='optionsWrapper' class=modalWrapper>
-        <div id=optionsDiv class=modalData>
+    <div id="optionsWrapper" class="modalWrapper">
+        <div id="optionsDiv" class="modalData">
             <h2>Options</h2>
-            <button id="toggleFlippedBoard">Toggle player view</button><br>
+            <button id="toggleFlippedBoard">Toggle player view</button>
         </div>
     </div>
     <!-- END MODALS -->
 
-    <div class="container">
-        <div class="game-control">
-            <h3 class="prompt" id="prompt">Prompt Text</h3>
-            <button class="sidebutton" id="sideButton1"></button>
-            <button class="sidebutton" id="sideButton2"></button>
-            <br clear=all>
-            <h3>Staged Move:</h3>
-            <input id="thismove"></input>
-            <br>
-
-            <input class="hidden" id="tab2" type="radio" name="tabs" checked>
-            <label class="tabTitle" for="tab2">History</label>
-
-            <input class="hidden" id="tab3" type="radio" name="tabs">
-            <label class="tabTitle" for="tab3">Find Pieces</label>
-
-            <!-- START TABS -->
-                <!-- history tab - move history and controls--> 
-            <section id=gameMetaTab>
-                <br>
-                <br>
-                <h4>Move History:</h4>
-                <button class='stepHistoryButton' id='back2'>&lt&lt</button>
-                <button class='stepHistoryButton' id='back1'>&lt</button>
-                <button class='stepHistoryButton' id='forward1'>&gt</button>
-                <button class='stepHistoryButton' id='forward2'>&gt&gt</button>
-                <div class="movehistory" id="movehistory" contenteditable></div>
-                <br>
-                <button class='historyButton' id='reset'>Reset Game</button>
-                <button class='historyButton' id='restorehistory'>Restore History</button>
-                <br>
-                <button class='historyButton' id='copyallhistory'>Copy All</button>
-                <button class='historyButton' id='copylastmove'>Copy Last Move</button>
-                <br>
-                <button class='historyButton' id='pasteallrestore'>Paste All & Reset</button>
-                <button class='historyButton' id='pastelinerestore'>Paste Move</button>
-                <!-- <textarea id="movehistory" rows=20></textarea> -->
-                <br>
-            </section>
-                <!-- find pieces tab - for game assistance --> 
-            <section id="gameFindpiecesTab">
-                <button class="findpiecebutton" id="findK">
-                    <div class="findpiece" id=findKpiece></div>
-                </button>
-                <button class="findpiecebutton" id="findQ">
-                    <div class="findpiece" id=findQpiece></div>
-                </button>
-                <button class="findpiecebutton" id="findR">
-                    <div class="findpiece" id=findRpiece></div>
-                </button>
-                <br clear=all>
-                <button class="findpiecebutton" id="findB">
-                    <div class="findpiece" id=findBpiece></div>
-                </button>
-                <button class="findpiecebutton" id="findN">
-                    <div class="findpiece" id=findNpiece></div>
-                </button>
-                <button class="findpiecebutton" id="findP">
-                    <div class="findpiece" id=findPpiece></div>
-                </button>
-                <br>
-                <br>
-                <div class="captured-pieces">
-                    <div class="column" id='whitecaptured'><strong>White Captured</strong></div>
-                    <div class="column" id='blackcaptured'><strong>Black Captured</strong></div>
-                </div>
-            </section>
-            <!-- END TABS -->
-
-            <br clear=all>
-            <hr>
-            <div>
-                <label id="debug"></label>
-            </div>
-
-		</div>
-		<div id="gameArea">
-            <h2 id=gameTitle></h2>
-            <div id="board" class="board">
-                <div class="boardrow">
-                    <button class="cornerbutton" id="cornerbutton"></button>
-                    <button class="filecoord" id="fileA">a</button>
-                    <button class="filecoord" id="fileB">b</button>
-                    <button class="filecoord" id="fileC">c</button>
-                    <button class="filecoord" id="fileD">d</button>
-                    <button class="filecoord" id="fileE">e</button>
-                    <button class="filecoord" id="fileF">f</button>
-                    <button class="filecoord" id="fileG">g</button>
-                    <button class="filecoord" id="fileH">h</button>
-                    <button class="cornerbutton" id="cornerbutton"></button>
-                </div>
-                <div class="boardrow">
-                        <button class="rankcoord" id="rank8">8</button>
-                        <button class="boardsquare" id="square00"></button>
-                        <button class="boardsquare" id="square01"></button>
-                        <button class="boardsquare" id="square02"></button>
-                        <button class="boardsquare" id="square03"></button>
-                        <button class="boardsquare" id="square04"></button>
-                        <button class="boardsquare" id="square05"></button>
-                        <button class="boardsquare" id="square06"></button>
-                        <button class="boardsquare" id="square07"></button>
-                        <button class="rankcoord" id="rank8">8</button>
-                </div>
-                <div class="boardrow">
-                        <button class="rankcoord" id="rank7">7</button>
-                        <button class="boardsquare" id="square10"></button>
-                        <button class="boardsquare" id="square11"></button>
-                        <button class="boardsquare" id="square12"></button>
-                        <button class="boardsquare" id="square13"></button>
-                        <button class="boardsquare" id="square14"></button>
-                        <button class="boardsquare" id="square15"></button>
-                        <button class="boardsquare" id="square16"></button>
-                        <button class="boardsquare" id="square17"></button>
-                        <button class="rankcoord" id="rank7">7</button>
-                </div>
-                <div class="boardrow">
-                        <button class="rankcoord" id="rank6">6</button>
-                        <button class="boardsquare" id="square20"></button>
-                        <button class="boardsquare" id="square21"></button>
-                        <button class="boardsquare" id="square22"></button>
-                        <button class="boardsquare" id="square23"></button>
-                        <button class="boardsquare" id="square24"></button>
-                        <button class="boardsquare" id="square25"></button>
-                        <button class="boardsquare" id="square26"></button>
-                        <button class="boardsquare" id="square27"></button>
-                        <button class="rankcoord" id="rank6">6</button>
-                </div>
-                <div class="boardrow">
-                        <button class="rankcoord" id="rank5">5</button>
-                        <button class="boardsquare" id="square30"></button>
-                        <button class="boardsquare" id="square31"></button>
-                        <button class="boardsquare" id="square32"></button>
-                        <button class="boardsquare" id="square33"></button>
-                        <button class="boardsquare" id="square34"></button>
-                        <button class="boardsquare" id="square35"></button>
-                        <button class="boardsquare" id="square36"></button>
-                        <button class="boardsquare" id="square37"></button>
-                        <button class="rankcoord" id="rank5">5</button>
-                </div>
-                <div class="boardrow">
-                        <button class="rankcoord" id="rank4">4</button>
-                        <button class="boardsquare" id="square40"></button>
-                        <button class="boardsquare" id="square41"></button>
-                        <button class="boardsquare" id="square42"></button>
-                        <button class="boardsquare" id="square43"></button>
-                        <button class="boardsquare" id="square44"></button>
-                        <button class="boardsquare" id="square45"></button>
-                        <button class="boardsquare" id="square46"></button>
-                        <button class="boardsquare" id="square47"></button>
-                        <button class="rankcoord" id="rank4">4</button>
-                </div>
-                <div class="boardrow">
-                        <button class="rankcoord" id="rank3">3</button>
-                        <button class="boardsquare" id="square50"></button>
-                        <button class="boardsquare" id="square51"></button>
-                        <button class="boardsquare" id="square52"></button>
-                        <button class="boardsquare" id="square53"></button>
-                        <button class="boardsquare" id="square54"></button>
-                        <button class="boardsquare" id="square55"></button>
-                        <button class="boardsquare" id="square56"></button>
-                        <button class="boardsquare" id="square57"></button>
-                        <button class="rankcoord" id="rank3">3</button>
-                </div>
-                <div class="boardrow">
-                        <button class="rankcoord" id="rank2">2</button>
-                        <button class="boardsquare" id="square60"></button>
-                        <button class="boardsquare" id="square61"></button>
-                        <button class="boardsquare" id="square62"></button>
-                        <button class="boardsquare" id="square63"></button>
-                        <button class="boardsquare" id="square64"></button>
-                        <button class="boardsquare" id="square65"></button>
-                        <button class="boardsquare" id="square66"></button>
-                        <button class="boardsquare" id="square67"></button>
-                        <button class="rankcoord" id="rank2">2</button>
-                </div>
-                <div class="boardrow">
-                        <button class="rankcoord" id="rank1">1</button>
-                        <button class="boardsquare" id="square70"></button>
-                        <button class="boardsquare" id="square71"></button>
-                        <button class="boardsquare" id="square72"></button>
-                        <button class="boardsquare" id="square73"></button>
-                        <button class="boardsquare" id="square74"></button>
-                        <button class="boardsquare" id="square75"></button>
-                        <button class="boardsquare" id="square76"></button>
-                        <button class="boardsquare" id="square77"></button>
-                        <button class="rankcoord" id="rank1">1</button>
-                </div>
-                <div class="boardrow">
-                        <button class="cornerbutton" id="cornerbutton"></button>
-                        <button class="filecoord" id="fileA">a</button>
-                        <button class="filecoord" id="fileB">b</button>
-                        <button class="filecoord" id="fileC">c</button>
-                        <button class="filecoord" id="fileD">d</button>
-                        <button class="filecoord" id="fileE">e</button>
-                        <button class="filecoord" id="fileF">f</button>
-                        <button class="filecoord" id="fileG">g</button>
-                        <button class="filecoord" id="fileH">h</button>
-                        <button class="cornerbutton" id="cornerbutton"></button>
-                </div>
-            </div>
+    <main class="container">
+        <!-- BOARD: the rows and squares are made by buildBoard() in src/client/render.js -->
+        <div class="board-area" id="gameArea">
+            <div id="board" class="board"></div>
         </div>
-    </div>
+
+        <!-- CONTROL PANEL -->
+        <aside class="game-control">
+            <!-- whose turn it is, what to do next, and the buttons for it -->
+            <div class="status">
+                <h3 class="prompt" id="prompt">Prompt Text</h3>
+                <div class="button-row">
+                    <button class="sidebutton" id="sideButton1"></button>
+                    <button class="sidebutton" id="sideButton2"></button>
+                </div>
+            </div>
+
+            <!-- notation for the move being made -->
+            <div class="staged">
+                <h3>Staged Move:</h3>
+                <input id="thismove">
+            </div>
+
+            <!-- tabbed panels: a hidden radio and its label per tab; the checked one shows its panel -->
+            <div class="panels">
+                <input class="hidden" id="tab2" type="radio" name="tabs" checked>
+                <label class="tabTitle" for="tab2">History</label>
+
+                <input class="hidden" id="tab3" type="radio" name="tabs">
+                <label class="tabTitle" for="tab3">Find Pieces</label>
+
+                <!-- history tab - move history and controls -->
+                <div class="tab-panel" id="gameMetaTab">
+                    <h4>Move History:</h4>
+                    <div class="button-row">
+                        <button class="stepHistoryButton" id="back2">&lt;&lt;</button>
+                        <button class="stepHistoryButton" id="back1">&lt;</button>
+                        <button class="stepHistoryButton" id="forward1">&gt;</button>
+                        <button class="stepHistoryButton" id="forward2">&gt;&gt;</button>
+                    </div>
+                    <div class="movehistory" id="movehistory" contenteditable></div>
+                    <div class="button-row">
+                        <button class="historyButton" id="reset">Reset Game</button>
+                        <button class="historyButton" id="restorehistory">Restore History</button>
+                    </div>
+                    <div class="button-row">
+                        <button class="historyButton" id="copyallhistory">Copy All</button>
+                        <button class="historyButton" id="copylastmove">Copy Last Move</button>
+                    </div>
+                    <div class="button-row">
+                        <button class="historyButton" id="pasteallrestore">Paste All &amp; Reset</button>
+                        <button class="historyButton" id="pastelinerestore">Paste Move</button>
+                    </div>
+                </div>
+
+                <!-- find pieces tab - for game assistance -->
+                <div class="tab-panel" id="gameFindpiecesTab">
+                    <div class="find-grid">
+                        <button class="findpiecebutton" id="findK"><div class="findpiece" id="findKpiece"></div></button>
+                        <button class="findpiecebutton" id="findQ"><div class="findpiece" id="findQpiece"></div></button>
+                        <button class="findpiecebutton" id="findR"><div class="findpiece" id="findRpiece"></div></button>
+                        <button class="findpiecebutton" id="findB"><div class="findpiece" id="findBpiece"></div></button>
+                        <button class="findpiecebutton" id="findN"><div class="findpiece" id="findNpiece"></div></button>
+                        <button class="findpiecebutton" id="findP"><div class="findpiece" id="findPpiece"></div></button>
+                    </div>
+                    <div class="captured-pieces">
+                        <div class="column" id="whitecaptured"><strong>White Captured</strong></div>
+                        <div class="column" id="blackcaptured"><strong>Black Captured</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- messages from debugPrint() in src/client/render.js -->
+            <div class="debug" id="debug"></div>
+        </aside>
+    </main>
 </body>
 
 </html>
