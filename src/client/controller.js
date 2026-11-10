@@ -683,7 +683,7 @@ function backToSinglePlayer() {
 	ui.replay = -1;
 	setFlippedBoard(false);
 	useSession(new LocalSession());
-	newGame();
+	resumeSavedGame();
 }
 
 // The session's connection or game changed: update what the page shows
@@ -800,6 +800,7 @@ function setState(stateIn) {
 
 // Redraw the page as it is
 function draw() {
+	saveRecord();
 	render({
 		game,
 		state: ui.state,
@@ -814,6 +815,45 @@ function draw() {
 		pcRule: pcRule(),
 		pcSetting: ui.potentialCheck,
 	});
+}
+
+////////////////////////////////
+// Saved game
+////////////////////////////////
+// The single-player game's record is kept in this browser (localStorage), so reloading the page carries on with
+// it. Only Reset Game (or loading other moves) replaces it. A multiplayer game isn't saved here: it has its own
+// way back in after a reload (socket-session.js savedSeat), and leaving it returns to the saved game.
+const GAME_STORAGE_KEY = "qhess.game";
+let savedRecord = null; // the record as last saved, so it is only written when it changes
+
+function saveRecord() {
+	if (isMultiplayer()) { return; }
+	const text = ui.record.join("\n");
+	if (text === savedRecord) { return; }
+	savedRecord = text;
+	try {
+		localStorage.setItem(GAME_STORAGE_KEY, text);
+	} catch {
+		// The browser won't keep it (e.g. storage is blocked): the game lasts until the page is closed
+	}
+}
+
+function loadSavedRecord() {
+	try {
+		return localStorage.getItem(GAME_STORAGE_KEY) ?? "";
+	} catch {
+		return "";
+	}
+}
+
+// Start the saved single-player game where it was left, or a new game if there isn't one
+function resumeSavedGame() {
+	const text = loadSavedRecord();
+	if (text.trim() == "") {
+		newGame();
+	} else {
+		restoreGameHistory(text);
+	}
 }
 
 // Called once when the page loads: make the board and its squares, then start a game
@@ -832,7 +872,7 @@ function init() {
 		}
 		squares.push(viewRow);
 	}
-	newGame();
+	resumeSavedGame();
 	// Reloading the page during a multiplayer game goes back into it
 	const seat = savedSeat();
 	if (seat) {
@@ -840,7 +880,7 @@ function init() {
 	}
 }
 
-// Start a new game for the player: the Reset Game button, and when the page opens
+// Start a new game for the player: the Reset Game button, and when there's no saved game (see resumeSavedGame)
 function newGame() {
 	setup();
 	skipMove0();

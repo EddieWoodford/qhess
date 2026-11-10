@@ -78,6 +78,7 @@ const MULTIPLAYER = [
 // returning a list of problems (empty if it passed)
 const SETTINGS_CHECKS = {
 	"settings: Potential Check off": checkNoPotentialCheck,
+	"saved game: reloading carries on": checkReloadKeepsGame,
 };
 
 ////////////////////////////////
@@ -90,7 +91,7 @@ const SETTINGS_CHECKS = {
 // Importing the module from inside the frame gives the same instance the page is running,
 // and its exported variables (TURNNUMBER etc.) are live, so they always show the current value.
 const GAME_MODULE_URL = new URL("../src/client/controller.js", location.href).href;
-function loadGame(frameId = "game", keepSeat = false) {
+function loadGame(frameId = "game", keepSeat = false, keepGame = false) {
 	return new Promise(resolve => {
 		const frame = document.getElementById(frameId);
 		frame.onload = async () => {
@@ -106,6 +107,11 @@ function loadGame(frameId = "game", keepSeat = false) {
 		// The Settings tab's switches start at their defaults (the snapshots were recorded with them):
 		// forget any this browser remembers (src/client/settings.js)
 		localStorage.removeItem("qhess.settings");
+		// The single-player game this browser saved would be carried on (controller.js resumeSavedGame): tests
+		// start with a new game, unless the test is reloading on purpose (keepGame)
+		if (!keepGame) {
+			localStorage.removeItem("qhess.game");
+		}
 		frame.src = "../index.html?t=" + Date.now();
 	});
 }
@@ -415,6 +421,39 @@ async function playMultiplayer(spec, snap) {
 // With the Potential Check switch off: Black's move 0 is passed by itself (for a new game, Reset Game, and an
 // empty import), Add PC never shows or works, a game file with potential checks still loads, and switching
 // it back on brings move 0 and Add PC back
+// Reloading the page carries on with the single-player game; only Reset Game starts a new one
+async function checkReloadKeepsGame(ctx) {
+	const problems = [];
+	const expect = (what, ok) => { if (!ok) { problems.push(what); } };
+	const norm = h => h.trim().split(/\r?\n/).map(l => l.trim()).join("\n");
+	const reload = () => loadGame("game", false, true);
+
+	const text = await fetchText("../example_games/02_potential_checks.txt");
+	const lines = historyLines(ctx, text).slice(0, 12);
+	ctx.game.restoreGameHistory(lines.join("\n"));
+	const before = norm(ctx.game.game.history);
+
+	ctx = await reload();
+	expect("After reloading, the history should be the same 12 plies, is '" + ctx.game.game.history + "'",
+		norm(ctx.game.game.history) == before);
+	expect("After reloading, the History tab should show 12 plies, shows " + ctx.game.ui.record.length,
+		ctx.game.ui.record.length == 12);
+
+	// Reloading while stepping back through the history comes back to the whole game
+	ctx.game.stepBackMove();
+	ctx.game.stepBackMove();
+	ctx = await reload();
+	expect("Reloading while replaying should come back at the end of the game, history is '" + ctx.game.game.history + "'",
+		norm(ctx.game.game.history) == before && ctx.game.ui.replay == -1);
+
+	// Reset Game is the way to start again, and that is kept too
+	ctx.win.document.getElementById("reset").click();
+	ctx = await reload();
+	expect("After Reset Game and reloading, the game should be new, history is '" + ctx.game.game.history + "'",
+		ctx.game.game.turnNumber == 0 && ctx.game.ui.record.length == 0);
+	return problems;
+}
+
 async function checkNoPotentialCheck(ctx) {
 	const problems = [];
 	const doc = ctx.win.document;
@@ -545,6 +584,7 @@ async function runAll(record) {
 			outcome = { status: "fail", problems: [String(err)] };
 		}
 		localStorage.removeItem("qhess.settings"); // don't leave the switch as the check left it
+		localStorage.removeItem("qhess.game");     // nor the game it saved
 		row.className = outcome.status;
 		statusCell.textContent = outcome.status.toUpperCase();
 		const pre = document.createElement("pre");
