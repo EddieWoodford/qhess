@@ -24,7 +24,9 @@ import { getPotentialMoves } from "../engine/moves.js";
 import { findPotentialKings, findPCAttackers } from "../engine/check.js";
 import { declareNotAKing as engineDeclareNotAKing, startMove, choosePCKing, addPCAttacker } from "../engine/game.js";
 import { getHistoryLines, parseMoveText } from "../engine/notation.js";
-import { SquareView, render, clearFindPieces, debugPrint } from "./render.js";
+import { SquareView } from "./board-view.js";
+import { render, debugPrint } from "./render.js";
+import { dom } from "./dom.js";
 import { LocalSession } from "./session.js";
 
 const session = new LocalSession();
@@ -127,7 +129,7 @@ function submitMove() {
 		return;
 	}
 	if (REPLAYNUMBER == -1) {
-		document.getElementById("movehistory").innerText = game.history;
+		dom.history.innerText = game.history;
 	}
 	// Remember this move's squares so replay can highlight the last move
 	LASTSTARTCOORDS = STARTCOORDS;
@@ -136,13 +138,8 @@ function submitMove() {
 }
 
 function findPiecesClick(wave) {
-	clearFindPieces();
-	if (wave == FINDPIECE) {
-		FINDPIECE = "";
-	} else {
-		FINDPIECE = wave;
-		document.getElementById("find"+wave).classList.add("findHighlight");
-	}
+	// Clicking the active one again turns it off. render() highlights the button and the squares.
+	FINDPIECE = (wave == FINDPIECE) ? "" : wave;
 	setState(STATE);
 }
 
@@ -164,7 +161,6 @@ function squareLeave(coords) {
 function squareClick(coords) {
 	if (REPLAYNUMBER > -1) {return}
 	FINDPIECE = "";
-	clearFindPieces();
 	if (STATE == "highlightPotentialMoves") {
 		showPartialMove(coords);
 	} else if (STATE == "showPartialMove") {
@@ -319,7 +315,7 @@ function selectPCAttackers(attackerCoords) {
 function restoreGameHistory(historyText,nMoves) {
 	// Restore a game from historyText, or if that's left out from whatever is in the move history box.
 	// nMoves: only replay the first nMoves plies (used when stepping through a replay).
-	let historyArea = document.getElementById("movehistory");
+	let historyArea = dom.history;
 	let historyLines;
 	if (historyText != undefined) {
 		historyLines = getHistoryLines(historyText);
@@ -357,7 +353,7 @@ function replayPly(moveText) {
 		return false;
 	}
 	if (REPLAYNUMBER == -1) {
-		document.getElementById("movehistory").innerText = game.history;
+		dom.history.innerText = game.history;
 	}
 	// Remember this move's squares so replay can highlight the last move
 	LASTSTARTCOORDS = move.from ?? [];
@@ -376,26 +372,26 @@ function doMoveFromText(moveText) {
 }
 
 function copyAllHistory() {
-	let historyArea = document.getElementById("movehistory");
+	let historyArea = dom.history;
 	let historyText = historyArea.innerText;
 	navigator.clipboard.writeText(historyText);
 }
 
 function copyLastMove() {
-	let historyArea = document.getElementById("movehistory");
+	let historyArea = dom.history;
 	let historyText = historyArea.innerText;
 	let historyLines = getHistoryLines(historyText);
 	navigator.clipboard.writeText(historyLines[historyLines.length-1]);
 }
 
 function pasteAllRestore() {
-	let historyArea = document.getElementById("movehistory");
+	let historyArea = dom.history;
 	historyArea.innerText = "";
 	navigator.clipboard.readText().then((clipText) => (restoreGameHistory(clipText)));
 }
 
 function pasteLineRestore() {
-	let historyArea = document.getElementById("movehistory");
+	let historyArea = dom.history;
 	let historyLines = getHistoryLines(historyArea.innerText);
 	let historyText = historyLines.join("\r\n");
 	navigator.clipboard.readText().then((clipText) => (restoreGameHistory(historyText + "\r\n" + clipText)));
@@ -421,7 +417,7 @@ function stepBackMove() {
 }
 
 function stepForwardMove() {
-	let historyArea = document.getElementById("movehistory");
+	let historyArea = dom.history;
 	let historyLines = getHistoryLines(historyArea.innerText);
 	if (REPLAYNUMBER < historyLines.length/2) {
 		let moveText = historyLines[2*REPLAYNUMBER];
@@ -431,7 +427,7 @@ function stepForwardMove() {
 }
 
 function stepForwardAll() {
-	let historyArea = document.getElementById("movehistory");
+	let historyArea = dom.history;
 	let historyLines = getHistoryLines(historyArea.innerText);
 	REPLAYNUMBER = historyLines.length/2;
 	restoreGameHistory(null, 2*REPLAYNUMBER);
@@ -498,10 +494,10 @@ function setup() {
 	LASTENDCOORDS = [];
 	FINDPIECE = "";
 
-	let moveTextarea = document.getElementById("thismove");
+	let moveTextarea = dom.stagedMove;
 	moveTextarea.value = "";
 	if (REPLAYNUMBER == -1) {
-		let historyArea = document.getElementById("movehistory");
+		let historyArea = dom.history;
 		historyArea.innerText = "";
 		historyArea.contentEditable = true;
 	}

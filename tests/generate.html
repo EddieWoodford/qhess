@@ -71,7 +71,7 @@ async function playGame(seed, maxPlies, pawnBias = 1) {
 	const { win, game: g } = await loadFrame();
 	const E = name => g[name]; // read the game's exported page variables (STATE, SQUARES)
 	const S = () => g.game; // the current game state object (replaced on every reset)
-	const sideButtonVisible = n => win.document.getElementById("sideButton" + n).style.visibility === "visible";
+	const sideButtonVisible = n => win.getComputedStyle(win.document.getElementById("sideButton" + n)).visibility === "visible";
 
 	// When a move is ambiguous (en passant / promotion), the game asks with confirm(). Answer randomly.
 	win.confirm = () => rng() < 0.5;

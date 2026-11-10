@@ -97,6 +97,22 @@
     --piece-checkAttacker-col: #5a8fb5;     /* blue */
     --findpiece-highlight-col: #5f4a82;     /* more visible highlight */
     --marker-clear: rgba(255,0,0,0);        /* transparent stop used by the move markers */
+
+    /* ---- Piece colours (section 7.4) ---- */
+    /* White pieces: richer, warmer, darker shades for visibility */
+    --piece-wK: #FFD700;                    /* bright gold */
+    --piece-wQ: #FF69B4;                    /* hot pink */
+    --piece-wR: #1E90FF;                    /* dodger blue */
+    --piece-wB: #FF4500;                    /* orange-red */
+    --piece-wN: #FFA500;                    /* orange */
+    --piece-wP: #32CD32;                    /* lime green */
+    /* Black pieces: softer, slightly glowing pastels to pop on dark squares */
+    --piece-bK: #F0E68C;                    /* khaki */
+    --piece-bQ: #BA55D3;                    /* medium orchid */
+    --piece-bR: #87CEFA;                    /* light sky blue */
+    --piece-bB: #FF6347;                    /* tomato */
+    --piece-bN: #FFA07A;                    /* light salmon */
+    --piece-bP: #90EE90;                    /* light green */
 }
 
 
@@ -140,6 +156,12 @@ button, input {
 button {
     cursor: pointer;
     height: var(--button-height);
+}
+
+/* Hidden but keeping its place, so the things around it don't move
+   (dom.js setVisible) */
+.invisible {
+    visibility: hidden;
 }
 
 
@@ -671,6 +693,20 @@ input:checked + .tabTitle {
 .whitepiececollapsed, .blackpiececollapsed {
     font-size: 2.7em;
 }
+
+/* Each piece symbol's colour (glyphs.js glyphHTML): glyph-{colour}{type} */
+.glyph-wK { color: var(--piece-wK); }
+.glyph-wQ { color: var(--piece-wQ); }
+.glyph-wR { color: var(--piece-wR); }
+.glyph-wB { color: var(--piece-wB); }
+.glyph-wN { color: var(--piece-wN); }
+.glyph-wP { color: var(--piece-wP); }
+.glyph-bK { color: var(--piece-bK); }
+.glyph-bQ { color: var(--piece-bQ); }
+.glyph-bR { color: var(--piece-bR); }
+.glyph-bB { color: var(--piece-bB); }
+.glyph-bN { color: var(--piece-bN); }
+.glyph-bP { color: var(--piece-bP); }
 
 
 /* ==========================================================================

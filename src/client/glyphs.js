@@ -1,72 +1,30 @@
 "use strict";
 
-// Chess piece symbols and the HTML that shows a piece's remaining possibilities in a square.
+// Chess piece symbols, and the HTML that shows a piece's remaining possibilities in a square.
+// Each symbol is a <span class="glyph glyph-{color}{type}">, e.g. glyph-wQ; style.css (section 7.4) colours them.
 
-// White pieces – richer, warmer, darker shades for visibility
-const WK = "<span style='color:#FFD700'>&#9812;</span>"; // bright gold
-const WQ = "<span style='color:#FF69B4'>&#9813;</span>"; // hot pink
-const WR = "<span style='color:#1E90FF'>&#9814;</span>"; // dodger blue
-const WB = "<span style='color:#FF4500'>&#9815;</span>"; // orange-red
-const WP = "<span style='color:#32CD32'>&#9817;</span>"; // lime green
-const WN = "<span style='color:#FFA500'>&#9816;</span>"; // orange
+const SYMBOLS = {
+	w: { K: "&#9812;", Q: "&#9813;", R: "&#9814;", B: "&#9815;", N: "&#9816;", P: "&#9817;" },
+	b: { K: "&#9818;", Q: "&#9819;", R: "&#9820;", B: "&#9821;", N: "&#9822;", P: "&#9823;" },
+};
 
-// Black pieces – softer, slightly glowing pastels to pop on dark squares
-const BK = "<span style='color:#F0E68C'>&#9818;</span>"; // khaki
-const BQ = "<span style='color:#BA55D3'>&#9819;</span>"; // medium orchid
-const BR = "<span style='color:#87CEFA'>&#9820;</span>"; // light sky blue
-const BB = "<span style='color:#FF6347'>&#9821;</span>"; // tomato
-const BN = "<span style='color:#FFA07A'>&#9822;</span>"; // light salmon
-const BP = "<span style='color:#90EE90'>&#9823;</span>"; // light green
+// HTML for one piece symbol: wave is the type ("K", "Q", ...), color is "w" or "b"
+function glyphHTML(wave, color) {
+	return '<span class="glyph glyph-' + color + wave + '">' + SYMBOLS[color][wave] + '</span>';
+}
 
 // HTML for a piece with the given waves (e.g. "KQRP") and color ("w"/"b"):
 // a 3x2 grid of the possible types (K Q R / B N P), or one large symbol once fully collapsed.
 function waveHTML(waves, color) {
-	let wavetext = "";
-	let allwaves = "KQRBNP";
-	for (let i = 0; i < 6; i++) {
-		if (waves.includes(allwaves[i])) {
-			wavetext = wavetext + allwaves[i];
-		} else {
-			wavetext = wavetext + "empty";
-		}
-		if (i == 2) { wavetext = wavetext + "<br>"; }
+	const side = color == "w" ? "whitepiece" : "blackpiece";
+	if (waves.length == 1) {
+		return '<div class="' + side + 'collapsed">' + glyphHTML(waves, color) + '</div>';
 	}
-
-	if (color == "w") {
-		if (waves.length == 1) {
-			wavetext = waves;
-			wavetext = wavetext.replace(/^/, '<div class="whitepiececollapsed">');
-		} else {
-			wavetext = wavetext.replace(/^/, '<div class="whitepiece">');
-		}
-		wavetext = wavetext.replace(/$/, '</div>');
-		// The letters are swapped for symbols one at a time, in this order. Each replace() only
-		// changes the first match, and some symbol strings contain capital letters (e.g. the "B" in
-		// WQ's colour), so changing the order could swap a letter inside an earlier symbol.
-		wavetext = wavetext.replace("B", WB);
-		wavetext = wavetext.replace("K", WK);
-		wavetext = wavetext.replace("Q", WQ);
-		wavetext = wavetext.replace("R", WR);
-		wavetext = wavetext.replace("N", WN);
-		wavetext = wavetext.replace("P", WP);
-		wavetext = wavetext.replaceAll("empty", "&nbsp;");
-	} else {
-		if (waves.length == 1) {
-			wavetext = waves;
-			wavetext = wavetext.replace(/^/, '<div class="blackpiececollapsed">');
-		} else {
-			wavetext = wavetext.replace(/^/, '<div class="blackpiece">');
-		}
-		wavetext = wavetext.replace(/$/, '</div>');
-		wavetext = wavetext.replace("B", BB);
-		wavetext = wavetext.replace("K", BK);
-		wavetext = wavetext.replace("Q", BQ);
-		wavetext = wavetext.replace("R", BR);
-		wavetext = wavetext.replace("N", BN);
-		wavetext = wavetext.replace("P", BP);
-		wavetext = wavetext.replaceAll("empty", "&nbsp;");
-	}
-	return wavetext;
+	const cell = wave => waves.includes(wave) ? glyphHTML(wave, color) : "&nbsp;";
+	return '<div class="' + side + '">'
+		+ [..."KQR"].map(cell).join("") + "<br>"
+		+ [..."BNP"].map(cell).join("")
+		+ '</div>';
 }
 
-export { WK, WQ, WR, WB, WN, WP, BK, BQ, BR, BB, BN, BP, waveHTML };
+export { glyphHTML, waveHTML };

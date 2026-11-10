@@ -114,8 +114,10 @@ function captureView(ctx) {
 	const parts = [];
 	doc.querySelectorAll(".boardsquare").forEach(sq => parts.push(sq.id + "|" + sq.className + "|" + sq.innerHTML));
 	parts.push(el("prompt").innerHTML);
+	// Visibility as the page shows it ("visible" / "hidden"), however the page code hides things
+	const visibility = e => ctx.win.getComputedStyle(e).visibility;
 	for (const id of ["sideButton1", "sideButton2", "back2", "back1", "forward1", "forward2"]) {
-		parts.push(id + "|" + el(id).innerText + "|" + el(id).style.visibility);
+		parts.push(id + "|" + el(id).innerText + "|" + visibility(el(id)));
 	}
 	parts.push(el("thismove").value);
 	parts.push(el("whitecaptured").innerHTML, el("blackcaptured").innerHTML);

@@ -4,7 +4,7 @@
 // Loaded from index.html as <script type="module">, which runs after the page has been parsed.
 
 import * as game from "./controller.js";
-import { buildBoard, toggleFlippedBoard } from "./render.js";
+import { buildBoard, toggleFlippedBoard } from "./board-view.js";
 import { setupModals } from "./modals.js";
 
 function onClick(id, handler) {
@@ -12,7 +12,7 @@ function onClick(id, handler) {
 }
 
 // The board's squares are made here rather than written out in index.html; game.setup() below needs them
-buildBoard(document.getElementById("board"));
+buildBoard();
 
 setupModals();
 
