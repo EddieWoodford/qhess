@@ -2,36 +2,36 @@
 
 // Reading the move-history notation. Pure functions; no game state, no page code.
 //
-// One ply looks like:   12w. [d2](KQRP)e2xe4(QR)=(QRNB)+<e8+ e4 h5> e.p.
+// One ply looks like:   12w. [d2](KQRP)e2xe4(QR)+<e8+ e4 h5>
 //   12w.          turn number and colour
 //   [d2]          optional: "Not a King" declared on d2 (the opponent's potential-check king)
 //   (KQRP)e2      waves before moving, and the start square
 //   x             optional: capture
 //   e4(QR)        end square, and waves after moving
-//   =(QRNB)       optional: pawn promotion
+//   then, optionally, one of
+//     =(QRNB)       pawn promotion (in place of the waves after moving: "e8(P)=(QRNB)")
+//     " e.p."       en passant
+//     " O-O" / " O-O-O"  castled towards the h-file / the a-file
 //   +             optional: automatic check
 //   <e8+ e4 h5>   optional: potential check on the king at e8, by the attackers on e4 and h5
-//   e.p.          optional: en passant
-//   O-O / O-O-O   optional: castled towards the h-file / the a-file (after the end square's waves)
+// Black's move 0 has no move: "0b. ", or "0b. <e2+ e7>" with a potential check.
 
 import { coordstext2coords } from "./utils.js";
 
-// Take history text in various formats (one ply per line, or all run together)
-// and return an array of trimmed plies, split wherever a turn label like "3w." starts
-function getHistoryLines(historyText) {
-	const splitOn = (slicable, ...indices) =>
-		[0, ...indices].map((n, i, m) => slicable.slice(n, m[i + 1]).trim());
+// A turn label such as "12w.", where each ply starts
+const TURN_LABEL = /\d+[bw]\./g;
 
-	historyText = historyText.replaceAll("\r", "");
-	historyText = historyText.replaceAll("\n", "");
-	let matches = historyText.match(/(\d+[bw]\.)/g);
-	let idxs = [];
-	for (let i = 0; i < matches.length; i++) {
-		idxs.push(historyText.indexOf(matches[i]));
+// Take history text in various formats (one ply per line, or all run together) and return an array of trimmed
+// plies, split wherever a turn label like "3w." starts. Any text before the first label is a ply of its own
+// (so it is reported when it can't be played, rather than silently dropped). Empty text gives no plies.
+function getHistoryLines(historyText) {
+	// A ply can be wrapped across lines when pasted, so the lines are joined back up first
+	const text = historyText.replace(/[\r\n]/g, "");
+	const starts = [...text.matchAll(TURN_LABEL)].map(m => m.index);
+	if (starts[0] !== 0) {
+		starts.unshift(0);
 	}
-	let historyLines = splitOn(historyText, ...idxs);
-	historyLines = historyLines.filter((str) => str.length > 0);
-	return historyLines;
+	return starts.map((start, i) => text.slice(start, starts[i + 1]).trim()).filter(line => line.length > 0);
 }
 
 // Parse one ply of notation into plain data:
@@ -45,13 +45,15 @@ function getHistoryLines(historyText) {
 //   pcKing:      [r,c] of the potential-check king, or null
 //   pcAttackers: list of [r,c] of the potential-check attackers
 // }
+// It never throws. A square that can't be read comes out as something that isn't a square (such as [NaN, NaN]),
+// which game.js applyMove then refuses.
 function parseMoveText(moveText) {
 	// Split on the first "." only, so the "e.p." marker stays in the rest of the text
-	let dotIdx = moveText.indexOf(".");
-	let turn = moveText.slice(0, dotIdx).trim();
-	let rest = moveText.slice(dotIdx + 1).trim();
+	const dotIdx = moveText.indexOf(".");
+	const turn = moveText.slice(0, dotIdx).trim();
+	let rest = moveText.slice(dotIdx + 1);
 
-	let move = {
+	const move = {
 		turn,
 		notAKing: null,
 		from: null,
@@ -63,35 +65,25 @@ function parseMoveText(moveText) {
 		pcAttackers: [],
 	};
 
-	if (rest.includes("]")) {
-		// "Not a King" declaration
-		let parts = rest.split("]");
-		move.notAKing = coordstext2coords(parts[0].replace("[", "").trim());
-		rest = parts[1];
+	// "[d2]": "Not a King" declaration
+	const notAKing = /\[([^\]]*)\]?/.exec(rest);
+	if (notAKing) {
+		move.notAKing = coordstext2coords(notAKing[1].trim());
+		rest = rest.slice(notAKing.index + notAKing[0].length);
 	}
-	let pcText = [];
-	if (rest.includes("<")) {
-		// Potential check: "<king+ attacker attacker>"
-		let parts = rest.split(">")[0].split("<");
-		pcText = parts[1].split(" ");
-		rest = parts[0];
+	// "<e8+ e4 h5>": potential check. The first square is the king, the rest are attackers.
+	const pc = /<([^>]*)>?/.exec(rest);
+	if (pc) {
+		const [king, ...attackers] = pc[1].replaceAll("+", " ").trim().split(/\s+/);
+		move.pcKing = coordstext2coords(king);
+		move.pcAttackers = attackers.map(coordstext2coords);
+		rest = rest.slice(0, pc.index);
 	}
-	if (rest.includes("(")) {
-		// Drop the waves either side of the move: "(KQRP)e2xe4(QR)..." -> "e2xe4"
-		rest = rest.split(")")[1].split("(")[0];
-	}
-	rest = rest.replace("x", "");
-	if (rest.length >= 4) {
-		// Now rest should be 4 chars long, such as h2h3, giving the from-to squares
-		move.from = coordstext2coords(rest.substring(0, 2));
-		move.to = coordstext2coords(rest.substring(2, 4));
-	}
-	if (pcText.length > 0) {
-		// The first entry is the king ("e8+"), the rest are attackers
-		move.pcKing = coordstext2coords(pcText[0]);
-		for (let i = 1; i < pcText.length; i++) {
-			move.pcAttackers.push(coordstext2coords(pcText[i].replace("+", "")));
-		}
+	// "(KQRP)e2xe4(QR)=(QRNB)+": the waves (letters in brackets) either side are dropped, leaving "e2xe4"
+	const squares = /([a-h][1-8])\s*x?\s*([a-h][1-8])/.exec(rest.replace(/\([KQBNRP]*\)?/g, " "));
+	if (squares) {
+		move.from = coordstext2coords(squares[1]);
+		move.to = coordstext2coords(squares[2]);
 	}
 	return move;
 }

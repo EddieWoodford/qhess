@@ -505,7 +505,7 @@ function selectPCAttackers(attackerCoords) {
 ////////////////////////////////
 // Split history text (one ply per line, or pasted all on one line) into plies. Empty text gives no plies.
 function parseRecord(historyText) {
-	return historyText.trim() == "" ? [] : getHistoryLines(historyText);
+	return getHistoryLines(historyText);
 }
 
 // During normal play, the record is the game's history. While replaying it is left alone.

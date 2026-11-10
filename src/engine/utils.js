@@ -19,10 +19,10 @@ function clone2DArray(arr) {
 	return arr.map(row => [...row]);
 }
 
-// "e4" -> [4, 4]
+// "e4" -> [4, 4]. Text that isn't a square gives something that isn't one either (e.g. "" -> [NaN, NaN]).
 function coordstext2coords(coordstext) {
-	let c = coordstext[0].charCodeAt() - 97;
-	let r = 8 - coordstext[1];
+	let c = coordstext.charCodeAt(0) - 97;
+	let r = 8 - Number(coordstext[1]);
 	return [r, c];
 }
 
