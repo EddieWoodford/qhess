@@ -384,14 +384,9 @@ function clearFindPieces() {
 	}
 }
 
+// Switch between White's view and Black's view of the board (the CSS for .flipped reverses the rows and columns)
 function toggleFlippedBoard() {
-	if (document.documentElement.style.getPropertyValue('--board-flex-flow') == 'column-reverse nowrap') {
-		document.documentElement.style.setProperty('--board-flex-flow', 'column nowrap');
-		document.documentElement.style.setProperty('--boardrow-flex-flow', 'row nowrap');
-	} else {
-		document.documentElement.style.setProperty('--board-flex-flow', 'column-reverse nowrap');
-		document.documentElement.style.setProperty('--boardrow-flex-flow', 'row-reverse nowrap');
-	}
+	document.getElementById("board").classList.toggle("flipped");
 }
 
 function debugPrint(txt) {

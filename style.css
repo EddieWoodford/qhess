@@ -5,7 +5,7 @@
    CONTENTS
      1. Design tokens
      2. Base elements
-     3. Page layout
+     3. Page layout              (the grid: change layouts here and in 8)
      4. Header
      5. Modals
      6. Control panel
@@ -14,28 +14,30 @@
         6.3 Tabs
         6.4 History tab
         6.5 Find Pieces tab and captured lists
+        6.6 Debug messages
      7. Board
-        7.1 Structure and squares
+        7.1 Size and structure
         7.2 Square states        (order matters)
         7.3 Move markers         (order matters)
         7.4 Coordinates and piece text
      8. Responsive overrides     (must stay last)
-     9. Unused and debug
 
    NOTES
-   - Class names, ids and the --board-flex-flow / --boardrow-flex-flow
-     variables are used by index.html and script.js. Rename them there first.
-   - script.js adds and removes the classes in section 7.2 and 7.3 at runtime.
+   - Class names and ids are used by index.html and src/client (mostly
+     render.js). Rename them there too.
+   - render.js adds and removes the classes in sections 7.2 and 7.3 at runtime,
+     and toggles .flipped on the board (section 7.1).
    - Where two rules have equal specificity, the later one wins. That is why
-     sections 7.2, 7.3 and 8 keep their original order.
-   - "UNUSED" comments mark selectors that match nothing in index.html or
-     script.js today. They are left in place rather than deleted.
+     sections 7.2, 7.3 and 8 keep their order.
+   - Sizes: panel text is in em, from --ui-font (clamped, so it stays readable
+     on small screens). Everything on the board is in em, from --square (see
+     7.1), so the board scales to whatever space its grid area gets.
    ========================================================================== */
 
 
 /* ==========================================================================
    1. DESIGN TOKENS
-   Change a colour, radius or shadow here and it updates everywhere.
+   Change a colour, radius, size or shadow here and it updates everywhere.
    ========================================================================== */
 :root {
     /* ---- Fonts ---- */
@@ -69,7 +71,6 @@
 
     /* ---- Accent ---- */
     --accent: #ff9500;
-    --accent-glow: #ff9500aa;
     --prompt-bg: #66ff66aa;
 
     /* ---- Shape, depth and motion ---- */
@@ -81,10 +82,10 @@
     --transition-button: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
 
     /* ---- Sizing ---- */
+    --ui-font: clamp(0.875rem, 2dvmin, 1.25rem);  /* base size of all text outside the board */
+    --panel-width: clamp(18rem, 42dvmin, 28rem);  /* control panel width beside the board */
     --button-height: 2.5em;
-    --button-font-size: 2dvmin;
-    --board-font-size: 3.35dvmin;           /* controls the board square size via the em unit */
-    --board-font-size-collapsed: 9dvmin;
+    --gap: 0.5rem;                                /* padding around and between the page areas */
 
     /* ---- Board colours ---- */
     --board-white-col: #555;                /* darkened 'white' squares */
@@ -96,12 +97,6 @@
     --piece-checkAttacker-col: #5a8fb5;     /* blue */
     --findpiece-highlight-col: #5f4a82;     /* more visible highlight */
     --marker-clear: rgba(255,0,0,0);        /* transparent stop used by the move markers */
-
-    /* ---- Board orientation ----
-       script.js overwrites these two when the player view is toggled.
-       column-reverse nowrap / row-reverse nowrap = black's view. */
-    --board-flex-flow: column nowrap;
-    --boardrow-flex-flow: row nowrap;
 }
 
 
@@ -109,16 +104,14 @@
    2. BASE ELEMENTS
    ========================================================================== */
 html, body {
-    width: 100%;
-    height: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden; /* remove scrollbars */
+    overflow: hidden; /* the page never scrolls; the control panel scrolls instead */
 }
 
 body {
     text-align: center;
-    font-size: 2dvmin;
+    font-size: var(--ui-font);
     font-family: var(--font-ui);
     background-color: var(--bg-page);
     color: var(--text);
@@ -138,50 +131,58 @@ h1, h2, h3 {
     color: var(--text-strong);  /* slightly brighter for main headers */
 }
 
-/* Every button gets these. Specific button types override below. */
+/* Every button and input gets these. Specific types override below.
+   Browsers don't pass the page's font on to form controls, so inherit it. */
+button, input {
+    font: inherit;
+}
+
 button {
     cursor: pointer;
     height: var(--button-height);
-    font-size: var(--button-font-size);
-}
-
-/* UNUSED: index.html has no <textarea> (the move history is a contenteditable div) */
-textarea {
-    width: 100%;
-    box-sizing: border-box;
-    background-color: var(--bg-input);
-    color: var(--text);
-    border: 1px solid var(--border-main);
-    border-radius: var(--radius-sm);
-    padding: 0.5em;
-    font-family: var(--font-mono);  /* preserve monospaced text for move history */
-    font-size: var(--button-font-size);
-    resize: vertical;               /* allow vertical resizing only */
 }
 
 
 /* ==========================================================================
    3. PAGE LAYOUT
-   Two columns: board area on the left, control panel on the right (their
-   order in index.html). Tall screens stack them (see section 8).
+   The body is the header above the main area. The main area (.container) is
+   a grid of named areas: "board" and "panel". Rearranging the page is just a
+   matter of changing grid-template-areas / columns / rows, here and in 8.
    ========================================================================== */
+body {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100dvh;
+}
+
 .container {
-    display: flex;
-    flex-flow: row nowrap;
-    justify-content: space-evenly;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--panel-width);
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: "board panel";
+    gap: var(--gap);
+    padding: var(--gap);
+    min-height: 0;
     background-color: var(--bg-container);
-    padding: 0.5em;
-    gap: 1em; /* spacing between board and controls */
-    height: calc(100% - 5dvmin); /* fill the space below the header (same as the header's height) */
-    box-sizing: border-box;
+}
+
+/* The board's area. Its size decides the board's size (see 7.1), so it is a
+   size container, and its own size comes only from the grid. */
+.board-area {
+    grid-area: board;
+    container-type: size;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 0;
 }
 
 .game-control {
-    /* A fixed width, so the panel doesn't resize as the prompt and history text change: with the
-       container's space-evenly, any change in its width would slide the board sideways. */
-    flex: 0 0 auto;
-    width: 42dvmin;
+    grid-area: panel;
     min-width: 0;
+    min-height: 0;
+    overflow-y: auto; /* scrolls when its content is taller than the space */
     box-sizing: border-box;
     text-align: center;
     background-color: var(--bg-panel);
@@ -195,20 +196,17 @@ textarea {
    4. HEADER
    ========================================================================== */
 header {
-    flex-shrink: 0;       /* header keeps its height */
-    height: 5dvmin;
     box-sizing: border-box;
     margin: 0;
-    padding: 0.5em 1em;
+    padding: 0.25em 1em;
     border-bottom: 1px solid var(--border-faint);
     box-shadow: 0 2px 4px rgba(0,0,0,0.6);
     background-color: var(--bg-raised);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-family: var(--font-ui);
-    font-size: 3dvmin;    /* scales with screen size */
     color: var(--text);
+    position: relative; /* keeps its shadow above the main area */
 }
 
 .header-group {
@@ -224,10 +222,8 @@ header {
     justify-content: center;
     height: auto;
     padding: 0.3em 0.6em;
-    font-size: 2dvmin;
     border: none;
     border-radius: var(--radius-md);
-    cursor: pointer;
     transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     background-color: #2c2c2c;
     color: var(--text-muted);
@@ -244,7 +240,8 @@ header {
 .title {
     margin: 0;
     font-weight: 500;
-    font-size: 4dvmin;          /* slightly bigger than header icons */
+    font-size: 2em;
+    line-height: 1;
     letter-spacing: 0.05em;
     color: var(--text-strong);
     text-shadow: 0 1px 2px rgba(0,0,0,0.5);
@@ -253,7 +250,7 @@ header {
 
 /* ==========================================================================
    5. MODALS  (info, help, options)
-   ui.js shows and hides them by toggling display on the wrapper.
+   src/client/modals.js shows and hides them by toggling display on the wrapper.
    ========================================================================== */
 .modalWrapper {
     display: none;
@@ -286,7 +283,7 @@ header {
 
 
 /* ==========================================================================
-   6. CONTROL PANEL  (right-hand column)
+   6. CONTROL PANEL
    ========================================================================== */
 
 /* ---------- 6.1 Prompt and action buttons ---------- */
@@ -313,7 +310,7 @@ header {
 
 /* Look shared by the three button types: side buttons (Submit etc.),
    history buttons (Reset Game, Copy All, ...) and the step buttons (<< < > >>).
-   Height, font size and cursor come from the base `button` rule. */
+   Height and cursor come from the base `button` rule. */
 .sidebutton,
 .historyButton,
 .stepHistoryButton {
@@ -351,8 +348,8 @@ header {
 
 /* ---------- 6.2 Staged move ---------- */
 #thismove {
-    width: 90%;
-    font-size: 2dvmin;
+    width: 100%;
+    box-sizing: border-box;
     background-color: var(--bg-input);
     color: var(--text);
     border: 1px solid var(--border-subtle);
@@ -363,9 +360,8 @@ header {
 
 /* ---------- 6.3 Tabs ----------
    Pure-CSS tabs: a hidden radio input, then its label, and a .tab-panel
-   that is shown when the radio is checked.
-   Currently in index.html: tab2 (History) and tab3 (Find Pieces).
-   tab1, tab4, tab11 and tab12 are UNUSED: they have no markup today. */
+   that is shown when the radio is checked. In index.html: tab2 (History)
+   and tab3 (Find Pieces). */
 .tab-panel {
     display: none;
     padding: 1em 0 0;
@@ -381,46 +377,35 @@ input.hidden {
 .tabTitle {
     display: inline-block;
     margin: 0 0 -1px;
-    padding: 12px 20px;
+    padding: 0.75em 1.25em;
     font-weight: 500;
     text-align: center;
     color: var(--text-muted);
     border-radius: var(--radius-md) var(--radius-md) 0 0;
     background-color: #2a2a2a;
     transition: background 0.2s, color 0.2s;
+    cursor: pointer;
 }
 
-/* Tab icons, chosen by which tab id the label's `for` contains */
-label[for*='1']:before { content: '🏠'; }   /* UNUSED (tab1) */
-label[for*='2']:before { content: '📝'; }   /* History */
-label[for*='3']:before { content: '👀'; }   /* Find Pieces */
-label[for*='4']:before { content: '⛬'; }    /* UNUSED (tab4) */
-label[for*='11']:before { content: '<-'; }  /* UNUSED (tab11) */
-label[for*='12']:before { content: '->'; }  /* UNUSED (tab12) */
+/* Tab icons */
+.tabTitle[for='tab2']::before { content: '📝'; }   /* History */
+.tabTitle[for='tab3']::before { content: '👀'; }   /* Find Pieces */
 
 .tabTitle:hover {
     color: var(--text-strong);
     background-color: var(--bg-control);
-    cursor: pointer;
 }
 
-input:checked + label {
+input:checked + .tabTitle {
     color: var(--text-strong);
     background-color: var(--bg-control-hover);
     border: 1px solid #666;
     border-bottom: 1px solid var(--bg-raised); /* hides the border between tab and content */
 }
 
-/* Which section each tab reveals */
-#tab1:checked ~ #gameLobbyTab,            /* UNUSED */
-#tab2:checked ~ #gameMetaTab,             /* History */
-#tab3:checked ~ #gameFindpiecesTab,       /* Find Pieces */
-#tab4:checked ~ #userHistoryTab {         /* UNUSED */
-    display: block;
-}
-
-#tab11:checked ~ #gameLobbyPastTab,       /* UNUSED */
-#tab12:checked ~ #gameLobbyFutureTab {    /* UNUSED */
+/* Which panel each tab reveals */
+#tab2:checked ~ #gameMetaTab,
+#tab3:checked ~ #gameFindpiecesTab {
     display: block;
 }
 
@@ -428,7 +413,6 @@ input:checked + label {
 /* ---------- 6.4 History tab ----------
    The buttons are styled in 6.1. */
 .movehistory {
-    font-size: 2dvmin;
     border: 1px solid var(--border-subtle);
     max-height: 8em;
     overflow: auto;
@@ -442,15 +426,34 @@ input:checked + label {
 }
 
 
-/* Messages from debugPrint(), under the tabs */
-.debug {
-    margin-top: 1em;
-    padding-top: 0.5em;
-    border-top: 1px solid var(--border-subtle);
+/* ---------- 6.5 Find Pieces tab and captured lists ---------- */
+/* The K Q R / B N P buttons, in two rows of three */
+.find-grid {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    justify-content: center;
+    padding-bottom: 1em;
 }
 
+/* render.js adds .findHighlight (section 7.2) to the active one */
+.findpiecebutton {
+    color: var(--text-strong);
+    font-size: 2em;
+    height: 3em;
+    width: 3em;
+    line-height: 1;
+    border: 1px solid var(--border-main);
+    padding: 0;
+    margin: 2px;
+    background-color: #888;
+}
 
-/* ---------- 6.5 Find Pieces tab and captured lists ---------- */
+.findpiecebutton:hover {
+    background-color: var(--accent);
+    box-shadow: var(--shadow-button-hover);
+    transform: scale(1.05);
+}
+
 .captured-pieces {
     border-top: 1px solid var(--border-main);
     display: flex;
@@ -464,51 +467,13 @@ input:checked + label {
     font-weight: 500;
 }
 
-/* UNUSED */
-.find-pieces {
-    border-top: 1px solid var(--border-main);
-    display: flex;
-    justify-content: center;
-    padding: 0.5em 0;
-}
 
-/* The K Q R / B N P buttons, in two rows of three */
-.find-grid {
-    display: grid;
-    grid-template-columns: repeat(3, auto);
-    justify-content: center;
-    padding-bottom: 1em;
-}
-
-/* The K Q R B N P buttons. script.js adds .findHighlight (section 7.2) to the
-   active one. */
-.findpiecebutton {
-    color: var(--text-strong);
-    font-size: 4dvmin;
-    height: 3em;
-    width: 3em;
-    line-height: 1;
-    border: 1px solid var(--border-main);
-    cursor: pointer;
-    white-space: normal;
-    justify-content: center; /* center the content horizontally */
-    align-items: center;     /* center the content vertically */
-    padding: 0px;
-    margin: 2px;
-    background-color: #888;
-}
-
-.findpiecebutton:hover {
-    background-color: var(--accent);
-    box-shadow: var(--shadow-button-hover);
-    transform: scale(1.05);
-}
-
-/* UNUSED: script.js uses .findHighlight instead */
-.findpieceselected {
-    background-color: var(--accent);
-    color: var(--text-strong);
-    box-shadow: 0 0 8px var(--accent-glow) inset;
+/* ---------- 6.6 Debug messages ---------- */
+/* Messages from debugPrint(), under the tabs */
+.debug {
+    margin-top: 1em;
+    padding-top: 0.5em;
+    border-top: 1px solid var(--border-subtle);
 }
 
 
@@ -516,35 +481,47 @@ input:checked + label {
    7. BOARD
    ========================================================================== */
 
-/* ---------- 7.1 Structure and squares ---------- */
+/* ---------- 7.1 Size and structure ----------
+   The board is 8 squares plus a coordinate strip (1/3 of a square) and a
+   padding (1/6 of a square) on each side: 9 squares across and down in all.
+   So a square is 1/9 of the board area's shorter side (100cqmin).
+   The board's font-size is a third of a square, so in the rules below a
+   square is 3em and a coordinate strip is 1em. */
 .board {
+    --square: calc(100cqmin / 9);
+    font-size: calc(var(--square) / 3);
     display: flex;
-    flex-flow: var(--board-flex-flow);
-    justify-content: center;
+    flex-direction: column;
     background-color: var(--bg-inset);
     padding: 0.5em;
     border-radius: var(--radius-lg);
-    max-height: 100%;
 }
 
 .boardrow {
     display: flex;
-    flex-flow: var(--boardrow-flex-flow);
-    justify-content: center;
+    flex-direction: row;
+}
+
+/* Black's view (Options > Toggle player view): render.js toggles .flipped */
+.board.flipped {
+    flex-direction: column-reverse;
+}
+
+.board.flipped .boardrow {
+    flex-direction: row-reverse;
 }
 
 /* Every square has .boardsquare, plus .whitesquare or .blacksquare */
 .boardsquare {
+    flex-shrink: 0;
     color: white;
     width: 3em;
     height: 3em;
-    font-size: var(--board-font-size);
     border: black solid 1px;
-    cursor: pointer;
     font-family: var(--font-mono);
     line-height: 1;
     text-align: center;
-    padding: 0px;
+    padding: 0;
 }
 
 .whitesquare {
@@ -621,7 +598,7 @@ input:checked + label {
 
 
 /* ---------- 7.3 Move markers ----------
-   script.js adds .destination1 to .destination16 to every square a piece can
+   render.js adds .destination1 to .destination16 to every square a piece can
    move to. The number is a point on a 16-point compass, like a clock face:
        odd numbers   knight-style hop (ring)
        2 and 10      bishop-style, NE and SW (stripe along that diagonal)
@@ -669,7 +646,6 @@ input:checked + label {
     flex-shrink: 0;
     color: var(--text-muted);
     background-color: var(--board-edge-col);
-    font-size: var(--board-font-size);
     font-family: var(--font-mono);
     line-height: 1;
 }
@@ -689,69 +665,42 @@ input:checked + label {
     height: 1em;
 }
 
-/* Piece text inside a square. "collapsed" means only one possibility is left,
-   so the piece is drawn large. */
-.whitepiece, .blackpiece {
-    font-size: var(--board-font-size);
-}
-
+/* Piece text inside a square (see glyphs.js). Uncollapsed pieces show all
+   their possibilities in a 3 x 2 grid at the square's own size; "collapsed"
+   means only one possibility is left, so it is drawn large. */
 .whitepiececollapsed, .blackpiececollapsed {
-    font-size: var(--board-font-size-collapsed);
+    font-size: 2.7em;
 }
 
 
 /* ==========================================================================
    8. RESPONSIVE OVERRIDES
-   ORDER MATTERS: these override the tokens and rules above, and the two
-   aspect-ratio queries stack (a tall screen matches both, and the later one
-   wins).
+   ORDER MATTERS: these override the tokens and rules above.
    ========================================================================== */
-@media all and (max-aspect-ratio: 1.6) { /* Squarish screens */
-    :root {
-        /* shrink the board down to fit in the other parts */
-        --board-font-size: 2.19dvmax;
-        --board-font-size-collapsed: 6dvmax;
-    }
-}
-
-@media all and (max-aspect-ratio: 1) { /* Tall screens */
-    :root {
-        --board-font-size: 3.8dvmin;
-        --board-font-size-collapsed: 11dvmin;
-    }
-    /* put everything in one big column */
+@media (max-aspect-ratio: 1) { /* Tall screens: board above the panel */
     .container {
-        flex-flow: column nowrap;
-        align-items: stretch;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+        grid-template-areas:
+            "board"
+            "panel";
     }
-    /* full width under the board */
-    .game-control {
-        width: auto;
+    /* The full width, and tall enough for a board that wide, but leaving at
+       least a third of the height for the panel. (It needs a set height: as a
+       size container its height can't come from the board inside it.) */
+    .board-area {
+        height: min(100dvw - 2 * var(--gap), 62dvh);
     }
 }
 
-@media (pointer:coarse) { /* Touch screens: bigger text and buttons */
+@media (pointer: coarse) { /* Touch screens: bigger text and buttons */
     :root {
-        --button-font-size: 4dvmin;
-    }
-    body {
-        font-size: 3dvmin;
+        --ui-font: clamp(1rem, 3dvmin, 1.375rem);
     }
 }
 
-
-/* ==========================================================================
-   9. UNUSED AND DEBUG
-   ========================================================================== */
-
-/* UNUSED: no element with this id in index.html (left over from a lobby UI) */
-#gameid {
-    width: 90%;
-    font-size: 3dvmin;
-}
-
-/* Debug outlines. Uncomment to see the three main areas.
+/* Debug outlines. Uncomment to see the main areas.
 .container    { outline: 3px solid red; }
-.board        { outline: 3px solid blue; }
+.board-area   { outline: 3px solid blue; }
 .game-control { outline: 3px solid green; }
 */
