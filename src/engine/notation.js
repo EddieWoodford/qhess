@@ -12,6 +12,7 @@
 //   +             optional: automatic check
 //   <e8+ e4 h5>   optional: potential check on the king at e8, by the attackers on e4 and h5
 //   e.p.          optional: en passant
+//   O-O / O-O-O   optional: castled towards the h-file / the a-file (after the end square's waves)
 
 import { coordstext2coords } from "./utils.js";
 
@@ -40,6 +41,7 @@ function getHistoryLines(historyText) {
 //   from, to:    [r,c] of the move, or null if the ply has no move (Black's move 0)
 //   enPassant:   true/false
 //   promotion:   true/false
+//   castle:      true/false
 //   pcKing:      [r,c] of the potential-check king, or null
 //   pcAttackers: list of [r,c] of the potential-check attackers
 // }
@@ -56,6 +58,7 @@ function parseMoveText(moveText) {
 		to: null,
 		enPassant: rest.includes("e.p."),
 		promotion: rest.includes("="),
+		castle: rest.includes("O-O"),
 		pcKing: null,
 		pcAttackers: [],
 	};

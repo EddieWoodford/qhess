@@ -15,6 +15,7 @@ import { oppColor, defPiece, attPiece } from "./state.js";
 import { getPotentialMoves } from "./moves.js";
 import { findChecks, findPotentialKings, findPCAttackers } from "./check.js";
 import { updateOptionsFromEntanglement } from "./entanglement.js";
+import { getCastlingMoves } from "./castling.js";
 
 // Search for check against `color` and store the result in state.autoCheck / state.potCheck.
 // Returns the full result from findChecks.
@@ -43,23 +44,34 @@ function declareNotAKing(state) {
 }
 
 // Move the piece on `from` to `to`, collapsing every piece's possibilities to match.
-// choices: { enPassant, promotion, ask }
+// choices: { enPassant, promotion, castle, ask }
 //   enPassant / promotion: true or false when the move is ambiguous (the piece could be a pawn but could also
 //     be something else). Leave undefined to have ask(question) called instead, with "En passant?" or
 //     "Promote Pawn?", which should return true or false.
+//   castle: the same for a move that could be a castle (see castling.js) but could also be an ordinary move
+//     by the piece's other possibilities; the question is "Castle?". A move only a castle can make castles.
 // Returns:
 //   { ok: false, error }               the move isn't possible (the state is unchanged)
-//   { ok: true, movedIntoCheck, enPassant, promotion }
+//   { ok: true, movedIntoCheck, enPassant, promotion, castle }
 //                                       the move was made. If movedIntoCheck, it leaves the mover in check,
-//                                       so it must not be submitted. enPassant / promotion say whether the move
-//                                       was played as an en passant / a promotion (whether given or asked).
+//                                       so it must not be submitted. enPassant / promotion / castle say whether
+//                                       the move was played as an en passant / a promotion / a castle (whether
+//                                       given or asked).
 function startMove(state, from, to, choices = {}) {
 	let movingPiece = state.board[from[0]][from[1]];
 	if (movingPiece === null || movingPiece.color != state.turnColor) {
 		return { ok: false, error: "no piece of the side to move on " + coords2text(from) };
 	}
-	if (!ismember(to, getPotentialMoves(state, from))) {
+	const ordinary = ismember(to, getPotentialMoves(state, from));
+	const castle = getCastlingMoves(state, from).find(m => isequal(m.kingTo, to));
+	if (!ordinary && !castle) {
 		return { ok: false, error: coords2text(from) + " can't move to " + coords2text(to) };
+	}
+	if (choices.castle === true && !castle) {
+		return { ok: false, error: coords2text(from) + coords2text(to) + " can't be a castle" };
+	}
+	if (choices.castle === false && !ordinary) {
+		return { ok: false, error: coords2text(from) + coords2text(to) + " can only be a castle" };
 	}
 	const choose = (given, question) => {
 		if (given !== undefined) { return given; }
@@ -68,18 +80,36 @@ function startMove(state, from, to, choices = {}) {
 	};
 	let doEP = choices.enPassant;
 	let doPromotion = choices.promotion;
+	let doCastle = false;
+	if (castle) {
+		// The mover decides whether they meant to castle, unless only a castle can make this move
+		doCastle = ordinary ? choose(choices.castle, "Castle?") : true;
+	}
 
 	state.thisMove = state.thisMove + "(" + movingPiece.waves() + ")" + coords2text(from);
 
-	// Remove the options from this piece based on movement:
-	movingPiece.updateOptionsByDest(state, to);
+	if (doCastle) {
+		// The king piece collapses to a king, the rook piece to a rook, and the rook jumps over the king
+		const rook = state.board[castle.rookFrom[0]][castle.rookFrom[1]];
+		movingPiece.removewaves("QBNRP");
+		rook.removewaves("KQBNP");
+		rook.hasmoved = 1;
+		rook.r = castle.rookTo[0];
+		rook.c = castle.rookTo[1];
+		state.board[castle.rookTo[0]][castle.rookTo[1]] = rook;
+		state.board[castle.rookFrom[0]][castle.rookFrom[1]] = null;
+		state.takenPiece = null;
+	} else {
+		// Remove the options from this piece based on movement:
+		movingPiece.updateOptionsByDest(state, to);
+		state.takenPiece = state.board[to[0]][to[1]];
+	}
 
 	movingPiece.hasmoved = 1;
 	movingPiece.r = to[0];
 	movingPiece.c = to[1];
 
 	// Move the piece:
-	state.takenPiece = state.board[to[0]][to[1]];
 	if (state.takenPiece !== null) {
 		state.takenPiece.captured = state.turnNumber;
 		state.takenPiece.removewaves('K');
@@ -168,8 +198,12 @@ function startMove(state, from, to, choices = {}) {
 	} else {
 		state.thisMove = state.thisMove + coords2text(to) + "(" + movingPiece.waves() + ")";
 	}
+	if (doCastle) {
+		// Towards the h-file is the short (king) side
+		state.thisMove = state.thisMove + (to[1] > from[1] ? " O-O" : " O-O-O");
+	}
 
-	const played = { enPassant: doEP === true, promotion: doPromotion === true };
+	const played = { enPassant: doEP === true, promotion: doPromotion === true, castle: doCastle };
 	// Has the mover put themselves in check? Then the move can be looked at but not submitted.
 	if (refreshChecks(state, state.turnColor).attackerCoords.length > 0) {
 		return { ok: true, movedIntoCheck: true, ...played };
@@ -263,7 +297,7 @@ function endTurn(state) {
 }
 
 // Play a whole turn from parsed notation (notation.js parseMoveText): the same steps a player would take.
-// choices.ask is only needed if the move leaves an en passant or promotion choice unanswered.
+// choices.ask is only needed if the move leaves an en passant, promotion or castling choice unanswered.
 // Returns { ok: true } or { ok: false, error }. On failure the state may be part-way through the turn.
 function applyMove(state, move, choices = {}) {
 	if (move.notAKing) {
@@ -275,7 +309,7 @@ function applyMove(state, move, choices = {}) {
 			return { ok: false, error: "no move given" };
 		}
 		const result = startMove(state, move.from, move.to,
-			{ enPassant: move.enPassant, promotion: move.promotion, ask: choices.ask });
+			{ enPassant: move.enPassant, promotion: move.promotion, castle: move.castle, ask: choices.ask });
 		if (!result.ok) { return result; }
 		if (result.movedIntoCheck) { return { ok: false, error: "the move leaves the mover in check" }; }
 	}
