@@ -208,6 +208,13 @@ function render(view) {
 			if (isequal([r,c], view.end)) {
 				sqr.button.classList.add("selectedEnd");
 			}
+			// While a move is staged, show what a click will do (see controller.js squareClick): the staged
+			// destination submits it, any other square cancels it. A move into check can only be cancelled.
+			if (STATE == "showCompleteMove" && isequal([r,c], view.end)) {
+				sqr.button.classList.add("submitOnClick");
+			} else if (STATE == "showCompleteMove" || STATE == "invalidMoveIntoCheck") {
+				sqr.button.classList.add("cancelOnClick");
+			}
 			if (view.replayNumber > -1) {
 				// In replay, show the move that led to this position
 				if (isequal([r,c], view.lastStart)) {

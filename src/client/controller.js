@@ -18,7 +18,7 @@
 //   "selectPCKing"             choosing which opponent piece to declare potential check on
 //   "selectPCAttackers"        choosing which pieces attack it; then Submit
 
-import { ismember } from "../engine/utils.js";
+import { isequal, ismember } from "../engine/utils.js";
 import { cloneState, getPieces } from "../engine/state.js";
 import { getPotentialMoves } from "../engine/moves.js";
 import { findPotentialKings, findPCAttackers } from "../engine/check.js";
@@ -175,6 +175,9 @@ function squareClick(coords) {
 		selectPCAttackers(coords);
 	} else if (STATE == "move0") {
 		setState("move0");
+	} else if (STATE == "showCompleteMove" && isequal(coords, ENDCOORDS)) {
+		// Clicking the staged destination again submits the move, same as the Submit button
+		sideButton2Action();
 	} else {
 		cancelTurn();
 		setState("clear");

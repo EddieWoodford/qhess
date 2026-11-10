@@ -570,6 +570,14 @@ input:checked + label {
     box-shadow: 0 0 0 6px var(--piece-dest-col) inset;
 }
 
+.submitOnClick { /* the staged destination: clicking it again submits the move */
+    cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><path d='M5 17 L13 25 L27 8' fill='none' stroke='%23000' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/><path d='M5 17 L13 25 L27 8' fill='none' stroke='%2366ff66' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/></svg>") 13 25, pointer;
+}
+
+.cancelOnClick { /* while a move is staged, clicking any other square cancels it */
+    cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><path d='M8 8 L24 24 M24 8 L8 24' fill='none' stroke='%23000' stroke-width='7' stroke-linecap='round'/><path d='M8 8 L24 24 M24 8 L8 24' fill='none' stroke='%23ff4444' stroke-width='4' stroke-linecap='round'/></svg>") 16 16, pointer;
+}
+
 .potKing { /* highlighted as a potential king to select */
     background-color: color-mix(in srgb, var(--piece-checkKing-col) 55%, transparent);
 }
