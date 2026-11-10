@@ -47,6 +47,7 @@ const dom = {
 	// Settings tab: one switch (checkbox) per setting
 	settings: {
 		blackView: $("settingBlackView"),
+		colourByType: $("settingColourByType"),
 	},
 
 	debug: $("debug"),

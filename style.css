@@ -117,6 +117,12 @@
     --piece-bB: #FF6347;                    /* tomato */
     --piece-bN: #FFA07A;                    /* light salmon */
     --piece-bP: #90EE90;                    /* light green */
+    /* One colour per side, when "Colour pieces by type" is switched off (7.4) */
+    --piece-white-side: #F4EBD0;            /* ivory */
+    --piece-black-side: #E8743B;            /* copper */
+
+    /* ---- Status ---- */
+    --live: #32CD32;                        /* the multiplayer tab's dot while a game is on */
 }
 
 
@@ -831,7 +837,7 @@ p.mp-problem {
     right: 0.3em;
     font-size: 0.7em;
     line-height: 1;
-    color: var(--piece-wP);
+    color: var(--live);
 }
 
 .mp-badge {
@@ -1163,6 +1169,24 @@ input.switch:focus-visible {
 .glyph-bB { color: var(--piece-bB); }
 .glyph-bN { color: var(--piece-bN); }
 .glyph-bP { color: var(--piece-bP); }
+
+/* "Colour pieces by type" switched off (Settings tab; main.js puts .side-colours
+   on <body>): every piece is its side's colour, so the sides are easier to
+   tell apart. */
+.side-colours {
+    --piece-wK: var(--piece-white-side);
+    --piece-wQ: var(--piece-white-side);
+    --piece-wR: var(--piece-white-side);
+    --piece-wB: var(--piece-white-side);
+    --piece-wN: var(--piece-white-side);
+    --piece-wP: var(--piece-white-side);
+    --piece-bK: var(--piece-black-side);
+    --piece-bQ: var(--piece-black-side);
+    --piece-bR: var(--piece-black-side);
+    --piece-bB: var(--piece-black-side);
+    --piece-bN: var(--piece-black-side);
+    --piece-bP: var(--piece-black-side);
+}
 
 
 /* ==========================================================================

@@ -13,6 +13,7 @@ import { dom } from "./dom.js";
 // name: { default: its value when nothing is remembered, remember: whether to keep it in this browser }
 const SETTINGS = {
 	blackView: { default: false, remember: false }, // multiplayer sets it to your own side, so it isn't kept
+	colourByType: { default: true, remember: true },
 };
 
 const STORAGE_KEY = "qhess.settings";

@@ -18,6 +18,8 @@ setupModals();
 // Settings tab: what each switch does (settings.js)
 setupSettings({
 	blackView: on => setFlippedBoard(on),
+	// Off: each side's pieces all in one colour (style.css 7.4 .side-colours)
+	colourByType: on => document.body.classList.toggle("side-colours", !on),
 });
 
 // Side panel: hidden until the menu button (☰) opens it.
