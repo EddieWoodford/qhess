@@ -56,6 +56,23 @@ function createInitialState() {
 	return state;
 }
 
+// An independent copy of the game state: changing the copy (making a move on it) leaves the original as it was
+function cloneState(state) {
+	const pieces = {
+		w: state.pieces.w.map(p => p.clone()),
+		b: state.pieces.b.map(p => p.clone()),
+	};
+	// The same piece in the copy (piece.i is its index in its side's list)
+	const inCopy = piece => piece === null ? null : pieces[piece.color][piece.i];
+	return {
+		...state,
+		board: state.board.map(row => row.map(inCopy)),
+		pieces,
+		epCoords: state.epCoords.slice(),
+		takenPiece: inCopy(state.takenPiece),
+	};
+}
+
 function oppColor(color) {
 	if (color == "w") {
 		return "b";
@@ -81,4 +98,4 @@ function attPiece(state, i) {
 	return getPieces(state, state.turnColor)[i];
 }
 
-export { createInitialState, oppColor, getPieces, defPiece, attPiece };
+export { createInitialState, cloneState, oppColor, getPieces, defPiece, attPiece };

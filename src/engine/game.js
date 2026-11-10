@@ -210,13 +210,14 @@ function addPCAttacker(state, attackerCoords) {
 	return { ok: true, movedIntoCheck: state.autoCheck };
 }
 
-// The "<king+ attacker attacker>" notation for a potential check declared by the side to move, or ""
+// The "<king+ attacker attacker>" notation for a potential check declared by the side to move, or "".
+// Doesn't change the state.
 function pcMoveText(state) {
 	let txt = "";
 	if (state.pcKing >= 0 && state.pcColor == oppColor(state.turnColor)) {
 		let piece = defPiece(state, state.pcKing);
 		txt = "<" + coords2text([piece.r, piece.c]) + "+";
-		let attackerCoords = refreshChecks(state, state.pcColor).attackerCoords;
+		let attackerCoords = findChecks(state, state.pcColor).attackerCoords;
 		for (let ai = 0; ai < attackerCoords.length; ai++) {
 			txt = txt + " " + coords2text(attackerCoords[ai]);
 		}

@@ -3,8 +3,9 @@
 // Entry point for the page: wires up every button and starts the game.
 // Loaded from index.html as <script type="module">, which runs after the page has been parsed.
 
-import * as game from "../../script.js";
-import { setupModals } from "../../ui.js";
+import * as game from "./controller.js";
+import { toggleFlippedBoard } from "./render.js";
+import { setupModals } from "./modals.js";
 
 function onClick(id, handler) {
 	document.getElementById(id).addEventListener("click", handler);
@@ -13,7 +14,7 @@ function onClick(id, handler) {
 setupModals();
 
 // Options modal
-onClick("toggleFlippedBoard", () => game.toggleFlippedBoard());
+onClick("toggleFlippedBoard", () => toggleFlippedBoard());
 
 // Side buttons
 onClick("sideButton1", () => game.sideButton1Click());

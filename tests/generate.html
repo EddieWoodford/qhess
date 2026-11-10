@@ -37,7 +37,7 @@ function mulberry32(a) {
 
 // Load a fresh copy of the game into the frame. Returns the frame's window and the game module's exports
 // (imported from inside the frame, so it is the same instance the page is running).
-const GAME_MODULE_URL = new URL("../script.js", location.href).href;
+const GAME_MODULE_URL = new URL("../src/client/controller.js", location.href).href;
 function loadFrame() {
 	return new Promise(resolve => {
 		const frame = document.getElementById("game");

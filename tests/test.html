@@ -60,14 +60,14 @@ const GENERATED = [
 
 ////////////////////////////////
 // Adapter: the only part that knows how the game code is structured.
-// As script.js is split up further, update these functions to call the new engine.
+// If the client code (src/client/controller.js) changes shape, update these functions to match.
 ////////////////////////////////
 
 // Load a fresh copy of the game page into the frame.
 // Returns { game, win }: the game module's exports and the frame's window.
 // Importing the module from inside the frame gives the same instance the page is running,
 // and its exported variables (TURNNUMBER etc.) are live, so they always show the current value.
-const GAME_MODULE_URL = new URL("../script.js", location.href).href;
+const GAME_MODULE_URL = new URL("../src/client/controller.js", location.href).href;
 function loadGame() {
 	return new Promise(resolve => {
 		const frame = document.getElementById("game");

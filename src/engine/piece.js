@@ -33,6 +33,13 @@ class Piece {
 	coords() {
 		return [this.r,this.c];
 	}
+	clone() {
+		// An independent copy (its options can be changed without affecting this piece)
+		const copy = Object.assign(Object.create(Piece.prototype), this);
+		copy.options = this.options.slice();
+		copy.promotedOptions = this.promotedOptions.slice();
+		return copy;
+	}
 	removewaves(waves) {
 		// Remove a wave from the options array
 		for (let wi=0; wi < waves.length; wi++) {
