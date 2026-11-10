@@ -1,15 +1,17 @@
 "use strict";
 
-import { isequal, clone2DArray, coords2text, isValidCoord, ismember, sum } from "./src/engine/utils.js";
-import { wave2optidxs } from "./src/engine/constants.js";
-import { filterOptionMatrix, getOM } from "./src/engine/entanglement.js";
+import { isequal, coords2text, ismember } from "./src/engine/utils.js";
+import { createInitialState, oppColor, getPieces, defPiece, attPiece } from "./src/engine/state.js";
+import { getPotentialMoves } from "./src/engine/moves.js";
+import { findChecks, findPotentialKings, findPCAttackers } from "./src/engine/check.js";
+import { updateOptionsFromEntanglement } from "./src/engine/entanglement.js";
 import { getHistoryLines, parseMoveText } from "./src/engine/notation.js";
 import { WK, WQ, WR, WB, WN, WP, BK, BQ, BR, BB, BN, BP, waveHTML } from "./src/client/glyphs.js";
 
 // Classes
 
 // One board square on the page: its button, what happens when it is hovered or clicked,
-// and the highlight flags used when drawing it. The piece on the square lives in BOARD.
+// and the highlight flags used when drawing it. The piece on the square lives in game.board.
 class SquareView {
 	constructor(r, c, button) {
 		this.r = r;
@@ -73,87 +75,6 @@ class SquareView {
 	}
 }
 
-class Piece {
-	constructor(i, r, c, color) {
-		this.i = i; // 1-16, to identify each piece uniquely from starting position
-		this.r = r; // row
-		this.c = c; // column
-		this.color = color;
-		this.captured = -1; // turn number when this piece was captured. -1 indicates not yet captured
-		this.hasmoved = 0; // boolean for whether this piece has moved
-		this.fullcollapsed = 0; // boolean for whether this piece is fully collapsed
-		this.promoted = 0; // boolean for whether this piece is a promoted pawn
-		this.promotedOptions = [];
-		// options:
-		// options is a 16 element array of 0/1 values to indicate the remaining options available to this piece
-		// P1,P2,P3,P4,P5,P6,P7,P8,R1,R2,N1,N2,Bb,Bw,Q, K
-		// 0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15
-		this.options = Array(16).fill(1);
-		if ((this.r+this.c)%2==0) {
-			// on a white square, so black bishop is not possible
-			this.options[12] = 0;
-		} else {
-			// on a black square, so white bishop is not possible
-			this.options[13] = 0;
-		}
-	}
-	coords() {
-		return [this.r,this.c];
-	}
-	removewaves(waves) {
-		// Remove a wave from the options array
-		for (let wi=0; wi < waves.length; wi++) {
-			let optidxs = wave2optidxs(waves[wi]);
-			for (let oi = 0; oi < optidxs.length; oi++) {
-				if (this.promoted==0) {
-					this.options[optidxs[oi]] = 0;
-				} else {
-					this.promotedOptions[optidxs[oi]] = 0;
-				}
-			}
-		}
-	}
-	updateOptionsByDest(destCoords) {
-		let currentWaves = this.waves();
-		for (let wi=0; wi < currentWaves.length; wi++) {
-			let waveDestinations = getPotentialMoves([this.r,this.c],currentWaves[wi]);
-			if (!ismember(destCoords,waveDestinations)) {
-				this.removewaves(currentWaves[wi]);
-			}
-		}
-	}
-	waves() {
-		// Waves string based on options array
-		let allwaves = "KQBNRP";
-		let wavesout = "";
-		let subopts;
-		for (let wi = 0; wi < 6; wi++) {
-			let optidxs = wave2optidxs(allwaves[wi]);
-			if (this.promoted == 0) {
-				subopts = this.options.slice(optidxs[0],optidxs[optidxs.length-1]+1);
-			} else {
-				subopts = this.promotedOptions.slice(optidxs[0],optidxs[optidxs.length-1]+1);
-		}
-			if (sum(subopts) > 0) {
-				wavesout = wavesout + allwaves[wi];
-			}
-		}
-		return wavesout
-	}
-	wavesWithBishopColor() {
-		let wavesout = this.waves();
-		if (wavesout.includes('B')) {
-			if (this.options[12]==1) {
-				wavesout = wavesout.replace('B','Bb');
-			} else {
-				wavesout = wavesout.replace('B','Bw');
-			}
-		}
-		return wavesout;
-	}
-}
-
-
 ////////////////////////////////
 // Button Actions
 ////////////////////////////////
@@ -170,9 +91,9 @@ function sideButton1Click() {
 
 function sideButton1Action() {
 	if (STATE == "showCompleteMove" || STATE == "move0") {
-		findPotentialKingsToAttack();
+		highlightPotentialKings();
 		setState("selectPCKing");
-	} else if (STATE == "clear" && POTCHECK) {
+	} else if (STATE == "clear" && game.potCheck) {
 		declareNotAKing();
 		setState("clear");
 	}
@@ -197,16 +118,16 @@ function sideButton2Action() {
 }
 
 function declareNotAKing() {
-	let defKing = attPiece(PCKING);
-	// THISMOVE = "[(" + defKing.waves() + ")" + coords2text([defKing.r, defKing.c]);
+	let defKing = attPiece(game, game.pcKing);
+	// game.thisMove = "[(" + defKing.waves() + ")" + coords2text([defKing.r, defKing.c]);
 	defKing.removewaves("K");
-	// THISMOVE = THISMOVE + "(" + defKing.waves() + ")]";
-	THISMOVE = THISMOVE + "[" + coords2text([defKing.r, defKing.c]) + "]";
-	updateOptionsFromEntanglement(TURNCOLOR);
-	PCKING = -1; 
-	PCCOLOR = "";
+	// game.thisMove = game.thisMove + "(" + defKing.waves() + ")]";
+	game.thisMove = game.thisMove + "[" + coords2text([defKing.r, defKing.c]) + "]";
+	updateOptionsFromEntanglement(game, game.turnColor);
+	game.pcKing = -1; 
+	game.pcColor = "";
 	clearFindPotentialCheckPieces();
-	findChecks(TURNCOLOR);
+	updateChecks(game.turnColor);
 }
 
 function submitMove() {
@@ -215,43 +136,43 @@ function submitMove() {
 	// Update move history label:
 	// The move annotation itself is constructed in showCompleteMove(), but if there is a Potential Check declared,
 	// then the contents of the <> in the move annotation is done here
-	if (PCCOLOR == TURNCOLOR) {
+	if (game.pcColor == game.turnColor) {
 		// Must have gotten out of potential check
-		PCKING = -1;
-		PCCOLOR = "";
+		game.pcKing = -1;
+		game.pcColor = "";
 	}
 	
-	if (MOVEHISTORY.length > 0) {
-		MOVEHISTORY = MOVEHISTORY + "\r\n"
+	if (game.history.length > 0) {
+		game.history = game.history + "\r\n"
 	}
-	MOVEHISTORY = MOVEHISTORY + THISMOVE + pcMoveText();
+	game.history = game.history + game.thisMove + pcMoveText();
 	let historyArea = document.getElementById("movehistory");
 	if (REPLAYNUMBER == -1) {
-		historyArea.innerText = MOVEHISTORY;
+		historyArea.innerText = game.history;
 	}
 	
 
-	if (TAKENPIECE !== null) {
-		TAKENPIECE.captured = TURNNUMBER;
+	if (game.takenPiece !== null) {
+		game.takenPiece.captured = game.turnNumber;
 	}
 
 	// Remember this move's squares so replay can highlight the last move
 	LASTSTARTCOORDS = STARTCOORDS;
 	LASTENDCOORDS = ENDCOORDS;
 
-	if (TURNCOLOR == "w") {
-		TURNCOLOR =	"b";
+	if (game.turnColor == "w") {
+		game.turnColor =	"b";
 	} else {
-		TURNNUMBER = TURNNUMBER + 1;
-		TURNCOLOR = "w";
+		game.turnNumber = game.turnNumber + 1;
+		game.turnColor = "w";
 	}
-	if (TURNCOLOR == EPCOLOR) {
-		EPCOLOR = "";
-		EPCOORDS = [];
+	if (game.turnColor == game.epColor) {
+		game.epColor = "";
+		game.epCoords = [];
 	}
-	THISMOVE = TURNNUMBER.toString() + TURNCOLOR + ". ";
+	game.thisMove = game.turnNumber.toString() + game.turnColor + ". ";
 	clearFindPotentialCheckPieces();
-	findChecks(TURNCOLOR);
+	updateChecks(game.turnColor);
 	
 	// copyLastMove();
 }
@@ -290,12 +211,12 @@ function clearFindPieces() {
 
 function highlightPotentialMoves(coords) {
 	// Highlight potential moves temporarily while mouse is over square
-	if (BOARD[coords[0]][coords[1]] === null) {return;}
-	if (BOARD[coords[0]][coords[1]].captured > -1) {return;}
-	if (BOARD[coords[0]][coords[1]].color == TURNCOLOR) {
+	if (game.board[coords[0]][coords[1]] === null) {return;}
+	if (game.board[coords[0]][coords[1]].captured > -1) {return;}
+	if (game.board[coords[0]][coords[1]].color == game.turnColor) {
 		SQUARES[coords[0]][coords[1]].highlighted = 1;
 
-		let moves = getPotentialMoves(coords);
+		let moves = getPotentialMoves(game, coords);
 		for (let i=0; i < moves.length; i++) {
 			let delY = coords[0] - moves[i][0];
 			let delX = moves[i][1] - coords[1];
@@ -310,10 +231,10 @@ function highlightPotentialMoves(coords) {
 function showPartialMove(coords) {
 	// Show potential moves after clicking on start location
 	let piece = coords2piece(coords);
-	if (piece !== null && piece.color == TURNCOLOR) {
+	if (piece !== null && piece.color == game.turnColor) {
 		
 		STARTCOORDS = coords;
-		let moves = getPotentialMoves(coords);
+		let moves = getPotentialMoves(game, coords);
 		for (let i=0; i<moves.length; i++) {
 			let delY = coords[0] - moves[i][0];
 			let delX = moves[i][1] - coords[1];
@@ -330,16 +251,16 @@ function showCompleteMove(endCoords,doEP,doPromotion) {
 	
 	// After clicking on destination:
 	let startCoords = STARTCOORDS;
-	let validDestinations = getPotentialMoves(startCoords);
+	let validDestinations = getPotentialMoves(game, startCoords);
 	if (!ismember(endCoords,validDestinations)) {
 		setState("clear");
 		return;
 	}
-	let movingPiece = BOARD[startCoords[0]][startCoords[1]];
-	THISMOVE = THISMOVE + "(" + movingPiece.waves() + ")" + coords2text(startCoords);
+	let movingPiece = game.board[startCoords[0]][startCoords[1]];
+	game.thisMove = game.thisMove + "(" + movingPiece.waves() + ")" + coords2text(startCoords);
 	
 	// Remove the options from this piece based on movement:
-	movingPiece.updateOptionsByDest(endCoords);
+	movingPiece.updateOptionsByDest(game, endCoords);
 	
 	
 	movingPiece.hasmoved = 1;
@@ -348,18 +269,18 @@ function showCompleteMove(endCoords,doEP,doPromotion) {
 	
 	// Move the piece:
 	ENDCOORDS = endCoords;
-	TAKENPIECE = BOARD[endCoords[0]][endCoords[1]];
-	if (TAKENPIECE !== null) {
-		TAKENPIECE.captured = TURNNUMBER;
-		TAKENPIECE.removewaves('K');
-		THISMOVE = THISMOVE + "x";
+	game.takenPiece = game.board[endCoords[0]][endCoords[1]];
+	if (game.takenPiece !== null) {
+		game.takenPiece.captured = game.turnNumber;
+		game.takenPiece.removewaves('K');
+		game.thisMove = game.thisMove + "x";
 	}
-	BOARD[endCoords[0]][endCoords[1]] = movingPiece;
-	BOARD[startCoords[0]][startCoords[1]] = null;
+	game.board[endCoords[0]][endCoords[1]] = movingPiece;
+	game.board[startCoords[0]][startCoords[1]] = null;
 	
 	
 	// Collapse the pieces
-	updateOptionsFromEntanglement();
+	updateOptionsFromEntanglement(game);
 	
 
 	let direction  = -1;
@@ -368,7 +289,7 @@ function showCompleteMove(endCoords,doEP,doPromotion) {
 	}
 	
 	// Check for en passant:
-	if (isequal(endCoords,EPCOORDS) && movingPiece.waves().includes("P")) {
+	if (isequal(endCoords,game.epCoords) && movingPiece.waves().includes("P")) {
 		if (movingPiece.waves().length > 1) {
 			if (doEP == undefined) {
 			// In this case the attacker needs to decide if they meant to do an en passant. If they do it collapses their piece to a pawn.
@@ -378,17 +299,17 @@ function showCompleteMove(endCoords,doEP,doPromotion) {
 			doEP = true;
 		}
 		if (doEP) {
-			THISMOVE = THISMOVE + "x";
+			game.thisMove = game.thisMove + "x";
 			movingPiece.removewaves("KQNRB");
-			TAKENPIECE = BOARD[endCoords[0]+direction][endCoords[1]];
-			TAKENPIECE.captured = TURNNUMBER;
-			TAKENPIECE.removewaves("KQNRB");
-			BOARD[endCoords[0]+direction][endCoords[1]] = null;
+			game.takenPiece = game.board[endCoords[0]+direction][endCoords[1]];
+			game.takenPiece.captured = game.turnNumber;
+			game.takenPiece.removewaves("KQNRB");
+			game.board[endCoords[0]+direction][endCoords[1]] = null;
 			// update all the collpases again!
-			updateOptionsFromEntanglement();
+			updateOptionsFromEntanglement(game);
 		} else {
 			movingPiece.removewaves("P");
-			updateOptionsFromEntanglement();
+			updateOptionsFromEntanglement(game);
 		}
 	} else {
 		doEP = false;
@@ -398,14 +319,14 @@ function showCompleteMove(endCoords,doEP,doPromotion) {
 	// Save the en passant square
 	if (movingPiece.waves().includes("P")) {
 		if (endCoords[0]-startCoords[0] == -2*direction) {
-			EPCOORDS = [startCoords[0]-direction,startCoords[1]];
-			EPCOLOR = TURNCOLOR;
+			game.epCoords = [startCoords[0]-direction,startCoords[1]];
+			game.epColor = game.turnColor;
 		}
 	}
 	
 	// Check if the moving piece is a pawn to be promoted
 	if (movingPiece.waves().includes("P")) {
-		if ((TURNCOLOR=="w" && endCoords[0]==0) || (TURNCOLOR=="b" && endCoords[0]==7)) {
+		if ((game.turnColor=="w" && endCoords[0]==0) || (game.turnColor=="b" && endCoords[0]==7)) {
 			if (movingPiece.waves().length > 1) {
 				if (doPromotion == undefined) {
 					// In this case the player needs to decide if they want to promote the piece as though it were a pawn.
@@ -430,24 +351,24 @@ function showCompleteMove(endCoords,doEP,doPromotion) {
 			} else {
 				movingPiece.removewaves("P");
 			}
-			updateOptionsFromEntanglement();
+			updateOptionsFromEntanglement(game);
 		}
 	}
 	
 	// Finish move annotation
 	if (doEP) {
-		THISMOVE = THISMOVE + coords2text(endCoords) + "(" + movingPiece.waves() + ")";
-		THISMOVE = THISMOVE + " e.p.";
+		game.thisMove = game.thisMove + coords2text(endCoords) + "(" + movingPiece.waves() + ")";
+		game.thisMove = game.thisMove + " e.p.";
 	} else if (doPromotion) {
-		THISMOVE = THISMOVE + coords2text(endCoords) + "(P)";
-		THISMOVE = THISMOVE + "=(QRNB)";
+		game.thisMove = game.thisMove + coords2text(endCoords) + "(P)";
+		game.thisMove = game.thisMove + "=(QRNB)";
 	} else {
-		THISMOVE = THISMOVE + coords2text(endCoords) + "(" + movingPiece.waves() + ")"
+		game.thisMove = game.thisMove + coords2text(endCoords) + "(" + movingPiece.waves() + ")"
 	}
 	
 	// Now, look to see if attacker has put themselves in automatic check. If so, it's an invalid move
 	clearFindPotentialCheckPieces();
-	let [kingCoords,attackerCoords] = findChecks(TURNCOLOR);
+	let [kingCoords,attackerCoords] = updateChecks(game.turnColor);
 	if (attackerCoords.length > 0) {
 		// We will still display the invalid move, but make it impossible to submit, as
 		// the player might want to inspect the board to understand how the check happened.
@@ -455,9 +376,9 @@ function showCompleteMove(endCoords,doEP,doPromotion) {
 	} else {		
 		// Check if the attacker has put the defender in auto check:
 		clearFindPotentialCheckPieces();
-		[kingCoords,attackerCoords] = findChecks(oppColor());
-		if (AUTOCHECK) {
-			THISMOVE = THISMOVE + "+";
+		[kingCoords,attackerCoords] = updateChecks(oppColor(game.turnColor));
+		if (game.autoCheck) {
+			game.thisMove = game.thisMove + "+";
 		}
 		setState("showCompleteMove");
 	}
@@ -497,14 +418,14 @@ function doMoveFromText(moveText) {
 	let move = parseMoveText(moveText);
 
 	// Check that the move number eg "3w. " is correct.
-	if (move.turn != TURNNUMBER.toString() + TURNCOLOR) {
+	if (move.turn != game.turnNumber.toString() + game.turnColor) {
 		debugPrint("Move text number + colour did not match expected");
 	}
 
 	if (move.notAKing) {
 		sideButton1Action(); // "Declare 'Not a King'" button
 	}
-	if (TURNNUMBER > 0) {
+	if (game.turnNumber > 0) {
 		// The ply should include an actual move
 		showPartialMove(move.from);
 		showCompleteMove(move.to, move.enPassant, move.promotion);
@@ -516,7 +437,7 @@ function doMoveFromText(moveText) {
 			selectPCAttackers(attacker);
 		}
 	}
-	return THISMOVE
+	return game.thisMove
 }
 
 function copyAllHistory() {
@@ -553,10 +474,10 @@ function stepBackAll() {
 function stepBackMove() {
 	if (REPLAYNUMBER == -1) {
 		// starting replay from game state
-			if (TURNCOLOR == "w") {
-			REPLAYNUMBER = TURNNUMBER - 0.5;
+			if (game.turnColor == "w") {
+			REPLAYNUMBER = game.turnNumber - 0.5;
 		} else {
-			REPLAYNUMBER = TURNNUMBER;
+			REPLAYNUMBER = game.turnNumber;
 		}
 	}
 	REPLAYNUMBER = REPLAYNUMBER - 0.5;
@@ -589,9 +510,9 @@ function replaynumber2turnID() {
 	if (REPLAYNUMBER == -1) {
 		return "";
 	} else if (REPLAYNUMBER % 1 == 0) {
-		return TURNNUMBER.toString() + "w. ";
+		return game.turnNumber.toString() + "w. ";
 	} else {
-		return TURNNUMBER.toString() + "b. ";
+		return game.turnNumber.toString() + "b. ";
 	}
 }
 
@@ -600,58 +521,25 @@ function replaynumber2turnID() {
 ////////////////////////////////
 // Check
 ////////////////////////////////
-function findPotentialKingsToAttack() {
-	// FInd all candidate kings for potential check
-	let pieces = getPieces(TURNCOLOR);
-	let piece;
-	let moves;
-	let nPotKings = 0;
-	
-	for (let r=0; r<8; r++) {
-		for (let c=0; c<8; c++) {
-			if (BOARD[r][c] === null) {continue};
-			if (BOARD[r][c].color == TURNCOLOR) {continue};
-			if (!BOARD[r][c].waves().includes("K")) {continue};
-			// Now we know the square has an opponent king-wave on it
-			// If the square is being attacked by any piece then it is a valid candidate for a PC King, and then we want to
-			// highlight it.
-			for (let pi=0; pi < pieces.length; pi++) {
-				piece = pieces[pi];
-				if (piece.captured > -1) {continue}
-				moves = getPotentialMoves([piece.r,piece.c]);
-				if (ismember([r,c],moves)) {
-					SQUARES[r][c].highlightPotKing = 1;
-					nPotKings++;
-				}
-			}
-		}
+// Highlight the opponent pieces that could be the king and are under attack (the candidates for a
+// potential check). Returns how many there are.
+function highlightPotentialKings() {
+	const kings = findPotentialKings(game);
+	for (const [r, c] of kings) {
+		SQUARES[r][c].highlightPotKing = 1;
 	}
-	return nPotKings;
+	return kings.length;
 }
 
-function findPCAttackers() {
-	// Now a potential check king has been selected, so highlight the potential attacking pieces
-	// Also called after every new PC attacker is selected, in case that selection collapses waves and changes
-	// the remaining candidates
-	
-	let attackPieces = getPieces(TURNCOLOR);
-	let piece;
-	let moves;
-	let defKing = defPiece(PCKING);
-	
-	let potAttackerCoords = [];
-	for (let pi=0; pi < attackPieces.length; pi++) {
-		piece = attackPieces[pi];
+// Highlight the side to move's pieces that could attack the chosen potential-check king, and
+// un-highlight the rest. Returns their coordinates.
+function highlightPCAttackers() {
+	const attackers = findPCAttackers(game);
+	for (const piece of getPieces(game, game.turnColor)) {
 		if (piece.captured > -1) {continue}
-		moves = getPotentialMoves(piece.coords());
-		if (ismember(defKing.coords(),moves)) { 
-			SQUARES[piece.r][piece.c].highlightPotAttacker = 1;
-			potAttackerCoords.push([piece.r,piece.c]);
-		} else {
-			SQUARES[piece.r][piece.c].highlightPotAttacker = 0;
-		}
+		SQUARES[piece.r][piece.c].highlightPotAttacker = ismember([piece.r, piece.c], attackers) ? 1 : 0;
 	}
-	return potAttackerCoords;
+	return attackers;
 }
 
 function clearFindPotentialCheckPieces() {
@@ -673,9 +561,9 @@ function selectPCKing(kingCoords) {
 	clearFindPotentialCheckPieces(); // stop highlighting the potential kings
 	
 	// Make this piece the PC King
-	PCKING = BOARD[kingCoords[0]][kingCoords[1]].i;
-	PCCOLOR = BOARD[kingCoords[0]][kingCoords[1]].color;
-	let potAttackerCoords = findPCAttackers();
+	game.pcKing = game.board[kingCoords[0]][kingCoords[1]].i;
+	game.pcColor = game.board[kingCoords[0]][kingCoords[1]].color;
+	let potAttackerCoords = highlightPCAttackers();
 	if (potAttackerCoords.length == 1) {
 		selectPCAttackers(potAttackerCoords[0]);
 	} else {
@@ -687,15 +575,15 @@ function selectPCAttackers(attackerCoords) {
 	// Get here when a PC attacker is selected by clicking on its square
 	
 	let attackerPiece = coords2piece(attackerCoords);
-	if (attackerPiece === null || attackerPiece.color != TURNCOLOR) {
+	if (attackerPiece === null || attackerPiece.color != game.turnColor) {
 		// clicked on an empty square
 		restoreGameHistory();
 		setState("clear");
 		return
 	}
 	
-	let attackerMoves = getPotentialMoves(attackerCoords);
-	let defKing = defPiece(PCKING);
+	let attackerMoves = getPotentialMoves(game, attackerCoords);
+	let defKing = defPiece(game, game.pcKing);
 	if (!ismember(defKing.coords(),attackerMoves)) {
 		// clicked on a piece which doesn't attack the PC king
 		restoreGameHistory();
@@ -704,105 +592,42 @@ function selectPCAttackers(attackerCoords) {
 	}
 	
 	
-	attackerPiece.updateOptionsByDest(defKing.coords());
-	updateOptionsFromEntanglement(TURNCOLOR);
+	attackerPiece.updateOptionsByDest(game, defKing.coords());
+	updateOptionsFromEntanglement(game, game.turnColor);
 	
 	// It is possible that by setting a potential check the attacker collapses down to a true king and thus puts 
 	// themselves into auto check. That wouldn't be a valid move
 	clearFindPotentialCheckPieces();
-	findChecks(TURNCOLOR);
-	if (AUTOCHECK) {
+	updateChecks(game.turnColor);
+	if (game.autoCheck) {
 		setState("invalidMoveIntoCheck");
 		return;
 	}
 	
-	findPCAttackers();
+	highlightPCAttackers();
 	setState("selectPCAttackers");
 }
 
-function findChecks(color) {
-	// Search to see if a check exists. 
-	// Should be called whenever the board state changes and is potentially in a valid move position
-	// color is the color of the king to check for check. What a great sentance.
-	
-	// First look for Auto Check:
-	AUTOCHECK = false;
-	POTCHECK = false;
-	let defPieces = getPieces(color);
-	let attPieces = getPieces(oppColor(color));
-	let kingCoords = [];
-	for (let pi=0; pi < 16; pi++) {
-		if (defPieces[pi].captured==-1 && defPieces[pi].waves() == "K") {
-			kingCoords = [defPieces[pi].r,defPieces[pi].c];
-			break;
-		}
-	} 
-	let attackerCoords = [];
-	if (kingCoords.length > 0) {
-		// There is a collapsed king, so look for auto check
-		let moveCoords;
-		for (let pi=0; pi < 16; pi++) {
-			let attacker = attPieces[pi];
-			if (attacker.captured > -1) {continue}
-			moveCoords = getPotentialMoves(attacker.coords());
-			if (ismember(kingCoords,moveCoords)) {
-				attackerCoords.push(attacker.coords());
-			}
-		}
-		if (attackerCoords.length > 0) {
-			AUTOCHECK = true;
-			return [kingCoords,attackerCoords];
-		} else {
-			// For auto check, only return anything if there are attackers
-			return [[],[]];
-		}
-		
-	} else {
-
-		// If no auto check, then check if the defender of potential check has moved the potential king out of the way ...
-		// of the potential attackers.
-		if (PCKING == -1) {
-			return [[],[]];
-		}
-		if (PCCOLOR != color) {
-			return [[],[]];
-		}
-		let defKing = defPieces[PCKING];
-		if (!defKing.waves().includes("K")) {
-			return [[],[]];
-		}
-		kingCoords = [defKing.r,defKing.c];
-		let attacker;
-		let moveCoords;
-		for (let pi=0; pi < 16; pi++) {
-			// Loop through the attacking pieces and see if it is unambiguously attacking the potential king.
-			attacker = attPieces[pi];
-			if (attacker.captured > -1) {continue}
-			moveCoords = getCertainMoves(attacker.coords());
-			if (ismember(kingCoords,moveCoords)) {
-				attackerCoords.push(attacker.coords());
-			}
-		}
-		if (attackerCoords.length > 0) {
-			POTCHECK = true;
-		}
-		// even if no attackers exist, still return the kingCoords
-		return [kingCoords,attackerCoords];
-		
-	}
+// Search for check against `color`, and remember the result in game.autoCheck / game.potCheck,
+// which the rest of the page reads. Returns [kingCoords, attackerCoords].
+function updateChecks(color) {
+	const result = findChecks(game, color);
+	game.autoCheck = result.autoCheck;
+	game.potCheck = result.potCheck;
+	return [result.kingCoords, result.attackerCoords];
 }
 
 function pcMoveText() {
-	// The PC notation can't be added onto THISMOVE since the king is the last entry.
+	// The PC notation can't be added onto game.thisMove since the king is the last entry.
 	// This function returns the "<....>" text for the potential check notation
 	let txt = "";
-	if (PCKING >= 0 && PCCOLOR == oppColor()) {
-		let piece = defPiece(PCKING);
+	if (game.pcKing >= 0 && game.pcColor == oppColor(game.turnColor)) {
+		let piece = defPiece(game, game.pcKing);
 		txt = "<" + coords2text([piece.r, piece.c]) + "+";
 		
 		let kingCoords;
 		let attackerCoords;
-		[kingCoords,attackerCoords] = findChecks(PCCOLOR);
+		[kingCoords,attackerCoords] = updateChecks(game.pcColor);
 		for (let ai=0; ai < attackerCoords.length; ai++) {
 			txt = txt + " " + coords2text([attackerCoords[ai][0], attackerCoords[ai][1]]);
 		}
@@ -814,250 +639,12 @@ function pcMoveText() {
 ////////////////////////////////
 // Piece collapse
 ////////////////////////////////
-function updateOptionsFromEntanglement(colors) {
-	if (colors == undefined) {
-		colors = ["w", "b"];
-	}
-	if (typeof colors === "string") {
-		// The old code was sometimes called with a bare "w" or "b"
-		colors = colors.split("");
-	}
-	for (const color of colors) {
-		const pieces = getPieces(color);
-		const filtered = filterOptionMatrix(getOM(pieces));
-		if (filtered === null) {
-			throw new Error('Original OM is not valid');
-		}
-		for (let pi = 0; pi < pieces.length; pi++) {
-			pieces[pi].options = filtered[pi];
-		}
-	}
-}
-
-
-
-
-
-
-function getCertainMoves(coords) {
-	// Get a list of the certain move destinations. That is - the desinations that a piece can definitely move to in all of their available waves.
-	
-	let piece = BOARD[coords[0]][coords[1]]; // Find the source pieceID
-	if (piece === null) {
-		return [];
-	}
-	let waves = piece.waves();
-	let moves;
-	let thismoves;
-	for (let wi=0; wi < waves.length; wi++) {
-		// Loop through the waves and intersec the resulting moves
-		thismoves = getPotentialMoves(coords,waves[wi]);
-		if (wi==0) {
-			moves = clone2DArray(thismoves);
-		} else {
-			let mi=0;
-			while (mi < moves.length) {
-				if (!ismember(moves[mi],thismoves)) {
-					moves.splice(mi,1);
-					if (moves.length == 0) {
-						return [];
-					}
-				} else {
-					mi++;
-				}
-			}
-		}
-	}
-	return moves;
-	
-}
-
-function getPotentialMoves(coords,waves) {
-	// Get a list of all potential destination coordinates.
-	// Optional input waves only returns destination for those passed in, otherwise use waves available to piece
-	
-	let piece = BOARD[coords[0]][coords[1]]; // Find the source pieceID
-	if (piece === null) {
-		return []
-	}
-	if (piece.captured > -1) {
-		return []
-	}
-	if (waves == undefined) {
-		waves = piece.waves();
-	}
-	let opponentColor = "w";
-	let direction  = -1;
-	if (piece.color == "w") {
-		opponentColor = "b";
-		direction = 1;
-	}
-	let newcoords = [];
-	let moves = [];
-	// Switch through difference piece types, adding to the growing moves array
-	
-	// King:
-	if (waves.includes("K")) {
-		for (let r=-1; r<=1; r++) {
-			for (let c=-1; c<=1; c++) {
-				newcoords = [coords[0]+r,coords[1]+c];
-				if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
-			}	
-		}
-	}
-	
-	// Pawn:
-	if (waves.includes("P")) {
-		newcoords = [coords[0]-direction,coords[1]]
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]] === null) {
-			moves.push(newcoords)
-			// if it can go 1 forward then it might be able to go 2 on its first move:
-			if (piece.hasmoved == 0) {
-				newcoords = [coords[0]-2*direction,coords[1]]
-				if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]] === null) {
-					moves.push(newcoords)
-				}
-			}
-		}
-		
-		newcoords = [coords[0]-direction,coords[1]-1]
-		if (isValidCoord(newcoords)) {
-			if (isequal(newcoords,EPCOORDS) || BOARD[newcoords[0]][newcoords[1]]?.color == opponentColor) {
-				moves.push(newcoords)
-			}
-		}
-		newcoords = [coords[0]-direction,coords[1]+1]
-		if (isValidCoord(newcoords)) {
-			if (isequal(newcoords,EPCOORDS) || BOARD[newcoords[0]][newcoords[1]]?.color == opponentColor) {
-				moves.push(newcoords)
-			}
-		}
-	}
-	
-	// Rooks and Queens:
-	if (waves.includes("R") || waves.includes("Q")) {
-		for (let i=coords[0]+1; i<=7; i++) {
-			newcoords = [i,coords[1]]
-			if (BOARD[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
-			moves.push(newcoords)
-			if (BOARD[newcoords[0]][newcoords[1]] !== null) {break;}
-		}
-		for (let i=coords[0]-1; i>=0; i--) {
-			newcoords = [i,coords[1]]
-			if (BOARD[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
-			moves.push(newcoords)
-			if (BOARD[newcoords[0]][newcoords[1]] !== null) {break;}
-		}
-		for (let i=coords[1]+1; i<=7; i++) {
-			newcoords = [coords[0],i]
-			if (BOARD[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
-			moves.push(newcoords)
-			if (BOARD[newcoords[0]][newcoords[1]] !== null) {break;}
-		}
-		for (let i=coords[1]-1; i>=0; i--) {
-			newcoords = [coords[0],i]
-			if (BOARD[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
-			moves.push(newcoords)
-			if (BOARD[newcoords[0]][newcoords[1]] !== null) {break;}
-		}
-	}
-	
-	// Bishops and Queens:
-	if (waves.includes("B") || waves.includes("Q")) {
-		for (let i=1; i<=7; i++) {
-			newcoords = [coords[0]+i,coords[1]+i]
-			if (isValidCoord(newcoords)) {
-				if (BOARD[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
-				moves.push(newcoords)
-				if (BOARD[newcoords[0]][newcoords[1]] !== null) {break;}
-			}
-		}
-		for (let i=1; i<=7; i++) {
-			newcoords = [coords[0]+i,coords[1]-i]
-			if (isValidCoord(newcoords)) {
-				if (BOARD[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
-				moves.push(newcoords)
-				if (BOARD[newcoords[0]][newcoords[1]] !== null) {break;}
-			}
-		}
-		for (let i=1; i<=7; i++) {
-			newcoords = [coords[0]-i,coords[1]-i]
-			if (isValidCoord(newcoords)) {
-				if (BOARD[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
-				moves.push(newcoords)
-				if (BOARD[newcoords[0]][newcoords[1]] !== null) {break;}
-			}
-		}
-		for (let i=1; i<=7; i++) {
-			newcoords = [coords[0]-i,coords[1]+i]
-			if (isValidCoord(newcoords)) {
-				if (BOARD[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
-				moves.push(newcoords)
-				if (BOARD[newcoords[0]][newcoords[1]] !== null) {break;}
-			}
-		}
-	}
-	
-	// Knights:
-	if (waves.includes("N")) {
-		newcoords = [coords[0]+2,coords[1]+1];
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
-		newcoords = [coords[0]+2,coords[1]-1];
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
-		newcoords = [coords[0]-2,coords[1]+1];
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
-		newcoords = [coords[0]-2,coords[1]-1];
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
-		newcoords = [coords[0]+1,coords[1]+2];
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
-		newcoords = [coords[0]+1,coords[1]-2];
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
-		newcoords = [coords[0]-1,coords[1]+2];
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
-		newcoords = [coords[0]-1,coords[1]-2];
-		if (isValidCoord(newcoords) && BOARD[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
-	}
-	
-	for (let i=moves.length-1; i>=0; i--) {
-		if (moves[i][0]==coords[0] && moves[i][1]==coords[1]) {
-			moves.splice(i,1)
-		}
-	}
-	
-	return moves
-}
-
 ////////////////////////////////
 // Utilities
 ////////////////////////////////
 function coords2piece(coords) {
-	return BOARD[coords[0]][coords[1]];
+	return game.board[coords[0]][coords[1]];
 }
-function oppColor(color) {
-	if (color == undefined) {
-		color = TURNCOLOR;
-	}
-	if (color=="w") {
-		return "b";
-	}
-	return "w";
-}
-function getPieces(color) {
-	if (color == "w") {
-		return WHITEPIECES;
-	} else {
-		return BLACKPIECES;
-	}
-}
-function defPiece(i) {
-	let pieces = getPieces(oppColor());
-	return pieces[i];
-}
-function attPiece(i) {
-	let pieces = getPieces(TURNCOLOR);
-	return pieces[i];
-}
-
 ////////////////////////////////
 // State Control
 ////////////////////////////////
@@ -1068,7 +655,7 @@ function debugPrint(txt) {
 }
 
 function setState(stateIn) {
-	if (stateIn == "clear" && TURNNUMBER == 0) {
+	if (stateIn == "clear" && game.turnNumber == 0) {
 		stateIn = "move0";
 	}
 	let prevState = STATE;
@@ -1086,25 +673,25 @@ function setState(stateIn) {
 	// them according to the variables in the object. 
 	let defaultText;
 	let promptText = "";
-	moveTextarea.value = THISMOVE + pcMoveText();
-	if (TURNNUMBER == 0) {
+	moveTextarea.value = game.thisMove + pcMoveText();
+	if (game.turnNumber == 0) {
 		promptText = "Black<br>Move 0 - ";
 	}
-	if (TURNCOLOR == "w") {
+	if (game.turnColor == "w") {
 		promptText = promptText + "White<br>";
 	} else {
 		promptText = promptText + "Black<br>";
 	}
 
-	if (AUTOCHECK) {
+	if (game.autoCheck) {
 		promptText = promptText + " Check - ";
 	}
-	if (POTCHECK) {
+	if (game.potCheck) {
 		promptText = promptText + " Potential Check - ";
 	}
 	
 	promptlabel.innerHTML = promptText + " select piece to move.";
-	if (TURNNUMBER == 0) {
+	if (game.turnNumber == 0) {
 		promptlabel.innerHTML = "Black<br>Move 0 - add Potential Check?";
 	}
 	if (STATE == "clear") {
@@ -1112,8 +699,8 @@ function setState(stateIn) {
 		sideButton1.style.visibility = "hidden";
 		STARTCOORDS = [];
 		ENDCOORDS = [];
-		TAKENPIECE = null;
-		if (POTCHECK) {
+		game.takenPiece = null;
+		if (game.potCheck) {
 			sideButton1.style.visibility = "visible";
 			sideButton1.innerText = "Declare 'Not a King'";
 		}
@@ -1124,7 +711,7 @@ function setState(stateIn) {
 		sideButton2.innerText = "Pass to white";
 		STARTCOORDS = [];
 		ENDCOORDS = [];
-		TAKENPIECE = null;
+		game.takenPiece = null;
 	} else if (STATE == "highlightPotentialMoves") {
 		sideButton2.style.visibility = "hidden";
 		sideButton1.style.visibility = "hidden";
@@ -1135,7 +722,7 @@ function setState(stateIn) {
 	} else if (STATE == "showCompleteMove") {
 		sideButton2.style.visibility = "visible";
 		sideButton2.innerText = "Submit";
-		let nPotKings = findPotentialKingsToAttack();
+		let nPotKings = highlightPotentialKings();
 		clearFindPotentialCheckPieces();
 		if (nPotKings > 0) {
 			promptlabel.innerHTML = promptText + "Add Potential Check / Submit";
@@ -1171,7 +758,7 @@ function setState(stateIn) {
 	if (REPLAYNUMBER == -1) {
 		forward1.style.visibility = "hidden";
 		forward2.style.visibility = "hidden";
-		if (TURNNUMBER > 0) {
+		if (game.turnNumber > 0) {
 			back2.style.visibility = "visible";
 			back1.style.visibility = "visible";
 		} else {
@@ -1201,10 +788,10 @@ function setState(stateIn) {
 	if (STATE != "selectPCAttackers" && STATE != "selectPCKing" && STATE != "highlightPotentialMoves" && STATE != "clear") {
 		clearFindPotentialCheckPieces();
 	}
-	[checkKingCoords,checkAttackerCoords] = findChecks(TURNCOLOR);
+	[checkKingCoords,checkAttackerCoords] = updateChecks(game.turnColor);
 	if (STATE == "selectPCAttackers") {
 		// Can only get here if player is not in check. Now we want to show the PCKing selected.
-		[checkKingCoords,checkAttackerCoords] = findChecks(oppColor());
+		[checkKingCoords,checkAttackerCoords] = updateChecks(oppColor(game.turnColor));
 	}
 	
 	let sqr;
@@ -1212,7 +799,7 @@ function setState(stateIn) {
 	for (let r = 0; r <= 7; r++) {
 		for ( let c = 0; c <= 7; c++) {
 			sqr = SQUARES[r][c];
-			piece = BOARD[r][c];
+			piece = game.board[r][c];
 			
 			if (STATE == "clear" || STATE == "move0") {
 				// For other states, the propertes are set in calling functions, but you can always reset to clear by 
@@ -1240,7 +827,7 @@ function setState(stateIn) {
 			// Default border:
 			sqr.resetButtonClasses();
 			if (STATE == "clear" && REPLAYNUMBER == -1) {
-				if (piece !== null && piece.color == TURNCOLOR) {
+				if (piece !== null && piece.color == game.turnColor) {
 					sqr.button.classList.add("selectable");
 				}
 			}
@@ -1290,7 +877,7 @@ function setState(stateIn) {
 			}
 			
 			// if they're selected then turn off the highlightPot* backgrounds
-			if (AUTOCHECK || POTCHECK || STATE == "selectPCAttackers") {
+			if (game.autoCheck || game.potCheck || STATE == "selectPCAttackers") {
 				if (isequal([r,c],checkKingCoords)) {
 					sqr.button.classList.remove("potKing");
 					sqr.button.classList.add("checkKing");
@@ -1334,14 +921,14 @@ function setState(stateIn) {
 	let blackorder = [];
 	let capturedwaves = [];
 	for (let i=0; i<16; i++) {
-		whiteorder.push(WHITEPIECES[i].captured);
-		blackorder.push(BLACKPIECES[i].captured);
+		whiteorder.push(game.pieces.w[i].captured);
+		blackorder.push(game.pieces.b[i].captured);
 	}
-	for (let i=0; i <= TURNNUMBER; i++) {
+	for (let i=0; i <= game.turnNumber; i++) {
 		let idx = whiteorder.indexOf(i);
-		if (idx > -1) {whitecaptured = whitecaptured + i + '. ' + WHITEPIECES[idx].wavesWithBishopColor() + "<br>";}
+		if (idx > -1) {whitecaptured = whitecaptured + i + '. ' + game.pieces.w[idx].wavesWithBishopColor() + "<br>";}
 		idx = blackorder.indexOf(i);
-		if (idx > -1) {blackcaptured = blackcaptured + i + '. ' + BLACKPIECES[idx].wavesWithBishopColor() + "<br>";}
+		if (idx > -1) {blackcaptured = blackcaptured + i + '. ' + game.pieces.b[idx].wavesWithBishopColor() + "<br>";}
 	}
 	
 	let capturedLabel;
@@ -1351,7 +938,7 @@ function setState(stateIn) {
 	capturedLabel.innerHTML = blackcaptured;
 	
 	// Update the findpiece buttons to display the correct piece for this color
-	if (TURNCOLOR == "w") {
+	if (game.turnColor == "w") {
 		document.getElementById("findKpiece").classList.remove("blackpiececollapsed");
 		document.getElementById("findQpiece").classList.remove("blackpiececollapsed");
 		document.getElementById("findRpiece").classList.remove("blackpiececollapsed");
@@ -1415,27 +1002,14 @@ function highlightReplayLine() {
 }
 
 function setup() {
-	TURNNUMBER = 0;
-	TURNCOLOR = "b";
-	TAKENPIECE = null;
-	BOARD = []; // 8 x 8 array: the Piece on each square, or null if empty
+	game = createInitialState();
 	SQUARES = []; // 8 x 8 array of SquareView objects (the page's buttons)
 	STARTCOORDS = [];
 	ENDCOORDS = [];
 	LASTSTARTCOORDS = [];
 	LASTENDCOORDS = [];
-	WHITEPIECES = [];
-	BLACKPIECES = [];
-	MOVEHISTORY = "";
-	THISMOVE = "0b. ";
-	EPCOORDS = [];
-	EPCOLOR = "";
-	AUTOCHECK = false;
-	POTCHECK = false;
-	PCKING = -1; // piece idx which is selected as potential check king
-	PCCOLOR = ""; // the color of the king in potential check
 	FINDPIECE = "";
-	
+
 	let moveTextarea = document.getElementById("thismove");
 	moveTextarea.value = "";
 	if (REPLAYNUMBER == -1) {
@@ -1443,30 +1017,13 @@ function setup() {
 		historyArea.innerText = "";
 		historyArea.contentEditable = true;
 	}
-	
-	
+
 	for (let r = 0; r <= 7; r++) {
-		BOARD.push(Array(8).fill(null));
 		let viewRow = [];
 		for (let c = 0; c <= 7; c++) {
 			viewRow.push(new SquareView(r, c, document.getElementById("square" + r + c)));
 		}
 		SQUARES.push(viewRow);
-	}
-	for (let r = 0; r <= 1; r++) {
-		for (let c=0; c <= 7; c++) {
-			let i = r*8 + c
-			let piece = new Piece(i, r, c, 'b')
-			BLACKPIECES.push(piece)
-			BOARD[r][c] = BLACKPIECES[i]
-		}
-	}for (let r = 6; r <= 7; r++) {
-		for (let c=0; c <= 7; c++) {
-			let i = (r-6)*8 + c
-			let piece = new Piece(i, r, c, 'w')
-			WHITEPIECES.push(piece)
-			BOARD[r][c] = WHITEPIECES[i]
-		}
 	}
 	setState("move0");
 }
@@ -1474,25 +1031,14 @@ function setup() {
 ////////////////////////////////
 // Initialisation
 ////////////////////////////////
-let TURNNUMBER;
-let TURNCOLOR;
-let TAKENPIECE; // the Piece captured by the move being made, or null
-let BOARD; // 8 x 8 array: the Piece on each square, or null if empty
+let game; // the game state: see src/engine/state.js
+
+// Page state
 let SQUARES; // 8 x 8 array of SquareView objects (the page's buttons)
 let STARTCOORDS; // [r,c] of the move being made, or [] if none
 let ENDCOORDS;
 let LASTSTARTCOORDS; // start square of the last submitted move, for replay highlighting
 let LASTENDCOORDS;   // end square of the last submitted move
-let WHITEPIECES;
-let BLACKPIECES;
-let MOVEHISTORY;
-let THISMOVE;
-let EPCOORDS;
-let EPCOLOR;
-let AUTOCHECK;
-let POTCHECK;
-let PCKING;
-let PCCOLOR;
 let FINDPIECE;
 let STATE;
 let REPLAYNUMBER = -1;
@@ -1517,8 +1063,8 @@ export {
 	pasteAllRestore,
 	pasteLineRestore,
 
-	// Used by tests/test.html and tests/generate.html to drive and inspect the game.
-	// These go away as the game state moves into a proper state object.
+	// Used by tests/test.html and tests/generate.html to drive and inspect the game
+	game,
 	sideButton1Action,
 	sideButton2Action,
 	getHistoryLines,
@@ -1528,22 +1074,6 @@ export {
 	selectPCKing,
 	selectPCAttackers,
 	getPotentialMoves,
-	TURNNUMBER,
-	TURNCOLOR,
-	BOARD,
 	SQUARES,
-	WHITEPIECES,
-	BLACKPIECES,
-	MOVEHISTORY,
-	EPCOORDS,
-	EPCOLOR,
-	AUTOCHECK,
-	POTCHECK,
-	PCKING,
-	PCCOLOR,
 	STATE,
 };
-
-
-
-

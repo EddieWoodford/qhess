@@ -1,5 +1,7 @@
 "use strict";
 
+import { getPieces } from "./state.js";
+
 // Piece collapse: which identities each piece can still have, given that the whole army must
 // still be assignable. Pure functions on 16x16 option matrices; no game state, no page code.
 
@@ -111,4 +113,26 @@ function getOM(pieces) {
 	return OM;
 }
 
-export { filterOptionMatrix, getOM };
+// Collapse each colour's pieces (colors: "w", "b", "wb" or an array; default both) so that every
+// remaining identity is part of some complete army
+function updateOptionsFromEntanglement(state, colors) {
+	if (colors == undefined) {
+		colors = ["w", "b"];
+	}
+	if (typeof colors === "string") {
+		// The old code was sometimes called with a bare "w" or "b"
+		colors = colors.split("");
+	}
+	for (const color of colors) {
+		const pieces = getPieces(state, color);
+		const filtered = filterOptionMatrix(getOM(pieces));
+		if (filtered === null) {
+			throw new Error('Original OM is not valid');
+		}
+		for (let pi = 0; pi < pieces.length; pi++) {
+			pieces[pi].options = filtered[pi];
+		}
+	}
+}
+
+export { filterOptionMatrix, getOM, updateOptionsFromEntanglement };

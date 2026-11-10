@@ -69,7 +69,8 @@ async function playGame(seed, maxPlies, pawnBias = 1) {
 	const rng = mulberry32(seed);
 	const pick = arr => arr[Math.floor(rng() * arr.length)];
 	const { win, game: g } = await loadFrame();
-	const E = name => g[name]; // read the game's exported variables
+	const E = name => g[name]; // read the game's exported page variables (STATE, SQUARES)
+	const S = () => g.game; // the current game state object (replaced on every reset)
 	const sideButtonVisible = n => win.document.getElementById("sideButton" + n).style.visibility === "visible";
 
 	// When a move is ambiguous (en passant / promotion), the game asks with confirm(). Answer randomly.
@@ -81,8 +82,8 @@ async function playGame(seed, maxPlies, pawnBias = 1) {
 	let endReason = "reached max plies";
 	let plies = 0;
 	while (plies < maxPlies) {
-		const savedHistory = E("MOVEHISTORY");
-		let declare = E("POTCHECK") && rng() < 0.5;
+		const savedHistory = S().history;
+		let declare = S().potCheck && rng() < 0.5;
 
 		// Put the turn back to how it started (optionally re-declaring 'Not a King')
 		const resetTurn = () => {
@@ -92,17 +93,17 @@ async function playGame(seed, maxPlies, pawnBias = 1) {
 
 		// List every candidate move for the side to play. Weight captures, pawn pushes, en passant
 		// and promotion more heavily so the rarer rules come up in the example games.
-		const color = E("TURNCOLOR");
-		const pieces = E(color === "w" ? "WHITEPIECES" : "BLACKPIECES");
-		const board = E("BOARD");
-		const epCoords = E("EPCOORDS");
+		const color = S().turnColor;
+		const pieces = S().pieces[color];
+		const board = S().board;
+		const epCoords = S().epCoords;
 		const forward = color === "w" ? -1 : 1;
 		const lastRank = color === "w" ? 0 : 7;
 		const cands = [];
 		for (const p of pieces) {
 			if (p.captured > -1) { continue; }
 			const canBePawn = p.waves().includes("P");
-			for (const to of g.getPotentialMoves([p.r, p.c])) {
+			for (const to of g.getPotentialMoves(S(), [p.r, p.c])) {
 				let weight = board[to[0]][to[1]] !== null ? 4 : 1;
 				if (canBePawn && to[1] === p.c && to[0] - p.r === forward) { weight *= 2 * pawnBias; }
 				if (canBePawn && to[1] === p.c && to[0] - p.r === 2 * forward) { weight *= 2 * pawnBias; }
@@ -177,7 +178,7 @@ async function playGame(seed, maxPlies, pawnBias = 1) {
 		plies++;
 	}
 
-	const history = E("MOVEHISTORY");
+	const history = S().history;
 	return { seed, history, endReason, features: historyFeatures(history) };
 }
 
