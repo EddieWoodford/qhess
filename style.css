@@ -625,6 +625,75 @@ input:checked + .tabTitle {
     max-width: 28em;
 }
 
+/* The Rules dialog (from the Info tab): reads like a page of text, so left aligned */
+.modalData.rules {
+    text-align: left;
+    line-height: 1.45;
+}
+
+.modalData.rules h2 {
+    margin-top: 0;
+    text-align: center;
+}
+
+.modalData.rules h3 {
+    margin: 1.4em 0 0.4em;
+    color: var(--text-strong);
+}
+
+.modalData.rules h4 {
+    margin: 1em 0 0.3em;
+    color: var(--text-strong);
+}
+
+.modalData.rules p,
+.modalData.rules ul,
+.modalData.rules ol {
+    margin: 0 0 0.6em;
+}
+
+.modalData.rules ul,
+.modalData.rules ol {
+    padding-left: 1.5em;
+}
+
+.modalData.rules li {
+    margin-bottom: 0.3em;
+}
+
+.modalData.rules pre,
+.modalData.rules code {
+    font-family: var(--font-mono);
+}
+
+.modalData.rules pre {
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 0.5em;
+    overflow-x: auto;
+}
+
+.modalData.rules table {
+    border-collapse: collapse;
+    margin-bottom: 1em;
+}
+
+.modalData.rules td {
+    border-top: 1px solid var(--border-faint);
+    padding: 0.3em 0.6em 0.3em 0;
+    vertical-align: top;
+}
+
+.modalData.rules td:first-child {
+    white-space: nowrap;
+}
+
+.modalData.rules .button-row {
+    justify-content: center;
+    margin-top: 1em;
+}
+
 /* The Edit / Import dialog's text box */
 .import-text {
     display: block;

@@ -75,6 +75,9 @@ onClick("importButton", () => game.openImport());
 onClick("importLoad", () => { game.importMoves(); hideModal("import"); });
 onClick("importCancel", () => hideModal("import"));
 
+// Rules dialog (modals.js opens it from the Info tab)
+onClick("rulesClose", () => hideModal("rules"));
+
 // Multiplayer tab
 onClick("mpCreate", () => {
 	const color = document.querySelector("input[name=mpColor]:checked")?.value ?? "random";

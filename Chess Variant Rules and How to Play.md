@@ -6,6 +6,9 @@ By the end of the game, each side's pieces have settled into a normal chess army
 
 Everything not covered here works as in ordinary chess.
 
+<!-- The game page shows these rules too (the Rules button in the Info tab): the rules modal in
+     index.html has the same text. Change both together. -->
+
 ## 1. The pieces
 
 Each side has 16 pieces, set up on the usual two ranks. Every piece starts out able to be any of

@@ -27,6 +27,161 @@
             </div>
         </div>
     </div>
+    <!-- rules modal - how to play, opened from the Info tab.
+         The same rules as "Chess Variant Rules and How to Play.md": change both together. -->
+    <div id="rulesWrapper" class="modalWrapper">
+        <div id="rulesDiv" class="modalData rules">
+            <h2>Rules</h2>
+            <p>Qhess is chess where you don't know which piece is which. At the start, every piece could be
+                any piece. Each time a piece moves, the types that couldn't have made that move are ruled out.
+                By the end of the game, each side's pieces have settled into a normal chess army.</p>
+            <p>Everything not covered here works as in ordinary chess.</p>
+
+            <h3>1. The pieces</h3>
+            <p>Each side has 16 pieces, set up on the usual two ranks. Every piece starts out able to be any of
+                the six types: <b>K</b>ing, <b>Q</b>ueen, <b>B</b>ishop, k<b>N</b>ight, <b>R</b>ook or
+                <b>P</b>awn. Each piece on the board shows the letters of the types it could still be.</p>
+            <p>There is one exception from the start: a piece can only be the bishop for the colour of square
+                it starts on. Each side has one dark-squared and one light-squared bishop.</p>
+            <h4>The army must always add up</h4>
+            <p>Each side must always be able to be shared out as a normal army: 8 pawns, 2 rooks, 2 knights,
+                a dark-squared bishop, a light-squared bishop, 1 queen and 1 king. Captured pieces still count
+                towards this.</p>
+            <p>So ruling out one piece's types can settle others. If the queen is known to be one particular
+                piece, no other piece can be the queen. If only one piece is left that could be the king, it
+                <i>is</i> the king. The game works all of this out for you after every move.</p>
+
+            <h3>2. Moving</h3>
+            <p>On your turn, move one of your pieces to any square that <b>at least one</b> of its possible
+                types could reach, using that type's normal moves (blocked by pieces in the way, as usual).</p>
+            <p>Afterwards, the piece keeps only the types that could have made that move. For example, a piece
+                that could be anything and moves one square diagonally forward onto an empty square could be a
+                king, queen or bishop, but not a rook, knight or pawn.</p>
+            <p>Some things to know about how each type moves:</p>
+            <ul>
+                <li><b>Pawns</b> move forward one square onto an empty square, or two on their first move if
+                    both squares are empty. They capture one square diagonally forward. Since any piece might be
+                    a pawn, this applies to pieces on the back rank too: an unmoved back-rank piece can step two
+                    squares forward as a pawn.</li>
+                <li><b>Knights</b> jump, as usual. Since any piece might be a knight, any piece can jump out
+                    from behind its own pawns on the first move.</li>
+                <li><b>Bishops</b> stay on their own colour of square. A piece that moves onto a square of the
+                    other colour can't be a bishop any more.</li>
+            </ul>
+            <h4>Capturing</h4>
+            <p>You capture by moving onto an opponent's piece, as in chess. <b>You can never capture the
+                king</b>: a piece that is captured is shown not to have been the king, so it loses its K.
+                (Capturing it may therefore tell you which piece <i>is</i> the king.) A piece that is certainly
+                the king can't be captured, because the check rules stop that happening.</p>
+
+            <h3>3. Choices during a move</h3>
+            <p>Sometimes a move could mean two different things. When it does, the game asks you which you
+                meant:</p>
+            <ul>
+                <li><b>En passant.</b> When a piece that could be a pawn moves two squares forward, an
+                    opponent's piece that could be a pawn may capture it en passant on the very next move, as
+                    in chess. If the capturing piece could also be something else, you're asked "En passant?".
+                    Saying yes makes both pieces pawns and removes the captured one. Saying no means the moving
+                    piece is not a pawn, and it just moves to the empty square.</li>
+                <li><b>Promotion.</b> When a piece that could be a pawn reaches the far rank, you're asked
+                    "Promote Pawn?" (unless it can only be a pawn, when it promotes anyway). Saying yes shows it
+                    was a pawn, and it becomes a new piece that could be a queen, rook, knight or bishop (a
+                    bishop of the colour of square it promoted on). Like any piece, its possible types narrow
+                    down as it moves. Saying no means it was not a pawn.</li>
+                <li><b>Castling.</b> See below. If a move could be either a castle or an ordinary move, you're
+                    asked "Castle?".</li>
+            </ul>
+
+            <h3>4. Castling</h3>
+            <p>A piece that could be the king and has never moved can castle:</p>
+            <ul>
+                <li>It moves two squares sideways along its rank. The square it passes over and the square it
+                    lands on must be empty.</li>
+                <li>The rook is the first piece beyond where the king lands, either right next to that square
+                    or one further along with an empty square between (like queenside castling in chess). It
+                    must be the same colour, never have moved, and be able to be a rook. It jumps to the square
+                    the king passed over.</li>
+                <li>Castling makes the one piece the king and the other a rook. That must still leave a complete
+                    army (section 1).</li>
+                <li>You can't castle out of check, through check, or into check, judged as though the piece were
+                    already the king.</li>
+            </ul>
+            <p>Because any piece could be the king, castling isn't tied to the usual squares: any pair of
+                unmoved pieces with the right space between them can castle, on either of a side's two starting
+                ranks.</p>
+
+            <h3>5. Check</h3>
+            <p>There are two kinds of check.</p>
+            <h4>Check (when the king is known)</h4>
+            <p>Once a side's king is known (only one piece left that could be the king), the normal check rule
+                applies, made stricter by the uncertainty: <b>the king is in check if any opponent piece could
+                capture it as any of its possible types.</b> A piece that might be a rook counts as attacking
+                along its rook lines, even if it might turn out to be a knight.</p>
+            <p>You must never end your move with your known king in check. If your king is in check, your move
+                must get it out.</p>
+            <h4>Potential check (when the king is not yet known)</h4>
+            <p>While the king could still be one of several pieces, you can't simply be in check. Instead, the
+                attacker can <b>declare a potential check</b>:</p>
+            <ol>
+                <li>After making your move, press <b>Add Potential Check</b>.</li>
+                <li>Choose an opponent piece that could be the king and that one of your pieces could
+                    capture.</li>
+                <li>Choose one or more of your pieces that could capture it. Each of those attackers keeps only
+                    the types that could make that capture. (This must not leave your own king in check.)</li>
+                <li>Submit.</li>
+            </ol>
+            <p>On their next turn, the defender must deal with it in one of these ways:</p>
+            <ul>
+                <li><b>Make a move that ends the threat</b>, as with any check: move the threatened piece out of
+                    the way, block the attack, or capture the attacker. The threat is over when no attacker could
+                    still certainly capture the threatened piece.</li>
+                <li><b>Declare "Not a King"</b> on the threatened piece. It is then shown not to be the king, and
+                    the defender must still make a move afterwards. Ruling it out may show that another piece is
+                    the king, and if that king is in check, the move must get it out of check. You can't declare
+                    "Not a King" on a piece that must be the king.</li>
+            </ul>
+            <p>A potential check lasts for that one reply only. Then it is gone.</p>
+            <h4>Black's move 0</h4>
+            <p>White makes the first move. Before that, Black has a <b>move 0</b>: Black doesn't move a piece,
+                but may declare a potential check (for example, a piece on Black's second rank that might be a
+                rook or queen attacking straight down the open file). Otherwise Black just presses <b>Pass to
+                white</b>.</p>
+
+            <h3>6. How the game ends</h3>
+            <p>The game ends when the side to move has no legal turn: no move that leaves their king out of
+                check (counting declaring "Not a King" first, when they are in potential check).</p>
+            <ul>
+                <li><b>Checkmate</b>: they are in check or in potential check. The other side wins.</li>
+                <li><b>Stalemate</b>: they are not in check. The game is drawn.</li>
+            </ul>
+            <p>The board then locks. There are no other draw rules (no 50-move rule or repetition).</p>
+
+            <h3>7. Learning mode</h3>
+            <p>The <b>Potential Check</b> switch in the Settings tab can be turned off while learning. You then
+                can't declare potential checks, and Black's move 0 is skipped. Multiplayer games always use
+                potential check.</p>
+
+            <h3>8. Reading the move history</h3>
+            <p>Each line of the History tab is one move, for example:</p>
+            <pre>12w. [d2](KQRP)e2xe4(QR)+&lt;e8+ e4 h5&gt;</pre>
+            <table>
+                <tr><td><code>12w.</code></td><td>Move number and side (<code>w</code> White, <code>b</code> Black)</td></tr>
+                <tr><td><code>[d2]</code></td><td>"Not a King" declared on the piece on d2</td></tr>
+                <tr><td><code>(KQRP)e2</code></td><td>The piece's possible types before moving, and where it started</td></tr>
+                <tr><td><code>x</code></td><td>A capture</td></tr>
+                <tr><td><code>e4(QR)</code></td><td>Where it landed, and its possible types afterwards</td></tr>
+                <tr><td><code>=(QRNB)</code></td><td>Promotion</td></tr>
+                <tr><td><code>e.p.</code></td><td>En passant</td></tr>
+                <tr><td><code>O-O</code> / <code>O-O-O</code></td><td>Castled towards the h-file / the a-file</td></tr>
+                <tr><td><code>+</code></td><td>Check</td></tr>
+                <tr><td><code>&lt;e8+ e4 h5&gt;</code></td><td>Potential check on the piece on e8, by the pieces on e4 and h5</td></tr>
+            </table>
+
+            <div class="button-row">
+                <button class="historyButton" id="rulesClose">Close</button>
+            </div>
+        </div>
+    </div>
     <!-- choice modal - en passant / promotion questions during a move (src/client/modals.js showChoice) -->
     <div id="choiceWrapper" class="modalWrapper">
         <div id="choiceDiv" class="modalData choice">
@@ -177,7 +332,9 @@
                         <h2>What is Qhess?</h2>
                         <p>Simply: it is your daily insanity chess!</p>
                         <p><a href="http://wiki.thorx.net/wiki/QuantumChess" target="_blank" rel="noopener">Qhess on ThorxWiki</a></p>
-                        <!-- an outline of the rules can go here, as an <h3>Rules</h3> section -->
+                        <div class="button-row">
+                            <button class="historyButton" id="rulesButton">Rules</button>
+                        </div>
                         <h3>Credit</h3>
                         <ul>
                             <li>Thomas Bremner</li>
