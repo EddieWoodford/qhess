@@ -127,7 +127,7 @@ function updateOptionsFromEntanglement(state, colors) {
 		const pieces = getPieces(state, color);
 		const filtered = filterOptionMatrix(getOM(pieces));
 		if (filtered === null) {
-			throw new Error('Original OM is not valid');
+			throw new Error("no complete army fits the " + (color == "w" ? "White" : "Black") + " pieces' possibilities");
 		}
 		for (let pi = 0; pi < pieces.length; pi++) {
 			pieces[pi].options = filtered[pi];

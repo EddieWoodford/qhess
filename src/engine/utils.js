@@ -35,6 +35,11 @@ function isValidCoord(coords) {
 	return coords[0] >= 0 && coords[0] <= 7 && coords[1] >= 0 && coords[1] <= 7;
 }
 
+// Is v a board square: [r, c], two whole numbers from 0 to 7? (For checking moves from outside the engine.)
+function isSquare(v) {
+	return Array.isArray(v) && v.length == 2 && v.every(n => Number.isInteger(n) && n >= 0 && n <= 7);
+}
+
 // 1 if coords is in coordlist, else 0
 function ismember(coords, coordlist) {
 	for (let i = 0; i < coordlist.length; i++) {
@@ -49,4 +54,4 @@ function sum(x) {
 	return x.reduce((a, b) => a + b, 0);
 }
 
-export { isequal, clone2DArray, coordstext2coords, coords2text, isValidCoord, ismember, sum };
+export { isequal, clone2DArray, coordstext2coords, coords2text, isValidCoord, isSquare, ismember, sum };

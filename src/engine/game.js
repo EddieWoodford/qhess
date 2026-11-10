@@ -12,7 +12,7 @@
 // After each turn, endTurn sets state.result: "checkmate" or "stalemate" if the side now to move has no legal
 // turn (see gameResult), otherwise null. Once it is set, no more moves can be made.
 
-import { isequal, ismember, coords2text } from "./utils.js";
+import { isequal, ismember, coords2text, isSquare } from "./utils.js";
 import { cloneState, oppColor, getPieces, defPiece, attPiece } from "./state.js";
 import { getPotentialMoves, enPassantVictim } from "./moves.js";
 import { findChecks, findPotentialKings, findPCAttackers } from "./check.js";
@@ -30,7 +30,7 @@ function refreshChecks(state, color) {
 
 // Declare that the side to move's potential-check king is not a king.
 // Returns { ok: true, square } (where that piece is), or { ok: false, error } if no potential check is
-// declared on the side to move.
+// declared on the side to move, or the piece must be the king.
 function declareNotAKing(state) {
 	if (state.result) {
 		return { ok: false, error: "the game is over" };
@@ -39,6 +39,10 @@ function declareNotAKing(state) {
 		return { ok: false, error: "no potential check to answer" };
 	}
 	let defKing = attPiece(state, state.pcKing);
+	if (defKing.waves() == "K") {
+		// (Nothing else could be the king: there would be no complete army)
+		return { ok: false, error: "the piece on " + coords2text(defKing.coords()) + " must be the king" };
+	}
 	defKing.removewaves("K");
 	state.thisMove = state.thisMove + "[" + coords2text([defKing.r, defKing.c]) + "]";
 	updateOptionsFromEntanglement(state, state.turnColor);
@@ -351,16 +355,10 @@ function hasLegalTurn(state) {
 	if (anyLegalMove(state)) {
 		return true;
 	}
-	const pcKing = state.pcColor == state.turnColor && state.pcKing >= 0 ? attPiece(state, state.pcKing) : null;
-	if (pcKing !== null && pcKing.waves().includes("K") && pcKing.waves() != "K") {
+	if (state.pcColor == state.turnColor && state.pcKing >= 0) {
+		// (declareNotAKing refuses a piece that must be the king)
 		const declared = cloneState(state);
-		let ok;
-		try {
-			ok = declareNotAKing(declared).ok;
-		} catch {
-			ok = false; // no complete army without that piece as the king
-		}
-		if (ok && anyLegalMove(declared)) {
+		if (declareNotAKing(declared).ok && anyLegalMove(declared)) {
 			return true;
 		}
 	}
@@ -379,10 +377,41 @@ function gameResult(state) {
 
 // Play a whole turn from parsed notation (notation.js parseMoveText): the same steps a player would take.
 // choices.ask is only needed if the move leaves an en passant, promotion or castling choice unanswered.
-// Returns { ok: true } or { ok: false, error }. On failure the state may be part-way through the turn.
+// Returns { ok: true } or { ok: false, error }, and never throws: a move from a network or a pasted history
+// can be anything. On failure the state may be part-way through the turn, so play it on a copy (cloneState).
 function applyMove(state, move, choices = {}) {
+	try {
+		return playTurn(state, move, choices);
+	} catch (err) {
+		// A move too malformed to play, or a fault in the engine: refuse the move rather than break the caller
+		return { ok: false, error: "the move couldn't be played (" + (err?.message ?? err) + ")" };
+	}
+}
+
+// Why a move isn't even the shape of one (see notation.js parseMoveText), or null if it is
+function malformed(move) {
+	if (move === null || typeof move != "object") {
+		return "no move given";
+	}
+	for (const name of ["notAKing", "from", "to", "pcKing"]) {
+		if (move[name] != null && !isSquare(move[name])) {
+			return name + " isn't a square";
+		}
+	}
+	const attackers = move.pcAttackers ?? [];
+	if (!Array.isArray(attackers) || !attackers.every(isSquare)) {
+		return "pcAttackers isn't a list of squares";
+	}
+	return null;
+}
+
+function playTurn(state, move, choices) {
 	if (state.result) {
 		return { ok: false, error: "the game is over" };
+	}
+	const problem = malformed(move);
+	if (problem) {
+		return { ok: false, error: problem };
 	}
 	if (move.notAKing) {
 		const result = declareNotAKing(state);
@@ -400,10 +429,14 @@ function applyMove(state, move, choices = {}) {
 	if (move.pcKing) {
 		const kingResult = choosePCKing(state, move.pcKing);
 		if (!kingResult.ok) { return kingResult; }
-		for (const attacker of move.pcAttackers) {
+		for (const attacker of move.pcAttackers ?? []) {
 			const result = addPCAttacker(state, attacker);
 			if (!result.ok) { return result; }
 			if (result.movedIntoCheck) { return { ok: false, error: "the potential check leaves the mover in check" }; }
+		}
+		// At least one piece must now be certain to capture it (one added above, or one that already was)
+		if (findChecks(state, state.pcColor).attackerCoords.length == 0) {
+			return { ok: false, error: "the potential check has no attacker" };
 		}
 	}
 	endTurn(state);

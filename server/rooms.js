@@ -7,6 +7,7 @@
 import { randomUUID } from "node:crypto";
 import { createInitialState, cloneState } from "../src/engine/state.js";
 import { applyMove } from "../src/engine/game.js";
+import { isSquare } from "../src/engine/utils.js";
 import { positionHash } from "../src/engine/fingerprint.js";
 import { OPPONENT, ENDED, ERRORS, normalizeCode } from "../src/shared/protocol.js";
 import { randomCode } from "./codes.js";
@@ -22,10 +23,9 @@ const colorOfMove = seq => seq % 2 == 0 ? "b" : "w";
 // a move at all. (Whether it's a legal move is up to the engine.)
 function cleanMove(move) {
 	if (move === null || typeof move != "object" || Array.isArray(move)) { return null; }
-	const isCoord = v => Array.isArray(v) && v.length == 2 && v.every(n => Number.isInteger(n) && n >= 0 && n <= 7);
 	const coordOrNull = v => {
 		if (v === undefined || v === null) { return null; }
-		return isCoord(v) ? [v[0], v[1]] : undefined;
+		return isSquare(v) ? [v[0], v[1]] : undefined;
 	};
 	const clean = {
 		notAKing: coordOrNull(move.notAKing),
@@ -39,7 +39,7 @@ function cleanMove(move) {
 	};
 	if (Object.values(clean).includes(undefined)) { return null; }
 	const attackers = move.pcAttackers ?? [];
-	if (!Array.isArray(attackers) || attackers.length > 16 || !attackers.every(isCoord)) { return null; }
+	if (!Array.isArray(attackers) || attackers.length > 16 || !attackers.every(isSquare)) { return null; }
 	clean.pcAttackers = attackers.map(a => [a[0], a[1]]);
 	return clean;
 }
@@ -71,7 +71,7 @@ class GameServer {
 
 	// conn has closed (or been lost)
 	disconnect(conn) {
-		return this.enqueue(() => this.detach(conn, true));
+		return this.enqueue(() => this.detach(conn));
 	}
 
 	// Stop every timer (for tests, and shutting down)
@@ -212,12 +212,7 @@ class GameServer {
 		}
 		// Play it on a copy, so a move that fails part-way leaves the game as it was
 		const next = cloneState(room.state);
-		let result;
-		try {
-			result = applyMove(next, clean);
-		} catch (err) {
-			result = { ok: false, error: String(err.message ?? err) };
-		}
+		const result = applyMove(next, clean);
 		if (!result.ok) {
 			return send(conn, { type: "rejected", seq, error: result.error });
 		}
