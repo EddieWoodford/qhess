@@ -20,7 +20,8 @@
 <h1>Qhess regression tests</h1>
 <p>Replays every game in <code>example_games/</code> through the real game page and checks that:
 the game replays without errors, the move history it writes back matches the file exactly,
-and the board state and what the page shows after every move match the snapshot recorded in <code>tests/snapshots.json</code>.</p>
+and the board state and what the page shows after every move match the snapshot recorded in <code>tests/snapshots.json</code>.
+It also has <code>tests/generate.html</code> replay a game by clicking through it the way a player does, and checks it plays the same game as before.</p>
 <p>
 	<button id="run">Run tests</button>
 	<button id="record">Record new snapshots</button>
@@ -34,6 +35,7 @@ and the board state and what the page shows after every move match the snapshot 
 	<textarea id="recordOut"></textarea>
 </div>
 <iframe id="game"></iframe>
+<iframe id="generator"></iframe>
 
 <script>
 "use strict";
@@ -46,6 +48,14 @@ const GAMES = [
 	"04_en_passant.txt",
 	"05_promotion.txt",
 	"06_checkmate.txt",
+];
+
+// Games that tests/generate.html made by clicking through the game the way a player does
+// (choosing potential-check kings and attackers from the highlights, trying moves that get rejected, ...).
+// Replaying the files above doesn't exercise those paths, so these check that the generator, given the
+// same seed, still plays exactly the same game. They also fail if generate.html's own move-picking changes.
+const GENERATED = [
+	{ file: "01_short_opening.txt", seed: 5, maxPlies: 20, pawnBias: 1 },
 ];
 
 ////////////////////////////////
@@ -251,6 +261,32 @@ function compare(result, snap) {
 	return { status: problems.length ? "fail" : "pass", problems };
 }
 
+// Load tests/generate.html in its own frame and return its window (for its playGame function)
+function loadGenerator() {
+	return new Promise(resolve => {
+		const frame = document.getElementById("generator");
+		frame.onload = () => resolve(frame.contentWindow);
+		frame.src = "generate.html?t=" + Date.now();
+	});
+}
+
+// Let the generator play spec.seed and compare its game with the saved file
+async function playGenerated(spec) {
+	const norm = text => text.trim().split(/\r?\n/).map(l => l.trim());
+	const expected = norm(await fetchText("../example_games/" + spec.file));
+	const gen = await loadGenerator();
+	const result = await gen.playGame(spec.seed, spec.maxPlies, spec.pawnBias);
+	const got = norm(result.history);
+	const problems = [];
+	if (got.join("\n") !== expected.join("\n")) {
+		let i = expected.findIndex((l, k) => l !== got[k]);
+		if (i === -1) { i = expected.length; }
+		problems.push("Generator's game differs from the file at ply " + i +
+			":\n  file:      " + (expected[i] ?? "(end)") + "\n  generated: " + (got[i] ?? "(end)"));
+	}
+	return { plies: got.length, status: problems.length ? "fail" : "pass", problems };
+}
+
 async function runAll(record) {
 	const tbody = document.querySelector("#results tbody");
 	tbody.innerHTML = "";
@@ -282,9 +318,31 @@ async function runAll(record) {
 		detailCell.appendChild(pre);
 		if (outcome.status === "pass") { passed++; }
 	}
-	const summary = passed + " / " + GAMES.length + " passed";
+	for (const spec of GENERATED) {
+		const row = tbody.insertRow();
+		row.insertCell().textContent = "generator seed " + spec.seed + " → " + spec.file;
+		const pliesCell = row.insertCell();
+		const statusCell = row.insertCell();
+		const detailCell = row.insertCell();
+		statusCell.textContent = "running";
+		let outcome;
+		try {
+			outcome = await playGenerated(spec);
+			pliesCell.textContent = outcome.plies;
+		} catch (err) {
+			outcome = { status: "fail", problems: [String(err)] };
+		}
+		row.className = outcome.status;
+		statusCell.textContent = outcome.status.toUpperCase();
+		const pre = document.createElement("pre");
+		pre.textContent = outcome.problems.join("\n");
+		detailCell.appendChild(pre);
+		if (outcome.status === "pass") { passed++; }
+	}
+	const total = GAMES.length + GENERATED.length;
+	const summary = passed + " / " + total + " passed";
 	document.getElementById("summary").textContent = summary;
-	document.getElementById("summary").className = passed === GAMES.length ? "pass" : "fail";
+	document.getElementById("summary").className = passed === total ? "pass" : "fail";
 	if (record) {
 		// Pretty-print, but keep each game's list of ply hashes on one line
 		const json = JSON.stringify(newSnapshots, null, "\t")
@@ -303,7 +361,7 @@ async function runAll(record) {
 			document.getElementById("recordArea").style.display = "block";
 		}
 	}
-	window.testResults = { passed, total: GAMES.length, newSnapshots };
+	window.testResults = { passed, total, newSnapshots };
 	return window.testResults;
 }
 
