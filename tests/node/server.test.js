@@ -277,10 +277,25 @@ test("leaving closes the game for both players", async () => {
 // Files
 ////////////////////////////////
 
-// The status for a request path sent exactly as written (fetch would tidy up ".." first)
-function rawStatus(path) {
+// The status for a request sent exactly as written (fetch would tidy up ".." first). A body is sent with its
+// Content-Length, unless the headers say otherwise: a Content-Length and no body (for the server to refuse
+// before reading), or chunked.
+function rawStatus(path, { method = "GET", headers = {}, body } = {}) {
+	if (body !== undefined && headers["content-length"] === undefined && headers["transfer-encoding"] === undefined) {
+		headers = { ...headers, "content-length": String(Buffer.byteLength(body)) };
+	}
 	return new Promise((resolve, reject) => {
-		http.get({ host: "127.0.0.1", port: server.port, path }, res => { res.resume(); resolve(res.statusCode); }).on("error", reject);
+		const req = http.request({ host: "127.0.0.1", port: server.port, path, method, headers }, res => {
+			res.resume();
+			resolve(res.statusCode);
+			req.destroy();
+		});
+		req.on("error", err => (err.code == "ECONNRESET" ? undefined : reject(err)));
+		if (body !== undefined || headers["content-length"] === undefined) {
+			req.end(body);
+		} else {
+			req.flushHeaders(); // the headers alone, promising a body that never comes
+		}
 	});
 }
 
@@ -291,12 +306,29 @@ test("serves the game's files and nothing it shouldn't", async () => {
 	assert.match(await home.text(), /<title>Qhess<\/title>/);
 	const js = await fetch(url("/src/shared/protocol.js"));
 	assert.match(js.headers.get("content-type"), /javascript/);
-	assert.equal((await fetch(url("/node_modules/ws/package.json"))).status, 403);
+	for (const path of ["/style.css", "/tests/test.html", "/tests/snapshots.json", "/example_games/01_short_opening.txt"]) {
+		assert.equal(await rawStatus(path), 200, path);
+	}
+	// Only the page's own files: not the server, the packages, the project's settings or its git history,
+	// however the name is spelt (Windows doesn't mind the case, and has short names such as GIT~1)
+	for (const path of ["/node_modules/ws/package.json", "/Node_Modules/ws/package.json", "/package.json",
+		"/server/rooms.js", "/.git/config", "/.Git/config", "/.GIT/HEAD", "/GIT~1/HEAD", "/.gitignore",
+		"/.claude/launch.json", "/SRC/shared/protocol.js"]) {
+		assert.equal(await rawStatus(path), 403, path);
+	}
 	assert.equal(await rawStatus("/..%5c..%5csecret.txt"), 403);
 	assert.ok([403, 404].includes(await rawStatus("/%2e%2e/%2e%2e/secret.txt"))); // tidied up, or refused
-	assert.equal(await rawStatus("/../package.json"), 200); // tidied to /package.json, inside the project
-	assert.equal((await fetch(url("/missing.js"))).status, 404);
-	assert.equal((await fetch(url("/index.html"), { method: "PUT", body: "x" })).status, 403);
+	assert.equal(await rawStatus("/../index.html"), 200); // tidied to /index.html, inside the project
+	assert.equal(await rawStatus("/missing.js"), 403); // not one of the page's files, so not even looked for
+	assert.equal(await rawStatus("/src/missing.js"), 404);
+});
+
+test("only the snapshots file can be written, and only with JSON of a sensible size", async () => {
+	// (Each of these is refused before anything is written, so the real file is never touched)
+	assert.equal(await rawStatus("/index.html", { method: "PUT", body: "x" }), 403);
+	assert.equal(await rawStatus("/tests/snapshots.json", { method: "PUT", body: "not json" }), 400);
+	assert.equal(await rawStatus("/tests/snapshots.json", { method: "PUT", headers: { "content-length": "2000000" } }), 413);
+	assert.equal(await rawStatus("/tests/snapshots.json", { method: "PUT", headers: { "transfer-encoding": "chunked" }, body: "{}" }), 411);
 });
 
 ////////////////////////////////

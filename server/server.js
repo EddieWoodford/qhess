@@ -33,11 +33,16 @@ const MIME = {
 	".woff2": "font/woff2",
 };
 
-// Folders that are never served
-const HIDDEN = ["node_modules", ".git", ".claude"];
+// What a browser may fetch: the page, and the folders it (and the browser test page) loads from. Everything else,
+// such as the server's own code, .git and node_modules, is refused. A path must start with one of these exactly as
+// written: on Windows other spellings reach the same file (".GIT", or the short name "GIT~1"), so a list of what
+// to hide can't be relied on.
+const PUBLIC = ["index.html", "style.css", "src", "tests", "example_games"];
 
-// The only file a browser may write: the test page's "Record new snapshots" saves it
+// The only file a browser may write: the test page's "Record new snapshots" saves it. Only from this computer
+// (the server is open to the whole network), only JSON, and only up to this size.
 const WRITABLE = "tests/snapshots.json";
+const MAX_WRITE_BYTES = 1024 * 1024;
 
 // How often to check each websocket is still alive (a dead one is dropped, and its seat kept for a reconnect)
 const HEARTBEAT_MS = 15000;
@@ -57,17 +62,11 @@ async function serveFile(req, res) {
 	if (rel == "" || rel.endsWith("/")) { rel += "index.html"; }
 	const full = path.resolve(ROOT, rel);
 	const relToRoot = path.relative(ROOT, full);
-	if (relToRoot.startsWith("..") || path.isAbsolute(relToRoot) || HIDDEN.includes(relToRoot.split(path.sep)[0])) {
+	if (relToRoot.startsWith("..") || path.isAbsolute(relToRoot) || !PUBLIC.includes(relToRoot.split(path.sep)[0])) {
 		return sendText(res, 403, "Forbidden");
 	}
 	if (req.method == "PUT") {
-		if (relToRoot.split(path.sep).join("/") != WRITABLE) {
-			return sendText(res, 403, "Only " + WRITABLE + " can be written");
-		}
-		const chunks = [];
-		for await (const chunk of req) { chunks.push(chunk); }
-		await writeFile(full, Buffer.concat(chunks));
-		return sendText(res, 200, "Saved");
+		return writeSnapshots(req, res, relToRoot.split(path.sep).join("/"), full);
 	}
 	if (req.method != "GET" && req.method != "HEAD") {
 		return sendText(res, 405, "Method not allowed");
@@ -82,6 +81,40 @@ async function serveFile(req, res) {
 	} catch {
 		sendText(res, 404, "Not found: " + rel);
 	}
+}
+
+// A PUT of the one writable file (see WRITABLE)
+async function writeSnapshots(req, res, rel, full) {
+	if (rel != WRITABLE) {
+		return sendText(res, 403, "Only " + WRITABLE + " can be written");
+	}
+	if (!isFromThisComputer(req)) {
+		return sendText(res, 403, WRITABLE + " can only be written from this computer");
+	}
+	// The body is exactly Content-Length bytes (Node holds the client to it), so checking it caps the upload
+	const length = Number(req.headers["content-length"]);
+	if (!Number.isInteger(length)) {
+		return sendText(res, 411, "Content-Length needed");
+	}
+	if (length > MAX_WRITE_BYTES) {
+		res.setHeader("Connection", "close"); // and don't read the rest
+		return sendText(res, 413, "Too large");
+	}
+	const chunks = [];
+	for await (const chunk of req) { chunks.push(chunk); }
+	const body = Buffer.concat(chunks);
+	try {
+		JSON.parse(body.toString("utf8"));
+	} catch {
+		return sendText(res, 400, WRITABLE + " must be JSON");
+	}
+	await writeFile(full, body);
+	return sendText(res, 200, "Saved");
+}
+
+// Did the request come from this computer (not another one on the network)?
+function isFromThisComputer(req) {
+	return ["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(req.socket.remoteAddress);
 }
 
 // Start the server. Returns { port, gameServer, close() } once it's listening.
