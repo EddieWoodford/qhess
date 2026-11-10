@@ -13,6 +13,7 @@
 	#summary { font-size: 1.3em; font-weight: bold; }
 	textarea { width: 100%; height: 200px; font-family: monospace; }
 	iframe { width: 1000px; height: 720px; border: 1px solid #888; }
+	iframe.mp { width: 640px; height: 520px; }
 	pre { margin: 0; white-space: pre-wrap; }
 </style>
 </head>
@@ -21,7 +22,9 @@
 <p>Replays every game in <code>example_games/</code> through the real game page and checks that:
 the game replays without errors, the move history it writes back matches the file exactly,
 and the board state and what the page shows after every move match the snapshot recorded in <code>tests/snapshots.json</code>.
-It also has <code>tests/generate.html</code> replay a game by clicking through it the way a player does, and checks it plays the same game as before.</p>
+It also has <code>tests/generate.html</code> replay a game by clicking through it the way a player does, and checks it plays the same game as before.
+Last, two copies of the game page play a game against each other through the server (multiplayer), one of them reloading part-way through.
+That needs the page to be served by the Qhess server (<code>start_test.bat</code>).</p>
 <p>
 	<button id="run">Run tests</button>
 	<button id="record">Record new snapshots</button>
@@ -36,6 +39,8 @@ It also has <code>tests/generate.html</code> replay a game by clicking through i
 </div>
 <iframe id="game"></iframe>
 <iframe id="generator"></iframe>
+<iframe id="mpA" class="mp"></iframe>
+<iframe id="mpB" class="mp"></iframe>
 
 <script>
 "use strict";
@@ -58,6 +63,13 @@ const GENERATED = [
 	{ file: "01_short_opening.txt", seed: 5, maxPlies: 20, pawnBias: 1 },
 ];
 
+// Multiplayer games: two copies of the game page, each playing one colour, play the game file against each
+// other through the server. creator: the colour the page that starts the game picks. reloadAt: the joining
+// page is reloaded before this ply, and must resume the game.
+const MULTIPLAYER = [
+	{ file: "02_potential_checks.txt", creator: "b", reloadAt: 40 },
+];
+
 ////////////////////////////////
 // Adapter: the only part that knows how the game code is structured.
 // If the client code (src/client/controller.js) changes shape, update these functions to match.
@@ -68,18 +80,33 @@ const GENERATED = [
 // Importing the module from inside the frame gives the same instance the page is running,
 // and its exported variables (TURNNUMBER etc.) are live, so they always show the current value.
 const GAME_MODULE_URL = new URL("../src/client/controller.js", location.href).href;
-function loadGame() {
+function loadGame(frameId = "game", keepSeat = false) {
 	return new Promise(resolve => {
-		const frame = document.getElementById("game");
+		const frame = document.getElementById(frameId);
 		frame.onload = async () => {
 			const win = frame.contentWindow;
 			const game = await win.eval("import('" + GAME_MODULE_URL + "')");
 			resolve({ game, win });
 		};
-		// A multiplayer game saved in this tab would be resumed by the page: tests always start in single player
-		sessionStorage.removeItem("qhess.multiplayer");
+		// A multiplayer game saved in this tab would be resumed by the page: tests start in single player,
+		// unless the test is reloading a multiplayer page on purpose (keepSeat)
+		if (!keepSeat) {
+			sessionStorage.removeItem("qhess.multiplayer");
+		}
 		frame.src = "../index.html?t=" + Date.now();
 	});
+}
+
+// Multiplayer: start a game, join a game, and what the page knows about it (controller.js ui.multiplayer)
+function createGame(ctx, color) { ctx.game.startMultiplayer({ create: color }); }
+function joinGame(ctx, code) { ctx.game.startMultiplayer({ join: code }); }
+function multiplayerInfo(ctx) { return ctx.game.ui.multiplayer; }
+function turnStep(ctx) { return ctx.game.ui.state; }
+function leaveGame(ctx) { ctx.game.leaveMultiplayer(); }
+function boardFlipped(ctx) { return ctx.win.document.getElementById("board").classList.contains("flipped"); }
+function pliesPlayed(ctx) {
+	const history = ctx.game.game.history;
+	return history == "" ? 0 : history.split(/\r?\n/).length;
 }
 
 // Split a history file into one string per ply
@@ -290,6 +317,77 @@ async function playGenerated(spec) {
 	return { plies: got.length, status: problems.length ? "fail" : "pass", problems };
 }
 
+// Wait until check() is true
+async function until(what, check, ms = 5000) {
+	const end = Date.now() + ms;
+	while (!check()) {
+		if (Date.now() > end) { throw new Error("Timed out waiting for " + what); }
+		await new Promise(r => setTimeout(r, 10));
+	}
+}
+
+// Two pages play spec.file against each other through the server
+async function playMultiplayer(spec, snap) {
+	const text = await fetchText("../example_games/" + spec.file);
+	const problems = [];
+	let a = await loadGame("mpA");
+	const lines = historyLines(a, text);
+	createGame(a, spec.creator);
+	await until("the game to be created", () => multiplayerInfo(a)?.code);
+	let b = await loadGame("mpB");
+	joinGame(b, multiplayerInfo(a).code.toLowerCase());
+	await until("the second page to join", () => multiplayerInfo(b)?.phase == "playing" && multiplayerInfo(a).opponent == "connected");
+	const byColor = () => ({ [multiplayerInfo(a).color]: a, [multiplayerInfo(b).color]: b });
+	for (const page of [a, b]) {
+		if (boardFlipped(page) != (multiplayerInfo(page).color == "b")) {
+			problems.push("The " + multiplayerInfo(page).color + " page doesn't have its own side at the bottom");
+		}
+	}
+	let plies = 0;
+	try {
+		for (let i = 0; i < lines.length; i++) {
+			if (i == spec.reloadAt) {
+				b = await loadGame("mpB", true);
+				await until("the reloaded page to resume", () => multiplayerInfo(b)?.phase == "playing" && pliesPlayed(b) == i);
+			}
+			const color = i % 2 == 0 ? "b" : "w"; // Black's move 0, then White, Black, ...
+			const mover = byColor()[color];
+			const waiter = byColor()[color == "w" ? "b" : "w"];
+			if (turnStep(waiter) != "waitOpponent") {
+				problems.push("Before ply " + i + " the waiting page is at '" + turnStep(waiter) + "', not waitOpponent");
+			}
+			if (!mover.game.doMoveFromText(lines[i])) {
+				throw new Error(mover.win.document.getElementById("debug").innerText);
+			}
+			await until("ply " + i + " to reach both pages", () => pliesPlayed(a) == i + 1 && pliesPlayed(b) == i + 1 && turnStep(mover) != "sendingMove");
+			for (const page of [mover, waiter]) {
+				if (hash(JSON.stringify(captureState(page))) !== snap.plyHashes[i]) {
+					problems.push("Position differs from snapshot after ply " + i + " (" + lines[i] + ") on the " + multiplayerInfo(page).color + " page");
+				}
+			}
+			plies++;
+			if (problems.length) { break; }
+		}
+		for (const page of [a, b]) {
+			const written = writtenHistory(page).split(/\r?\n/).map(l => l.trim());
+			if (written.join("\n") !== lines.join("\n")) {
+				problems.push("The " + multiplayerInfo(page).color + " page's history differs from the file");
+			}
+		}
+	} catch (err) {
+		problems.push("Error at ply " + plies + ": " + err);
+	}
+	// The other page is told when one leaves
+	leaveGame(a);
+	try {
+		await until("the other page to see the game end", () => multiplayerInfo(b)?.phase == "ended");
+	} catch (err) {
+		problems.push(String(err));
+	}
+	leaveGame(b);
+	return { plies, status: problems.length ? "fail" : "pass", problems };
+}
+
 async function runAll(record) {
 	const tbody = document.querySelector("#results tbody");
 	tbody.innerHTML = "";
@@ -342,7 +440,28 @@ async function runAll(record) {
 		detailCell.appendChild(pre);
 		if (outcome.status === "pass") { passed++; }
 	}
-	const total = GAMES.length + GENERATED.length;
+	for (const spec of MULTIPLAYER) {
+		const row = tbody.insertRow();
+		row.insertCell().textContent = "multiplayer: " + spec.file;
+		const pliesCell = row.insertCell();
+		const statusCell = row.insertCell();
+		const detailCell = row.insertCell();
+		statusCell.textContent = "running";
+		let outcome;
+		try {
+			outcome = await playMultiplayer(spec, snapshots.games[spec.file]);
+			pliesCell.textContent = outcome.plies;
+		} catch (err) {
+			outcome = { status: "fail", problems: [String(err)] };
+		}
+		row.className = outcome.status;
+		statusCell.textContent = outcome.status.toUpperCase();
+		const pre = document.createElement("pre");
+		pre.textContent = outcome.problems.join("\n");
+		detailCell.appendChild(pre);
+		if (outcome.status === "pass") { passed++; }
+	}
+	const total = GAMES.length + GENERATED.length + MULTIPLAYER.length;
 	const summary = passed + " / " + total + " passed";
 	document.getElementById("summary").textContent = summary;
 	document.getElementById("summary").className = passed === total ? "pass" : "fail";
@@ -350,7 +469,7 @@ async function runAll(record) {
 		// Pretty-print, but keep each game's list of ply hashes on one line
 		const json = JSON.stringify(newSnapshots, null, "\t")
 			.replace(/\[\s+(?:"[0-9a-f]{8}",?\s*)+\]/g, m => m.replace(/\s+/g, "")) + "\n";
-		// serve.ps1 accepts a PUT to this one file, so the snapshots can be saved straight to disk
+		// The server accepts a PUT to this one file, so the snapshots can be saved straight to disk
 		let saved = false;
 		try {
 			const res = await fetch("snapshots.json", { method: "PUT", body: json });
