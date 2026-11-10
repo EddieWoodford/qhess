@@ -25,7 +25,7 @@ Single player (both sides on one screen) is the default and needs nothing else.
 
 ## Playing a friend (multiplayer)
 
-1. Open the side panel (📜) and the **Multiplayer** tab.
+1. Open the menu (☰, top left) and the **Multiplayer** tab (🌐).
 2. Choose White, Black or Random, and press **Create game**. You get a code like `TIGER-42`.
 3. Send the code to your friend. They open the game from the server's address, go to the
    Multiplayer tab, type the code (case and spacing don't matter) and press **Join**.

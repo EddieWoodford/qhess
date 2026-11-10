@@ -292,7 +292,7 @@ body {
 
 
 /* ==========================================================================
-   5. MODALS  (info, help, options)
+   5. MODALS  (Edit / Import, and the en passant / promotion choice)
    src/client/modals.js shows and hides them by toggling display on the wrapper.
    ========================================================================== */
 .modalWrapper {
@@ -444,9 +444,10 @@ body {
 
 
 /* ---------- 6.2 Side panel ----------
-   History and captured pieces. Fills the height of its grid cell (3), or of
-   the screen on tall screens (8). The tabs fill the height, and the move
-   history list takes the spare height (6.4). */
+   The tabbed menu: History, Captured, Multiplayer, Info and Settings. Fills
+   the height of its grid cell (3), or of the screen on tall screens (8).
+   The tabs fill the height, and the move history list takes the spare
+   height (6.4). */
 .game-control {
     position: relative;  /* for the close button */
     flex: none;
@@ -983,7 +984,7 @@ input.switch:focus-visible {
     flex-direction: row;
 }
 
-/* Black's view (Options > Toggle player view): render.js toggles .flipped */
+/* Black's view (the Settings tab's switch, or a multiplayer game as Black): board-view.js setFlippedBoard toggles .flipped */
 .board.flipped {
     flex-direction: column-reverse;
 }
