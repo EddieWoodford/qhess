@@ -63,6 +63,9 @@ const ui = {
 	// null in a single-player game. In a multiplayer game, what the page shows about it: SocketSession info()
 	// ({ phase, code, color, opponent, connection, pending, endedReason }) and message (why it ended, or "").
 	multiplayer: null,
+	// The Settings tab's Potential Check switch. Off: no Add PC, and Black's move 0 is passed by itself.
+	// A multiplayer game always uses the rule (see pcRule), as both players must play by the same rules.
+	potentialCheck: true,
 };
 
 // The steps of a multiplayer turn when the player can't do anything (see the list at the top)
@@ -166,6 +169,29 @@ function isMultiplayer() {
 	return ui.multiplayer !== null;
 }
 
+// Whether the player can declare potential checks: the Settings switch, except that a multiplayer game always can.
+// (A potential check already declared still has to be answered either way: the engine's rules don't change.)
+function pcRule() {
+	return ui.potentialCheck || isMultiplayer();
+}
+
+// The Settings tab's Potential Check switch changed. Takes effect straight away.
+function setPotentialCheckRule(on) {
+	ui.potentialCheck = on;
+	if (!squares) { return; } // the page is still starting: init() starts the game with the rule as set
+	skipMove0();
+	draw();
+}
+
+// Without the Potential Check rule, Black's move 0 has nothing to do, so it is passed by itself (writing "0b.",
+// as "Pass to white" does). Only at the live end of a single-player game, never while stepping through the history.
+function skipMove0() {
+	if (!pcRule() && ui.replay == -1 && ui.state == "move0") {
+		submitMove();
+		setState("clear");
+	}
+}
+
 useSession(new LocalSession());
 
 // Throw away the move being made and go back to the start of the turn
@@ -193,7 +219,7 @@ function sideButton1Click() {
 }
 
 function sideButton1Action() {
-	if (ui.state == "showCompleteMove" || ui.state == "move0") {
+	if ((ui.state == "showCompleteMove" || ui.state == "move0") && pcRule()) {
 		highlightPotentialKings();
 		setState("selectPCKing");
 	} else if (ui.state == "clear" && game.potCheck) {
@@ -504,6 +530,7 @@ function restoreGameHistory(historyText,nMoves) {
 	if (replayed > 0) {
 		setState("clear");
 	}
+	skipMove0(); // nothing (or only up to move 0) was replayed, and the Potential Check rule is off
 }
 
 function replayPly(moveText) {
@@ -653,7 +680,7 @@ function backToSinglePlayer() {
 	ui.replay = -1;
 	setFlippedBoard(false);
 	useSession(new LocalSession());
-	setup();
+	newGame();
 }
 
 // The session's connection or game changed: update what the page shows
@@ -781,6 +808,8 @@ function draw() {
 		replayNumber: ui.replay,
 		record: ui.record,
 		multiplayer: ui.multiplayer,
+		pcRule: pcRule(),
+		pcSetting: ui.potentialCheck,
 	});
 }
 
@@ -800,7 +829,7 @@ function init() {
 		}
 		squares.push(viewRow);
 	}
-	setup();
+	newGame();
 	// Reloading the page during a multiplayer game goes back into it
 	const seat = savedSeat();
 	if (seat) {
@@ -808,8 +837,14 @@ function init() {
 	}
 }
 
-// Start a new game (also used to rewind before replaying a history). The squares' highlight flags are
-// cleared by setState("move0").
+// Start a new game for the player: the Reset Game button, and when the page opens
+function newGame() {
+	setup();
+	skipMove0();
+}
+
+// Start a new game at Black's move 0 (also used to rewind before replaying a history, so it never skips move 0).
+// The squares' highlight flags are cleared by setState("move0").
 function setup() {
 	boardSession().reset(); // its onChange sets committed, game and turnMove
 	ui.start = [];
@@ -830,7 +865,8 @@ function setup() {
 export {
 	// Used by src/client/main.js to wire up the page
 	init,
-	setup,
+	newGame,
+	setPotentialCheckRule,
 	sideButton1Click,
 	sideButton2Click,
 	stepBackAll,
@@ -849,6 +885,7 @@ export {
 	backToSinglePlayer,
 
 	// Used by tests/test.html and tests/generate.html to drive and inspect the game
+	setup,              // a new game at Black's move 0, whatever the Potential Check switch says
 	game,
 	sideButton1Action,
 	sideButton2Action,

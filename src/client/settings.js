@@ -14,6 +14,7 @@ import { dom } from "./dom.js";
 const SETTINGS = {
 	blackView: { default: false, remember: false }, // multiplayer sets it to your own side, so it isn't kept
 	colourByType: { default: true, remember: true },
+	potentialCheck: { default: true, remember: true }, // render.js drawSettings locks it on in a multiplayer game
 };
 
 const STORAGE_KEY = "qhess.settings";

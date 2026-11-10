@@ -47,6 +47,7 @@ function loadFrame() {
 			resolve({ win, game });
 		};
 		sessionStorage.removeItem("qhess.multiplayer"); // always single player (see test.html loadGame)
+		localStorage.removeItem("qhess.settings");      // the Settings tab's switches at their defaults
 		frame.src = "../index.html?t=" + Date.now();
 	});
 }

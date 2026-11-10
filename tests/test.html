@@ -72,6 +72,12 @@ const MULTIPLAYER = [
 // dropAt: before this ply the mover picks the piece to move, then its connection drops. Once it has
 // reconnected the piece must still be picked.
 
+// Checks of the Settings tab's switches, each run on a fresh copy of the game page: name -> function(ctx)
+// returning a list of problems (empty if it passed)
+const SETTINGS_CHECKS = {
+	"settings: Potential Check off": checkNoPotentialCheck,
+};
+
 ////////////////////////////////
 // Adapter: the only part that knows how the game code is structured.
 // If the client code (src/client/controller.js) changes shape, update these functions to match.
@@ -95,6 +101,9 @@ function loadGame(frameId = "game", keepSeat = false) {
 		if (!keepSeat) {
 			sessionStorage.removeItem("qhess.multiplayer");
 		}
+		// The Settings tab's switches start at their defaults (the snapshots were recorded with them):
+		// forget any this browser remembers (src/client/settings.js)
+		localStorage.removeItem("qhess.settings");
 		frame.src = "../index.html?t=" + Date.now();
 	});
 }
@@ -401,6 +410,51 @@ async function playMultiplayer(spec, snap) {
 	return { plies, status: problems.length ? "fail" : "pass", problems };
 }
 
+// With the Potential Check switch off: Black's move 0 is passed by itself (for a new game, Reset Game, and an
+// empty import), Add PC never shows or works, a game file with potential checks still loads, and switching
+// it back on brings move 0 and Add PC back
+async function checkNoPotentialCheck(ctx) {
+	const problems = [];
+	const doc = ctx.win.document;
+	const g = ctx.game;
+	const visible = id => ctx.win.getComputedStyle(doc.getElementById(id)).visibility === "visible";
+	const expect = (what, ok) => { if (!ok) { problems.push(what); } };
+	const atWhiteMove1 = when => expect(when + ": should be at White's move 1 after '0b.', is at " +
+		g.game.turnNumber + g.game.turnColor + " (" + g.ui.state + "), history '" + g.game.history + "'",
+		g.game.turnNumber == 1 && g.game.turnColor == "w" && g.ui.state == "clear" && g.game.history.trim() == "0b.");
+
+	doc.getElementById("settingPotentialCheck").click(); // switch it off, at move 0 of a new game
+	atWhiteMove1("Switching it off at move 0");
+
+	// White's move 1, then Black makes a move that could declare a potential check (01_short_opening.txt does)
+	g.doMoveFromText("1w. (KQBNRP)d2e3(KQB)");
+	g.showPartialMove([1, 2]);  // c7
+	g.showCompleteMove([2, 2]); // c6
+	expect("Black's move should be staged, is at " + g.ui.state, g.ui.state == "showCompleteMove");
+	expect("Add PC shows", !visible("sideButton1"));
+	expect("The prompt mentions potential check: " + doc.getElementById("prompt").textContent,
+		!/potential/i.test(doc.getElementById("prompt").textContent));
+	g.sideButton1Action(); // as if Add PC were clicked anyway
+	expect("Add PC worked anyway (now at " + g.ui.state + ")", g.ui.state == "showCompleteMove");
+
+	g.newGame();
+	atWhiteMove1("Reset Game");
+	g.restoreGameHistory("");
+	atWhiteMove1("Importing no moves");
+
+	const text = await fetchText("../example_games/02_potential_checks.txt");
+	const lines = historyLines(ctx, text).slice(0, 12);
+	g.restoreGameHistory(lines.join("\n"));
+	expect("A game with potential checks didn't load: history is '" + g.game.history + "'",
+		g.game.history.trim().split(/\r?\n/).map(l => l.trim()).join("\n") == lines.join("\n"));
+
+	doc.getElementById("settingPotentialCheck").click(); // on again
+	g.newGame();
+	expect("Switched on, a new game should start at move 0, is at " + g.ui.state, g.ui.state == "move0");
+	expect("Switched on, Add PC should show at move 0", visible("sideButton1"));
+	return problems;
+}
+
 async function runAll(record) {
 	const tbody = document.querySelector("#results tbody");
 	tbody.innerHTML = "";
@@ -474,7 +528,29 @@ async function runAll(record) {
 		detailCell.appendChild(pre);
 		if (outcome.status === "pass") { passed++; }
 	}
-	const total = GAMES.length + GENERATED.length + MULTIPLAYER.length;
+	for (const [name, check] of Object.entries(SETTINGS_CHECKS)) {
+		const row = tbody.insertRow();
+		row.insertCell().textContent = name;
+		row.insertCell();
+		const statusCell = row.insertCell();
+		const detailCell = row.insertCell();
+		statusCell.textContent = "running";
+		let outcome;
+		try {
+			const problems = await check(await loadGame());
+			outcome = { status: problems.length ? "fail" : "pass", problems };
+		} catch (err) {
+			outcome = { status: "fail", problems: [String(err)] };
+		}
+		localStorage.removeItem("qhess.settings"); // don't leave the switch as the check left it
+		row.className = outcome.status;
+		statusCell.textContent = outcome.status.toUpperCase();
+		const pre = document.createElement("pre");
+		pre.textContent = outcome.problems.join("\n");
+		detailCell.appendChild(pre);
+		if (outcome.status === "pass") { passed++; }
+	}
+	const total = GAMES.length + GENERATED.length + MULTIPLAYER.length + Object.keys(SETTINGS_CHECKS).length;
 	const summary = passed + " / " + total + " passed";
 	document.getElementById("summary").textContent = summary;
 	document.getElementById("summary").className = passed === total ? "pass" : "fail";

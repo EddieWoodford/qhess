@@ -26,6 +26,8 @@ import { dom } from "./dom.js";
 //   record:      the game record for the History tab, one ply per line (array of strings)
 //   multiplayer: null in single player; in a multiplayer game, its code, your colour and the connections
 //                (controller.js ui.multiplayer)
+//   pcRule:      whether the player can declare potential checks (controller.js pcRule)
+//   pcSetting:   the Settings tab's Potential Check switch (controller.js ui.potentialCheck)
 // }
 function render(view) {
 	drawStatus(view);
@@ -33,6 +35,15 @@ function render(view) {
 	drawBoard(view);
 	drawPanels(view);
 	drawMultiplayer(view);
+	drawSettings(view);
+}
+
+// The Settings tab's Potential Check switch: a multiplayer game always uses the rule, so the switch shows it on
+// and can't be changed until the game is over. It shows the player's own choice again afterwards.
+function drawSettings(view) {
+	const input = dom.settings.potentialCheck;
+	input.disabled = view.multiplayer !== null;
+	input.checked = view.multiplayer !== null ? true : view.pcSetting;
 }
 
 // Show a message just above the status bar for a few seconds (style.css hides the element while it is empty)

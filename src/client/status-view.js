@@ -15,8 +15,8 @@ import { dom, setVisible } from "./dom.js";
 // A value can be a function of ctx (see statusContext) when it depends on the position.
 const STEPS = {
 	move0: {
-		prompt: "Add Potential Check?",
-		button1: "Add PC",
+		prompt: ctx => ctx.pcRule ? "Add Potential Check?" : "Pass to white",
+		button1: ctx => ctx.pcRule ? "Add PC" : null,
 		button2: "Pass to white",
 	},
 	clear: {
@@ -82,8 +82,9 @@ const REPLAY = { button1: "Resume from here", button2: null };
 // ... and in a multiplayer game, where the game can't be taken back
 const REPLAY_MULTIPLAYER = { button1: "Back to game", button2: null };
 
-// The facts about the position that the prompt and buttons depend on
-function statusContext(game, state, multiplayer) {
+// The facts about the position that the prompt and buttons depend on.
+// pcRule: whether the player can declare potential checks (the Settings tab's switch; controller.js pcRule).
+function statusContext(game, state, multiplayer, pcRule) {
 	// The checks to describe in the prompt. While the side to move is declaring a potential check, these
 	// describe the side being checked.
 	let checks = { autoCheck: game.autoCheck, potCheck: game.potCheck };
@@ -93,8 +94,9 @@ function statusContext(game, state, multiplayer) {
 	return {
 		multiplayer,
 		checks,
+		pcRule,
 		inPotentialCheck: checks.potCheck,
-		canAddPC: state == "showCompleteMove" && findPotentialKings(game).length > 0,
+		canAddPC: pcRule && state == "showCompleteMove" && findPotentialKings(game).length > 0,
 		hasPCAttackers: state == "selectPCAttackers" && findChecks(game, oppColor(game.turnColor)).attackerCoords.length > 0,
 	};
 }
@@ -126,7 +128,7 @@ function setButton(button, label) {
 function drawStatus(view) {
 	const game = view.game;
 	const step = STEPS[view.state];
-	const ctx = statusContext(game, view.state, view.multiplayer);
+	const ctx = statusContext(game, view.state, view.multiplayer, view.pcRule);
 	const value = v => typeof v == "function" ? v(ctx) : v;
 
 	let heading = promptHeading(game, ctx.checks);

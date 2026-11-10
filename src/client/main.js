@@ -20,6 +20,7 @@ setupSettings({
 	blackView: on => setFlippedBoard(on),
 	// Off: each side's pieces all in one colour (style.css 7.4 .side-colours)
 	colourByType: on => document.body.classList.toggle("side-colours", !on),
+	potentialCheck: on => game.setPotentialCheckRule(on),
 });
 
 // Side panel: hidden until the menu button (☰) opens it.
@@ -50,7 +51,7 @@ onClick("forward2", () => game.stepForwardAll());
 
 // History buttons. Wrapped in arrow functions so the click event isn't passed in as an argument
 // (restoreGameHistory, for example, would treat it as the history text).
-onClick("reset", () => game.setup());
+onClick("reset", () => game.newGame());
 onClick("copyallhistory", () => game.copyAllHistory());
 onClick("copylastmove", () => game.copyLastMove());
 onClick("pasteallrestore", () => game.pasteAllRestore());

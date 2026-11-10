@@ -48,6 +48,7 @@ const dom = {
 	settings: {
 		blackView: $("settingBlackView"),
 		colourByType: $("settingColourByType"),
+		potentialCheck: $("settingPotentialCheck"),
 	},
 
 	debug: $("debug"),
