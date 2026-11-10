@@ -97,6 +97,9 @@ function startServer(options = {}) {
 	});
 
 	const wss = new WebSocketServer({ server: httpServer, path: SOCKET_PATH, maxPayload: 64 * 1024 });
+	// The websocket server repeats the HTTP server's errors (such as a port that can't be used); those are
+	// handled where the HTTP server starts listening, below
+	wss.on("error", () => {});
 	wss.on("connection", ws => {
 		const conn = {
 			send(message) {
@@ -129,7 +132,13 @@ function startServer(options = {}) {
 	}, options.heartbeatMs ?? HEARTBEAT_MS);
 
 	return new Promise((resolve, reject) => {
-		httpServer.once("error", reject);
+		httpServer.once("error", err => {
+			// Couldn't start (e.g. the port is taken): tidy up so another port can be tried
+			clearInterval(heartbeat);
+			gameServer.close();
+			wss.close();
+			reject(err);
+		});
 		httpServer.listen(options.port ?? 8000, options.host, () => {
 			resolve({
 				port: httpServer.address().port,
@@ -144,6 +153,21 @@ function startServer(options = {}) {
 			});
 		});
 	});
+}
+
+// Start the server on the first port from firstPort that can be used. A port is skipped if another program
+// has it (EADDRINUSE) or the system won't allow it (EACCES: Windows reserves some ports, often including 8000).
+// onSkip(port) is called for each port skipped.
+async function startOnFreePort(firstPort, options = {}, onSkip = () => {}, tries = 20) {
+	for (let port = firstPort; port < firstPort + tries; port++) {
+		try {
+			return await startServer({ ...options, port });
+		} catch (err) {
+			if (err.code != "EADDRINUSE" && err.code != "EACCES") { throw err; }
+			onSkip(port);
+		}
+	}
+	throw new Error("No usable port between " + firstPort + " and " + (firstPort + tries - 1));
 }
 
 // The addresses another computer on this network could use to reach this one
@@ -162,17 +186,13 @@ async function main() {
 	const firstPort = Number(arg("--port") ?? process.env.PORT ?? 8000);
 	const log = text => console.log(new Date().toLocaleTimeString() + "  " + text);
 
-	// Use the first free port from firstPort
 	let server;
-	for (let port = firstPort; port < firstPort + 20 && !server; port++) {
-		try {
-			server = await startServer({ port, log });
-		} catch (err) {
-			if (err.code != "EADDRINUSE") { throw err; }
-		}
-	}
-	if (!server) {
-		console.error("No free port between " + firstPort + " and " + (firstPort + 19));
+	try {
+		server = await startOnFreePort(firstPort, { log }, port => {
+			console.log("Port " + port + " is in use or reserved by Windows; trying " + (port + 1));
+		});
+	} catch (err) {
+		console.error(err.message);
 		process.exit(1);
 	}
 	const url = "http://localhost:" + server.port + "/";
@@ -194,4 +214,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) == fileURLToPath(import.met
 	main();
 }
 
-export { startServer };
+export { startServer, startOnFreePort };

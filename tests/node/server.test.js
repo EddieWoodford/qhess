@@ -6,7 +6,7 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
-import { startServer } from "../../server/server.js";
+import { startServer, startOnFreePort } from "../../server/server.js";
 import { colorOfMove } from "../../server/rooms.js";
 import { normalizeCode } from "../../src/shared/protocol.js";
 import { TestClient } from "./test-client.js";
@@ -297,4 +297,22 @@ test("serves the game's files and nothing it shouldn't", async () => {
 	assert.equal(await rawStatus("/../package.json"), 200); // tidied to /package.json, inside the project
 	assert.equal((await fetch(url("/missing.js"))).status, 404);
 	assert.equal((await fetch(url("/index.html"), { method: "PUT", body: "x" })).status, 403);
+});
+
+////////////////////////////////
+// Starting up
+////////////////////////////////
+
+test("a port that can't be used is skipped, without crashing", async () => {
+	// The port the shared server has is taken; Windows-reserved ports fail the same way (EACCES instead)
+	const skipped = [];
+	const second = await startOnFreePort(server.port, { host: "127.0.0.1" }, port => skipped.push(port));
+	try {
+		assert.equal(skipped[0], server.port); // (the next port may happen to be taken too, by another test)
+		assert.ok(second.port > server.port);
+		assert.equal((await fetch("http://127.0.0.1:" + second.port + "/")).status, 200);
+	} finally {
+		await second.close();
+	}
+	await assert.rejects(startServer({ port: server.port, host: "127.0.0.1" }), { code: "EADDRINUSE" });
 });
