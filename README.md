@@ -88,7 +88,9 @@ runs the command-line tests:
 
 `start_test.bat` opens the browser test page (press **Run tests**). It replays the example
 games through the real page and checks what it shows, and has two copies of the page play a
-multiplayer game against each other, with one reloading part-way through.
+multiplayer game against each other, with one reloading part-way through. It also checks a game
+with the Potential Check switch off. It starts the game page with the Settings tab's switches at
+their defaults, which also resets any your browser had remembered for that server.
 
 `serve.ps1` is the old PowerShell file server. It still works for single player without
 Node.js, but not for multiplayer.

@@ -24,7 +24,7 @@ Each piece shows a small grid of the types it could still be:
 - Top row: **K Q R**
 - Bottom row: **B N P**
 
-A blank slot means that type has been ruled out. When only one possibility is left, the piece is drawn as a single large symbol, which means it has fully collapsed. Each piece type has its own colour, and the symbols differ for the two sides.
+A blank slot means that type has been ruled out. When only one possibility is left, the piece is drawn as a single large symbol, which means it has fully collapsed. Each piece type has its own colour, and the symbols differ for the two sides. (To colour each side's pieces in a single colour instead, switch off **Colour pieces by type** in the menu's Settings tab.)
 
 Other things on screen:
 
@@ -128,6 +128,8 @@ Potential check is how you squeeze the opponent's king: every time they decline 
 ## Move 0
 
 Black has a preliminary turn called **Move 0**. Black cannot move a piece. Black may press **Add PC** to declare a Potential Check against one of White's pieces, or may simply press **Pass to white**. White's first move is then move 1.
+
+**Learning without Potential Check:** switching off **Potential Check** in the menu's Settings tab leaves Potential Check out of the game. The **Add PC** button never appears, and Black's Move 0 is passed automatically. It is easier to start learning this way. Multiplayer games always use Potential Check.
 
 ## Winning and ending the game
 
