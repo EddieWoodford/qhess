@@ -90,6 +90,14 @@ class SocketSession {
 		this.retries = 0;
 		this.timers = {};
 		this.useMoves([]);
+		// When the browser says the network is back, reconnect now rather than at the next retry
+		this.onOnline = () => {
+			if (this.timers.retry) {
+				this.retries = 0;
+				this.connect();
+			}
+		};
+		globalThis.addEventListener?.("online", this.onOnline);
 	}
 
 	////////////////////////////////
@@ -262,6 +270,7 @@ class SocketSession {
 		this.pending = null;
 		this.forgetSeat();
 		this.clearTimers();
+		globalThis.removeEventListener?.("online", this.onOnline);
 		const ws = this.ws;
 		this.ws = null;
 		if (ws) {
