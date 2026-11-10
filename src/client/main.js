@@ -17,7 +17,7 @@ setupModals();
 // Options modal
 onClick("toggleFlippedBoard", () => toggleFlippedBoard());
 
-// Side panel (history and captured pieces): hidden until the header's panel button opens it.
+// Side panel: hidden until the menu button (☰) opens it.
 // style.css shows it when <body> has .panel-open: beside the board on wide screens, over it on tall ones.
 function setPanelOpen(open) {
 	document.body.classList.toggle("panel-open", open);
@@ -25,6 +25,10 @@ function setPanelOpen(open) {
 }
 onClick("panelButton", () => setPanelOpen(!document.body.classList.contains("panel-open")));
 onClick("panelClose", () => setPanelOpen(false));
+// On tall screens the panel is over a dimmed backdrop: tapping the backdrop closes it
+document.getElementById("sidePanel").addEventListener("click", e => {
+	if (e.target === e.currentTarget) {setPanelOpen(false);}
+});
 document.addEventListener("keydown", e => {
 	if (e.key == "Escape") {setPanelOpen(false);}
 });

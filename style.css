@@ -171,10 +171,11 @@ button {
 /* ==========================================================================
    3. PAGE LAYOUT
    The body is the header above the main area. The main area (.container) is
-   a grid of named areas: "play" (the board with the status bar beneath it)
-   and "panel" (the side panel). The panel's column is 0 wide until <body>
-   gets .panel-open (main.js); then the board shrinks and recentres beside
-   it. Tall screens put the panel over the board instead (see 8).
+   a grid of named areas: "panel" (the side panel, on the left) and "play"
+   (the board with the status bar beneath it). The panel's column is 0 wide
+   until <body> gets .panel-open (main.js); then the board shrinks and
+   recentres beside it. Tall screens put the panel over the board instead
+   (see 8).
    ========================================================================== */
 body {
     display: grid;
@@ -184,9 +185,9 @@ body {
 
 .container {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 0px;
+    grid-template-columns: 0px minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
-    grid-template-areas: "play panel";
+    grid-template-areas: "panel play";
     padding: var(--gap);
     min-height: 0;
     background-color: var(--bg-container);
@@ -194,7 +195,7 @@ body {
 }
 
 .panel-open .container {
-    grid-template-columns: minmax(0, 1fr) calc(var(--panel-width) + var(--gap));
+    grid-template-columns: calc(var(--panel-width) + var(--gap)) minmax(0, 1fr);
 }
 
 /* The board above the status bar. The board gets all the height the status
@@ -220,9 +221,12 @@ body {
 }
 
 /* The side panel's grid cell. It clips the panel while the column opens and
-   closes; the panel itself keeps its full width throughout (see 6.2). */
+   closes; the panel itself keeps its full width throughout (see 6.2), and
+   hangs from the cell's right edge, so it slides in from the left. */
 .side-panel {
     grid-area: panel;
+    display: flex;
+    justify-content: flex-end;
     min-width: 0;
     min-height: 0;
     overflow: hidden;
@@ -282,6 +286,12 @@ header {
         box-shadow: 0 0 8px #fff4;  /* subtle glow */
         color: var(--text-strong);
     }
+}
+
+/* The menu button (☰) that opens the side panel: a text glyph, so a little larger than the emoji icons */
+.menu-button {
+    font-size: 1.25em;
+    line-height: 1;
 }
 
 /* The "Qhess" title */
@@ -454,10 +464,11 @@ header {
    history list takes the spare height (6.4). */
 .game-control {
     position: relative;  /* for the close button */
+    flex: none;
     box-sizing: border-box;
     width: var(--panel-width);
     height: 100%;
-    margin-left: var(--gap);
+    margin-right: var(--gap);
     overflow-y: auto;    /* only if even a short history list can't fit */
     display: flex;
     flex-direction: column;
@@ -1030,7 +1041,7 @@ p.mp-problem {
    8. RESPONSIVE OVERRIDES
    ORDER MATTERS: these override the tokens and rules above.
    ========================================================================== */
-@media (max-aspect-ratio: 1) { /* Tall screens: the side panel opens over the board */
+@media (max-aspect-ratio: 1) { /* Tall screens: the side panel slides out over the board */
     .container,
     .panel-open .container {
         grid-template-columns: minmax(0, 1fr);
@@ -1042,23 +1053,29 @@ p.mp-problem {
         grid-template-rows: minmax(0, calc(100dvw - 2 * var(--gap))) auto;
         align-content: center;
     }
+    /* The dimmed backdrop fades in while the panel slides in from the left */
     .side-panel {
         position: fixed;
         inset: 0;
         z-index: 1;
+        justify-content: flex-start;
         padding: var(--gap);
-        background-color: rgba(0, 0, 0, 0.6);
-        opacity: 0;
-        transition: opacity var(--panel-slide), visibility 0s var(--panel-slide);
+        background-color: rgba(0, 0, 0, 0);
+        transition: background-color var(--panel-slide), visibility 0s var(--panel-slide);
     }
     .panel-open .side-panel {
-        opacity: 1;
-        transition: opacity var(--panel-slide), visibility 0s;
+        background-color: rgba(0, 0, 0, 0.6);
+        transition: background-color var(--panel-slide), visibility 0s;
     }
     .game-control {
         width: 100%;
         max-width: 32rem;
-        margin: 0 auto;
+        margin: 0;
+        transform: translateX(calc(-100% - 2 * var(--gap)));
+        transition: transform var(--panel-slide);
+    }
+    .panel-open .game-control {
+        transform: none;
     }
 }
 

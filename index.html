@@ -12,14 +12,14 @@
 <body>
     <header>
         <div class="header-group">
+            <button class="icon-button menu-button" id="panelButton" title="Menu" aria-label="Menu"
+                    aria-controls="sidePanel" aria-expanded="false">☰</button>
             <button class="icon-button" id="infoButton" title="Information">ℹ️</button>
             <button class="icon-button" id="helpButton" title="Game Help">❔</button>
         </div>
         <h1 class="title">Qhess</h1>
         <div class="header-group">
             <button class="icon-button" id="optionsButton" title="Options">⚙️</button>
-            <button class="icon-button" id="panelButton" title="Move history and captures"
-                    aria-controls="sidePanel" aria-expanded="false">📜</button>
         </div>
     </header>
 
@@ -104,8 +104,8 @@
             </div>
         </div>
 
-        <!-- SIDE PANEL: hidden until the header's panel button opens it (src/client/main.js).
-             Beside the board on wide screens, over it on tall ones. -->
+        <!-- SIDE PANEL: hidden until the menu button (☰) opens it (src/client/main.js).
+             Slides out from the left: beside the board on wide screens, over it on tall ones. -->
         <aside class="side-panel" id="sidePanel">
             <div class="game-control">
                 <button class="icon-button panel-close" id="panelClose" title="Close">✕</button>
