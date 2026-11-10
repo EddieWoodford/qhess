@@ -26,7 +26,8 @@ function refreshChecks(state, color) {
 }
 
 // Declare that the side to move's potential-check king is not a king.
-// Returns { ok: false, error } if no potential check is declared on the side to move.
+// Returns { ok: true, square } (where that piece is), or { ok: false, error } if no potential check is
+// declared on the side to move.
 function declareNotAKing(state) {
 	if (state.pcKing < 0 || state.pcColor != state.turnColor) {
 		return { ok: false, error: "no potential check to answer" };
@@ -38,7 +39,7 @@ function declareNotAKing(state) {
 	state.pcKing = -1;
 	state.pcColor = "";
 	refreshChecks(state, state.turnColor);
-	return { ok: true };
+	return { ok: true, square: [defKing.r, defKing.c] };
 }
 
 // Move the piece on `from` to `to`, collapsing every piece's possibilities to match.
@@ -48,8 +49,10 @@ function declareNotAKing(state) {
 //     "Promote Pawn?", which should return true or false.
 // Returns:
 //   { ok: false, error }               the move isn't possible (the state is unchanged)
-//   { ok: true, movedIntoCheck }        the move was made. If movedIntoCheck, it leaves the mover in check,
-//                                       so it must not be submitted.
+//   { ok: true, movedIntoCheck, enPassant, promotion }
+//                                       the move was made. If movedIntoCheck, it leaves the mover in check,
+//                                       so it must not be submitted. enPassant / promotion say whether the move
+//                                       was played as an en passant / a promotion (whether given or asked).
 function startMove(state, from, to, choices = {}) {
 	let movingPiece = state.board[from[0]][from[1]];
 	if (movingPiece === null || movingPiece.color != state.turnColor) {
@@ -166,16 +169,17 @@ function startMove(state, from, to, choices = {}) {
 		state.thisMove = state.thisMove + coords2text(to) + "(" + movingPiece.waves() + ")";
 	}
 
+	const played = { enPassant: doEP === true, promotion: doPromotion === true };
 	// Has the mover put themselves in check? Then the move can be looked at but not submitted.
 	if (refreshChecks(state, state.turnColor).attackerCoords.length > 0) {
-		return { ok: true, movedIntoCheck: true };
+		return { ok: true, movedIntoCheck: true, ...played };
 	}
 	// Has the mover put the opponent in check?
 	refreshChecks(state, oppColor(state.turnColor));
 	if (state.autoCheck) {
 		state.thisMove = state.thisMove + "+";
 	}
-	return { ok: true, movedIntoCheck: false };
+	return { ok: true, movedIntoCheck: false, ...played };
 }
 
 // Declare potential check on the opponent piece at kingCoords, which must be one of findPotentialKings(state).

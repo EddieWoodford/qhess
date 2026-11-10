@@ -3,8 +3,10 @@
 // The click flow: what happens when the player hovers or clicks squares and buttons, and the history panel.
 // The rules are in src/engine; drawing is in render.js.
 //
-// While a turn is being made, clicks change `game`, a working copy of `committed` (the state at the start of
-// the turn). Submitting makes the working copy the new committed state; cancelling throws it away.
+// The official game state is held by a session (session.js). While a turn is being made, clicks change `game`, a
+// working copy of `committed` (the session's state at the start of the turn), and the steps taken are recorded in
+// `turnMove`. Submitting hands turnMove to the session, which plays it on the official state and sends back the
+// new state; cancelling throws the working copy away.
 //
 // STATE, the step of the turn the player is on:
 //   "move0"                    Black's move 0: optionally add a potential check, then pass to White
@@ -17,16 +19,18 @@
 //   "selectPCAttackers"        choosing which pieces attack it; then Submit
 
 import { ismember } from "../engine/utils.js";
-import { createInitialState, cloneState, getPieces } from "../engine/state.js";
+import { cloneState, getPieces } from "../engine/state.js";
 import { getPotentialMoves } from "../engine/moves.js";
 import { findPotentialKings, findPCAttackers } from "../engine/check.js";
-import { declareNotAKing as engineDeclareNotAKing, startMove, choosePCKing, addPCAttacker,
-	endTurn, applyMove } from "../engine/game.js";
+import { declareNotAKing as engineDeclareNotAKing, startMove, choosePCKing, addPCAttacker } from "../engine/game.js";
 import { getHistoryLines, parseMoveText } from "../engine/notation.js";
 import { SquareView, render, clearFindPieces, debugPrint } from "./render.js";
+import { LocalSession } from "./session.js";
 
-let committed; // the game state at the start of the current turn: see src/engine/state.js
+const session = new LocalSession();
+let committed; // the session's game state at the start of the current turn: see src/engine/state.js
 let game;      // the game state being shown and changed by clicks: a working copy of `committed`
+let turnMove;  // the turn being made, as a move for session.submitMove (see newTurnMove)
 
 // Page state
 let SQUARES; // 8 x 8 array of SquareView objects (the page's buttons)
@@ -46,15 +50,22 @@ const ask = question => confirm(question);
 // Turns
 ////////////////////////////////
 
-// The working copy becomes the committed state, and a new working copy is made for the next turn
-function commitTurn() {
-	committed = game;
-	game = cloneState(committed);
+// A turn with nothing done yet, in the same shape as notation.js parseMoveText
+function newTurnMove() {
+	return { notAKing: null, from: null, to: null, enPassant: false, promotion: false, pcKing: null, pcAttackers: [] };
 }
+
+// Whenever the session's game state changes (a new game, or an accepted move), start a fresh turn from it
+session.onChange(state => {
+	committed = state;
+	game = cloneState(committed);
+	turnMove = newTurnMove();
+});
 
 // Throw away the move being made and go back to the start of the turn
 function cancelTurn() {
 	game = cloneState(committed);
+	turnMove = newTurnMove();
 	clearFindPotentialCheckPieces();
 }
 
@@ -99,14 +110,22 @@ function sideButton2Action() {
 }
 
 function declareNotAKing() {
-	engineDeclareNotAKing(game);
+	const result = engineDeclareNotAKing(game);
+	if (result.ok) {
+		turnMove.notAKing = result.square;
+	}
 	clearFindPotentialCheckPieces();
 }
 
 function submitMove() {
-	// Here after clicking Submit (or "Pass to white" on move 0) when a valid move is staged
-	endTurn(game);
-	commitTurn();
+	// Here after clicking Submit (or "Pass to white" on move 0) when a valid move is staged.
+	// The session plays the recorded turn on the official game state; its onChange starts the next turn.
+	const result = session.submitMove(turnMove);
+	if (!result.ok) {
+		debugPrint("Move not accepted: " + result.error);
+		cancelTurn();
+		return;
+	}
 	if (REPLAYNUMBER == -1) {
 		document.getElementById("movehistory").innerText = game.history;
 	}
@@ -205,6 +224,10 @@ function showCompleteMove(endCoords,doEP,doPromotion) {
 		return;
 	}
 	ENDCOORDS = endCoords;
+	turnMove.from = STARTCOORDS;
+	turnMove.to = endCoords;
+	turnMove.enPassant = result.enPassant;
+	turnMove.promotion = result.promotion;
 	clearFindPotentialCheckPieces();
 	if (result.movedIntoCheck) {
 		// We will still display the invalid move, but make it impossible to submit, as
@@ -257,6 +280,7 @@ function selectPCKing(kingCoords) {
 		setState("clear");
 		return
 	}
+	turnMove.pcKing = kingCoords;
 	clearFindPotentialCheckPieces(); // stop highlighting the potential kings
 	let potAttackerCoords = highlightPCAttackers();
 	if (potAttackerCoords.length == 1) {
@@ -275,6 +299,7 @@ function selectPCAttackers(attackerCoords) {
 		setState("clear");
 		return
 	}
+	turnMove.pcAttackers.push(attackerCoords);
 	clearFindPotentialCheckPieces();
 	if (result.movedIntoCheck) {
 		// By setting a potential check the attacker collapsed down to a true king and put themselves in check
@@ -322,13 +347,12 @@ function replayPly(moveText) {
 	if (move.turn != game.turnNumber.toString() + game.turnColor) {
 		debugPrint("Move text number + colour did not match expected");
 	}
-	const result = applyMove(game, move, { ask });
+	const result = session.submitMove(move);
 	if (!result.ok) {
 		debugPrint("Couldn't replay '" + moveText + "': " + result.error);
 		cancelTurn();
 		return false;
 	}
-	commitTurn();
 	if (REPLAYNUMBER == -1) {
 		document.getElementById("movehistory").innerText = game.history;
 	}
@@ -463,8 +487,7 @@ function setState(stateIn) {
 }
 
 function setup() {
-	committed = createInitialState();
-	game = cloneState(committed);
+	session.reset(); // its onChange sets committed, game and turnMove
 	SQUARES = []; // 8 x 8 array of SquareView objects (the page's buttons)
 	STARTCOORDS = [];
 	ENDCOORDS = [];
