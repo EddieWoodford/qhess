@@ -6,7 +6,7 @@
 import * as game from "./controller.js";
 import { setFlippedBoard } from "./board-view.js";
 import { setupModals, hideModal } from "./modals.js";
-import { dom } from "./dom.js";
+import { setupSettings } from "./settings.js";
 import { normalizeCode } from "../shared/protocol.js";
 
 function onClick(id, handler) {
@@ -15,8 +15,10 @@ function onClick(id, handler) {
 
 setupModals();
 
-// Settings tab: each switch's "change" event applies its setting
-dom.settings.blackView.addEventListener("change", e => setFlippedBoard(e.target.checked));
+// Settings tab: what each switch does (settings.js)
+setupSettings({
+	blackView: on => setFlippedBoard(on),
+});
 
 // Side panel: hidden until the menu button (☰) opens it.
 // style.css shows it when <body> has .panel-open: beside the board on wide screens, over it on tall ones.
