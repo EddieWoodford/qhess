@@ -71,11 +71,115 @@ function buildBoard(boardEl = dom.board) {
 	boardEl.append(fileRow());
 }
 
+////////////////////////////////
+// Move animation
+////////////////////////////////
+// When view.animate is set (only for a move in live play, see controller.js), each piece that has moved since
+// the last draw slides from its old square to its new one, and each piece that has gone from the board (taken)
+// fades out where it was. The slide is a floating copy of the old square's piece ("ghost", style.css 7.5) on top
+// of the board; the real piece is drawn on its new square straight away, hidden until the ghost arrives.
+
+const SLIDE_MS = 180;
+const FADE_MS = 220;
+
+// Where each piece was at the last draw: "w5" (colour + piece number) -> [r, c]
+let drawnPositions = new Map();
+// The ghosts still moving, so a new move can finish them first
+let runningAnimations = [];
+let ghostCount = 0;
+
+function piecePositions(game) {
+	const positions = new Map();
+	for (let r = 0; r <= 7; r++) {
+		for (let c = 0; c <= 7; c++) {
+			const piece = game.board[r][c];
+			if (piece !== null) {
+				positions.set(piece.color + piece.i, [r, c]);
+			}
+		}
+	}
+	return positions;
+}
+
+function prefersReducedMotion() {
+	return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+}
+
+// Compare the board as last drawn with the one about to be drawn, and note what to animate: for each, the old
+// square's piece HTML and its place on screen, read now, before the squares are redrawn.
+function planAnimations(squares, before, after) {
+	const plan = [];
+	for (const [key, from] of before) {
+		const to = after.get(key);
+		if (to && isequal(from, to)) { continue; }
+		const fromBtn = squares[from[0]][from[1]].button;
+		if (fromBtn.innerHTML == "") { continue; }
+		plan.push({
+			html: fromBtn.innerHTML,
+			fontSize: getComputedStyle(fromBtn).fontSize,
+			fromRect: fromBtn.getBoundingClientRect(),
+			toBtn: to ? squares[to[0]][to[1]].button : null, // null: taken
+		});
+	}
+	return plan;
+}
+
+function makeGhost(item) {
+	const ghost = document.createElement("div");
+	ghost.className = "piece-ghost";
+	ghost.innerHTML = item.html;
+	const rect = item.fromRect;
+	Object.assign(ghost.style, {
+		left: rect.left + "px",
+		top: rect.top + "px",
+		width: rect.width + "px",
+		height: rect.height + "px",
+		fontSize: item.fontSize,
+	});
+	document.body.append(ghost);
+	return ghost;
+}
+
+function runAnimations(plan) {
+	for (const item of plan) {
+		const ghost = makeGhost(item);
+		let anim;
+		if (item.toBtn) {
+			const to = item.toBtn.getBoundingClientRect();
+			const dx = to.left - item.fromRect.left;
+			const dy = to.top - item.fromRect.top;
+			// Hide the real piece until the ghost lands. A data attribute, as a redraw resets the classes.
+			item.toBtn.dataset.arriving = ++ghostCount;
+			ghost.style.zIndex = "2"; // moving pieces pass over the fading ones
+			anim = ghost.animate(
+				[{ transform: "translate(0, 0)" }, { transform: `translate(${dx}px, ${dy}px)` }],
+				{ duration: SLIDE_MS, easing: "ease-out" });
+		} else {
+			anim = ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: FADE_MS, easing: "ease-in" });
+		}
+		const id = String(ghostCount);
+		const done = () => {
+			ghost.remove();
+			// (unless a later move's ghost is now heading for the same square)
+			if (item.toBtn && item.toBtn.dataset.arriving === id) { delete item.toBtn.dataset.arriving; }
+			runningAnimations = runningAnimations.filter(a => a !== anim);
+		};
+		anim.finished.then(done, done); // finished or cancelled
+		runningAnimations.push(anim);
+	}
+}
+
 // Draw every square: its piece, and the classes for its highlights (see style.css sections 7.2 and 7.3).
 // view: see render.js
 function drawBoard(view) {
 	const game = view.game;
 	const STATE = view.state;
+
+	// Any move still sliding lands now; then work out this draw's animations before the squares change
+	for (const anim of runningAnimations.slice()) { anim.finish(); }
+	const positions = piecePositions(game);
+	const plan = view.animate && !prefersReducedMotion() ? planAnimations(view.squares, drawnPositions, positions) : [];
+	drawnPositions = positions;
 
 	// Check to show on the board: on the side to move, or while choosing potential-check attackers, on the
 	// king being checked
@@ -155,6 +259,8 @@ function drawBoard(view) {
 			}
 		}
 	}
+
+	runAnimations(plan);
 }
 
 // Show Black's view (flipped true: Black at the bottom) or White's view. The CSS for .flipped reverses the rows

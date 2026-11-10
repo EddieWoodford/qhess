@@ -28,6 +28,7 @@ import { dom } from "./dom.js";
 //                (controller.js ui.multiplayer)
 //   pcRule:      whether the player can declare potential checks (controller.js pcRule)
 //   pcSetting:   the Settings tab's Potential Check switch (controller.js ui.potentialCheck)
+//   animate:     slide the pieces that moved since the last draw (board-view.js); only for a move in live play
 // }
 function render(view) {
 	drawStatus(view);

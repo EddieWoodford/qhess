@@ -417,12 +417,14 @@ function showCompleteMove(endCoords,doEP,doPromotion,doCastle) {
 	turnMove.promotion = result.promotion;
 	turnMove.castle = result.castle;
 	clearFindPotentialCheckPieces();
+	// The piece slides to its destination, in live play only (never while stepping through the history)
+	const animate = ui.replay == -1;
 	if (result.movedIntoCheck) {
 		// We will still display the invalid move, but make it impossible to submit, as
 		// the player might want to inspect the board to understand how the check happened.
-		setState("invalidMoveIntoCheck");
+		setState("invalidMoveIntoCheck", animate);
 	} else {
-		setState("showCompleteMove");
+		setState("showCompleteMove", animate);
 	}
 }
 
@@ -721,11 +723,17 @@ function liveChanged(state) {
 		draw();
 		return;
 	}
+	// The opponent's move slides into place. Not the answer to this player's own move (already on the board),
+	// nor a catch-up of more than one move (after a reload the board was showing something else).
+	const before = parseRecord(committed.history);
+	const after = parseRecord(state.history);
+	const opponentMoved = after.length == before.length + 1 && before.every((ply, i) => ply == after[i])
+		&& state.turnColor == ui.multiplayer.color;
 	adopt(state);
-	ui.record = parseRecord(game.history);
+	ui.record = after;
 	showLastMove();
 	clearFindPotentialCheckPieces();
-	setState("clear");
+	setState("clear", opponentMoved);
 }
 
 // For tests: close the multiplayer connection as if the network had dropped
@@ -757,8 +765,9 @@ function multiplayerWait() {
 // State Control
 ////////////////////////////////
 
-// Move to a new step of the turn: reset the highlights that don't belong to it, then redraw
-function setState(stateIn) {
+// Move to a new step of the turn: reset the highlights that don't belong to it, then redraw.
+// animate: slide the pieces that moved since the last draw (see draw)
+function setState(stateIn, animate = false) {
 	if (stateIn == "clear" && game.turnNumber == 0) {
 		stateIn = "move0";
 	}
@@ -795,11 +804,12 @@ function setState(stateIn) {
 			}
 		}
 	}
-	draw();
+	draw(animate);
 }
 
-// Redraw the page as it is
-function draw() {
+// Redraw the page as it is. animate: slide the pieces that moved since the last draw to their new squares
+// (board-view.js), for a move in live play.
+function draw(animate = false) {
 	saveRecord();
 	render({
 		game,
@@ -814,6 +824,7 @@ function draw() {
 		multiplayer: ui.multiplayer,
 		pcRule: pcRule(),
 		pcSetting: ui.potentialCheck,
+		animate,
 	});
 }
 

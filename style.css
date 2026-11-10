@@ -23,6 +23,7 @@
         7.2 Square states        (order matters)
         7.3 Move markers         (order matters)
         7.4 Coordinates and piece text
+        7.5 Move animation
      8. Responsive overrides     (must stay last)
 
    NOTES
@@ -1210,6 +1211,28 @@ input.switch:focus-visible {
     --piece-bB: var(--piece-black-side);
     --piece-bN: var(--piece-black-side);
     --piece-bP: var(--piece-black-side);
+}
+
+/* ---------- 7.5 Move animation ----------
+   board-view.js slides a copy of a moving piece (a "ghost") from its old
+   square to its new one, or fades out a taken piece. The ghost is set to the
+   old square's place and font size, and lays its piece out like a square.
+   The real piece on the new square is hidden ([data-arriving]) until it lands. */
+.piece-ghost {
+    position: fixed;
+    z-index: 1;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-family: var(--font-mono);
+    line-height: 1;
+    text-align: center;
+}
+
+.boardsquare[data-arriving] > * {
+    visibility: hidden;
 }
 
 
