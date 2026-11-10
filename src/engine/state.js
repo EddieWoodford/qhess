@@ -14,6 +14,7 @@
 //   pcColor:     colour of that king, or ""
 //   takenPiece:  the Piece captured by the move being made, or null
 //   autoCheck, potCheck: result of the most recent check search (see check.js)
+//   result:      null while the game goes on; "checkmate" or "stalemate" once the side to move has no legal turn
 // }
 
 import { Piece } from "./piece.js";
@@ -33,6 +34,7 @@ function createInitialState() {
 		takenPiece: null,
 		autoCheck: false,
 		potCheck: false,
+		result: null,
 	};
 	for (let r = 0; r <= 7; r++) {
 		state.board.push(Array(8).fill(null));

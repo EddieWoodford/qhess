@@ -9,13 +9,15 @@
 //   addPCAttacker(state, attackerCoords)    ...attacked by one or more of your pieces
 //   endTurn(state)                          record the move in the history and pass to the other side
 // applyMove(state, move) runs a whole turn from parsed notation (see notation.js parseMoveText).
+// After each turn, endTurn sets state.result: "checkmate" or "stalemate" if the side now to move has no legal
+// turn (see gameResult), otherwise null. Once it is set, no more moves can be made.
 
 import { isequal, ismember, coords2text } from "./utils.js";
-import { oppColor, defPiece, attPiece } from "./state.js";
+import { cloneState, oppColor, getPieces, defPiece, attPiece } from "./state.js";
 import { getPotentialMoves } from "./moves.js";
 import { findChecks, findPotentialKings, findPCAttackers } from "./check.js";
 import { updateOptionsFromEntanglement } from "./entanglement.js";
-import { getCastlingMoves } from "./castling.js";
+import { getCastlingMoves, getMoveDestinations } from "./castling.js";
 
 // Search for check against `color` and store the result in state.autoCheck / state.potCheck.
 // Returns the full result from findChecks.
@@ -30,6 +32,9 @@ function refreshChecks(state, color) {
 // Returns { ok: true, square } (where that piece is), or { ok: false, error } if no potential check is
 // declared on the side to move.
 function declareNotAKing(state) {
+	if (state.result) {
+		return { ok: false, error: "the game is over" };
+	}
 	if (state.pcKing < 0 || state.pcColor != state.turnColor) {
 		return { ok: false, error: "no potential check to answer" };
 	}
@@ -58,6 +63,9 @@ function declareNotAKing(state) {
 //                                       the move was played as an en passant / a promotion / a castle (whether
 //                                       given or asked).
 function startMove(state, from, to, choices = {}) {
+	if (state.result) {
+		return { ok: false, error: "the game is over" };
+	}
 	let movingPiece = state.board[from[0]][from[1]];
 	if (movingPiece === null || movingPiece.color != state.turnColor) {
 		return { ok: false, error: "no piece of the side to move on " + coords2text(from) };
@@ -294,12 +302,86 @@ function endTurn(state) {
 	}
 	state.thisMove = state.turnNumber.toString() + state.turnColor + ". ";
 	refreshChecks(state, state.turnColor);
+	state.result = gameResult(state);
+}
+
+// Could the piece on `from` move to `to` without leaving its side in check, for some answer to any question
+// the move asks (en passant, promotion, castle)? Tries each answer on a copy of the state.
+function canMoveLegally(state, from, to) {
+	const untried = [{}];
+	while (untried.length > 0) {
+		const answers = untried.pop();
+		// Answer each new question "no", and keep "yes" to try next
+		const ask = question => {
+			if (!(question in answers)) {
+				untried.push({ ...answers, [question]: true });
+				answers[question] = false;
+			}
+			return answers[question];
+		};
+		const result = startMove(cloneState(state), from, to, { ask });
+		if (result.ok && !result.movedIntoCheck) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// Does the side to move have any move that doesn't leave it in check?
+function anyLegalMove(state) {
+	for (const piece of getPieces(state, state.turnColor)) {
+		if (piece.captured > -1) { continue; }
+		for (const to of getMoveDestinations(state, piece.coords())) {
+			if (canMoveLegally(state, piece.coords(), to)) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+// Does the side to move have a legal turn? A move, or (in potential check) declaring "Not a King" and then a
+// move. Declaring a potential check of its own is optional, so it never matters here. Doesn't change the state.
+function hasLegalTurn(state) {
+	if (state.turnNumber == 0) {
+		return true; // Black's move 0 can always pass
+	}
+	if (anyLegalMove(state)) {
+		return true;
+	}
+	const pcKing = state.pcColor == state.turnColor && state.pcKing >= 0 ? attPiece(state, state.pcKing) : null;
+	if (pcKing !== null && pcKing.waves().includes("K") && pcKing.waves() != "K") {
+		const declared = cloneState(state);
+		let ok;
+		try {
+			ok = declareNotAKing(declared).ok;
+		} catch {
+			ok = false; // no complete army without that piece as the king
+		}
+		if (ok && anyLegalMove(declared)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// How the game stands for the side to move: "checkmate" (in check, automatic or potential, with no legal
+// turn), "stalemate" (not in check, with no legal turn), or null (the game goes on). Uses state.autoCheck /
+// state.potCheck, so refreshChecks for the side to move first. Doesn't change the state.
+function gameResult(state) {
+	if (hasLegalTurn(state)) {
+		return null;
+	}
+	return state.autoCheck || state.potCheck ? "checkmate" : "stalemate";
 }
 
 // Play a whole turn from parsed notation (notation.js parseMoveText): the same steps a player would take.
 // choices.ask is only needed if the move leaves an en passant, promotion or castling choice unanswered.
 // Returns { ok: true } or { ok: false, error }. On failure the state may be part-way through the turn.
 function applyMove(state, move, choices = {}) {
+	if (state.result) {
+		return { ok: false, error: "the game is over" };
+	}
 	if (move.notAKing) {
 		const result = declareNotAKing(state);
 		if (!result.ok) { return result; }
@@ -326,4 +408,4 @@ function applyMove(state, move, choices = {}) {
 	return { ok: true };
 }
 
-export { refreshChecks, declareNotAKing, startMove, choosePCKing, addPCAttacker, pcMoveText, endTurn, applyMove };
+export { refreshChecks, declareNotAKing, startMove, choosePCKing, addPCAttacker, pcMoveText, endTurn, applyMove, hasLegalTurn, gameResult };
