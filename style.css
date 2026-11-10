@@ -590,13 +590,68 @@ input:checked + .tabTitle {
 .captured-pieces {
     display: flex;
     justify-content: space-between;
+    gap: var(--gap);
     padding: 0.5em 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;      /* a long game's list scrolls within the tab */
 }
 
 .column {
-    width: 50%;
+    flex: 1 1 0;
+    min-width: 0;
     color: var(--text);    /* captured piece labels */
     font-weight: 500;
+}
+
+/* One captured piece (panels-view.js): the turn it was taken on, then the
+   types it could still have been, in the board's piece colours (7.4).
+   A piece with many possible types wraps onto a second line. */
+.captured-entry {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4em;
+    margin-top: 0.3em;
+}
+
+.captured-turn {
+    flex: 0 0 auto;
+    min-width: 2em;
+    text-align: right;
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    color: var(--text-muted);
+}
+
+.captured-glyphs {
+    display: flex;
+    flex-wrap: wrap;
+    min-width: 0;
+    font-size: 1.3em;
+    line-height: 1.1;
+}
+
+/* A bishop and its swatch stay together when the line wraps */
+.captured-type {
+    white-space: nowrap;
+}
+
+/* The small square after a bishop: the colour of square it was on */
+.bishop-square {
+    display: inline-block;
+    width: 0.35em;
+    height: 0.35em;
+    margin-left: 0.05em;
+    border: 1px solid var(--text-muted);
+    vertical-align: baseline;
+}
+
+.bishop-square-light {
+    background-color: #ddd;
+}
+
+.bishop-square-dark {
+    background-color: #111;
 }
 
 
