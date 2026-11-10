@@ -10,18 +10,9 @@
 </head>
 
 <body>
-    <header>
-        <div class="header-group">
-            <button class="icon-button menu-button" id="panelButton" title="Menu" aria-label="Menu"
-                    aria-controls="sidePanel" aria-expanded="false">☰</button>
-            <button class="icon-button" id="infoButton" title="Information">ℹ️</button>
-            <button class="icon-button" id="helpButton" title="Game Help">❔</button>
-        </div>
-        <h1 class="title">Qhess</h1>
-        <div class="header-group">
-            <button class="icon-button" id="optionsButton" title="Options">⚙️</button>
-        </div>
-    </header>
+    <!-- MENU BUTTON: opens and closes the side panel. Fixed in the top-left corner (style.css 4). -->
+    <button class="icon-button menu-button" id="panelButton" title="Menu" aria-label="Menu"
+            aria-controls="sidePanel" aria-expanded="false"><span aria-hidden="true">☰</span></button>
 
     <!-- MODALS: shown and hidden by src/client/modals.js -->
     <!-- information modal - credits, rules? -->

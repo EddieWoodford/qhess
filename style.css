@@ -6,7 +6,7 @@
      1. Design tokens
      2. Base elements
      3. Page layout              (the grid: change layouts here and in 8)
-     4. Header
+     4. Menu button
      5. Modals
      6. Status bar and side panel
         6.1 Status bar: prompt, staged move and action buttons
@@ -33,8 +33,8 @@
    - Sizes: panel text is in em, from --ui-font (clamped, so it stays readable
      on small screens). Everything on the board is in em, from --square (see
      7.1), so the board scales to whatever space its grid area gets.
-   - The page never scrolls: the board takes whatever height is left after
-     the header and the status bar. Only the move history list scrolls.
+   - The page never scrolls: the board takes whatever space is left after
+     the menu button's gutter and the status bar. Only the move history list scrolls.
    ========================================================================== */
 
 
@@ -58,7 +58,7 @@
     --bg-page: #121212;
     --bg-container: #181818;
     --bg-inset: #1a1a1a;          /* board frame, modal box */
-    --bg-raised: #1e1e1e;         /* header, tab content */
+    --bg-raised: #1e1e1e;         /* tab content */
     --bg-panel: #1f1f1f;          /* side panel */
     --bg-input: #222;             /* move history, staged move */
 
@@ -170,8 +170,8 @@ button {
 
 /* ==========================================================================
    3. PAGE LAYOUT
-   The body is the header above the main area. The main area (.container) is
-   a grid of named areas: "panel" (the side panel, on the left) and "play"
+   The body holds the main area (.container) and the menu button (4). The main
+   area is a grid of named areas: "panel" (the side panel, on the left) and "play"
    (the board with the status bar beneath it). The panel's column is 0 wide
    until <body> gets .panel-open (main.js); then the board shrinks and
    recentres beside it. Tall screens put the panel over the board instead
@@ -179,16 +179,19 @@ button {
    ========================================================================== */
 body {
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
     height: 100dvh;
 }
 
+/* The left padding is a gutter for the menu button (4). The board is limited
+   by the height on wide screens, so the gutter doesn't make it smaller. */
 .container {
     display: grid;
     grid-template-columns: 0px minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
     grid-template-areas: "panel play";
     padding: var(--gap);
+    padding-left: calc(2 * var(--gap) + var(--button-height));
     min-height: 0;
     background-color: var(--bg-container);
     transition: grid-template-columns var(--panel-slide);
@@ -241,29 +244,9 @@ body {
 
 
 /* ==========================================================================
-   4. HEADER
+   4. MENU BUTTON
    ========================================================================== */
-header {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0.25em 1em;
-    border-bottom: 1px solid var(--border-faint);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.6);
-    background-color: var(--bg-raised);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: var(--text);
-    position: relative; /* keeps its shadow above the main area */
-}
-
-.header-group {
-    display: flex;
-    align-items: center;
-    gap: 0.5em; /* spacing between icons */
-}
-
-/* Icon buttons (info, help, options) */
+/* Icon buttons (the menu button, and the side panel's close button) */
 .icon-button {
     display: inline-flex;
     align-items: center;
@@ -288,21 +271,21 @@ header {
     }
 }
 
-/* The menu button (☰) that opens the side panel: a text glyph, so a little larger than the emoji icons */
+/* The menu button (☰) that opens the side panel. It stays in the top-left
+   corner, in a gutter the container keeps clear for it (3; on tall screens a
+   strip above the board, 8). The panel's overlay on tall screens covers it. */
 .menu-button {
-    font-size: 1.25em;
-    line-height: 1;
+    position: fixed;
+    top: var(--gap);
+    left: var(--gap);
+    width: var(--button-height);
+    height: var(--button-height);
+    padding: 0;
 }
 
-/* The "Qhess" title */
-.title {
-    margin: 0;
-    font-weight: 500;
-    font-size: 2em;
+.menu-button > span {
+    font-size: 1.4em;  /* ☰ is a text glyph: a little larger than the emoji icons */
     line-height: 1;
-    letter-spacing: 0.05em;
-    color: var(--text-strong);
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
 
@@ -1047,6 +1030,11 @@ p.mp-problem {
         grid-template-columns: minmax(0, 1fr);
         grid-template-areas: "play";
     }
+    /* The board is limited by the width here, so the menu button's gutter
+       is a strip along the top instead of down the left */
+    .container {
+        padding: calc(2 * var(--gap) + var(--button-height)) var(--gap) var(--gap);
+    }
     /* The board is only as tall as it is wide, so the spare height goes
        above and below the board and status bar together, not between them */
     .play-area {
@@ -1084,7 +1072,7 @@ p.mp-problem {
         --ui-font: clamp(1rem, 3dvmin, 1.375rem);
         --button-height: 2.75em;    /* at least 44px to tap */
     }
-    /* The header's icon buttons and the tab labels are smaller than the others,
+    /* The icon buttons and the tab labels are smaller than the others,
        so give them the same minimum tap size */
     .icon-button {
         min-width: var(--button-height);
