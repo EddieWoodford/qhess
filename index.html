@@ -53,6 +53,18 @@
             <button id="toggleFlippedBoard">Toggle player view</button>
         </div>
     </div>
+    <!-- edit / import modal - change the moves, or paste in a game, then load it -->
+    <div id="importWrapper" class="modalWrapper">
+        <div id="importDiv" class="modalData">
+            <h2>Edit / Import Moves</h2>
+            <p>One move per line. Edit them, or paste in a whole game, then load it.</p>
+            <textarea class="import-text" id="importText" rows="14" spellcheck="false"></textarea>
+            <div class="button-row">
+                <button class="historyButton" id="importLoad">Load these moves</button>
+                <button class="historyButton" id="importCancel">Cancel</button>
+            </div>
+        </div>
+    </div>
     <!-- END MODALS -->
 
     <main class="container">
@@ -95,10 +107,11 @@
                         <button class="stepHistoryButton" id="forward1">&gt;</button>
                         <button class="stepHistoryButton" id="forward2">&gt;&gt;</button>
                     </div>
-                    <div class="movehistory" id="movehistory" contenteditable></div>
+                    <!-- one line per ply: drawn by src/client/history-view.js -->
+                    <div class="movehistory" id="movehistory"></div>
                     <div class="button-row">
                         <button class="historyButton" id="reset">Reset Game</button>
-                        <button class="historyButton" id="restorehistory">Restore History</button>
+                        <button class="historyButton" id="importButton">Edit / Import</button>
                     </div>
                     <div class="button-row">
                         <button class="historyButton" id="copyallhistory">Copy All</button>

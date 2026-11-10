@@ -22,6 +22,7 @@ import { dom } from "./dom.js";
 //   lastStart, lastEnd: [r,c] of the last submitted move (highlighted during replay)
 //   findPiece:   piece type the find buttons are highlighting, or ""
 //   replayNumber: -1, or the replay position (see controller.js)
+//   record:      the game record for the History tab, one ply per line (array of strings)
 // }
 function render(view) {
 	drawStatus(view);

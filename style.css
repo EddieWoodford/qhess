@@ -149,7 +149,7 @@ h1, h2, h3 {
 
 /* Every button and input gets these. Specific types override below.
    Browsers don't pass the page's font on to form controls, so inherit it. */
-button, input {
+button, input, textarea {
     font: inherit;
 }
 
@@ -445,6 +445,27 @@ input:checked + .tabTitle {
     color: var(--text);
     padding: 0.5em;
     border-radius: var(--radius-md);
+}
+
+/* While replaying, the ply for the position being shown (history-view.js) */
+.historyLine.replayLine {
+    background-color: lightgrey;
+    color: #000;
+}
+
+/* The Edit / Import dialog's text box */
+.import-text {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 1em 0;
+    background-color: var(--bg-input);
+    color: var(--text);
+    border: 1px solid var(--border-main);
+    border-radius: var(--radius-sm);
+    padding: 0.5em;
+    font-family: var(--font-mono);
+    resize: vertical;
 }
 
 

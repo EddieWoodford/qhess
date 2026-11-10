@@ -8,7 +8,7 @@
 // `turnMove`. Submitting hands turnMove to the session, which plays it on the official state and sends back the
 // new state; cancelling throws the working copy away.
 //
-// STATE, the step of the turn the player is on:
+// ui.state, the step of the turn the player is on:
 //   "move0"                    Black's move 0: optionally add a potential check, then pass to White
 //   "clear"                    waiting for the player to pick a piece
 //   "highlightPotentialMoves"  hovering over one of their pieces (its moves are shown)
@@ -24,7 +24,7 @@ import { getPotentialMoves } from "../engine/moves.js";
 import { findPotentialKings, findPCAttackers } from "../engine/check.js";
 import { declareNotAKing as engineDeclareNotAKing, startMove, choosePCKing, addPCAttacker } from "../engine/game.js";
 import { getHistoryLines, parseMoveText } from "../engine/notation.js";
-import { SquareView } from "./board-view.js";
+import { SquareView, buildBoard } from "./board-view.js";
 import { render, debugPrint } from "./render.js";
 import { dom } from "./dom.js";
 import { LocalSession } from "./session.js";
@@ -34,17 +34,24 @@ let committed; // the session's game state at the start of the current turn: see
 let game;      // the game state being shown and changed by clicks: a working copy of `committed`
 let turnMove;  // the turn being made, as a move for session.submitMove (see newTurnMove)
 
-// Page state
-let SQUARES; // 8 x 8 array of SquareView objects (the page's buttons)
-let STARTCOORDS; // [r,c] of the move being made, or [] if none
-let ENDCOORDS;
-let LASTSTARTCOORDS; // start square of the last submitted move, for replay highlighting
-let LASTENDCOORDS;   // end square of the last submitted move
-let FINDPIECE;
-let STATE;
-// -1 when not replaying. While stepping through the history, the position being shown, in moves:
-// 0.5 = after Black's move 0, 1 = after White's move 1, 1.5 = after Black's move 1, ...
-let REPLAYNUMBER = -1;
+// Page state: everything about what the page is showing, apart from the game itself
+const ui = {
+	state: "move0",  // the step of the turn (see the list above)
+	start: [],       // [r,c] of the move being made, or [] if none
+	end: [],
+	lastStart: [],   // start square of the last submitted move, for replay highlighting
+	lastEnd: [],     // end square of the last submitted move
+	findPiece: "",   // piece type the Find Pieces buttons are highlighting, or ""
+	// The game record shown in the History tab, one ply per line. It follows the game as moves are made, and
+	// stays as it is while replaying (so the later moves can be stepped forward through).
+	record: [],
+	// -1 when not replaying. While stepping through the history, the position being shown, in moves:
+	// 0.5 = after Black's move 0, 1 = after White's move 1, 1.5 = after Black's move 1, ...
+	replay: -1,
+};
+
+// 8 x 8 array of SquareView objects (the board's buttons and their highlight flags). Made once, by init().
+let squares;
 
 const ask = question => confirm(question);
 
@@ -75,10 +82,10 @@ function cancelTurn() {
 // Button Actions
 ////////////////////////////////
 function sideButton1Click() {
-	if (REPLAYNUMBER > -1) {
+	if (ui.replay > -1) {
 		// When in replay mode, sideButton1 is 'Resume Game From Here'
-		let foo = REPLAYNUMBER;
-		REPLAYNUMBER = -1;
+		let foo = ui.replay;
+		ui.replay = -1;
 		restoreGameHistory(null, 2*foo);
 	} else {
 		sideButton1Action();
@@ -86,10 +93,10 @@ function sideButton1Click() {
 }
 
 function sideButton1Action() {
-	if (STATE == "showCompleteMove" || STATE == "move0") {
+	if (ui.state == "showCompleteMove" || ui.state == "move0") {
 		highlightPotentialKings();
 		setState("selectPCKing");
-	} else if (STATE == "clear" && game.potCheck) {
+	} else if (ui.state == "clear" && game.potCheck) {
 		declareNotAKing();
 		setState("clear");
 	}
@@ -102,10 +109,10 @@ function sideButton2Click() {
 }
 
 function sideButton2Action() {
-	if (STATE == "showCompleteMove" || STATE == "selectPCAttackers" || STATE == "move0") {
+	if (ui.state == "showCompleteMove" || ui.state == "selectPCAttackers" || ui.state == "move0") {
 		submitMove();
 		setState("clear");
-	} else if (STATE == "invalidMoveIntoCheck") {
+	} else if (ui.state == "invalidMoveIntoCheck") {
 		cancelTurn();
 		setState("clear");
 	}
@@ -128,50 +135,48 @@ function submitMove() {
 		cancelTurn();
 		return;
 	}
-	if (REPLAYNUMBER == -1) {
-		dom.history.innerText = game.history;
-	}
+	followRecord();
 	// Remember this move's squares so replay can highlight the last move
-	LASTSTARTCOORDS = STARTCOORDS;
-	LASTENDCOORDS = ENDCOORDS;
+	ui.lastStart = ui.start;
+	ui.lastEnd = ui.end;
 	clearFindPotentialCheckPieces();
 }
 
 function findPiecesClick(wave) {
 	// Clicking the active one again turns it off. render() highlights the button and the squares.
-	FINDPIECE = (wave == FINDPIECE) ? "" : wave;
-	setState(STATE);
+	ui.findPiece = (wave == ui.findPiece) ? "" : wave;
+	setState(ui.state);
 }
 
 ////////////////////////////////
 // Squares
 ////////////////////////////////
 function squareEnter(coords) {
-	if (STATE == "clear") {
+	if (ui.state == "clear") {
 		highlightPotentialMoves(coords);
 	}
 }
 
 function squareLeave(coords) {
-	if (STATE == "highlightPotentialMoves") {
+	if (ui.state == "highlightPotentialMoves") {
 		setState("clear");
 	}
 }
 
 function squareClick(coords) {
-	if (REPLAYNUMBER > -1) {return}
-	FINDPIECE = "";
-	if (STATE == "highlightPotentialMoves") {
+	if (ui.replay > -1) {return}
+	ui.findPiece = "";
+	if (ui.state == "highlightPotentialMoves") {
 		showPartialMove(coords);
-	} else if (STATE == "showPartialMove") {
+	} else if (ui.state == "showPartialMove") {
 		showCompleteMove(coords);
-	} else if (STATE == "selectPCKing") {
+	} else if (ui.state == "selectPCKing") {
 		selectPCKing(coords);
-	} else if (STATE == "selectPCAttackers") {
+	} else if (ui.state == "selectPCAttackers") {
 		selectPCAttackers(coords);
-	} else if (STATE == "move0") {
+	} else if (ui.state == "move0") {
 		setState("move0");
-	} else if (STATE == "showCompleteMove" && isequal(coords, ENDCOORDS)) {
+	} else if (ui.state == "showCompleteMove" && isequal(coords, ui.end)) {
 		// Clicking the staged destination again submits the move, same as the Submit button
 		sideButton2Action();
 	} else {
@@ -188,7 +193,7 @@ function markDestinations(coords) {
 		let delX = moves[i][1] - coords[1];
 		// returns 1-16 = bearing of potential move where 1=NNE, 2=NE, 3=ENE, 3=E, 5=ESE, etc.
 		let bearing = (Math.round(((Math.atan2(delX, delY) * 180) / Math.PI)/22.5) + 16 - 1) % 16 + 1;
-		SQUARES[moves[i][0]][moves[i][1]].potentialMove = bearing;
+		squares[moves[i][0]][moves[i][1]].potentialMove = bearing;
 	}
 }
 
@@ -198,7 +203,7 @@ function highlightPotentialMoves(coords) {
 	if (piece === null) {return;}
 	if (piece.captured > -1) {return;}
 	if (piece.color == game.turnColor) {
-		SQUARES[coords[0]][coords[1]].highlighted = 1;
+		squares[coords[0]][coords[1]].highlighted = 1;
 		markDestinations(coords);
 		setState("highlightPotentialMoves");
 	}
@@ -208,7 +213,7 @@ function showPartialMove(coords) {
 	// Show potential moves after clicking on start location
 	let piece = game.board[coords[0]][coords[1]];
 	if (piece !== null && piece.color == game.turnColor) {
-		STARTCOORDS = coords;
+		ui.start = coords;
 		markDestinations(coords);
 		setState("showPartialMove");
 	}
@@ -217,13 +222,13 @@ function showPartialMove(coords) {
 function showCompleteMove(endCoords,doEP,doPromotion) {
 	// After clicking on destination. doEP / doPromotion (do en passant / promotion) are normally left out, and the
 	// player is asked if the move is ambiguous.
-	const result = startMove(game, STARTCOORDS, endCoords, { enPassant: doEP, promotion: doPromotion, ask });
+	const result = startMove(game, ui.start, endCoords, { enPassant: doEP, promotion: doPromotion, ask });
 	if (!result.ok) {
 		setState("clear");
 		return;
 	}
-	ENDCOORDS = endCoords;
-	turnMove.from = STARTCOORDS;
+	ui.end = endCoords;
+	turnMove.from = ui.start;
 	turnMove.to = endCoords;
 	turnMove.enPassant = result.enPassant;
 	turnMove.promotion = result.promotion;
@@ -246,7 +251,7 @@ function showCompleteMove(endCoords,doEP,doPromotion) {
 function highlightPotentialKings() {
 	const kings = findPotentialKings(game);
 	for (const [r, c] of kings) {
-		SQUARES[r][c].highlightPotKing = 1;
+		squares[r][c].highlightPotKing = 1;
 	}
 	return kings.length;
 }
@@ -257,7 +262,7 @@ function highlightPCAttackers() {
 	const attackers = findPCAttackers(game);
 	for (const piece of getPieces(game, game.turnColor)) {
 		if (piece.captured > -1) {continue}
-		SQUARES[piece.r][piece.c].highlightPotAttacker = ismember([piece.r, piece.c], attackers) ? 1 : 0;
+		squares[piece.r][piece.c].highlightPotAttacker = ismember([piece.r, piece.c], attackers) ? 1 : 0;
 	}
 	return attackers;
 }
@@ -265,8 +270,8 @@ function highlightPCAttackers() {
 function clearFindPotentialCheckPieces() {
 	for (let r=0; r<8; r++) {
 		for (let c=0; c<8; c++) {
-			SQUARES[r][c].highlightPotKing = 0;
-			SQUARES[r][c].highlightPotAttacker = 0;
+			squares[r][c].highlightPotKing = 0;
+			squares[r][c].highlightPotAttacker = 0;
 		}
 	}
 }
@@ -312,18 +317,29 @@ function selectPCAttackers(attackerCoords) {
 ////////////////////////////////
 // Move History
 ////////////////////////////////
-function restoreGameHistory(historyText,nMoves) {
-	// Restore a game from historyText, or if that's left out from whatever is in the move history box.
-	// nMoves: only replay the first nMoves plies (used when stepping through a replay).
-	let historyArea = dom.history;
-	let historyLines;
-	if (historyText != undefined) {
-		historyLines = getHistoryLines(historyText);
-		historyArea.innerText = historyLines.join("\r\n");
-	} else {
-		historyLines = getHistoryLines(historyArea.innerText);
+// Split history text (one ply per line, or pasted all on one line) into plies. Empty text gives no plies.
+function parseRecord(historyText) {
+	return historyText.trim() == "" ? [] : getHistoryLines(historyText);
+}
+
+// During normal play, the record is the game's history. While replaying it is left alone.
+function followRecord() {
+	if (ui.replay == -1) {
+		ui.record = parseRecord(game.history);
 	}
-	setup();
+}
+
+function restoreGameHistory(historyText,nMoves) {
+	// Restore a game from historyText, or if that's left out, from the record in the History tab.
+	// nMoves: only replay the first nMoves plies (used when stepping through a replay).
+	let historyLines;
+	if (historyText != null) {
+		historyLines = parseRecord(historyText);
+		ui.record = historyLines;
+	} else {
+		historyLines = ui.record.slice();
+	}
+	setup(); // clears the record unless replaying; replaying the plies below rebuilds it
 	if (nMoves == undefined) {
 		nMoves = historyLines.length;
 	}
@@ -352,12 +368,10 @@ function replayPly(moveText) {
 		cancelTurn();
 		return false;
 	}
-	if (REPLAYNUMBER == -1) {
-		dom.history.innerText = game.history;
-	}
+	followRecord();
 	// Remember this move's squares so replay can highlight the last move
-	LASTSTARTCOORDS = move.from ?? [];
-	LASTENDCOORDS = move.to ?? [];
+	ui.lastStart = move.from ?? [];
+	ui.lastEnd = move.to ?? [];
 	clearFindPotentialCheckPieces();
 	return true;
 }
@@ -372,65 +386,63 @@ function doMoveFromText(moveText) {
 }
 
 function copyAllHistory() {
-	let historyArea = dom.history;
-	let historyText = historyArea.innerText;
-	navigator.clipboard.writeText(historyText);
+	navigator.clipboard.writeText(ui.record.join("\r\n"));
 }
 
 function copyLastMove() {
-	let historyArea = dom.history;
-	let historyText = historyArea.innerText;
-	let historyLines = getHistoryLines(historyText);
-	navigator.clipboard.writeText(historyLines[historyLines.length-1]);
+	if (ui.record.length > 0) {
+		navigator.clipboard.writeText(ui.record[ui.record.length-1]);
+	}
 }
 
 function pasteAllRestore() {
-	let historyArea = dom.history;
-	historyArea.innerText = "";
-	navigator.clipboard.readText().then((clipText) => (restoreGameHistory(clipText)));
+	navigator.clipboard.readText().then(clipText => restoreGameHistory(clipText));
 }
 
 function pasteLineRestore() {
-	let historyArea = dom.history;
-	let historyLines = getHistoryLines(historyArea.innerText);
-	let historyText = historyLines.join("\r\n");
-	navigator.clipboard.readText().then((clipText) => (restoreGameHistory(historyText + "\r\n" + clipText)));
+	const historyText = ui.record.join("\r\n");
+	navigator.clipboard.readText().then(clipText => restoreGameHistory(historyText + "\r\n" + clipText));
+}
+
+// The Edit / Import dialog: it opens with the record to edit (or replace with pasted moves), and Load plays it
+function openImport() {
+	dom.importText.value = ui.record.join("\n");
+}
+
+function importMoves() {
+	restoreGameHistory(dom.importText.value);
 }
 
 function stepBackAll() {
-	REPLAYNUMBER = 0.5;
-	restoreGameHistory(null, 2*REPLAYNUMBER);
+	ui.replay = 0.5;
+	restoreGameHistory(null, 2*ui.replay);
 }
 
 function stepBackMove() {
-	if (REPLAYNUMBER == -1) {
+	if (ui.replay == -1) {
 		// starting replay from game state
 		if (game.turnColor == "w") {
-			REPLAYNUMBER = game.turnNumber - 0.5;
+			ui.replay = game.turnNumber - 0.5;
 		} else {
-			REPLAYNUMBER = game.turnNumber;
+			ui.replay = game.turnNumber;
 		}
 	}
-	REPLAYNUMBER = REPLAYNUMBER - 0.5;
-	REPLAYNUMBER = Math.max(REPLAYNUMBER,0.5);
-	restoreGameHistory(null, 2*REPLAYNUMBER);
+	ui.replay = ui.replay - 0.5;
+	ui.replay = Math.max(ui.replay,0.5);
+	restoreGameHistory(null, 2*ui.replay);
 }
 
 function stepForwardMove() {
-	let historyArea = dom.history;
-	let historyLines = getHistoryLines(historyArea.innerText);
-	if (REPLAYNUMBER < historyLines.length/2) {
-		let moveText = historyLines[2*REPLAYNUMBER];
-		REPLAYNUMBER = REPLAYNUMBER + 0.5;
+	if (ui.replay < ui.record.length/2) {
+		let moveText = ui.record[2*ui.replay];
+		ui.replay = ui.replay + 0.5;
 		doMoveFromText(moveText);
 	}
 }
 
 function stepForwardAll() {
-	let historyArea = dom.history;
-	let historyLines = getHistoryLines(historyArea.innerText);
-	REPLAYNUMBER = historyLines.length/2;
-	restoreGameHistory(null, 2*REPLAYNUMBER);
+	ui.replay = ui.record.length/2;
+	restoreGameHistory(null, 2*ui.replay);
 }
 
 ////////////////////////////////
@@ -442,17 +454,17 @@ function setState(stateIn) {
 	if (stateIn == "clear" && game.turnNumber == 0) {
 		stateIn = "move0";
 	}
-	STATE = stateIn;
-	if (STATE == "clear" || STATE == "move0") {
-		STARTCOORDS = [];
-		ENDCOORDS = [];
+	ui.state = stateIn;
+	if (ui.state == "clear" || ui.state == "move0") {
+		ui.start = [];
+		ui.end = [];
 	}
-	if (STATE != "selectPCAttackers" && STATE != "selectPCKing" && STATE != "highlightPotentialMoves" && STATE != "clear") {
+	if (ui.state != "selectPCAttackers" && ui.state != "selectPCKing" && ui.state != "highlightPotentialMoves" && ui.state != "clear") {
 		clearFindPotentialCheckPieces();
 	}
-	for (const row of SQUARES) {
+	for (const row of squares) {
 		for (const sqr of row) {
-			if (STATE == "clear" || STATE == "move0") {
+			if (ui.state == "clear" || ui.state == "move0") {
 				// For other states, the properties are set in calling functions, but you can always reset to clear by
 				// just calling setState("clear")
 				sqr.highlighted = 0;
@@ -460,59 +472,64 @@ function setState(stateIn) {
 				sqr.highlightPotKing = 0;
 				sqr.highlightPotAttacker = 0;
 			}
-			if (STATE == "showPartialMove") {
+			if (ui.state == "showPartialMove") {
 				sqr.highlighted = 0;
 			}
-			if (STATE == "showCompleteMove" || STATE == "invalidMoveIntoCheck") {
+			if (ui.state == "showCompleteMove" || ui.state == "invalidMoveIntoCheck") {
 				sqr.highlighted = 0;
 				sqr.potentialMove = 0;
 			}
-			if (STATE == "selectPCAttackers") {
+			if (ui.state == "selectPCAttackers") {
 				sqr.highlightPotKing = 0;
 			}
 		}
 	}
 	render({
 		game,
-		state: STATE,
-		squares: SQUARES,
-		start: STARTCOORDS,
-		end: ENDCOORDS,
-		lastStart: LASTSTARTCOORDS,
-		lastEnd: LASTENDCOORDS,
-		findPiece: FINDPIECE,
-		replayNumber: REPLAYNUMBER,
+		state: ui.state,
+		squares,
+		start: ui.start,
+		end: ui.end,
+		lastStart: ui.lastStart,
+		lastEnd: ui.lastEnd,
+		findPiece: ui.findPiece,
+		replayNumber: ui.replay,
+		record: ui.record,
 	});
 }
 
-function setup() {
-	session.reset(); // its onChange sets committed, game and turnMove
-	SQUARES = []; // 8 x 8 array of SquareView objects (the page's buttons)
-	STARTCOORDS = [];
-	ENDCOORDS = [];
-	LASTSTARTCOORDS = [];
-	LASTENDCOORDS = [];
-	FINDPIECE = "";
-
-	let moveTextarea = dom.stagedMove;
-	moveTextarea.value = "";
-	if (REPLAYNUMBER == -1) {
-		let historyArea = dom.history;
-		historyArea.innerText = "";
-		historyArea.contentEditable = true;
-	}
-
+// Called once when the page loads: make the board and its squares, then start a game
+function init() {
+	buildBoard();
+	squares = [];
 	for (let r = 0; r <= 7; r++) {
-		let viewRow = [];
+		const viewRow = [];
 		for (let c = 0; c <= 7; c++) {
 			const sqr = new SquareView(r, c, document.getElementById("square" + r + c));
 			const coords = [r, c];
-			sqr.button.onmouseenter = () => squareEnter(coords);
-			sqr.button.onmouseleave = () => squareLeave(coords);
-			sqr.button.onclick = () => squareClick(coords);
+			sqr.button.addEventListener("mouseenter", () => squareEnter(coords));
+			sqr.button.addEventListener("mouseleave", () => squareLeave(coords));
+			sqr.button.addEventListener("click", () => squareClick(coords));
 			viewRow.push(sqr);
 		}
-		SQUARES.push(viewRow);
+		squares.push(viewRow);
+	}
+	setup();
+}
+
+// Start a new game (also used to rewind before replaying a history). The squares' highlight flags are
+// cleared by setState("move0").
+function setup() {
+	session.reset(); // its onChange sets committed, game and turnMove
+	ui.start = [];
+	ui.end = [];
+	ui.lastStart = [];
+	ui.lastEnd = [];
+	ui.findPiece = "";
+
+	dom.stagedMove.value = "";
+	if (ui.replay == -1) {
+		ui.record = [];
 	}
 	setState("move0");
 }
@@ -522,6 +539,7 @@ function setup() {
 ////////////////////////////////
 export {
 	// Used by src/client/main.js to wire up the page
+	init,
 	setup,
 	sideButton1Click,
 	sideButton2Click,
@@ -535,6 +553,8 @@ export {
 	copyLastMove,
 	pasteAllRestore,
 	pasteLineRestore,
+	openImport,
+	importMoves,
 
 	// Used by tests/test.html and tests/generate.html to drive and inspect the game
 	game,
@@ -547,6 +567,6 @@ export {
 	selectPCKing,
 	selectPCAttackers,
 	getPotentialMoves,
-	SQUARES,
-	STATE,
+	squares as SQUARES, // the highlight flags (e.g. which squares are potential-check candidates)
+	ui,                 // page state: ui.state is the step of the turn
 };

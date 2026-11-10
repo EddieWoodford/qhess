@@ -1,32 +1,21 @@
 "use strict";
 
-// The History tab: the move history box, the replay step buttons (<< < > >>) and the history buttons
-// (Reset Game, Copy All, ...).
-// NOTE: the history box's text is also where controller.js reads the history back from (for Restore
-// History and replay stepping). Phase 4 of the UI plan makes the history data instead.
+// The History tab: the game record (one line per ply), the replay step buttons (<< < > >>) and the history
+// buttons (Reset Game, Edit / Import, Copy All, ...).
 
 import { dom, setVisible } from "./dom.js";
 
 // view: see render.js
 function drawHistory(view) {
-	const game = view.game;
 	const replaying = view.replayNumber > -1;
 
-	// The history can be typed or pasted in only before the first move
-	if (view.state != "move0") {
-		dom.history.contentEditable = false;
-	}
-
-	highlightReplayLine(view.replayNumber);
-	if (!replaying) {
-		followNewMoves(game.history);
-	}
+	drawRecord(view.record, view.replayNumber);
 
 	// Stepping back is possible once a move has been made; stepping forward only while replaying.
 	// The history buttons are hidden while replaying.
 	const steps = dom.stepButtons;
-	setVisible(steps.back2, replaying || game.turnNumber > 0);
-	setVisible(steps.back1, replaying || game.turnNumber > 0);
+	setVisible(steps.back2, replaying || view.game.turnNumber > 0);
+	setVisible(steps.back1, replaying || view.game.turnNumber > 0);
 	setVisible(steps.forward1, replaying);
 	setVisible(steps.forward2, replaying);
 	for (const button of dom.historyButtons) {
@@ -34,35 +23,32 @@ function drawHistory(view) {
 	}
 }
 
-// Highlight the history line for the current replay position (or none when not replaying), and scroll
-// the history box so it stays in view
-function highlightReplayLine(replayNumber) {
-	const historyArea = dom.history;
-	let historyHTML = historyArea.innerHTML;
-
-	const lineStyle = "<span style=\"background-color:lightgrey\">";
-	historyHTML = historyHTML.replaceAll(lineStyle,"");
-	historyHTML = historyHTML.replaceAll("</span>","");
-	const historyLines = historyHTML.split("<br>");
-	if (replayNumber > -1) {
-		historyLines[replayNumber*2-1] = lineStyle + historyLines[replayNumber*2-1] + "</span>";
+// The record as one .historyLine per ply. While replaying, the line for the position being shown is marked
+// .replayLine and scrolled into view; otherwise the box follows the newest move.
+let recordShown = null;
+function drawRecord(record, replayNumber) {
+	const box = dom.history;
+	// Only rebuild when the record has changed (controller.js makes a new array each time), so redrawing for
+	// other reasons (hovering a square, say) leaves the box where the player scrolled it
+	const changed = record !== recordShown;
+	if (changed) {
+		box.replaceChildren(...record.map(line => {
+			const el = document.createElement("div");
+			el.className = "historyLine";
+			el.textContent = line;
+			return el;
+		}));
+		recordShown = record;
 	}
-	historyArea.innerHTML = historyLines.join("<br>");
 
-	const highlighted = historyArea.querySelector("span");
-	if (highlighted) {
-		scrollIntoBox(historyArea, highlighted);
-	}
-}
+	// replayNumber 0.5 is after the first ply (line 0), 1 after the second, ...
+	const current = replayNumber > -1 ? replayNumber*2 - 1 : -1;
+	[...box.children].forEach((el, i) => el.classList.toggle("replayLine", i == current));
 
-// During normal play, scroll the history box to the bottom whenever the history changes, so the newest
-// move is in view. Only on a change: redrawing for other reasons (hovering a square, say) leaves the box
-// where the player scrolled it.
-let historyLastShown = null;
-function followNewMoves(history) {
-	if (history !== historyLastShown) {
-		dom.history.scrollTop = dom.history.scrollHeight;
-		historyLastShown = history;
+	if (current > -1 && box.children[current]) {
+		scrollIntoBox(box, box.children[current]);
+	} else if (changed) {
+		box.scrollTop = box.scrollHeight;
 	}
 }
 

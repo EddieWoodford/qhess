@@ -4,15 +4,12 @@
 // Loaded from index.html as <script type="module">, which runs after the page has been parsed.
 
 import * as game from "./controller.js";
-import { buildBoard, toggleFlippedBoard } from "./board-view.js";
-import { setupModals } from "./modals.js";
+import { toggleFlippedBoard } from "./board-view.js";
+import { setupModals, hideModal } from "./modals.js";
 
 function onClick(id, handler) {
 	document.getElementById(id).addEventListener("click", handler);
 }
-
-// The board's squares are made here rather than written out in index.html; game.setup() below needs them
-buildBoard();
 
 setupModals();
 
@@ -32,15 +29,20 @@ onClick("forward2", () => game.stepForwardAll());
 // History buttons. Wrapped in arrow functions so the click event isn't passed in as an argument
 // (restoreGameHistory, for example, would treat it as the history text).
 onClick("reset", () => game.setup());
-onClick("restorehistory", () => game.restoreGameHistory());
 onClick("copyallhistory", () => game.copyAllHistory());
 onClick("copylastmove", () => game.copyLastMove());
 onClick("pasteallrestore", () => game.pasteAllRestore());
 onClick("pastelinerestore", () => game.pasteLineRestore());
+
+// Edit / Import dialog (modals.js opens it; this fills it with the current moves first)
+onClick("importButton", () => game.openImport());
+onClick("importLoad", () => { game.importMoves(); hideModal("import"); });
+onClick("importCancel", () => hideModal("import"));
 
 // Find-piece buttons
 for (const wave of "KQRBNP") {
 	onClick("find" + wave, () => game.findPiecesClick(wave));
 }
 
-game.setup();
+// Make the board's squares and start the first game
+game.init();

@@ -1,9 +1,10 @@
 "use strict";
 
-// Show/hide the header modals (info, help, options).
-// Each modal is a full-screen wrapper (click it to close) holding a content box (clicks inside don't close it).
+// Show/hide the modals: info, help and options (from the header) and import (from the History tab).
+// Each modal is a full-screen wrapper (click it to close) holding a content box (clicks inside don't close it),
+// opened by the button with id name + "Button".
 
-const MODALS = ["info", "help", "options"];
+const MODALS = ["info", "help", "options", "import"];
 
 function showModal(name) {
 	document.getElementById(name + "Wrapper").style.display = "block";

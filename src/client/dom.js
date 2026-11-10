@@ -18,7 +18,8 @@ const dom = {
 	// History tab
 	history: $("movehistory"),
 	stepButtons: { back2: $("back2"), back1: $("back1"), forward1: $("forward1"), forward2: $("forward2") },
-	historyButtons: [...document.querySelectorAll(".historyButton")],
+	historyButtons: [...document.querySelectorAll("#gameMetaTab .historyButton")],
+	importText: $("importText"), // the Edit / Import dialog's text box
 
 	// Find Pieces tab: for each piece type, its button and the element holding its symbol
 	findButtons: Object.fromEntries([..."KQRBNP"].map(w => [w, { button: $("find" + w), symbol: $("find" + w + "piece") }])),
