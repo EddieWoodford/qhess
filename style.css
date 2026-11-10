@@ -16,6 +16,7 @@
         6.5 Captured tab
         6.6 Debug messages
         6.7 Multiplayer tab and badge
+        6.8 Info tab
      7. Board
         7.1 Size and structure
         7.2 Square states        (order matters)
@@ -477,7 +478,7 @@ body {
    To add a tab: add the radio, label and panel in index.html, raise --tabs
    below, and add the radio and panel to "Which panel each tab reveals". */
 .panels {
-    --tabs: 3;  /* the number of tabs */
+    --tabs: 4;  /* the number of tabs */
     flex: 1 1 auto;
     min-height: 0;
     display: grid;
@@ -567,7 +568,8 @@ input:checked + .tabTitle {
 /* Which panel each tab reveals */
 #tabHistory:checked ~ #gameMetaTab,
 #tabCaptured:checked ~ #gameCapturedTab,
-#tabMultiplayer:checked ~ #multiplayerTab {
+#tabMultiplayer:checked ~ #multiplayerTab,
+#tabInfo:checked ~ #infoTab {
     display: flex;
 }
 
@@ -839,6 +841,42 @@ p.mp-problem {
 
 .mp-badge.mp-badge-problem {
     color: #ff8a65;
+}
+
+/* ---------- 6.8 Info tab ----------
+   What Qhess is, the link to the wiki, and the credits. Scrolls if it
+   grows taller than the panel. */
+.info-tab {
+    gap: 0;
+    overflow-y: auto;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    text-align: left;
+    line-height: 1.4;
+}
+
+.info-tab h2 {
+    margin: 0 0 0.5em;
+    font-size: 1.3em;
+}
+
+.info-tab h3 {
+    margin: 1em 0 0.25em;
+    font-size: 1em;
+    color: var(--text-strong);
+}
+
+.info-tab p,
+.info-tab ul {
+    margin: 0 0 0.5em;
+}
+
+.info-tab ul {
+    padding-left: 1.25em;
+}
+
+.info-tab a {
+    color: var(--accent);
 }
 
 

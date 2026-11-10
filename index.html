@@ -15,29 +15,6 @@
             aria-controls="sidePanel" aria-expanded="false"><span aria-hidden="true">☰</span></button>
 
     <!-- MODALS: shown and hidden by src/client/modals.js -->
-    <!-- information modal - credits, rules? -->
-    <div id="infoWrapper" class="modalWrapper">
-        <div id="infoDiv" class="modalData">
-            <h2>What is Qhess?</h2>
-            Simply: it is your daily insanity chess!<br>
-            <h3>Credit:</h3>
-            <ul>
-                <li>Thomas Bremner</li>
-                <li>Nemo Thorx</li>
-                <li>Eddie Woodford</li>
-            </ul>
-            <a href="http://wiki.thorx.net/wiki/QuantumChess">Qhess on ThorxWiki</a>
-        </div>
-    </div>
-    <!-- help modal - game UI help -->
-    <div id="helpWrapper" class="modalWrapper">
-        <div id="helpDiv" class="modalData">
-            <h2>Help!</h2>
-            Explain the game UI here<br>
-            <br>
-            <em>Whaddya mean it's not "intuitive"?</em>
-        </div>
-    </div>
     <!-- options modal -->
     <div id="optionsWrapper" class="modalWrapper">
         <div id="optionsDiv" class="modalData">
@@ -114,6 +91,10 @@
                     <input class="hidden" id="tabMultiplayer" type="radio" name="tabs">
                     <label class="tabTitle" for="tabMultiplayer" id="mpTabTitle" title="Multiplayer">
                         <span class="tab-icon" aria-hidden="true">🌐</span><span class="tab-name">Multiplayer</span></label>
+
+                    <input class="hidden" id="tabInfo" type="radio" name="tabs">
+                    <label class="tabTitle" for="tabInfo" title="Info">
+                        <span class="tab-icon" aria-hidden="true">ℹ️</span><span class="tab-name">Info</span></label>
 
                     <!-- history tab - move history and controls -->
                     <div class="tab-panel" id="gameMetaTab">
@@ -197,6 +178,20 @@
                                 <button class="historyButton" id="mpBack">Back to single player</button>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- info tab - what Qhess is, and who made it -->
+                    <div class="tab-panel info-tab" id="infoTab">
+                        <h2>What is Qhess?</h2>
+                        <p>Simply: it is your daily insanity chess!</p>
+                        <p><a href="http://wiki.thorx.net/wiki/QuantumChess" target="_blank" rel="noopener">Qhess on ThorxWiki</a></p>
+                        <!-- an outline of the rules can go here, as an <h3>Rules</h3> section -->
+                        <h3>Credit</h3>
+                        <ul>
+                            <li>Thomas Bremner</li>
+                            <li>Nemo Thorx</li>
+                            <li>Eddie Woodford</li>
+                        </ul>
                     </div>
                 </div>
             </div>
