@@ -2,6 +2,6 @@
 
 ## Rules
 
-- Never do any git actions. Leave that all to the user
-- after any change, give me a git commit message and detail which you would recommend
-- Ask before creating new files.
+- You may git commit, but never push. 
+- Only commit after tests successfully run, while allowing the test conditions to change if the development requires it.
+- Commit often, after any change with a successful test run.
