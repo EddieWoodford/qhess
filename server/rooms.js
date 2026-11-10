@@ -33,6 +33,7 @@ function cleanMove(move) {
 		to: coordOrNull(move.to),
 		enPassant: move.enPassant === true,
 		promotion: move.promotion === true,
+		castle: move.castle === true,
 		pcKing: coordOrNull(move.pcKing),
 		pcAttackers: [],
 	};

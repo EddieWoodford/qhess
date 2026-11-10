@@ -14,7 +14,7 @@ import { exampleGames, snapshots, moveFromLine, historyAsLines } from "./helpers
 
 const games = exampleGames();
 const snaps = snapshots();
-const NO_MOVE = { notAKing: null, from: null, to: null, enPassant: false, promotion: false, pcKing: null, pcAttackers: [] };
+const NO_MOVE = { notAKing: null, from: null, to: null, enPassant: false, promotion: false, castle: false, pcKing: null, pcAttackers: [] };
 
 let server;
 const clients = [];

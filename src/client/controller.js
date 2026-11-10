@@ -31,6 +31,7 @@
 import { isequal, ismember } from "../engine/utils.js";
 import { cloneState, getPieces } from "../engine/state.js";
 import { getPotentialMoves } from "../engine/moves.js";
+import { getMoveDestinations } from "../engine/castling.js";
 import { findPotentialKings, findPCAttackers } from "../engine/check.js";
 import { declareNotAKing as engineDeclareNotAKing, startMove, choosePCKing, addPCAttacker } from "../engine/game.js";
 import { getHistoryLines, parseMoveText } from "../engine/notation.js";
@@ -81,6 +82,7 @@ let squares;
 // The page asks in a dialog instead, which answers later: see showCompleteMove.
 const QUESTION_EN_PASSANT = "En passant?";
 const QUESTION_PROMOTION = "Promote Pawn?";
+const QUESTION_CASTLE = "Castle?";
 
 // How each question is put to the player
 const CHOICES = {
@@ -93,6 +95,11 @@ const CHOICES = {
 		text: "This piece could be a pawn. Promote it? (It will be a promoted pawn if you do, and not a pawn if you don't.)",
 		yes: "Promote",
 		no: "Don't promote",
+	},
+	[QUESTION_CASTLE]: {
+		text: "This piece could be the king. Castle? (It will be the king and the other piece a rook if you do, and it won't be the king if you don't.)",
+		yes: "Castle",
+		no: "Normal move",
 	},
 };
 
@@ -127,7 +134,7 @@ function setChoiceHandler(handler) {
 
 // A turn with nothing done yet, in the same shape as notation.js parseMoveText
 function newTurnMove() {
-	return { notAKing: null, from: null, to: null, enPassant: false, promotion: false, pcKing: null, pcAttackers: [] };
+	return { notAKing: null, from: null, to: null, enPassant: false, promotion: false, castle: false, pcKing: null, pcAttackers: [] };
 }
 
 // Start a fresh turn from this game state
@@ -314,7 +321,7 @@ function squareClick(coords) {
 
 // Mark the squares a piece could move to, with the direction of each move (for the arrow styling)
 function markDestinations(coords) {
-	let moves = getPotentialMoves(game, coords);
+	let moves = getMoveDestinations(game, coords);
 	for (let i=0; i < moves.length; i++) {
 		let delY = coords[0] - moves[i][0];
 		let delX = moves[i][1] - coords[1];
@@ -352,7 +359,7 @@ function pickPiece(coords) {
 // picks that one instead; clicking the picked piece again, or anywhere else, puts it back.
 function chooseDestination(coords) {
 	const piece = game.board[coords[0]][coords[1]];
-	if (ismember(coords, getPotentialMoves(game, ui.start))) {
+	if (ismember(coords, getMoveDestinations(game, ui.start))) {
 		showCompleteMove(coords);
 	} else if (piece !== null && piece.color == game.turnColor && !isequal(coords, ui.start)) {
 		setState("clear");
@@ -372,25 +379,27 @@ function showPartialMove(coords) {
 	}
 }
 
-function showCompleteMove(endCoords,doEP,doPromotion) {
-	// After clicking on destination. doEP / doPromotion (do en passant / promotion) are normally left out, and the
-	// player is asked if the move is ambiguous.
+function showCompleteMove(endCoords,doEP,doPromotion,doCastle) {
+	// After clicking on destination. doEP / doPromotion / doCastle (do en passant / promotion / castle) are normally
+	// left out, and the player is asked if the move is ambiguous.
 	// The move is tried on a copy of the working state, because the engine asks part-way through the move: if a
 	// question comes up, the copy is thrown away, the player is asked in the page, and the move is tried again
 	// with the answer.
 	const trial = cloneState(game);
 	let result;
 	try {
-		result = startMove(trial, ui.start, endCoords, { enPassant: doEP, promotion: doPromotion, ask: choiceHandler ?? askInPage });
+		result = startMove(trial, ui.start, endCoords, { enPassant: doEP, promotion: doPromotion, castle: doCastle, ask: choiceHandler ?? askInPage });
 	} catch (err) {
 		if (!(err instanceof ChoiceNeeded)) { throw err; }
 		askChoice(err.question, answer => {
 			if (answer === null) {
 				setState("clear"); // cancelled
 			} else if (err.question == QUESTION_EN_PASSANT) {
-				showCompleteMove(endCoords, answer, doPromotion);
+				showCompleteMove(endCoords, answer, doPromotion, doCastle);
+			} else if (err.question == QUESTION_CASTLE) {
+				showCompleteMove(endCoords, doEP, doPromotion, answer);
 			} else {
-				showCompleteMove(endCoords, doEP, answer);
+				showCompleteMove(endCoords, doEP, answer, doCastle);
 			}
 		});
 		return;
@@ -405,6 +414,7 @@ function showCompleteMove(endCoords,doEP,doPromotion) {
 	turnMove.to = endCoords;
 	turnMove.enPassant = result.enPassant;
 	turnMove.promotion = result.promotion;
+	turnMove.castle = result.castle;
 	clearFindPotentialCheckPieces();
 	if (result.movedIntoCheck) {
 		// We will still display the invalid move, but make it impossible to submit, as

@@ -8,7 +8,7 @@
 //   getState()          a copy of the current game state (safe to change; the session's own is untouched)
 //   reset()             start a new game
 //   submitMove(move)    play a whole turn. move is plain data, the same shape as notation.js parseMoveText:
-//                         { notAKing, from, to, enPassant, promotion, pcKing, pcAttackers }
+//                         { notAKing, from, to, enPassant, promotion, castle, pcKing, pcAttackers }
 //                       Returns { ok: true } or { ok: false, error }.
 //   onChange(listener)  call listener(stateCopy) whenever the game state changes (after reset or an accepted move)
 //

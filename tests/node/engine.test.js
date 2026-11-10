@@ -41,6 +41,6 @@ test("applyMove rejects a move by the wrong side", () => {
 	const state = createInitialState();
 	applyMove(state, moveFromLine(lines[0])); // Black's move 0; White to move
 	// A Black piece (row 1) trying to move
-	const result = applyMove(cloneState(state), { notAKing: null, from: [1, 4], to: [2, 4], enPassant: false, promotion: false, pcKing: null, pcAttackers: [] });
+	const result = applyMove(cloneState(state), { notAKing: null, from: [1, 4], to: [2, 4], enPassant: false, promotion: false, castle: false, pcKing: null, pcAttackers: [] });
 	assert.equal(result.ok, false);
 });
