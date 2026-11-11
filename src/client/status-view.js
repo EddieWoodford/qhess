@@ -177,7 +177,7 @@ function drawMultiplayerBadge(mp) {
 			problem = "waiting for opponent";
 		}
 	} else if (mp.phase == "connecting") {
-		problem = "connecting…";
+		problem = mp.serverStarting ? "starting the server (up to a minute)…" : "connecting…";
 	} else {
 		problem = "game over";
 	}

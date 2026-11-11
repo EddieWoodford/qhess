@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import { startServer } from "../../server/server.js";
 import { colorOfMove } from "../../server/rooms.js";
 import { SocketSession, savedSeat } from "../../src/client/socket-session.js";
+import { socketUrl, usesHostedServer, HOSTED_SERVER } from "../../src/client/server-address.js";
 import { positionHash } from "../../src/engine/fingerprint.js";
 import { exampleGames, snapshots, moveFromLine, historyAsLines } from "./helpers.js";
 
@@ -174,9 +175,25 @@ test("when the opponent leaves, the game ends", async () => {
 	assert.equal(players.w.submitMove(moveFromLine(games[0].lines[0])).ok, false);
 });
 
-test("no server: gives up starting a game after a few tries", async () => {
-	const s = session("ws://127.0.0.1:1/ws");
+test("no server: says the server is starting, then gives up", async () => {
+	const s = new SocketSession({ url: "ws://127.0.0.1:1/ws", storage: memoryStorage(), startWaitMs: 4500 });
+	sessions.push(s);
 	s.start({ create: "w" });
-	await waitFor("gave up", () => s.info().phase == "ended", 8000);
+	assert.equal(s.info().serverStarting, false);
+	await waitFor("server starting", () => s.info().serverStarting, 4000);
+	assert.equal(s.info().phase, "connecting");
+	await waitFor("gave up", () => s.info().phase == "ended", 4000);
 	assert.equal(s.info().endedReason, "unreachable");
+	assert.equal(s.info().serverStarting, false);
+});
+
+test("the server address: the page's own server, or the hosted one from GitHub Pages", () => {
+	const at = href => new URL(href);
+	assert.equal(socketUrl(at("http://localhost:8000/")), "ws://localhost:8000/ws");
+	assert.equal(socketUrl(at("http://192.168.1.5:8001/")), "ws://192.168.1.5:8001/ws");
+	assert.equal(socketUrl(at("https://qhess.onrender.com/")), "wss://qhess.onrender.com/ws");
+	assert.equal(socketUrl(at("https://someone.github.io/qhess/")), "wss://" + HOSTED_SERVER + "/ws");
+	assert.equal(usesHostedServer(at("https://someone.github.io/qhess/")), true);
+	assert.equal(usesHostedServer(at("http://localhost:8000/")), false);
+	assert.equal(usesHostedServer(undefined), false);
 });

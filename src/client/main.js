@@ -9,6 +9,10 @@ import { setupModals, showModal, hideModal } from "./modals.js";
 import { setupSettings } from "./settings.js";
 import { dom } from "./dom.js";
 import { normalizeCode } from "../shared/protocol.js";
+import { wakeServer } from "./server-address.js";
+
+// Opened from GitHub Pages: start the hosted multiplayer server waking now, so it's ready sooner
+wakeServer();
 
 function onClick(id, handler) {
 	document.getElementById(id).addEventListener("click", handler);

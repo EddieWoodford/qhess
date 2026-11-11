@@ -40,9 +40,21 @@ made while disconnected is sent once the connection returns, and is never played
 **Leave game** ends the game for both players. Games are only kept while the server is
 running: stopping it ends them.
 
-For a friend outside your network, the server would need to be reachable from the internet
-(for example hosted somewhere, or through a tunnel). It has no accounts, and anyone with a
-code can join a game that is still waiting for its second player.
+The server has no accounts, and anyone with a code can join a game that is still waiting for
+its second player.
+
+## Online
+
+The page is hosted on GitHub Pages, and the multiplayer server on Render
+(https://qhess.onrender.com). Both update by themselves when `main` is pushed to GitHub.
+
+- Single player runs entirely in the browser, so it works straight away.
+- A page opened from GitHub Pages uses the Render server for multiplayer
+  (`src/client/server-address.js`), and wakes it as soon as the page loads. Render's free
+  server sleeps after about 15 minutes unused and takes up to a minute to start; until it
+  has, the Multiplayer tab says the server is starting. Games in progress are lost when it
+  sleeps or restarts.
+- `.nojekyll` tells GitHub Pages to serve the files as they are.
 
 ## How it fits together
 
@@ -51,6 +63,7 @@ src/engine/    the rules: pure JavaScript, no page code. Used by the page AND th
 src/client/    the page. controller.js runs the click flow; *-view.js draw it.
                session.js       LocalSession: a game played on this screen
                socket-session.js SocketSession: a game played through the server
+               server-address.js which server multiplayer uses
 src/shared/    protocol.js: the messages between page and server
 server/        server.js: serves the files and the websocket (/ws)
                rooms.js:  the referee. Checks every move with the engine.

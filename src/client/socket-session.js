@@ -19,9 +19,11 @@
 //   onEvent(listener)     listener(event) for what the page should show:
 //                           { type: "status" }    something in info() changed
 //                           { type: "error", message, fatal }  fatal: the session is over (see info().phase)
-//   info()                { phase, code, color, opponent, connection, pending }
+//   info()                { phase, code, color, opponent, connection, pending, serverStarting }
 //                           phase:      "connecting" (first connection, or creating/joining), "playing",
 //                                       "ended" (the game is over or couldn't be joined), "left"
+//                           serverStarting: still connecting after a few seconds. The hosted server sleeps
+//                                       when unused and takes up to a minute to start (server-address.js)
 //                           connection: "connected" | "reconnecting"
 //                           opponent:   "waiting" | "connected" | "disconnected" (protocol.js OPPONENT)
 //                           endedReason: why phase is "ended" (protocol.js ENDED / ERRORS code)
@@ -30,17 +32,18 @@
 import { createInitialState, cloneState } from "../engine/state.js";
 import { applyMove } from "../engine/game.js";
 import { positionHash } from "../engine/fingerprint.js";
-import { SOCKET_PATH, ERRORS } from "../shared/protocol.js";
+import { ERRORS } from "../shared/protocol.js";
+import { socketUrl, usesHostedServer } from "./server-address.js";
 
 const STORAGE_KEY = "qhess.multiplayer";
 const PING_MS = 10000;           // send a keep-alive this often
 const SILENCE_MS = 25000;        // no message at all for this long: treat the connection as lost
 const RETRY_MS = [500, 1000, 2000, 4000, 8000]; // delays between reconnect attempts (the last one repeats)
-
-// The websocket address for the page's own server
-function defaultUrl() {
-	return (location.protocol == "https:" ? "wss://" : "ws://") + location.host + SOCKET_PATH;
-}
+const SLOW_START_MS = 3000;      // still connecting after this long: say the server is starting
+// How long to keep trying to create or join a game before giving up. The hosted server can take up to a
+// minute to wake; a server on this computer or network is either there or not.
+const HOSTED_START_WAIT_MS = 90000;
+const LOCAL_START_WAIT_MS = 5000;
 
 // sessionStorage, or a stand-in when there isn't one (Node, or storage blocked)
 function defaultStorage() {
@@ -70,9 +73,13 @@ function savedSeat(storage = defaultStorage()) {
 }
 
 class SocketSession {
-	// options: url (websocket address), storage (like sessionStorage), WebSocket (the class to use)
+	// options: url (websocket address), storage (like sessionStorage), WebSocket (the class to use),
+	// startWaitMs (how long to keep trying to create or join a game)
 	constructor(options = {}) {
-		this.url = options.url ?? defaultUrl();
+		this.url = options.url ?? socketUrl();
+		this.startWaitMs = options.startWaitMs ?? (usesHostedServer() ? HOSTED_START_WAIT_MS : LOCAL_START_WAIT_MS);
+		this.serverStarting = false;
+		this.startTimers = {};   // slow and giveUp: only while first getting into the game
 		this.storage = options.storage ?? defaultStorage();
 		this.WebSocketClass = options.WebSocket ?? globalThis.WebSocket;
 		this.listeners = [];
@@ -151,7 +158,34 @@ class SocketSession {
 		} else {
 			this.request = { type: "create", color: request.create };
 		}
+		this.startTimers.slow = setTimeout(() => {
+			if (this.phase != "connecting") { return; }
+			this.serverStarting = true;
+			this.emit({ type: "status" });
+		}, SLOW_START_MS);
+		if (this.request.type != "resume") {
+			// Never got into the game: give up rather than retrying a create or join for ever. (A resume keeps
+			// trying: the seat is kept on the server.)
+			this.startTimers.giveUp = setTimeout(() => this.giveUp(), this.startWaitMs);
+		}
 		this.connect();
+	}
+
+	giveUp() {
+		if (this.phase != "connecting") { return; }
+		this.endedReason = "unreachable";
+		const message = usesHostedServer()
+			? "Couldn't reach the Qhess server. Please try again in a minute."
+			: "Couldn't reach the Qhess server. Multiplayer needs the page to be opened from it (start.bat).";
+		this.emit({ type: "error", message, fatal: true });
+		this.finish("ended");
+	}
+
+	clearStartTimers() {
+		clearTimeout(this.startTimers.slow);
+		clearTimeout(this.startTimers.giveUp);
+		this.startTimers = {};
+		this.serverStarting = false;
 	}
 
 	leave() {
@@ -173,6 +207,7 @@ class SocketSession {
 			connection: this.connection,
 			pending: this.pending !== null,
 			endedReason: this.endedReason,
+			serverStarting: this.serverStarting,
 		};
 	}
 
@@ -231,13 +266,6 @@ class SocketSession {
 		this.ws = null;
 		this.clearTimers();
 		if (this.phase == "ended" || this.phase == "left") { return; }
-		if (this.phase == "connecting" && this.request?.type != "resume" && this.retries >= 2) {
-			// Never got into the game: give up rather than retrying a create or join for ever
-			this.endedReason = "unreachable";
-			this.emit({ type: "error", message: "Couldn't reach the Qhess server. Multiplayer needs the page to be opened from it (start.bat).", fatal: true });
-			this.finish("ended");
-			return;
-		}
 		this.connection = "reconnecting";
 		this.emit({ type: "status" });
 		const delay = RETRY_MS[Math.min(this.retries, RETRY_MS.length - 1)];
@@ -270,6 +298,7 @@ class SocketSession {
 		this.pending = null;
 		this.forgetSeat();
 		this.clearTimers();
+		this.clearStartTimers();
 		globalThis.removeEventListener?.("online", this.onOnline);
 		const ws = this.ws;
 		this.ws = null;
@@ -308,6 +337,7 @@ class SocketSession {
 		this.phase = "playing";
 		this.connection = "connected";
 		this.retries = 0;
+		this.clearStartTimers();
 		// From now on, a reconnect resumes this seat
 		this.request = { type: "resume", code: this.code, token: this.token };
 		this.saveSeat();

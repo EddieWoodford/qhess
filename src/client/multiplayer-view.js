@@ -33,7 +33,9 @@ function drawMultiplayer(view) {
 	els.opponent.classList.toggle("mp-problem", mp.opponent == "disconnected");
 
 	let message;
-	if (phase == "connecting") {
+	if (phase == "connecting" && mp.serverStarting) {
+		message = "Starting the multiplayer server. It sleeps when nobody is playing, so this can take up to a minute…";
+	} else if (phase == "connecting") {
 		message = "Connecting to the server…";
 	} else if (mp.opponent == "waiting") {
 		message = "Send this code to your friend. The game starts when they join.";
