@@ -450,4 +450,4 @@ function playTurn(state, move, choices) {
 	return { ok: true };
 }
 
-export { refreshChecks, declareNotAKing, startMove, choosePCKing, addPCAttacker, pcMoveText, endTurn, applyMove, hasLegalTurn, gameResult, canMoveLegally };
+export { refreshChecks, declareNotAKing, startMove, choosePCKing, addPCAttacker, pcMoveText, endTurn, applyMove, hasLegalTurn, gameResult };

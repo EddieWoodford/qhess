@@ -100,7 +100,6 @@
     --board-edge-col: #111;                 /* coordinate labels and corners */
     --piece-selectedStart-col: #a87c2a;     /* dark amber */
     --piece-dest-col: #4f8f5a;              /* green */
-    --piece-intoCheck-col: #d23c3c;         /* red: a move that would leave the mover in check */
     --piece-checkKing-col: #7a1f1f;         /* dark oxblood */
     --piece-checkAttacker-col: #5a8fb5;     /* blue */
     --marker-clear: rgba(255,0,0,0);        /* transparent stop used by the move markers */
@@ -1229,11 +1228,6 @@ input.switch:focus-visible {
 
 .destination8, .destination16 {
     background-image: linear-gradient(to right, var(--marker-clear), var(--marker-clear), var(--marker-clear), var(--piece-dest-col), var(--marker-clear), var(--marker-clear), var(--marker-clear));
-}
-
-/* A move that would leave the mover in check: the same marker in red */
-.intoCheck {
-    --piece-dest-col: var(--piece-intoCheck-col);
 }
 
 

@@ -18,7 +18,6 @@ class SquareView {
 		this.highlighted = 0;
 		// 0 = not a potential move; 1-16 = bearing of potential move where 1=NNE, 2=NE, 3=ENE, 4=E, 5=ESE, etc.
 		this.potentialMove = 0;
-		this.intoCheck = false; // a potential move that would leave the mover in check
 		this.highlightPotKing = 0; // 0 = not a PK; 1 = candidate for PK;
 		this.highlightPotAttacker = 0; // 0 = not a PA; 1 = candidate for PA;
 		this.color = (r + c) % 2 == 0 ? "w" : "b"; // square colour
@@ -257,9 +256,6 @@ function drawBoard(view) {
 			}
 			if (sqr.potentialMove > 0) {
 				classes.add("destination" + sqr.potentialMove);
-				if (sqr.intoCheck) {
-					classes.add("intoCheck");
-				}
 			}
 		}
 	}
