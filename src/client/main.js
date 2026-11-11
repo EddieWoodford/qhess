@@ -72,7 +72,12 @@ onClick("exportButton", async () => {
 
 // Edit / Import dialog (modals.js opens it; this fills it with the current moves first)
 onClick("importButton", () => game.openImport());
-onClick("importLoad", () => { game.importMoves(); hideModal("import"); });
+onClick("importLoad", () => {
+	// A move that can't be played keeps the dialog open, saying which, so it can be put right
+	const problem = game.importMoves();
+	dom.importError.textContent = problem ?? "";
+	if (problem === null) { hideModal("import"); }
+});
 onClick("importCancel", () => hideModal("import"));
 
 // Rules dialog (modals.js opens it from the Info tab)

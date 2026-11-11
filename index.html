@@ -21,6 +21,8 @@
             <h2>Edit / Import Moves</h2>
             <p>One move per line. Edit them, or paste in a whole game, then load it.</p>
             <textarea class="import-text" id="importText" rows="14" spellcheck="false"></textarea>
+            <!-- why Load didn't load them (the game is left as it was) -->
+            <p class="import-error" id="importError" role="alert"></p>
             <div class="button-row">
                 <button class="historyButton" id="importLoad">Load these moves</button>
                 <button class="historyButton" id="importCancel">Cancel</button>

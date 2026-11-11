@@ -74,11 +74,12 @@ const MULTIPLAYER = [
 // dropAt: before this ply the mover picks the piece to move, then its connection drops. Once it has
 // reconnected the piece must still be picked.
 
-// Checks of the Settings tab's switches, each run on a fresh copy of the game page: name -> function(ctx)
-// returning a list of problems (empty if it passed)
+// Checks of the Settings tab's switches and other page features, each run on a fresh copy of the game page:
+// name -> function(ctx) returning a list of problems (empty if it passed)
 const SETTINGS_CHECKS = {
 	"settings: Potential Check off": checkNoPotentialCheck,
 	"saved game: reloading carries on": checkReloadKeepsGame,
+	"import: a bad move leaves the game as it was": checkImportChecksFirst,
 };
 
 ////////////////////////////////
@@ -451,6 +452,38 @@ async function checkReloadKeepsGame(ctx) {
 	ctx = await reload();
 	expect("After Reset Game and reloading, the game should be new, history is '" + ctx.game.game.history + "'",
 		ctx.game.game.turnNumber == 0 && ctx.game.ui.record.length == 0);
+	return problems;
+}
+
+// Edit / Import's Load, through the dialog's own buttons: moves with a mistake in them are refused (the dialog
+// stays open and says why) and the game is left alone; good moves are loaded
+async function checkImportChecksFirst(ctx) {
+	const problems = [];
+	const expect = (what, ok) => { if (!ok) { problems.push(what); } };
+	const doc = ctx.win.document;
+	const el = id => doc.getElementById(id);
+	const dialogOpen = () => ctx.win.getComputedStyle(el("importWrapper")).display != "none";
+
+	ctx.game.restoreGameHistory("0b.\n1w. (KQBNRP)e2e4(QRP)\n1b. (KQBNRP)h7h6(KQRP)");
+	const before = ctx.game.game.history;
+
+	el("importButton").click();
+	expect("Import should open with the game's moves, has '" + el("importText").value + "'",
+		dialogOpen() && el("importText").value.split("\n").length == 3);
+	el("importText").value = "0b.\n1w. (KQBNRP)a2b5(K)"; // nothing moves like that
+	el("importLoad").click();
+	expect("A move that can't be played should keep the dialog open", dialogOpen());
+	expect("... and say which move, says '" + el("importError").textContent + "'", el("importError").textContent.includes("a2b5"));
+	expect("... and leave the game as it was, history is '" + ctx.game.game.history + "'", ctx.game.game.history == before);
+
+	el("importText").value = "0b.\n1w. (KQBNRP)d2d4(QRP)";
+	el("importLoad").click();
+	expect("Good moves should close the dialog", !dialogOpen());
+	expect("... and be the game, history is '" + ctx.game.game.history + "'",
+		ctx.game.game.history.trim().split(/\r?\n/).map(l => l.trim()).join("|") == "0b.|1w. (KQBNRP)d2d4(QRP)");
+	el("importButton").click();
+	expect("Opening Import again shouldn't show the old problem", el("importError").textContent == "");
+	el("importCancel").click();
 	return problems;
 }
 

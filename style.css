@@ -709,6 +709,18 @@ input:checked + .tabTitle {
     resize: vertical;
 }
 
+/* ... and why its moves couldn't be loaded (hidden while empty) */
+.import-error {
+    margin: -0.5em 0 1em;
+    color: #ff8a65;
+    font-size: 0.9em;
+    overflow-wrap: anywhere;
+}
+
+.import-error:empty {
+    display: none;
+}
+
 
 /* ---------- 6.5 Captured tab ---------- */
 .captured-pieces {

@@ -30,11 +30,11 @@
 // the real game is never rewound; stepping forward to the end returns to it.
 
 import { isequal, ismember } from "../engine/utils.js";
-import { cloneState, getPieces } from "../engine/state.js";
+import { createInitialState, cloneState, getPieces } from "../engine/state.js";
 import { getPotentialMoves } from "../engine/moves.js";
 import { getMoveDestinations } from "../engine/castling.js";
 import { findPotentialKings, findPCAttackers } from "../engine/check.js";
-import { declareNotAKing as engineDeclareNotAKing, startMove, choosePCKing, addPCAttacker } from "../engine/game.js";
+import { declareNotAKing as engineDeclareNotAKing, startMove, choosePCKing, addPCAttacker, applyMove } from "../engine/game.js";
 import { getHistoryLines, parseMoveText } from "../engine/notation.js";
 import { SquareView, buildBoard, setFlippedBoard } from "./board-view.js";
 import { render, debugPrint } from "./render.js";
@@ -217,10 +217,10 @@ function sideButton1Click() {
 		// In a multiplayer game, sideButton1 is 'Back to game' while replaying
 		exitReplay();
 	} else if (ui.replay > -1) {
-		// When in replay mode, sideButton1 is 'Resume Game From Here'
-		let foo = ui.replay;
+		// When in replay mode, sideButton1 is 'Resume Game From Here': the moves up to the one shown become the game
+		const plies = 2 * ui.replay;
 		ui.replay = -1;
-		restoreGameHistory(null, 2*foo);
+		restoreGameHistory(null, plies);
 	} else {
 		sideButton1Action();
 	}
@@ -326,7 +326,7 @@ function markDestinations(coords) {
 	for (let i=0; i < moves.length; i++) {
 		let delY = coords[0] - moves[i][0];
 		let delX = moves[i][1] - coords[1];
-		// returns 1-16 = bearing of potential move where 1=NNE, 2=NE, 3=ENE, 3=E, 5=ESE, etc.
+		// 1-16 = bearing of potential move where 1=NNE, 2=NE, 3=ENE, 4=E, 5=ESE, etc.
 		let bearing = (Math.round(((Math.atan2(delX, delY) * 180) / Math.PI)/22.5) + 16 - 1) % 16 + 1;
 		squares[moves[i][0]][moves[i][1]].potentialMove = bearing;
 	}
@@ -391,7 +391,13 @@ function showCompleteMove(endCoords,doEP,doPromotion,doCastle) {
 	try {
 		result = startMove(trial, ui.start, endCoords, { enPassant: doEP, promotion: doPromotion, castle: doCastle, ask: choiceHandler ?? askInPage });
 	} catch (err) {
-		if (!(err instanceof ChoiceNeeded)) { throw err; }
+		if (!(err instanceof ChoiceNeeded)) {
+			// A fault in the engine: drop the move rather than leave the board stuck part-way through it
+			console.error(err);
+			debugPrint("That move couldn't be made: " + err.message);
+			setState("clear");
+			return;
+		}
 		askChoice(err.question, answer => {
 			if (answer === null) {
 				setState("clear"); // cancelled
@@ -489,7 +495,9 @@ function selectPCAttackers(attackerCoords) {
 		setState("clear");
 		return
 	}
-	turnMove.pcAttackers.push(attackerCoords);
+	if (!ismember(attackerCoords, turnMove.pcAttackers)) { // (clicking one twice adds it once)
+		turnMove.pcAttackers.push(attackerCoords);
+	}
 	clearFindPotentialCheckPieces();
 	if (result.movedIntoCheck) {
 		// By setting a potential check the attacker collapsed down to a true king and put themselves in check
@@ -590,10 +598,31 @@ async function exportMoves() {
 // The Edit / Import dialog: it opens with the record to edit (or replace with pasted moves), and Load plays it
 function openImport() {
 	dom.importText.value = ui.record.join("\n");
+	dom.importError.textContent = "";
 }
 
+// The Edit / Import dialog's Load: play its moves as the game. They are checked first, so a mistake in them
+// leaves the game as it was. Returns why they can't be played, for the dialog to show, or null once loaded.
 function importMoves() {
+	const problem = recordProblem(parseRecord(dom.importText.value));
+	if (problem !== null) {
+		return problem;
+	}
 	restoreGameHistory(dom.importText.value);
+	return null;
+}
+
+// Why these plies can't be played as a game from the start, or null if they can
+function recordProblem(lines) {
+	const state = createInitialState();
+	for (const line of lines) {
+		const { turn, ...move } = parseMoveText(line);
+		const result = applyMove(state, move);
+		if (!result.ok) {
+			return "Couldn't play '" + line + "': " + result.error;
+		}
+	}
+	return null;
 }
 
 function stepBackAll() {

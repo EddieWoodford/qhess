@@ -12,12 +12,10 @@
 //                       Returns { ok: true } or { ok: false, error }.
 //   onChange(listener)  call listener(stateCopy) whenever the game state changes (after reset or an accepted move)
 //
-// LocalSession plays both sides in this browser. A networked version (e.g. a SocketSession) would have the same
-// interface: submitMove would send the move (it's plain JSON) to the server, which checks it with the same engine
-// (applyMove) and sends accepted moves to both players. Each player's session applies them to its own copy and
-// calls the listeners. So only moves cross the network, never whole game states. Because the answer then arrives
-// later, submitMove would return { ok: true, pending: true }; the page already waits for onChange to update
-// rather than relying on the return value.
+// LocalSession plays both sides in this browser. SocketSession (socket-session.js) has the same interface for a
+// multiplayer game: submitMove sends the move to the server, which checks it with the same engine (applyMove)
+// and sends accepted moves to both players. Its answer arrives later, so it returns { ok: true, pending: true },
+// and the page waits for onChange rather than relying on the return value.
 
 import { createInitialState, cloneState } from "../engine/state.js";
 import { applyMove } from "../engine/game.js";

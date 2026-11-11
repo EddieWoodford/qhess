@@ -23,6 +23,7 @@ const dom = {
 	localOnlyButtons: ["reset", "importButton"].map($),
 	exportButton: $("exportButton"),
 	importText: $("importText"), // the Edit / Import dialog's text box
+	importError: $("importError"), // ... and why its moves couldn't be loaded
 
 	// Captured tab
 	whiteCaptured: $("whitecaptured"),
