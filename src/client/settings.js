@@ -10,10 +10,16 @@
 
 import { dom } from "./dom.js";
 
+// Whether the device asks for a light page (its own light / dark setting)
+function devicePrefersLight() {
+	return window.matchMedia?.("(prefers-color-scheme: light)").matches ?? false;
+}
+
 // name: { default: its value when nothing is remembered, remember: whether to keep it in this browser }
 const SETTINGS = {
 	blackView: { default: false, remember: false }, // multiplayer sets it to your own side, so it isn't kept
 	colourByType: { default: true, remember: true },
+	lightMode: { default: devicePrefersLight(), remember: true }, // follows the device until it is switched
 	potentialCheck: { default: true, remember: true }, // render.js drawSettings locks it on in a multiplayer game
 	showCoords: { default: false, remember: true },
 };

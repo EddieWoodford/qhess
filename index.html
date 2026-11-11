@@ -6,6 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Qhess</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Light mode before the page is drawn, so it doesn't flash dark first. settings.js sets it properly. -->
+    <script>
+        try {
+            const saved = JSON.parse(localStorage.getItem("qhess.settings"))?.lightMode;
+            const light = typeof saved == "boolean" ? saved : matchMedia("(prefers-color-scheme: light)").matches;
+            document.documentElement.dataset.theme = light ? "light" : "dark";
+        } catch {}
+    </script>
     <script type="module" src="src/client/main.js"></script>
 </head>
 
@@ -384,6 +392,14 @@
                                     sides apart.</span>
                             </span>
                             <input class="switch" id="settingColourByType" type="checkbox" role="switch">
+                        </label>
+                        <label class="setting">
+                            <span class="setting-text">
+                                <span class="setting-name">Light mode</span>
+                                <span class="setting-note">Light colours around the board. Off: dark. Until it
+                                    is switched, it follows the device's own setting.</span>
+                            </span>
+                            <input class="switch" id="settingLightMode" type="checkbox" role="switch">
                         </label>
                         <label class="setting">
                             <span class="setting-text">

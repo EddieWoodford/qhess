@@ -61,6 +61,7 @@ const dom = {
 	settings: {
 		blackView: $("settingBlackView"),
 		colourByType: $("settingColourByType"),
+		lightMode: $("settingLightMode"),
 		potentialCheck: $("settingPotentialCheck"),
 		showCoords: $("settingShowCoords"),
 	},

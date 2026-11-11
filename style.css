@@ -78,6 +78,20 @@
 
     /* ---- Accent ---- */
     --accent: #ff9500;
+    --accent-text: #ff9500;       /* accent-coloured text, which needs more contrast in light mode */
+    --text-problem: #ff8a65;      /* errors and connection problems */
+
+    /* ---- Smaller touches ---- */
+    --bg-icon-button: #2c2c2c;
+    --bg-tab: #2a2a2a;            /* an unchosen tab title */
+    --border-tab: #666;           /* the chosen tab title */
+    --bg-replay-line: lightgrey;  /* the ply being shown while replaying */
+    --text-replay-line: #000;
+    --icon-glow: #fff4;
+    --heading-shadow: 1px 1px 0 rgba(255,255,255,0.05);
+    --overlay: rgba(0, 0, 0, 0.75);   /* behind a modal */
+    --placeholder: #888;
+    color-scheme: dark;           /* the browser's own controls and scrollbars */
 
     /* ---- Shape, depth and motion ---- */
     --radius-sm: 4px;
@@ -130,6 +144,50 @@
 }
 
 
+/* Light mode (Settings tab; main.js sets data-theme="light" on <html>).
+   Only the page around the board changes: the board, its pieces and the game
+   over colours stay as they are, as the piece colours are chosen to show up
+   on dark squares. */
+:root[data-theme="light"] {
+    color-scheme: light;
+
+    --text: #1d1d1f;
+    --text-muted: #4a4a4f;
+    --text-strong: #000;
+
+    --bg-page: #f2f2f4;
+    --bg-container: #ebebee;
+    --bg-inset: #fafafa;
+    --bg-raised: #fff;
+    --bg-panel: #f7f7f9;
+    --bg-input: #fff;
+
+    --bg-control: #e2e2e6;
+    --bg-control-hover: #d2d2d8;
+    --bg-control-active: #c2c2ca;
+
+    --border-faint: #e0e0e4;
+    --border-subtle: #cfcfd5;
+    --border-main: #b5b5bd;
+
+    --accent-text: #b45309;
+    --text-problem: #c2410c;
+
+    --bg-icon-button: #e2e2e6;
+    --bg-tab: #e6e6ea;
+    --border-tab: #b5b5bd;
+    --bg-replay-line: #ffd9a0;
+    --text-replay-line: #000;
+    --icon-glow: #0002;
+    --heading-shadow: none;
+    --overlay: rgba(0, 0, 0, 0.45);
+    --placeholder: #8a8a92;
+
+    --shadow-button: 0 2px 4px #0003;
+    --shadow-button-hover: 0 4px 8px #0004;
+}
+
+
 /* ==========================================================================
    2. BASE ELEMENTS
    ========================================================================== */
@@ -153,7 +211,7 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 400;           /* normal weight for modern look */
     letter-spacing: 0.03em;     /* slightly airy */
     line-height: 1.2;           /* tighter spacing */
-    text-shadow: 1px 1px 0 rgba(255,255,255,0.05); /* subtle light shadow for dark bg */
+    text-shadow: var(--heading-shadow);
     color: var(--text);
 }
 
@@ -268,7 +326,7 @@ body {
     border: none;
     border-radius: var(--radius-md);
     transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-    background-color: #2c2c2c;
+    background-color: var(--bg-icon-button);
     color: var(--text-muted);
 }
 
@@ -278,7 +336,7 @@ body {
     .icon-button:hover {
         background-color: var(--bg-control-hover);
         transform: scale(1.1);
-        box-shadow: 0 0 8px #fff4;  /* subtle glow */
+        box-shadow: 0 0 8px var(--icon-glow);  /* subtle glow */
         color: var(--text-strong);
     }
 }
@@ -316,7 +374,7 @@ body {
     height: 100%;
     box-sizing: border-box;
     overflow: auto;
-    background-color: rgba(0, 0, 0, 0.75); /* darker overlay */
+    background-color: var(--overlay);
     text-align: center;
 }
 
@@ -377,7 +435,7 @@ body {
     min-height: 1.3em;
     font-family: var(--font-mono);
     font-size: 0.9em;
-    color: var(--accent);
+    color: var(--accent-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -532,7 +590,7 @@ input.hidden {
     font-weight: 500;
     color: var(--text-muted);
     border-radius: var(--radius-md) var(--radius-md) 0 0;
-    background-color: #2a2a2a;
+    background-color: var(--bg-tab);
     transition: background 0.2s, color 0.2s;
     cursor: pointer;
 }
@@ -573,7 +631,7 @@ input:checked + .tabTitle .tab-name {
 input:checked + .tabTitle {
     color: var(--text-strong);
     background-color: var(--bg-control-hover);
-    border-color: #666;
+    border-color: var(--border-tab);
     border-bottom-color: var(--bg-raised); /* hides the border between tab and content */
 }
 
@@ -619,8 +677,8 @@ input:checked + .tabTitle {
 
 /* While replaying, the ply for the position being shown (history-view.js) */
 .historyLine.replayLine {
-    background-color: lightgrey;
-    color: #000;
+    background-color: var(--bg-replay-line);
+    color: var(--text-replay-line);
 }
 
 /* The choice dialog (en passant / promotion): narrower than the other modals */
@@ -715,7 +773,7 @@ input:checked + .tabTitle {
 /* ... and why its moves couldn't be loaded (hidden while empty) */
 .import-error {
     margin: -0.5em 0 1em;
-    color: #ff8a65;
+    color: var(--text-problem);
     font-size: 0.9em;
     overflow-wrap: anywhere;
 }
@@ -878,7 +936,7 @@ input:checked + .tabTitle {
 
 .mp-code-input::placeholder {
     text-transform: none;
-    color: #888;
+    color: var(--placeholder);
 }
 
 .mp-join .historyButton {
@@ -898,7 +956,7 @@ input:checked + .tabTitle {
     font-weight: 700;
     letter-spacing: 0.08em;
     text-align: center;
-    color: var(--accent);
+    color: var(--accent-text);
     user-select: all;
 }
 
@@ -957,7 +1015,7 @@ input:checked + .tabTitle {
 }
 
 .mp-problem {
-    color: #ff8a65;
+    color: var(--text-problem);
 }
 
 p.mp-problem {
@@ -986,7 +1044,7 @@ p.mp-problem {
 }
 
 .mp-badge.mp-badge-problem {
-    color: #ff8a65;
+    color: var(--text-problem);
 }
 
 /* ---------- 6.8 Info tab ----------
@@ -1022,7 +1080,7 @@ p.mp-problem {
 }
 
 .info-tab a {
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 /* ---------- 6.9 Settings tab ----------

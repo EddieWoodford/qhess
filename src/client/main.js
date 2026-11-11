@@ -27,6 +27,8 @@ setupSettings({
 	blackView: on => setFlippedBoard(on),
 	// Off: each side's pieces all in one colour (style.css 7.4 .side-colours)
 	colourByType: on => document.body.classList.toggle("side-colours", !on),
+	// The page around the board in light colours (style.css 1, :root[data-theme="light"])
+	lightMode: on => document.documentElement.dataset.theme = on ? "light" : "dark",
 	potentialCheck: on => game.setPotentialCheckRule(on),
 	// The file letters and rank numbers around the board (style.css 7.4)
 	showCoords: on => dom.board.classList.toggle("show-coords", on),
