@@ -265,19 +265,19 @@
                     <label class="tabTitle" for="tabSettings" title="Settings">
                         <span class="tab-icon" aria-hidden="true">⚙️</span><span class="tab-name">Settings</span></label>
 
-                    <!-- history tab - move history and controls, and each side's captured pieces. While stepping
-                         through the history, the captured lists show the position being shown. -->
+                    <!-- history tab - the step buttons, move history, each side's captured pieces, then the history
+                         buttons. While stepping through the history, the captured lists show the position being
+                         shown. Each button's title is its help text. -->
                     <div class="tab-panel" id="gameMetaTab">
-                        <div class="button-row history-buttons">
-                            <button class="historyButton" id="reset">Reset</button>
-                            <button class="historyButton" id="exportButton">Export</button>
-                            <button class="historyButton" id="importButton">Import</button>
-                        </div>
                         <div class="button-row">
-                            <button class="stepHistoryButton" id="back2">&lt;&lt;</button>
-                            <button class="stepHistoryButton" id="back1">&lt;</button>
-                            <button class="stepHistoryButton" id="forward1">&gt;</button>
-                            <button class="stepHistoryButton" id="forward2">&gt;&gt;</button>
+                            <button class="stepHistoryButton" id="back2"
+                                    title="Start: the position at the start of the game">&lt;&lt;</button>
+                            <button class="stepHistoryButton" id="back1"
+                                    title="Previous: the position one move back">&lt;</button>
+                            <button class="stepHistoryButton" id="forward1"
+                                    title="Next: the position one move on">&gt;</button>
+                            <button class="stepHistoryButton" id="forward2"
+                                    title="End: the position after the newest move">&gt;&gt;</button>
                         </div>
                         <!-- one line per ply: drawn by src/client/history-view.js -->
                         <div class="movehistory" id="movehistory"></div>
@@ -286,8 +286,14 @@
                             <div class="column" id="whitecaptured"><strong>White Captured</strong></div>
                             <div class="column" id="blackcaptured"><strong>Black Captured</strong></div>
                         </div>
-                        <p class="history-note">To save a game, press Export: it copies the moves as text you can
-                            keep anywhere. To carry on later, press Import, paste them in and load them.</p>
+                        <div class="button-row history-buttons">
+                            <button class="historyButton" id="reset"
+                                    title="Start a new game. The moves so far are lost, so Export them first to keep them.">Reset</button>
+                            <button class="historyButton" id="exportButton"
+                                    title="Save this game: copies the moves as text you can keep anywhere. To carry on later, Import them.">Export</button>
+                            <button class="historyButton" id="importButton"
+                                    title="Load a game: paste in moves saved with Export, or edit this game's moves, then load them.">Import</button>
+                        </div>
                     </div>
 
                     <!-- multiplayer tab - start or join a game against a friend (src/client/multiplayer-view.js) -->

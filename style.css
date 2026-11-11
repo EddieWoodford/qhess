@@ -687,15 +687,6 @@ input:checked + .tabTitle {
     gap: var(--gap);
 }
 
-/* How to save and restore a game, under the history */
-.history-note {
-    margin: 0;
-    font-size: 0.85em;
-    line-height: 1.35;
-    text-align: left;
-    color: var(--text-muted);
-}
-
 /* A line can be clicked to show the position after it (history-view.js) */
 .historyLine {
     cursor: pointer;
