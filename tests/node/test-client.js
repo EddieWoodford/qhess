@@ -4,7 +4,7 @@
 import WebSocket from "ws";
 import { createInitialState } from "../../src/engine/state.js";
 import { applyMove } from "../../src/engine/game.js";
-import { positionHash } from "../../src/engine/fingerprint.js";
+import { positionHash } from "../../src/engine/position-hash.js";
 import { SOCKET_PATH } from "../../src/shared/protocol.js";
 
 const WAIT_MS = 3000;

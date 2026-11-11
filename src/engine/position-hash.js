@@ -3,6 +3,8 @@
 // A compact fingerprint of a game position, for checking that two copies of a game agree.
 // Used by the tests (tests/node, and the same scheme as tests/test.html's snapshots) and by multiplayer
 // clients and the server to detect a copy of the game that has drifted from the official one.
+// Don't name a file the page loads "fingerprint...": content blockers refuse scripts with that in their name,
+// and the page can't start without this one.
 
 // Everything about the game position that matters, as plain data (see state.js)
 function positionSummary(s) {

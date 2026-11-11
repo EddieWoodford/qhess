@@ -8,7 +8,7 @@ import { randomUUID } from "node:crypto";
 import { createInitialState, cloneState } from "../src/engine/state.js";
 import { applyMove } from "../src/engine/game.js";
 import { isSquare } from "../src/engine/utils.js";
-import { positionHash } from "../src/engine/fingerprint.js";
+import { positionHash } from "../src/engine/position-hash.js";
 import { OPPONENT, ENDED, ERRORS, normalizeCode } from "../src/shared/protocol.js";
 import { randomCode } from "./codes.js";
 import { MemoryGameStore } from "./store.js";

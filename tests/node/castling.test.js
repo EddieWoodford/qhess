@@ -7,7 +7,7 @@ import { applyMove, startMove } from "../../src/engine/game.js";
 import { getCastlingMoves, getMoveDestinations } from "../../src/engine/castling.js";
 import { updateOptionsFromEntanglement } from "../../src/engine/entanglement.js";
 import { getHistoryLines, parseMoveText } from "../../src/engine/notation.js";
-import { positionHash } from "../../src/engine/fingerprint.js";
+import { positionHash } from "../../src/engine/position-hash.js";
 import { ismember } from "../../src/engine/utils.js";
 import { move, play, at, sq } from "./helpers.js";
 

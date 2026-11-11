@@ -7,7 +7,7 @@ import { startServer } from "../../server/server.js";
 import { colorOfMove } from "../../server/rooms.js";
 import { SocketSession, savedSeat } from "../../src/client/socket-session.js";
 import { socketUrl, usesHostedServer, HOSTED_SERVER } from "../../src/client/server-address.js";
-import { positionHash } from "../../src/engine/fingerprint.js";
+import { positionHash } from "../../src/engine/position-hash.js";
 import { exampleGames, snapshots, moveFromLine, historyAsLines } from "./helpers.js";
 
 const games = exampleGames();

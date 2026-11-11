@@ -31,7 +31,7 @@
 
 import { createInitialState, cloneState } from "../engine/state.js";
 import { applyMove } from "../engine/game.js";
-import { positionHash } from "../engine/fingerprint.js";
+import { positionHash } from "../engine/position-hash.js";
 import { ERRORS } from "../shared/protocol.js";
 import { socketUrl, usesHostedServer } from "./server-address.js";
 

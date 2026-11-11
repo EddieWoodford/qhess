@@ -24,7 +24,7 @@
 //                     to resume. moves: every move so far. opponent: one of OPPONENT below.
 //   { type: "move", seq, move, color, hash }
 //                     move number seq was played by color. Also the answer to your own move. hash is the
-//                     server's positionHash (src/engine/fingerprint.js) after it, to catch copies that differ.
+//                     server's positionHash (src/engine/position-hash.js) after it, to catch copies that differ.
 //   { type: "rejected", seq, error }   your move wasn't accepted (the game is unchanged)
 //   { type: "sync", moves }            the whole move list: replace your copy of the game with it
 //   { type: "opponent", status }       the other player's connection changed (OPPONENT)

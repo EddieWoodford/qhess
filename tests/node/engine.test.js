@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createInitialState, cloneState } from "../../src/engine/state.js";
 import { applyMove } from "../../src/engine/game.js";
-import { positionHash } from "../../src/engine/fingerprint.js";
+import { positionHash } from "../../src/engine/position-hash.js";
 import { exampleGames, snapshots, moveFromLine, historyAsLines } from "./helpers.js";
 
 const snaps = snapshots();
