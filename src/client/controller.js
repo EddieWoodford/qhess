@@ -34,7 +34,7 @@ import { createInitialState, cloneState, getPieces } from "../engine/state.js";
 import { getPotentialMoves } from "../engine/moves.js";
 import { getMoveDestinations } from "../engine/castling.js";
 import { findPotentialKings, findPCAttackers } from "../engine/check.js";
-import { declareNotAKing as engineDeclareNotAKing, startMove, choosePCKing, addPCAttacker, applyMove } from "../engine/game.js";
+import { declareNotAKing as engineDeclareNotAKing, startMove, choosePCKing, addPCAttacker, applyMove, canMoveLegally } from "../engine/game.js";
 import { getHistoryLines, parseMoveText } from "../engine/notation.js";
 import { SquareView, buildBoard, setFlippedBoard } from "./board-view.js";
 import { render, debugPrint } from "./render.js";
@@ -320,7 +320,8 @@ function squareClick(coords) {
 	}
 }
 
-// Mark the squares a piece could move to, with the direction of each move (for the arrow styling)
+// Mark the squares a piece could move to, with the direction of each move (for the arrow styling), and
+// whether the move would leave the mover in check (drawn in red: it can be looked at but not submitted)
 function markDestinations(coords) {
 	let moves = getMoveDestinations(game, coords);
 	for (let i=0; i < moves.length; i++) {
@@ -329,6 +330,7 @@ function markDestinations(coords) {
 		// 1-16 = bearing of potential move where 1=NNE, 2=NE, 3=ENE, 4=E, 5=ESE, etc.
 		let bearing = (Math.round(((Math.atan2(delX, delY) * 180) / Math.PI)/22.5) + 16 - 1) % 16 + 1;
 		squares[moves[i][0]][moves[i][1]].potentialMove = bearing;
+		squares[moves[i][0]][moves[i][1]].intoCheck = !canMoveLegally(game, coords, moves[i]);
 	}
 }
 
@@ -818,6 +820,7 @@ function setState(stateIn, animate = false) {
 				// just calling setState("clear")
 				sqr.highlighted = 0;
 				sqr.potentialMove = 0;
+				sqr.intoCheck = false;
 				sqr.highlightPotKing = 0;
 				sqr.highlightPotAttacker = 0;
 			}
@@ -827,6 +830,7 @@ function setState(stateIn, animate = false) {
 			if (ui.state == "showCompleteMove" || ui.state == "invalidMoveIntoCheck") {
 				sqr.highlighted = 0;
 				sqr.potentialMove = 0;
+				sqr.intoCheck = false;
 			}
 			if (ui.state == "selectPCAttackers") {
 				sqr.highlightPotKing = 0;

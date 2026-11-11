@@ -172,3 +172,4 @@ Each line of the History tab is one move, for example:
 | `O-O` / `O-O-O` | Castled towards the h-file / the a-file |
 | `+` | Check |
 | `<e8+ e4 h5>` | Potential check on the piece on e8, by the pieces on e4 and h5 |
+| `#` | Checkmate: written in place of the `+` of the check that mates (`...e4(QR)#`, or `<e8# e4 h5>`) |

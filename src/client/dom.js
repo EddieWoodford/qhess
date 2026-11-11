@@ -15,6 +15,11 @@ const dom = {
 	sideButton2: $("sideButton2"),
 	stagedMove: $("thismove"),
 
+	// The banner over the board when the game ends
+	gameOver: $("gameOver"),
+	gameOverTitle: $("gameOverTitle"),
+	gameOverDetail: $("gameOverDetail"),
+
 	// History tab
 	history: $("movehistory"),
 	stepButtons: { back2: $("back2"), back1: $("back1"), forward1: $("forward1"), forward2: $("forward2") },
@@ -51,6 +56,7 @@ const dom = {
 		blackView: $("settingBlackView"),
 		colourByType: $("settingColourByType"),
 		potentialCheck: $("settingPotentialCheck"),
+		showCoords: $("settingShowCoords"),
 	},
 
 	debug: $("debug"),

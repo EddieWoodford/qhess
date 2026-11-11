@@ -24,6 +24,7 @@
         7.3 Move markers         (order matters)
         7.4 Coordinates and piece text
         7.5 Move animation
+        7.6 Game over banner
      8. Responsive overrides     (must stay last)
 
    NOTES
@@ -99,9 +100,12 @@
     --board-edge-col: #111;                 /* coordinate labels and corners */
     --piece-selectedStart-col: #a87c2a;     /* dark amber */
     --piece-dest-col: #4f8f5a;              /* green */
+    --piece-intoCheck-col: #d23c3c;         /* red: a move that would leave the mover in check */
     --piece-checkKing-col: #7a1f1f;         /* dark oxblood */
     --piece-checkAttacker-col: #5a8fb5;     /* blue */
     --marker-clear: rgba(255,0,0,0);        /* transparent stop used by the move markers */
+    --game-over-checkmate-col: #ff5a4f;     /* the game over banner (7.6) */
+    --game-over-draw-col: #e9c46a;
 
     /* ---- Piece colours (section 7.4) ---- */
     /* White pieces: richer, warmer, darker shades for visibility */
@@ -1076,13 +1080,15 @@ input.switch:focus-visible {
    ========================================================================== */
 
 /* ---------- 7.1 Size and structure ----------
-   The board is 8 squares plus a coordinate strip (1/3 of a square) and a
-   padding (1/6 of a square) on each side: 9 squares across and down in all.
-   So a square is 1/9 of the board area's shorter side (100cqmin).
+   The board is 8 squares plus a coordinate strip (--coord-strip, as a
+   fraction of a square) and a padding (1/6 of a square) on each side, and
+   fills the board area's shorter side (100cqmin).
    The board's font-size is a third of a square, so in the rules below a
-   square is 3em and a coordinate strip is 1em. */
+   square is 3em. The coordinates are hidden unless the Settings tab's switch
+   adds .show-coords (main.js); then the squares shrink to make room. */
 .board {
-    --square: calc(100cqmin / 9);
+    --coord-strip: 0;
+    --square: calc(100cqmin / (8 + 1/3 + 2 * var(--coord-strip)));
     font-size: calc(var(--square) / 3);
     display: flex;
     flex-direction: column;
@@ -1225,12 +1231,17 @@ input.switch:focus-visible {
     background-image: linear-gradient(to right, var(--marker-clear), var(--marker-clear), var(--marker-clear), var(--piece-dest-col), var(--marker-clear), var(--marker-clear), var(--marker-clear));
 }
 
+/* A move that would leave the mover in check: the same marker in red */
+.intoCheck {
+    --piece-dest-col: var(--piece-intoCheck-col);
+}
+
 
 /* ---------- 7.4 Coordinates and piece text ---------- */
 /* The labels around the board: rank numbers down the sides, file letters
    along the top and bottom, and the four empty corners */
 .rankcoord, .filecoord, .cornercoord {
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
@@ -1240,19 +1251,32 @@ input.switch:focus-visible {
     line-height: 1;
 }
 
+.board.show-coords {
+    --coord-strip: 0.22;
+}
+
+.board.show-coords :is(.rankcoord, .filecoord, .cornercoord) {
+    display: flex;
+}
+
+.rankcoord, .filecoord, .cornercoord {
+    font-size: 0.5em;  /* a sixth of a square */
+}
+
+/* At the labels' font size a square is 6em, and a strip is --coord-strip of that */
 .rankcoord {
-    width: 1em;
-    height: 3em;
+    width: calc(var(--coord-strip) * 6em);
+    height: 6em;
 }
 
 .filecoord {
-    width: 3em;
-    height: 1em;
+    width: 6em;
+    height: calc(var(--coord-strip) * 6em);
 }
 
 .cornercoord {
-    width: 1em;
-    height: 1em;
+    width: calc(var(--coord-strip) * 6em);
+    height: calc(var(--coord-strip) * 6em);
 }
 
 /* Piece text inside a square (see glyphs.js). Uncollapsed pieces show all
@@ -1314,6 +1338,77 @@ input.switch:focus-visible {
 
 .boardsquare[data-arriving] > * {
     visibility: hidden;
+}
+
+
+/* ---------- 7.6 Game over banner ----------
+   status-view.js shows it over the board on checkmate or stalemate, until it
+   is clicked away (or the game is stepped back through in the History tab). */
+.board-area {
+    position: relative;
+}
+
+.game-over {
+    position: absolute;
+    inset: 0;
+    width: 100%;  /* (a button doesn't stretch to inset: 0 by itself) */
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: var(--font-ui);
+    color: var(--text-strong);
+}
+
+.game-over[hidden] {
+    display: none;
+}
+
+.game-over-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2cqmin;
+    padding: 4cqmin 8cqmin;
+    border-radius: var(--radius-lg);
+    border: 0.6cqmin solid var(--game-over-col);
+    background-color: color-mix(in srgb, var(--bg-inset) 88%, transparent);
+    box-shadow: 0 1cqmin 6cqmin #000c;
+    animation: game-over-in 0.35s ease-out;
+}
+
+.game-over-title {
+    font-size: 12cqmin;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    text-transform: uppercase;
+    color: var(--game-over-col);
+}
+
+.game-over-detail {
+    font-size: 4.5cqmin;
+}
+
+.game-over-hint {
+    font-size: 2.6cqmin;
+    color: var(--text-muted);
+}
+
+.game-over.checkmate { --game-over-col: var(--game-over-checkmate-col); }
+.game-over.draw      { --game-over-col: var(--game-over-draw-col); }
+
+@keyframes game-over-in {
+    from { opacity: 0; transform: scale(0.8); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .game-over-card { animation: none; }
 }
 
 

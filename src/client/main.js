@@ -26,6 +26,8 @@ setupSettings({
 	// Off: each side's pieces all in one colour (style.css 7.4 .side-colours)
 	colourByType: on => document.body.classList.toggle("side-colours", !on),
 	potentialCheck: on => game.setPotentialCheckRule(on),
+	// The file letters and rank numbers around the board (style.css 7.4)
+	showCoords: on => dom.board.classList.toggle("show-coords", on),
 });
 
 // Side panel: hidden until the menu button (☰) opens it.

@@ -177,6 +177,8 @@
                 <tr><td><code>O-O</code> / <code>O-O-O</code></td><td>Castled towards the h-file / the a-file</td></tr>
                 <tr><td><code>+</code></td><td>Check</td></tr>
                 <tr><td><code>&lt;e8+ e4 h5&gt;</code></td><td>Potential check on the piece on e8, by the pieces on e4 and h5</td></tr>
+                <tr><td><code>#</code></td><td>Checkmate: written in place of the <code>+</code> of the check that mates
+                    (<code>...e4(QR)#</code>, or <code>&lt;e8# e4 h5&gt;</code>)</td></tr>
             </table>
 
             <div class="button-row">
@@ -202,6 +204,15 @@
             <!-- BOARD: the rows and squares are made by buildBoard() in src/client/board-view.js -->
             <div class="board-area" id="gameArea">
                 <div id="board" class="board"></div>
+                <!-- GAME OVER: a banner over the board on checkmate or stalemate (src/client/status-view.js).
+                     Clicking it puts it away, to look at the final position. -->
+                <button class="game-over" id="gameOver" hidden>
+                    <span class="game-over-card">
+                        <span class="game-over-title" id="gameOverTitle"></span>
+                        <span class="game-over-detail" id="gameOverDetail"></span>
+                        <span class="game-over-hint">Click to see the board</span>
+                    </span>
+                </button>
             </div>
 
             <!-- STATUS BAR: whose turn it is, what to do next, the move being made, and the buttons for it
@@ -373,6 +384,14 @@
                                     move 0 is skipped. Multiplayer games always use it.</span>
                             </span>
                             <input class="switch" id="settingPotentialCheck" type="checkbox" role="switch">
+                        </label>
+                        <label class="setting">
+                            <span class="setting-text">
+                                <span class="setting-name">Coordinates</span>
+                                <span class="setting-note">The file letters (a-h) and rank numbers (1-8) around
+                                    the board.</span>
+                            </span>
+                            <input class="switch" id="settingShowCoords" type="checkbox" role="switch">
                         </label>
                     </div>
                 </div>

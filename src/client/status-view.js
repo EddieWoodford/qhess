@@ -157,6 +157,29 @@ function drawStatus(view) {
 	setButton(dom.sideButton2, value(buttons.button2));
 
 	dom.stagedMove.textContent = game.thisMove + pcMoveText(game);
+
+	drawGameOver(view);
+}
+
+// The banner over the board when the game has ended (style.css 7.6). It isn't shown while stepping through the
+// history, and once clicked away it stays away until the game changes.
+let gameOverDismissed = null; // the history of the game whose banner was clicked away
+dom.gameOver.addEventListener("click", () => {
+	gameOverDismissed = dom.gameOver.dataset.history;
+	dom.gameOver.hidden = true;
+});
+
+function drawGameOver(view) {
+	const game = view.game;
+	const show = view.state == "gameOver" && view.replayNumber == -1 && game.history !== gameOverDismissed;
+	dom.gameOver.hidden = !show;
+	if (!show) { return; }
+	const checkmate = game.result == "checkmate";
+	dom.gameOver.dataset.history = game.history;
+	dom.gameOver.classList.toggle("checkmate", checkmate);
+	dom.gameOver.classList.toggle("draw", !checkmate);
+	dom.gameOverTitle.textContent = checkmate ? "Checkmate" : "Draw";
+	dom.gameOverDetail.textContent = checkmate ? (game.turnColor == "w" ? "Black" : "White") + " wins" : "Stalemate";
 }
 
 // The line above the prompt in a multiplayer game: the code, your colour, and how the connections are
