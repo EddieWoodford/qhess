@@ -263,6 +263,11 @@
 
                     <!-- history tab - move history and controls -->
                     <div class="tab-panel" id="gameMetaTab">
+                        <div class="button-row history-buttons">
+                            <button class="historyButton" id="reset">Reset</button>
+                            <button class="historyButton" id="exportButton">Export</button>
+                            <button class="historyButton" id="importButton">Import</button>
+                        </div>
                         <div class="button-row">
                             <button class="stepHistoryButton" id="back2">&lt;&lt;</button>
                             <button class="stepHistoryButton" id="back1">&lt;</button>
@@ -271,11 +276,6 @@
                         </div>
                         <!-- one line per ply: drawn by src/client/history-view.js -->
                         <div class="movehistory" id="movehistory"></div>
-                        <div class="button-row history-buttons">
-                            <button class="historyButton" id="reset">Reset</button>
-                            <button class="historyButton" id="exportButton">Export</button>
-                            <button class="historyButton" id="importButton">Import</button>
-                        </div>
                         <p class="history-note">To save a game, press Export: it copies the moves as text you can
                             keep anywhere. To carry on later, press Import, paste them in and load them.</p>
                     </div>

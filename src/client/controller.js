@@ -187,7 +187,12 @@ function pcRule() {
 function setPotentialCheckRule(on) {
 	ui.potentialCheck = on;
 	if (!squares) { return; } // the page is still starting: init() starts the game with the rule as set
-	skipMove0();
+	if (on && !isMultiplayer() && ui.replay == -1 && committed.history.trim() == "0b.") {
+		// Nothing has happened beyond the skipped move 0: start again at move 0, so Black can use it
+		newGame();
+	} else {
+		skipMove0();
+	}
 	draw();
 }
 

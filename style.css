@@ -608,7 +608,7 @@ input:checked + .tabTitle {
     gap: var(--gap);
 }
 
-/* How to save and restore a game, under the buttons */
+/* How to save and restore a game, under the history */
 .history-note {
     margin: 0;
     font-size: 0.85em;

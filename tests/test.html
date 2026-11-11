@@ -518,6 +518,11 @@ async function checkNoPotentialCheck(ctx) {
 	atWhiteMove1("Reset Game");
 	g.restoreGameHistory("");
 	atWhiteMove1("Importing no moves");
+	doc.getElementById("settingPotentialCheck").click(); // on, with nothing played beyond '0b.'
+	expect("Switched on after only '0b.', the game should go back to move 0, is at " + g.ui.state +
+		", history '" + g.game.history + "'", g.ui.state == "move0" && g.game.history.trim() == "");
+	doc.getElementById("settingPotentialCheck").click(); // off again
+	atWhiteMove1("Switching it off again");
 
 	const text = await fetchText("../example_games/02_potential_checks.txt");
 	const lines = historyLines(ctx, text).slice(0, 12);
@@ -526,6 +531,8 @@ async function checkNoPotentialCheck(ctx) {
 		g.game.history.trim().split(/\r?\n/).map(l => l.trim()).join("\n") == lines.join("\n"));
 
 	doc.getElementById("settingPotentialCheck").click(); // on again
+	expect("Switched on part-way through a game, the game should carry on: history is '" + g.game.history + "'",
+		g.game.history.trim().split(/\r?\n/).map(l => l.trim()).join("\n") == lines.join("\n"));
 	g.newGame();
 	expect("Switched on, a new game should start at move 0, is at " + g.ui.state, g.ui.state == "move0");
 	expect("Switched on, Add PC should show at move 0", visible("sideButton1"));
