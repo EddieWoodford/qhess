@@ -5,26 +5,28 @@
 // 0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15
 // (Bb = dark-squared bishop, Bw = light-squared bishop)
 
-// Which option indexes belong to a piece type ("wave")
+// The option indexes of each piece type ("wave")
+const WAVE_OPTIONS = {
+	P: [0, 1, 2, 3, 4, 5, 6, 7],
+	R: [8, 9],
+	N: [10, 11],
+	B: [12, 13],
+	Q: [14],
+	K: [15],
+};
+
+// The two bishops' option indexes
+const DARK_BISHOP = 12;
+const LIGHT_BISHOP = 13;
+
+// Which option indexes belong to a piece type ("wave"), e.g. "R" -> [8, 9]
 function wave2optidxs(wave) {
-	if (wave == "P") {
-		return [0, 1, 2, 3, 4, 5, 6, 7];
-	}
-	if (wave == "R") {
-		return [8, 9];
-	}
-	if (wave == "N") {
-		return [10, 11];
-	}
-	if (wave == "B") {
-		return [12, 13];
-	}
-	if (wave == "Q") {
-		return [14];
-	}
-	if (wave == "K") {
-		return [15];
-	}
+	return WAVE_OPTIONS[wave];
 }
 
-export { wave2optidxs };
+// Is [r, c] a light square? (a1, row 7 column 0, is dark)
+function isLightSquare(r, c) {
+	return (r + c) % 2 == 0;
+}
+
+export { wave2optidxs, DARK_BISHOP, LIGHT_BISHOP, isLightSquare };

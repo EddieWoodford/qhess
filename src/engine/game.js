@@ -183,18 +183,9 @@ function startMove(state, from, to, choices = {}) {
 				doPromotion = true;
 			}
 			if (doPromotion) {
+				// It was a pawn, and is now a new piece: a queen, rook, knight or bishop
 				movingPiece.removewaves("KQNBR");
-				movingPiece.promoted = 1;
-
-				movingPiece.promotedOptions = Array(16).fill(1);
-				movingPiece.removewaves("KP"); // can't be a king or pawn
-				if ((movingPiece.r + movingPiece.c)%2==0) {
-					// on a white square, so black bishop is not possible
-					movingPiece.promotedOptions[12] = 0;
-				} else {
-					// on a black square, so white bishop is not possible
-					movingPiece.promotedOptions[13] = 0;
-				}
+				movingPiece.promote();
 			} else {
 				movingPiece.removewaves("P");
 			}

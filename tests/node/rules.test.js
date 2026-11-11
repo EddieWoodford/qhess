@@ -7,7 +7,7 @@ import { applyMove, startMove, declareNotAKing, hasLegalTurn } from "../../src/e
 import { getPotentialMoves } from "../../src/engine/moves.js";
 import { updateOptionsFromEntanglement } from "../../src/engine/entanglement.js";
 import { ismember } from "../../src/engine/utils.js";
-import { move, play, at, sq } from "./helpers.js";
+import { move, play, at, sq, exampleGames, moveFromLine } from "./helpers.js";
 
 ////////////////////////////////
 // En passant
@@ -57,6 +57,35 @@ test("a pawn can't take its own side's piece en passant", () => {
 	assert.equal(result.ok, true);
 	assert.equal(result.enPassant, false);
 	assert.ok(!at(trial, "e3").waves().includes("P"));
+});
+
+////////////////////////////////
+// Promotion
+////////////////////////////////
+
+// The example promotion game, up to (not including) the first ply that contains `text`
+function promotionGameBefore(text) {
+	const { lines } = exampleGames().find(g => g.name == "05_promotion.txt");
+	const state = createInitialState();
+	for (const line of lines) {
+		if (line.includes(text)) { return state; }
+		assert.deepEqual(applyMove(state, moveFromLine(line)), { ok: true }, line);
+	}
+	assert.fail("no ply " + text);
+}
+
+test("a promoted pawn could be a queen, rook, knight, or the bishop for its square", () => {
+	// White's h7 piece can only be a pawn, so stepping onto h8 (a dark square) promotes it without asking
+	const state = promotionGameBefore("h7h8");
+	const result = startMove(state, sq("h7"), sq("h8"), { ask: () => assert.fail("shouldn't ask") });
+	assert.equal(result.promotion, true);
+	const piece = at(state, "h8");
+	assert.equal(piece.promoted, 1);
+	assert.equal(piece.waves(), "QBNR");
+	assert.equal(piece.wavesWithBishopColor(), "QBbNR"); // (the Captured tab shows the bishop's square from this)
+	assert.match(state.thisMove, /h7h8\(P\)=\(QRNB\)/);
+	// It is still counted as the pawn it was, so the army adds up
+	assert.deepEqual(piece.options.slice(8), [0, 0, 0, 0, 0, 0, 0, 0]);
 });
 
 ////////////////////////////////

@@ -50,8 +50,4 @@ function ismember(coords, coordlist) {
 	return 0;
 }
 
-function sum(x) {
-	return x.reduce((a, b) => a + b, 0);
-}
-
-export { isequal, clone2DArray, coordstext2coords, coords2text, isValidCoord, isSquare, ismember, sum };
+export { isequal, clone2DArray, coordstext2coords, coords2text, isValidCoord, isSquare, ismember };
