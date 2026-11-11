@@ -81,6 +81,11 @@ runs the command-line tests:
 
 - every example game in `example_games/` replayed through the engine, checked against
   `tests/snapshots.json` after every move
+- the rules the example games don't reach: en passant, promotion, potential check, castling,
+  checkmate and stalemate, and moves that aren't moves at all (as a network or a pasted
+  history could send)
+- the army collapse, checked against trying every assignment by brute force
+- reading the move history, including text typed or pasted by hand
 - the same games played through the real server by two scripted players, one colour each
 - the multiplayer edge cases: out-of-turn and illegal moves, bad codes, a full game, dropped
   connections, resent moves, a second tab taking over a seat, leaving, and abandoned games
@@ -89,7 +94,8 @@ runs the command-line tests:
 `start_test.bat` opens the browser test page (press **Run tests**). It replays the example
 games through the real page and checks what it shows, and has two copies of the page play a
 multiplayer game against each other, with one reloading part-way through. It also checks a game
-with the Potential Check switch off. It starts the game page with the Settings tab's switches at
+with the Potential Check switch off, reloading a saved game, and that Edit / Import refuses moves
+that can't be played without losing the game. It starts the game page with the Settings tab's switches at
 their defaults, which also resets any your browser had remembered for that server.
 
 `serve.ps1` is the old PowerShell file server. It still works for single player without
