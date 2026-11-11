@@ -14,10 +14,6 @@ import { getPotentialMoves, getCertainMoves } from "./moves.js";
 //              potential king is still attacked by a piece that could make that capture in every one of its waves.
 //              kingCoords is then the potential king (returned even with no attackers).
 function findChecks(state, color) {
-	// Search to see if a check exists. 
-	// Should be called whenever the board state changes and is potentially in a valid move position
-	// color is the color of the king to check for check. What a great sentance.
-	
 	// First look for Auto Check:
 	let autoCheck = false;
 	let potCheck = false;

@@ -1,195 +1,96 @@
 "use strict";
 
 // Where a piece could move. Pure functions of the game state; no page code.
+// Coordinates are [row, column], with row 0 = rank 8: White's pieces move towards row 0.
 
-import { isequal, clone2DArray, isValidCoord, ismember } from "./utils.js";
+import { isequal, isValidCoord, ismember } from "./utils.js";
 
+// [row, column] steps for each kind of move. The order matters: it is the order of the lists below, which
+// tests/generate.html's seeded games depend on.
+const KING_STEPS = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
+const ROOK_LINES = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+const BISHOP_LINES = [[1, 1], [1, -1], [-1, -1], [-1, 1]];
+const KNIGHT_JUMPS = [[2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [1, -2], [-1, 2], [-1, -2]];
+
+// The destinations the piece on `coords` could move to as every one of its waves (types): the squares it is
+// certain to be able to reach, whichever it turns out to be.
 function getCertainMoves(state, coords) {
-	// Get a list of the certain move destinations. That is - the desinations that a piece can definitely move to in all of their available waves.
-	
-	let piece = state.board[coords[0]][coords[1]]; // Find the source pieceID
+	const piece = state.board[coords[0]][coords[1]];
 	if (piece === null) {
 		return [];
 	}
-	let waves = piece.waves();
-	let moves;
-	let thismoves;
-	for (let wi=0; wi < waves.length; wi++) {
-		// Loop through the waves and intersec the resulting moves
-		thismoves = getPotentialMoves(state, coords,waves[wi]);
-		if (wi==0) {
-			moves = clone2DArray(thismoves);
-		} else {
-			let mi=0;
-			while (mi < moves.length) {
-				if (!ismember(moves[mi],thismoves)) {
-					moves.splice(mi,1);
-					if (moves.length == 0) {
-						return [];
-					}
-				} else {
-					mi++;
-				}
-			}
-		}
-	}
-	return moves;
-	
+	const [first = [], ...others] = [...piece.waves()].map(wave => getPotentialMoves(state, coords, wave));
+	return first.filter(to => others.every(moves => ismember(to, moves)));
 }
 
-function getPotentialMoves(state, coords,waves) {
-	// Get a list of all potential destination coordinates.
-	// Optional input waves only returns destination for those passed in, otherwise use waves available to piece
-	
-	let piece = state.board[coords[0]][coords[1]]; // Find the source pieceID
-	if (piece === null) {
-		return []
+// Every square the piece on `coords` could move to (not counting castling: see castling.js) as at least one of
+// `waves` (default: all its waves), e.g. getPotentialMoves(state, [6, 4], "P") for its pawn moves only.
+// A square reachable as more than one wave can appear more than once.
+function getPotentialMoves(state, coords, waves) {
+	const piece = state.board[coords[0]][coords[1]];
+	if (piece === null || piece.captured > -1) {
+		return [];
 	}
-	if (piece.captured > -1) {
-		return []
-	}
-	if (waves == undefined) {
+	if (waves === undefined) {
 		waves = piece.waves();
 	}
-	let opponentColor = "w";
-	let direction  = -1;
-	if (piece.color == "w") {
-		opponentColor = "b";
-		direction = 1;
-	}
-	let newcoords = [];
-	let moves = [];
-	// Switch through difference piece types, adding to the growing moves array
-	
-	// King:
+	const [r, c] = coords;
+	const at = ([row, col]) => state.board[row][col];
+	const moves = [];
+
+	// One step or jump: onto any square that isn't one of its own pieces
+	const step = ([dr, dc]) => {
+		const to = [r + dr, c + dc];
+		if (isValidCoord(to) && at(to)?.color != piece.color) {
+			moves.push(to);
+		}
+	};
+	// Along a line: up to the first piece in the way, taking it if it's the opponent's
+	const slide = ([dr, dc]) => {
+		for (let to = [r + dr, c + dc]; isValidCoord(to); to = [to[0] + dr, to[1] + dc]) {
+			const target = at(to);
+			if (target?.color == piece.color) {
+				break;
+			}
+			moves.push(to);
+			if (target !== null) {
+				break;
+			}
+		}
+	};
+
 	if (waves.includes("K")) {
-		for (let r=-1; r<=1; r++) {
-			for (let c=-1; c<=1; c++) {
-				newcoords = [coords[0]+r,coords[1]+c];
-				if (isValidCoord(newcoords) && state.board[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
-			}	
-		}
+		KING_STEPS.forEach(step);
 	}
-	
-	// Pawn:
 	if (waves.includes("P")) {
-		newcoords = [coords[0]-direction,coords[1]]
-		if (isValidCoord(newcoords) && state.board[newcoords[0]][newcoords[1]] === null) {
-			moves.push(newcoords)
-			// if it can go 1 forward then it might be able to go 2 on its first move:
-			if (piece.hasmoved == 0) {
-				newcoords = [coords[0]-2*direction,coords[1]]
-				if (isValidCoord(newcoords) && state.board[newcoords[0]][newcoords[1]] === null) {
-					moves.push(newcoords)
-				}
+		const forward = piece.color == "w" ? -1 : 1;
+		// Forward onto an empty square; two squares on its first move if both are empty
+		const ahead = [r + forward, c];
+		if (isValidCoord(ahead) && at(ahead) === null) {
+			moves.push(ahead);
+			const twoAhead = [r + 2 * forward, c];
+			if (piece.hasmoved == 0 && isValidCoord(twoAhead) && at(twoAhead) === null) {
+				moves.push(twoAhead);
 			}
 		}
-		
-		newcoords = [coords[0]-direction,coords[1]-1]
-		if (isValidCoord(newcoords)) {
-			if (enPassantVictim(state, newcoords, piece.color) !== null || state.board[newcoords[0]][newcoords[1]]?.color == opponentColor) {
-				moves.push(newcoords)
-			}
-		}
-		newcoords = [coords[0]-direction,coords[1]+1]
-		if (isValidCoord(newcoords)) {
-			if (enPassantVictim(state, newcoords, piece.color) !== null || state.board[newcoords[0]][newcoords[1]]?.color == opponentColor) {
-				moves.push(newcoords)
+		// Diagonally forward to take: an opponent's piece, or en passant
+		for (const dc of [-1, 1]) {
+			const to = [r + forward, c + dc];
+			if (isValidCoord(to) && (enPassantVictim(state, to, piece.color) !== null || (at(to) !== null && at(to).color != piece.color))) {
+				moves.push(to);
 			}
 		}
 	}
-	
-	// Rooks and Queens:
 	if (waves.includes("R") || waves.includes("Q")) {
-		for (let i=coords[0]+1; i<=7; i++) {
-			newcoords = [i,coords[1]]
-			if (state.board[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
-			moves.push(newcoords)
-			if (state.board[newcoords[0]][newcoords[1]] !== null) {break;}
-		}
-		for (let i=coords[0]-1; i>=0; i--) {
-			newcoords = [i,coords[1]]
-			if (state.board[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
-			moves.push(newcoords)
-			if (state.board[newcoords[0]][newcoords[1]] !== null) {break;}
-		}
-		for (let i=coords[1]+1; i<=7; i++) {
-			newcoords = [coords[0],i]
-			if (state.board[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
-			moves.push(newcoords)
-			if (state.board[newcoords[0]][newcoords[1]] !== null) {break;}
-		}
-		for (let i=coords[1]-1; i>=0; i--) {
-			newcoords = [coords[0],i]
-			if (state.board[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
-			moves.push(newcoords)
-			if (state.board[newcoords[0]][newcoords[1]] !== null) {break;}
-		}
+		ROOK_LINES.forEach(slide);
 	}
-	
-	// Bishops and Queens:
 	if (waves.includes("B") || waves.includes("Q")) {
-		for (let i=1; i<=7; i++) {
-			newcoords = [coords[0]+i,coords[1]+i]
-			if (isValidCoord(newcoords)) {
-				if (state.board[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
-				moves.push(newcoords)
-				if (state.board[newcoords[0]][newcoords[1]] !== null) {break;}
-			}
-		}
-		for (let i=1; i<=7; i++) {
-			newcoords = [coords[0]+i,coords[1]-i]
-			if (isValidCoord(newcoords)) {
-				if (state.board[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
-				moves.push(newcoords)
-				if (state.board[newcoords[0]][newcoords[1]] !== null) {break;}
-			}
-		}
-		for (let i=1; i<=7; i++) {
-			newcoords = [coords[0]-i,coords[1]-i]
-			if (isValidCoord(newcoords)) {
-				if (state.board[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
-				moves.push(newcoords)
-				if (state.board[newcoords[0]][newcoords[1]] !== null) {break;}
-			}
-		}
-		for (let i=1; i<=7; i++) {
-			newcoords = [coords[0]-i,coords[1]+i]
-			if (isValidCoord(newcoords)) {
-				if (state.board[newcoords[0]][newcoords[1]]?.color == piece.color) {break;}
-				moves.push(newcoords)
-				if (state.board[newcoords[0]][newcoords[1]] !== null) {break;}
-			}
-		}
+		BISHOP_LINES.forEach(slide);
 	}
-	
-	// Knights:
 	if (waves.includes("N")) {
-		newcoords = [coords[0]+2,coords[1]+1];
-		if (isValidCoord(newcoords) && state.board[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
-		newcoords = [coords[0]+2,coords[1]-1];
-		if (isValidCoord(newcoords) && state.board[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
-		newcoords = [coords[0]-2,coords[1]+1];
-		if (isValidCoord(newcoords) && state.board[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
-		newcoords = [coords[0]-2,coords[1]-1];
-		if (isValidCoord(newcoords) && state.board[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
-		newcoords = [coords[0]+1,coords[1]+2];
-		if (isValidCoord(newcoords) && state.board[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
-		newcoords = [coords[0]+1,coords[1]-2];
-		if (isValidCoord(newcoords) && state.board[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
-		newcoords = [coords[0]-1,coords[1]+2];
-		if (isValidCoord(newcoords) && state.board[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
-		newcoords = [coords[0]-1,coords[1]-2];
-		if (isValidCoord(newcoords) && state.board[newcoords[0]][newcoords[1]]?.color != piece.color) {moves.push(newcoords)};
+		KNIGHT_JUMPS.forEach(step);
 	}
-	
-	for (let i=moves.length-1; i>=0; i--) {
-		if (moves[i][0]==coords[0] && moves[i][1]==coords[1]) {
-			moves.splice(i,1)
-		}
-	}
-	
-	return moves
+	return moves;
 }
 
 // The piece a pawn of `color` would take en passant by landing on `coords`, or null if there isn't one.

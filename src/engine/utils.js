@@ -15,10 +15,6 @@ function isequal(arr1, arr2) {
 	return true;
 }
 
-function clone2DArray(arr) {
-	return arr.map(row => [...row]);
-}
-
 // "e4" -> [4, 4]. Text that isn't a square gives something that isn't one either (e.g. "" -> [NaN, NaN]).
 function coordstext2coords(coordstext) {
 	let c = coordstext.charCodeAt(0) - 97;
@@ -40,14 +36,9 @@ function isSquare(v) {
 	return Array.isArray(v) && v.length == 2 && v.every(n => Number.isInteger(n) && n >= 0 && n <= 7);
 }
 
-// 1 if coords is in coordlist, else 0
+// Is coords in coordlist (a list of [r, c])?
 function ismember(coords, coordlist) {
-	for (let i = 0; i < coordlist.length; i++) {
-		if (coords[0] == coordlist[i][0] && coords[1] == coordlist[i][1]) {
-			return 1;
-		}
-	}
-	return 0;
+	return coordlist.some(item => coords[0] == item[0] && coords[1] == item[1]);
 }
 
-export { isequal, clone2DArray, coordstext2coords, coords2text, isValidCoord, isSquare, ismember };
+export { isequal, coordstext2coords, coords2text, isValidCoord, isSquare, ismember };
