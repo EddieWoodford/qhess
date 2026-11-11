@@ -6,6 +6,7 @@
 //     code:      "TIGER-42"
 //     createdAt, updatedAt:   milliseconds since 1970
 //     seats:     { w: { token } | null, b: { token } | null }   who holds each colour
+//     joinedColor: "w" | "b" | null   the seat the second player joined (rooms.js retakableSeat)
 //     moves:     [ move, ... ]   every accepted move, in order (see src/shared/protocol.js)
 //   }
 // The game position is never stored: it is rebuilt by replaying the moves through the engine.

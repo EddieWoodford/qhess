@@ -127,7 +127,7 @@ class GameServer {
 			code = randomCode(this.random);
 		} while (this.rooms.has(code) || await this.store.has(code));
 		const now = Date.now();
-		const record = { code, createdAt: now, updatedAt: now, seats: { w: null, b: null }, moves: [] };
+		const record = { code, createdAt: now, updatedAt: now, seats: { w: null, b: null }, joinedColor: null, moves: [] };
 		record.seats[color] = { token: randomUUID() };
 		const room = this.addRoom(record, createInitialState());
 		await this.store.save(record);
@@ -143,15 +143,44 @@ class GameServer {
 		if (this.seats.get(conn)?.room === room) {
 			return this.error(conn, ERRORS.BAD_REQUEST, "You're already in that game");
 		}
-		const color = COLORS.find(c => room.record.seats[c] === null);
-		if (!color) {
-			return this.error(conn, ERRORS.FULL, "That game already has two players");
+		let color = COLORS.find(c => room.record.seats[c] === null);
+		const retaking = !color;
+		if (retaking) {
+			color = this.retakableSeat(room);
+			if (!color) {
+				return this.error(conn, ERRORS.FULL, "That game already has two players");
+			}
 		}
 		await this.leave(conn);
+		if (retaking) {
+			this.replaceConn(room, color);
+		}
+		// A new token: whoever had the seat before can't resume it
 		room.record.seats[color] = { token: randomUUID() };
+		room.record.joinedColor = color;
 		await this.save(room);
-		this.log("Game " + room.record.code + ": " + color + " joined");
+		this.log("Game " + room.record.code + ": " + color + (retaking ? " joined again, taking the seat over" : " joined"));
 		this.attach(conn, room, color);
+	}
+
+	// The seat a join may take over in a full game, or null. Joining from a link often happens twice: a phone
+	// opens the link in the messaging app's own browser first, then in its real browser. So until the joiner
+	// has made a move, joining again takes their seat over. The creator's seat is never taken.
+	retakableSeat(room) {
+		const color = room.record.joinedColor;
+		if (!color) { return null; }
+		const hasMoved = room.record.moves.some((_, seq) => colorOfMove(seq) == color);
+		return hasMoved ? null : color;
+	}
+
+	// The connection in room's color seat (if any) is told it has been replaced, and dropped
+	replaceConn(room, color) {
+		const previous = room.conns[color];
+		if (!previous) { return; }
+		this.seats.delete(previous);
+		room.conns[color] = null;
+		this.error(previous, ERRORS.REPLACED, "This game was opened somewhere else");
+		previous.close();
 	}
 
 	async resume(conn, { code, token }) {
@@ -163,14 +192,10 @@ class GameServer {
 		if (!color) {
 			return this.error(conn, ERRORS.BAD_TOKEN, "That seat isn't yours");
 		}
-		const previous = room.conns[color];
-		if (previous && previous !== conn) {
+		if (room.conns[color] !== conn) {
 			// The seat is being taken over (a reconnect before the old connection was noticed as lost, or
 			// another tab): the old connection is told and dropped
-			this.seats.delete(previous);
-			room.conns[color] = null;
-			this.error(previous, ERRORS.REPLACED, "This game was opened somewhere else");
-			previous.close();
+			this.replaceConn(room, color);
 		}
 		if (this.seats.get(conn)?.room !== room) {
 			await this.leave(conn);

@@ -30,7 +30,8 @@ Single player (both sides on one screen) is the default and needs nothing else.
 3. Your friend can join in any of three ways:
    - **The code**: read it out or send it. They open the game from the server's address, go to the
      Multiplayer tab, type the code (case and spacing don't matter) and press **Join**.
-   - **The link**: **Copy link** (or **Share…** on a phone) and send it. Opening it joins the game.
+   - **The link**: **Copy link** (or **Share…** on a phone) and send it. Opening it joins the game
+     and goes straight to the board.
    - **The QR code**: they scan it with their phone's camera, which opens the link.
 
    On a page opened as `localhost` (start.bat), the link and QR code use this computer's network
@@ -47,7 +48,9 @@ made while disconnected is sent once the connection returns, and is never played
 running: stopping it ends them.
 
 The server has no accounts, and anyone with a code can join a game that is still waiting for
-its second player.
+its second player. Until that second player has made a move, joining again with the code takes
+their seat over: a phone often opens a link in the messaging app's own browser first, and then
+again in its real browser. The creator's seat is never taken.
 
 ## Online
 
@@ -108,7 +111,8 @@ runs the command-line tests:
 - reading the move history, including text typed or pasted by hand
 - the same games played through the real server by two scripted players, one colour each
 - the multiplayer edge cases: out-of-turn and illegal moves, bad codes, a full game, dropped
-  connections, resent moves, a second tab taking over a seat, leaving, and abandoned games
+  connections, resent moves, a second tab taking over a seat, joining again before the
+  joiner has moved, leaving, and abandoned games
 - the page's SocketSession against the real server, including reconnects and lost messages
 - join links: made, read back from the address, and their QR codes read with a real QR reader
 

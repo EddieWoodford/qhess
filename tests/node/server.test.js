@@ -119,8 +119,34 @@ test("joining a game that doesn't exist, or is full", async () => {
 	const c = await client("lost");
 	assert.equal((await c.request({ type: "join", code: "NOPE-00" }, "error")).code, "not_found");
 	assert.equal((await c.request({ type: "join", code: "nonsense" }, "error")).code, "not_found");
-	const { code } = await newGame();
-	assert.equal((await c.request({ type: "join", code }, "error")).code, "full");
+	// Full once the second player has made a move (until then, see the next test)
+	const players = await newGame("b");
+	await playLine(players, games[0].lines, 0);
+	await playLine(players, games[0].lines, 1);
+	assert.equal((await c.request({ type: "join", code: players.code }, "error")).code, "full");
+});
+
+test("joining again before the joiner has moved takes their seat over, never the creator's", async () => {
+	// As when a phone opens a join link in a messaging app's browser, then again in its real browser.
+	// The creator plays Black, so after Black's move 0 the joiner (White) still hasn't moved.
+	const players = await newGame("b");
+	await playLine(players, games[0].lines, 0);
+	const again = await client("real browser");
+	const joined = await again.request({ type: "join", code: players.code }, "welcome");
+	assert.equal(joined.color, "w", "the joiner's seat, not the creator's");
+	assert.notEqual(joined.token, players.joiner.token);
+	assert.equal(joined.moves.length, 1, "with the game so far");
+	assert.equal((await players.joiner.next("error")).code, "replaced");
+	await players.joiner.waitClosed();
+	assert.equal((await players.creator.next("opponent")).status, "connected");
+	// Whoever had the seat before can't resume it
+	const stale = await client("messaging app's browser");
+	const resumed = await stale.request({ type: "resume", code: players.code, token: players.joiner.token }, "error");
+	assert.equal(resumed.code, "bad_token");
+	// Once the joiner has moved, the game is full
+	const late = await client("too late");
+	await playLine({ w: again, b: players.creator }, games[0].lines, 1);
+	assert.equal((await late.request({ type: "join", code: players.code }, "error")).code, "full");
 });
 
 test("bad requests are refused without harm", async () => {

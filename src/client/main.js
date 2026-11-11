@@ -139,13 +139,11 @@ onClick("mpLeave", () => {
 });
 onClick("mpBack", () => game.backToSinglePlayer());
 
-// Opened from a join link: join that game, and show the Multiplayer tab while it connects. The code is taken out
-// of the address, so a reload goes back into the game (from its saved seat) rather than trying to join it again.
+// Opened from a join link: join that game, straight to the board. The code is taken out of the address, so a
+// reload goes back into the game (from its saved seat) rather than trying to join it again.
 const joinCode = codeFromUrl();
 if (joinCode) {
 	history.replaceState(null, "", urlWithoutJoin());
-	document.getElementById("tabMultiplayer").checked = true;
-	setPanelOpen(true);
 }
 
 // Make the board's squares and start the first game
