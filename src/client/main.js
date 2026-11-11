@@ -10,6 +10,8 @@ import { setupSettings } from "./settings.js";
 import { dom } from "./dom.js";
 import { normalizeCode } from "../shared/protocol.js";
 import { wakeServer } from "./server-address.js";
+import { codeFromUrl, urlWithoutJoin, networkHost } from "./join-link.js";
+import { setNetworkHost } from "./multiplayer-view.js";
 
 // Opened from GitHub Pages: start the hosted multiplayer server waking now, so it's ready sooner
 wakeServer();
@@ -111,10 +113,25 @@ onClick("mpJoin", joinFromInput);
 document.getElementById("mpCodeInput").addEventListener("keydown", e => {
 	if (e.key == "Enter") {joinFromInput();}
 });
-onClick("mpCopyCode", () => {
-	const code = document.getElementById("mpCode").textContent;
-	navigator.clipboard?.writeText(code).catch(() => {});
+// Copy buttons say "Copied ✓" for a moment
+function copyButton(button, text) {
+	const label = button.dataset.label ??= button.textContent;
+	navigator.clipboard?.writeText(text).then(() => {
+		button.textContent = "Copied ✓";
+		clearTimeout(button.copiedTimer);
+		button.copiedTimer = setTimeout(() => { button.textContent = label; }, 1500);
+	}).catch(() => {});
+}
+onClick("mpCopyCode", () => copyButton(dom.mp.copyCode, dom.mp.code.textContent));
+onClick("mpCopyLink", () => copyButton(dom.mp.copyLink, dom.mp.link.href));
+// Share… opens the device's own share sheet (messages, email, ...), where it has one: mostly phones
+dom.mp.shareLink.hidden = !navigator.share;
+onClick("mpShareLink", () => {
+	navigator.share({ title: "Play Qhess with me", text: "Join my Qhess game (code " + dom.mp.code.textContent + "):",
+		url: dom.mp.link.href }).catch(() => {});
 });
+// A page opened as localhost makes its join links with this computer's network address instead
+networkHost().then(setNetworkHost);
 onClick("mpLeave", () => {
 	if (confirm("Leave this game? It ends the game for your opponent too.")) {
 		game.leaveMultiplayer();
@@ -122,5 +139,14 @@ onClick("mpLeave", () => {
 });
 onClick("mpBack", () => game.backToSinglePlayer());
 
+// Opened from a join link: join that game, and show the Multiplayer tab while it connects. The code is taken out
+// of the address, so a reload goes back into the game (from its saved seat) rather than trying to join it again.
+const joinCode = codeFromUrl();
+if (joinCode) {
+	history.replaceState(null, "", urlWithoutJoin());
+	document.getElementById("tabMultiplayer").checked = true;
+	setPanelOpen(true);
+}
+
 // Make the board's squares and start the first game
-game.init();
+game.init(joinCode);

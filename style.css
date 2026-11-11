@@ -902,6 +902,44 @@ input:checked + .tabTitle {
     user-select: all;
 }
 
+/* The ways for a friend to join, until they have: the buttons, the link, and its QR code */
+.mp-invite {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+}
+
+.mp-invite[hidden],
+.mp-invite [hidden] {
+    display: none;
+}
+
+.mp-invite .button-row {
+    gap: var(--gap);
+}
+
+.mp-link {
+    font-family: var(--font-mono);
+    font-size: 0.8em;
+    text-align: center;
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+}
+
+/* Black on white whatever the theme, which is what scanners expect */
+.mp-qr {
+    align-self: center;
+    width: min(100%, 220px);
+    line-height: 0;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.mp-qr svg {
+    width: 100%;
+    height: auto;
+}
+
 .mp-facts {
     display: grid;
     grid-template-columns: auto 1fr;

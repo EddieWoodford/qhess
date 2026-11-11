@@ -317,10 +317,18 @@
                         <div class="mp-section" id="mpGame" hidden>
                             <div class="mp-code-label">Game code</div>
                             <div class="mp-code" id="mpCode"></div>
-                            <div class="button-row">
-                                <button class="historyButton" id="mpCopyCode">Copy code</button>
-                            </div>
                             <p class="mp-note" id="mpMessage"></p>
+                            <!-- three ways for a friend to join: read out the code, send the link, scan the QR code.
+                                 Shown until they join (src/client/join-link.js) -->
+                            <div class="mp-invite" id="mpInvite">
+                                <div class="button-row">
+                                    <button class="historyButton" id="mpCopyCode">Copy code</button>
+                                    <button class="historyButton" id="mpCopyLink">Copy link</button>
+                                    <button class="historyButton" id="mpShareLink" hidden>Share…</button>
+                                </div>
+                                <a class="mp-link" id="mpLink" target="_blank" rel="noopener"></a>
+                                <div class="mp-qr" id="mpQr" title="Scan to join"></div>
+                            </div>
                             <dl class="mp-facts">
                                 <dt>You play</dt><dd id="mpColor"></dd>
                                 <dt>Opponent</dt><dd id="mpOpponent"></dd>

@@ -27,8 +27,14 @@ Single player (both sides on one screen) is the default and needs nothing else.
 
 1. Open the menu (☰, top left) and the **Multiplayer** tab (🌐).
 2. Choose White, Black or Random, and press **Create game**. You get a code like `TIGER-42`.
-3. Send the code to your friend. They open the game from the server's address, go to the
-   Multiplayer tab, type the code (case and spacing don't matter) and press **Join**.
+3. Your friend can join in any of three ways:
+   - **The code**: read it out or send it. They open the game from the server's address, go to the
+     Multiplayer tab, type the code (case and spacing don't matter) and press **Join**.
+   - **The link**: **Copy link** (or **Share…** on a phone) and send it. Opening it joins the game.
+   - **The QR code**: they scan it with their phone's camera, which opens the link.
+
+   On a page opened as `localhost` (start.bat), the link and QR code use this computer's network
+   address instead, which the server gives the page (`/network-address`).
 
 Your own side is always at the bottom of the board. The board is locked while it's your
 opponent's turn. The line above the prompt shows the code, your colour, and any connection
@@ -64,6 +70,7 @@ src/client/    the page. controller.js runs the click flow; *-view.js draw it.
                session.js       LocalSession: a game played on this screen
                socket-session.js SocketSession: a game played through the server
                server-address.js which server multiplayer uses
+               join-link.js     join links and their QR codes (vendor/qrcode.js draws them)
 src/shared/    protocol.js: the messages between page and server
 server/        server.js: serves the files and the websocket (/ws)
                rooms.js:  the referee. Checks every move with the engine.
@@ -103,6 +110,7 @@ runs the command-line tests:
 - the multiplayer edge cases: out-of-turn and illegal moves, bad codes, a full game, dropped
   connections, resent moves, a second tab taking over a seat, leaving, and abandoned games
 - the page's SocketSession against the real server, including reconnects and lost messages
+- join links: made, read back from the address, and their QR codes read with a real QR reader
 
 `start_test.bat` opens the browser test page (press **Run tests**). It replays the example
 games through the real page and checks what it shows, and has two copies of the page play a

@@ -59,6 +59,11 @@ async function serveFile(req, res) {
 	} catch {
 		return sendText(res, 400, "Bad request");
 	}
+	// This computer's address on the network, for the page's join links (src/client/join-link.js)
+	if (rel == "network-address") {
+		res.writeHead(200, { "Content-Type": MIME[".json"], "Cache-Control": "no-store" });
+		return res.end(JSON.stringify({ addresses: lanAddresses() }));
+	}
 	if (rel == "" || rel.endsWith("/")) { rel += "index.html"; }
 	const full = path.resolve(ROOT, rel);
 	const relToRoot = path.relative(ROOT, full);

@@ -896,8 +896,9 @@ function resumeSavedGame() {
 	}
 }
 
-// Called once when the page loads: make the board and its squares, then start a game
-function init() {
+// Called once when the page loads: make the board and its squares, then start a game.
+// joinCode: the code of a game to join, when the page was opened from its join link (join-link.js)
+function init(joinCode = null) {
 	buildBoard();
 	squares = [];
 	for (let r = 0; r <= 7; r++) {
@@ -913,9 +914,12 @@ function init() {
 		squares.push(viewRow);
 	}
 	resumeSavedGame();
-	// Reloading the page during a multiplayer game goes back into it
+	// Reloading the page during a multiplayer game goes back into it, as does opening that game's own join link
+	// again. A link to another game joins that one instead.
 	const seat = savedSeat();
-	if (seat) {
+	if (joinCode && seat?.code != joinCode) {
+		startMultiplayer({ join: joinCode });
+	} else if (seat) {
 		startMultiplayer({ resume: seat });
 	}
 }

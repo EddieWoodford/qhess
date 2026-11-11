@@ -2,13 +2,40 @@
 
 // The Multiplayer tab. It shows one of three sections:
 //   #mpStart  not in a multiplayer game: start one (choosing a colour) or join one with a code
-//   #mpGame   in a game: its code to send to a friend, your colour, and how the connections are
+//   #mpGame   in a game: its code, link and QR code for a friend to join with, your colour, and how the
+//             connections are
 //   #mpEnded  the game is over or couldn't be joined: why, and a button back to single player
 // The buttons are wired up in main.js.
 
 import { dom } from "./dom.js";
+import { joinLink, qrSvg } from "./join-link.js";
 
 const COLOR_NAMES = { w: "White", b: "Black" };
+
+// This computer's address on the network, for links made on a localhost page (join-link.js networkHost)
+let knownNetworkHost = null;
+function setNetworkHost(host) {
+	knownNetworkHost = host;
+}
+
+// The link the QR code was last drawn for, so it is only drawn again when the link changes
+let drawnLink = null;
+
+// The join link of the game being shown, or null before it has a code
+function currentJoinLink(mp) {
+	return mp?.code ? joinLink(mp.code, globalThis.location, knownNetworkHost) : null;
+}
+
+function drawInvite(mp) {
+	const els = dom.mp;
+	const link = currentJoinLink(mp);
+	els.invite.hidden = !link || mp.opponent != "waiting";
+	if (link == drawnLink) { return; }
+	drawnLink = link;
+	els.link.textContent = link ?? "";
+	els.link.href = link ?? "";
+	els.qr.innerHTML = link ? qrSvg(link) : "";
+}
 
 // view: see render.js. view.multiplayer is null in single player, else controller.js ui.multiplayer.
 function drawMultiplayer(view) {
@@ -22,6 +49,7 @@ function drawMultiplayer(view) {
 	if (!mp) { return; }
 
 	els.code.textContent = mp.code ?? "…";
+	drawInvite(mp);
 	els.color.textContent = mp.color ? COLOR_NAMES[mp.color] : "…";
 	els.opponent.textContent = {
 		waiting: "not joined yet",
@@ -38,7 +66,7 @@ function drawMultiplayer(view) {
 	} else if (phase == "connecting") {
 		message = "Connecting to the server…";
 	} else if (mp.opponent == "waiting") {
-		message = "Send this code to your friend. The game starts when they join.";
+		message = "Your friend can join with the code, the link or the QR code. The game starts when they join.";
 	} else {
 		message = "Playing. Your side is at the bottom of the board.";
 	}
@@ -46,4 +74,4 @@ function drawMultiplayer(view) {
 	els.endedText.textContent = phase == "left" ? "You left the game." : (mp.message || "The game has ended.");
 }
 
-export { drawMultiplayer };
+export { drawMultiplayer, setNetworkHost, currentJoinLink };
