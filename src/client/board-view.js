@@ -214,9 +214,13 @@ function drawBoard(view) {
 			}
 			// While a move is staged, show what a click will do (see controller.js squareClick): the staged
 			// destination submits it, any other square cancels it. A move into check can only be cancelled.
+			// While declaring a potential check, only the highlighted candidates can be chosen: any other square
+			// cancels the move too.
 			if (STATE == "showCompleteMove" && isequal([r,c], view.end)) {
 				classes.add("submitOnClick");
-			} else if (STATE == "showCompleteMove" || STATE == "invalidMoveIntoCheck") {
+			} else if (STATE == "showCompleteMove" || STATE == "invalidMoveIntoCheck"
+					|| (STATE == "selectPCKing" && sqr.highlightPotKing != 1)
+					|| (STATE == "selectPCAttackers" && sqr.highlightPotAttacker != 1)) {
 				classes.add("cancelOnClick");
 			}
 			if (view.replayNumber > -1 || (view.multiplayer && STATE != "showPartialMove" && STATE != "showCompleteMove")) {

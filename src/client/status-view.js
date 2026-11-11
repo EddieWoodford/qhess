@@ -6,6 +6,7 @@
 import { oppColor } from "../engine/state.js";
 import { findChecks, findPotentialKings } from "../engine/check.js";
 import { pcMoveText } from "../engine/game.js";
+import { coords2text } from "../engine/utils.js";
 import { dom, setVisible } from "./dom.js";
 
 // What the status bar shows at each step of the turn (the controller.js STATE).
@@ -50,7 +51,10 @@ const STEPS = {
 		button2: null,
 	},
 	selectPCAttackers: {
-		prompt: "Select attacking pieces",
+		// Names the squares, e.g. "Select pieces attacking f1", then "e2 attacking f1. Submit, or add another"
+		prompt: ctx => ctx.pcAttackers.length == 0
+			? "Select pieces attacking " + ctx.pcKing
+			: ctx.pcAttackers.join(", ") + " attacking " + ctx.pcKing + ". Submit, or add another",
 		button1: null,
 		button2: ctx => ctx.hasPCAttackers ? "Submit" : null, // once at least one attacker is chosen
 	},
@@ -85,29 +89,35 @@ const STEPS = {
 	},
 };
 
-// While stepping through the history, the buttons are replaced by this
-const REPLAY = { button1: "Resume from here", button2: null };
+// While stepping through the history, the buttons are replaced by this: play on from the position shown (the later
+// moves are dropped), or go back to the game as it was. At the newest move the two would be the same.
+const REPLAY = { button1: "Resume from here", button2: ctx => ctx.replayAtEnd ? null : "Back to game" };
 // ... and in a multiplayer game, where the game can't be taken back
 const REPLAY_MULTIPLAYER = { button1: "Back to game", button2: null };
 
 // The facts about the position that the prompt and buttons depend on.
 // pcRule: whether the player can declare potential checks (the Settings tab's switch; controller.js pcRule).
-function statusContext(game, state, multiplayer, pcRule) {
+function statusContext(game, state, multiplayer, pcRule, replayAtEnd) {
 	// The checks to describe in the prompt. While the side to move is declaring a potential check, these
 	// describe the side being checked.
 	let checks = { autoCheck: game.autoCheck, potCheck: game.potCheck };
 	if (game.pcKing >= 0 && game.pcColor == oppColor(game.turnColor)) {
 		checks = findChecks(game, game.pcColor);
 	}
+	// The potential check being declared: the king's square and its attackers', e.g. "f1" and ["e2"]
+	const declared = state == "selectPCAttackers" ? findChecks(game, oppColor(game.turnColor)) : null;
 	return {
 		multiplayer,
+		replayAtEnd,
+		pcKing: declared ? coords2text(declared.kingCoords) : "",
+		pcAttackers: declared ? declared.attackerCoords.map(coords2text) : [],
 		checks,
 		result: game.result,
 		toMove: game.turnColor,
 		pcRule,
 		inPotentialCheck: checks.potCheck,
 		canAddPC: pcRule && state == "showCompleteMove" && findPotentialKings(game).length > 0,
-		hasPCAttackers: state == "selectPCAttackers" && findChecks(game, oppColor(game.turnColor)).attackerCoords.length > 0,
+		hasPCAttackers: declared !== null && declared.attackerCoords.length > 0,
 	};
 }
 
@@ -138,7 +148,7 @@ function setButton(button, label) {
 function drawStatus(view) {
 	const game = view.game;
 	const step = STEPS[view.state];
-	const ctx = statusContext(game, view.state, view.multiplayer, view.pcRule);
+	const ctx = statusContext(game, view.state, view.multiplayer, view.pcRule, view.replayNumber * 2 >= view.record.length);
 	const value = v => typeof v == "function" ? v(ctx) : v;
 
 	let heading = promptHeading(game, ctx.checks);
@@ -155,6 +165,9 @@ function drawStatus(view) {
 	const buttons = view.replayNumber > -1 ? (view.multiplayer ? REPLAY_MULTIPLAYER : REPLAY) : step;
 	setButton(dom.sideButton1, value(buttons.button1));
 	setButton(dom.sideButton2, value(buttons.button2));
+	// The same cursors as the board's (style.css 7.2), so the tick and cross on the squares are easy to learn
+	dom.sideButton2.classList.toggle("submitOnClick", buttons === step && dom.sideButton2.innerText == "Submit");
+	dom.sideButton2.classList.toggle("cancelOnClick", buttons === step && dom.sideButton2.innerText == "Cancel");
 
 	dom.stagedMove.textContent = game.thisMove + pcMoveText(game);
 

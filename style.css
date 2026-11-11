@@ -697,6 +697,17 @@ input:checked + .tabTitle {
     color: var(--text-muted);
 }
 
+/* A line can be clicked to show the position after it (history-view.js) */
+.historyLine {
+    cursor: pointer;
+}
+
+@media (hover: hover) {
+    .historyLine:hover {
+        background-color: var(--bg-control);
+    }
+}
+
 /* While replaying, the ply for the position being shown (history-view.js) */
 .historyLine.replayLine {
     background-color: var(--bg-replay-line);

@@ -242,8 +242,12 @@ function sideButton1Action() {
 }
 
 function sideButton2Click() {
-	// Can put extra code here that will only happen when user clicks the button, rather than when the script calls
-	// sideButton2Action() to replicate a user click
+	if (ui.replay > -1) {
+		// When in replay mode (single player), sideButton2 is 'Back to game': the whole record, as it was
+		ui.replay = -1;
+		restoreGameHistory(null);
+		return;
+	}
 	sideButton2Action();
 }
 
@@ -671,6 +675,19 @@ function stepForwardAll() {
 	restoreGameHistory(null, 2*ui.replay);
 }
 
+// Show the position after the ply on line i of the record (a click on a History tab line). The newest line, outside
+// replay, is the game as it is: nothing to do.
+function jumpToPly(i) {
+	if (i < 0 || i >= ui.record.length) {return}
+	if (ui.replay == -1 && i == ui.record.length - 1) {return}
+	if (isMultiplayer() && i == ui.record.length - 1) {
+		exitReplay();
+		return;
+	}
+	ui.replay = (i + 1) / 2;
+	restoreGameHistory(null, i + 1);
+}
+
 // Multiplayer: stop stepping through the history and show the game as it is now
 function exitReplay() {
 	ui.replay = -1;
@@ -966,6 +983,7 @@ export {
 	stepBackMove,
 	stepForwardMove,
 	stepForwardAll,
+	jumpToPly,
 	restoreGameHistory,
 	exportMoves,
 	openImport,

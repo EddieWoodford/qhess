@@ -59,6 +59,11 @@ onClick("back2", () => game.stepBackAll());
 onClick("back1", () => game.stepBackMove());
 onClick("forward1", () => game.stepForwardMove());
 onClick("forward2", () => game.stepForwardAll());
+// A click on a line of the move history shows the position after that ply (history-view.js numbers the lines)
+dom.history.addEventListener("click", e => {
+	const line = e.target.closest(".historyLine");
+	if (line) {game.jumpToPly(Number(line.dataset.ply));}
+});
 
 // History buttons. Wrapped in arrow functions so the click event isn't passed in as an argument
 // (restoreGameHistory, for example, would treat it as the history text).

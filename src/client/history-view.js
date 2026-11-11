@@ -1,7 +1,7 @@
 "use strict";
 
 // The History tab: the game record (one line per ply), the replay step buttons (<< < > >>) and the history
-// buttons (Reset, Export, Import).
+// buttons (Reset, Export, Import). Clicking a line shows the position after that ply (main.js, controller.js jumpToPly).
 
 import { dom, setVisible } from "./dom.js";
 
@@ -34,10 +34,12 @@ function drawRecord(record, replayNumber) {
 	// other reasons (hovering a square, say) leaves the box where the player scrolled it
 	const changed = record !== recordShown;
 	if (changed) {
-		box.replaceChildren(...record.map(line => {
+		box.replaceChildren(...record.map((line, i) => {
 			const el = document.createElement("div");
 			el.className = "historyLine";
 			el.textContent = line;
+			el.dataset.ply = i;
+			el.title = "Show the position after this move";
 			return el;
 		}));
 		recordShown = record;
