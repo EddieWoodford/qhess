@@ -865,9 +865,10 @@ function draw(animate = false) {
 ////////////////////////////////
 // Saved game
 ////////////////////////////////
-// The single-player game's record is kept in this browser (localStorage), so reloading the page carries on with
-// it. Only Reset Game (or loading other moves) replaces it. A multiplayer game isn't saved here: it has its own
-// way back in after a reload (socket-session.js savedSeat), and leaving it returns to the saved game.
+// The single-player game's record is kept in this tab (sessionStorage), so reloading the page carries on with it,
+// but closing the tab forgets it and a new tab starts a new game. Only Reset Game (or loading other moves) replaces
+// it. A multiplayer game isn't saved here: it has its own way back in after a reload (socket-session.js savedSeat),
+// and leaving it returns to the saved game.
 const GAME_STORAGE_KEY = "qhess.game";
 let savedRecord = null; // the record as last saved, so it is only written when it changes
 
@@ -877,7 +878,7 @@ function saveRecord() {
 	if (text === savedRecord) { return; }
 	savedRecord = text;
 	try {
-		localStorage.setItem(GAME_STORAGE_KEY, text);
+		sessionStorage.setItem(GAME_STORAGE_KEY, text);
 	} catch {
 		// The browser won't keep it (e.g. storage is blocked): the game lasts until the page is closed
 	}
@@ -885,7 +886,7 @@ function saveRecord() {
 
 function loadSavedRecord() {
 	try {
-		return localStorage.getItem(GAME_STORAGE_KEY) ?? "";
+		return sessionStorage.getItem(GAME_STORAGE_KEY) ?? "";
 	} catch {
 		return "";
 	}

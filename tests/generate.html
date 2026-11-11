@@ -48,7 +48,7 @@ function loadFrame() {
 		};
 		sessionStorage.removeItem("qhess.multiplayer"); // always single player (see test.html loadGame)
 		localStorage.removeItem("qhess.settings");      // the Settings tab's switches at their defaults
-		localStorage.removeItem("qhess.game");          // a new game, not the one this browser saved
+		sessionStorage.removeItem("qhess.game");        // a new game, not the one this tab saved
 		frame.src = "../index.html?t=" + Date.now();
 	});
 }

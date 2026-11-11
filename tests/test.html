@@ -108,10 +108,10 @@ function loadGame(frameId = "game", keepSeat = false, keepGame = false) {
 		// The Settings tab's switches start at their defaults (the snapshots were recorded with them):
 		// forget any this browser remembers (src/client/settings.js)
 		localStorage.removeItem("qhess.settings");
-		// The single-player game this browser saved would be carried on (controller.js resumeSavedGame): tests
+		// The single-player game this tab saved would be carried on (controller.js resumeSavedGame): tests
 		// start with a new game, unless the test is reloading on purpose (keepGame)
 		if (!keepGame) {
-			localStorage.removeItem("qhess.game");
+			sessionStorage.removeItem("qhess.game");
 		}
 		frame.src = "../index.html?t=" + Date.now();
 	});
@@ -627,7 +627,7 @@ async function runAll(record) {
 			outcome = { status: "fail", problems: [String(err)] };
 		}
 		localStorage.removeItem("qhess.settings"); // don't leave the switch as the check left it
-		localStorage.removeItem("qhess.game");     // nor the game it saved
+		sessionStorage.removeItem("qhess.game");   // nor the game it saved
 		row.className = outcome.status;
 		statusCell.textContent = outcome.status.toUpperCase();
 		const pre = document.createElement("pre");
