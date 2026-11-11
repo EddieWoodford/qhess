@@ -1178,6 +1178,10 @@ input.switch:focus-visible {
     background-color: color-mix(in srgb, var(--piece-selectedStart-col) 60%, transparent);
 }
 
+:root {
+    --chosen-ring: 6px; /* ring width on the chosen start and staged destination squares */
+}
+
 .selectable {
     box-shadow: 0 0 0 3px var(--piece-selectedStart-col) inset;
 }
@@ -1188,16 +1192,16 @@ input.switch:focus-visible {
 }
 
 .selectedStart { /* player has clicked it as the start square */
-    box-shadow: 0 0 0 6px var(--piece-selectedStart-col) inset;
+    box-shadow: 0 0 0 var(--chosen-ring) var(--piece-selectedStart-col) inset;
 }
 
 .selectedStart.checkKing { /* player has clicked a potential king as the start */
     box-shadow: 0 0 0 6px var(--piece-checkKing-col) inset,
-                0 0 0 12px var(--piece-selectedStart-col) inset;
+                0 0 0 calc(6px + var(--chosen-ring)) var(--piece-selectedStart-col) inset;
 }
 
 .selectedEnd { /* player has clicked it as the destination */
-    box-shadow: 0 0 0 6px var(--piece-dest-col) inset;
+    box-shadow: 0 0 0 var(--chosen-ring) var(--piece-dest-col) inset;
 }
 
 .submitOnClick { /* the staged destination: clicking it again submits the move */
@@ -1226,7 +1230,7 @@ input.switch:focus-visible {
 
 .selectedEnd.checkAttacker { /* both of the above */
     box-shadow: 0 0 0 6px var(--piece-checkAttacker-col) inset,
-                0 0 0 12px var(--piece-dest-col) inset;
+                0 0 0 calc(6px + var(--chosen-ring)) var(--piece-dest-col) inset;
 }
 
 
@@ -1509,6 +1513,10 @@ input.switch:focus-visible {
     /* No grey flash over a tapped square: the board's own highlights show what happened */
     .boardsquare {
         -webkit-tap-highlight-color: transparent;
+    }
+    /* Small squares: keep the chosen and staged rings as thin as the side highlight */
+    :root {
+        --chosen-ring: 3px;
     }
 }
 
