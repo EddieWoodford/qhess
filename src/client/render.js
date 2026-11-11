@@ -41,10 +41,12 @@ function render(view) {
 
 // The Settings tab's Potential Check switch: a multiplayer game always uses the rule, so the switch shows it on
 // and can't be changed until the game is over. It shows the player's own choice again afterwards.
+// The Black's view switch: a multiplayer game shows the player's own side at the bottom, so it can't be changed either.
 function drawSettings(view) {
 	const input = dom.settings.potentialCheck;
 	input.disabled = view.multiplayer !== null;
 	input.checked = view.multiplayer !== null ? true : view.pcSetting;
+	dom.settings.blackView.disabled = view.multiplayer !== null;
 }
 
 // Show a message just above the status bar for a few seconds (style.css hides the element while it is empty)

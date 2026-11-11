@@ -362,6 +362,9 @@ async function playMultiplayer(spec, snap) {
 		if (boardFlipped(page) != (multiplayerInfo(page).color == "b")) {
 			problems.push("The " + multiplayerInfo(page).color + " page doesn't have its own side at the bottom");
 		}
+		if (!page.win.document.getElementById("settingBlackView").disabled) {
+			problems.push("The " + multiplayerInfo(page).color + " page's Black's view switch can still be changed");
+		}
 	}
 	let plies = 0;
 	try {
