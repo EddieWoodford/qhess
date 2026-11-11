@@ -13,7 +13,7 @@
         6.2 Side panel
         6.3 Tabs
         6.4 History tab
-        6.5 Captured tab
+        6.5 Captured pieces      (in the History tab)
         6.6 Debug messages
         6.7 Multiplayer tab and badge
         6.8 Info tab
@@ -534,10 +534,10 @@ body {
 
 
 /* ---------- 6.2 Side panel ----------
-   The tabbed menu: History, Captured, Multiplayer, Info and Settings. Fills
+   The tabbed menu: History, Multiplayer, Info and Settings. Fills
    the height of its grid cell (3), or of the screen on tall screens (8).
    The tabs fill the height, and the move history list takes the spare
-   height (6.4). */
+   height (6.4), shared with the captured pieces below it (6.5). */
 .game-control {
     position: relative;  /* for the close button */
     flex: none;
@@ -570,7 +570,7 @@ body {
    To add a tab: add the radio, label and panel in index.html, raise --tabs
    below, and add the radio and panel to "Which panel each tab reveals". */
 .panels {
-    --tabs: 5;  /* the number of tabs */
+    --tabs: 4;  /* the number of tabs */
     flex: 1 1 auto;
     min-height: 0;
     display: grid;
@@ -659,7 +659,6 @@ input:checked + .tabTitle {
 
 /* Which panel each tab reveals */
 #tabHistory:checked ~ #gameMetaTab,
-#tabCaptured:checked ~ #gameCapturedTab,
 #tabMultiplayer:checked ~ #multiplayerTab,
 #tabInfo:checked ~ #infoTab,
 #tabSettings:checked ~ #settingsTab {
@@ -816,13 +815,19 @@ input:checked + .tabTitle {
 }
 
 
-/* ---------- 6.5 Captured tab ---------- */
+/* ---------- 6.5 Captured pieces ----------
+   Under the move history, in the History tab. The history takes most of the
+   spare height; the captured lists grow to at most 40% of the tab, then
+   scroll. */
 .captured-pieces {
+    flex: 0 1 auto;
     display: flex;
     justify-content: space-between;
     gap: var(--gap);
     padding: 0.5em 0;
-    min-height: 0;
+    border-top: 1px solid var(--border-subtle);
+    min-height: 5em;
+    max-height: 40%;
     overflow-x: hidden;
     overflow-y: auto;      /* a long game's list scrolls within the tab */
 }

@@ -19,7 +19,7 @@ function devicePrefersLight() {
 const SETTINGS = {
 	blackView: { default: false, remember: false }, // multiplayer sets it to your own side, so it isn't kept
 	colourByType: { default: true, remember: true },
-	lightMode: { default: devicePrefersLight(), remember: true }, // follows the device until it is switched
+	lightMode: { default: false, remember: true }, // follows the device until it is switched
 	potentialCheck: { default: true, remember: true }, // render.js drawSettings locks it on in a multiplayer game
 	showCoords: { default: false, remember: true },
 };

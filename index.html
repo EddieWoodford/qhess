@@ -253,10 +253,6 @@
                     <label class="tabTitle" for="tabHistory" title="History">
                         <span class="tab-icon" aria-hidden="true">📝</span><span class="tab-name">History</span></label>
 
-                    <input class="hidden" id="tabCaptured" type="radio" name="tabs">
-                    <label class="tabTitle" for="tabCaptured" title="Captured">
-                        <span class="tab-icon" aria-hidden="true">⚔️</span><span class="tab-name">Captured</span></label>
-
                     <input class="hidden" id="tabMultiplayer" type="radio" name="tabs">
                     <label class="tabTitle" for="tabMultiplayer" id="mpTabTitle" title="Multiplayer">
                         <span class="tab-icon" aria-hidden="true">🌐</span><span class="tab-name">Multiplayer</span></label>
@@ -269,7 +265,8 @@
                     <label class="tabTitle" for="tabSettings" title="Settings">
                         <span class="tab-icon" aria-hidden="true">⚙️</span><span class="tab-name">Settings</span></label>
 
-                    <!-- history tab - move history and controls -->
+                    <!-- history tab - move history and controls, and each side's captured pieces. While stepping
+                         through the history, the captured lists show the position being shown. -->
                     <div class="tab-panel" id="gameMetaTab">
                         <div class="button-row history-buttons">
                             <button class="historyButton" id="reset">Reset</button>
@@ -284,16 +281,13 @@
                         </div>
                         <!-- one line per ply: drawn by src/client/history-view.js -->
                         <div class="movehistory" id="movehistory"></div>
-                        <p class="history-note">To save a game, press Export: it copies the moves as text you can
-                            keep anywhere. To carry on later, press Import, paste them in and load them.</p>
-                    </div>
-
-                    <!-- captured tab - each side's captured pieces (src/client/panels-view.js) -->
-                    <div class="tab-panel" id="gameCapturedTab">
+                        <!-- each side's captured pieces: drawn by src/client/panels-view.js -->
                         <div class="captured-pieces">
                             <div class="column" id="whitecaptured"><strong>White Captured</strong></div>
                             <div class="column" id="blackcaptured"><strong>Black Captured</strong></div>
                         </div>
+                        <p class="history-note">To save a game, press Export: it copies the moves as text you can
+                            keep anywhere. To carry on later, press Import, paste them in and load them.</p>
                     </div>
 
                     <!-- multiplayer tab - start or join a game against a friend (src/client/multiplayer-view.js) -->

@@ -30,7 +30,7 @@ const dom = {
 	importText: $("importText"), // the Edit / Import dialog's text box
 	importError: $("importError"), // ... and why its moves couldn't be loaded
 
-	// Captured tab
+	// History tab: the captured pieces
 	whiteCaptured: $("whitecaptured"),
 	blackCaptured: $("blackcaptured"),
 

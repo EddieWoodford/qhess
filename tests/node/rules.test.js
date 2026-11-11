@@ -82,7 +82,7 @@ test("a promoted pawn could be a queen, rook, knight, or the bishop for its squa
 	const piece = at(state, "h8");
 	assert.equal(piece.promoted, 1);
 	assert.equal(piece.waves(), "QBNR");
-	assert.equal(piece.wavesWithBishopColor(), "QBbNR"); // (the Captured tab shows the bishop's square from this)
+	assert.equal(piece.wavesWithBishopColor(), "QBbNR"); // (the captured pieces list shows the bishop's square from this)
 	assert.match(state.thisMove, /h7h8\(P\)=\(QRNB\)/);
 	// It is still counted as the pawn it was, so the army adds up
 	assert.deepEqual(piece.options.slice(8), [0, 0, 0, 0, 0, 0, 0, 0]);

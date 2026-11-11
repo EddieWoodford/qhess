@@ -1,6 +1,7 @@
 "use strict";
 
-// The Captured tab: each side's captured pieces.
+// Each side's captured pieces, under the move history in the History tab. Drawn from the position being shown, so
+// while stepping through the history they are the pieces captured by then.
 
 import { glyphHTML } from "./glyphs.js";
 import { dom } from "./dom.js";

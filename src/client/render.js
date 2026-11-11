@@ -5,7 +5,7 @@
 //   board-view.js    the board's squares, pieces and highlights
 //   status-view.js   the status bar under the board: prompt, staged move and the two side buttons
 //   history-view.js  the History tab
-//   panels-view.js   the Captured tab
+//   panels-view.js   the captured pieces (in the History tab)
 //   multiplayer-view.js  the Multiplayer tab
 // and dom.js finds the page's elements for them.
 
