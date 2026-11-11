@@ -1161,13 +1161,22 @@ input.switch:focus-visible {
     padding: 0;
 }
 
+
 .whitesquare {
     background-color: var(--board-white-col);
+    .glyph-bB, .glyph-wB {
+        text-decoration: underline white 6px;
+    }
 }
 
 .blacksquare {
     background-color: var(--board-black-col);
+    .glyph-bB, .glyph-wB {
+        text-decoration: underline black 6px;
+    }
 }
+
+
 
 
 /* ---------- 7.2 Square states ----------
