@@ -112,6 +112,7 @@
     --board-white-col: #555;                /* darkened 'white' squares */
     --board-black-col: #222;                /* darker black squares */
     --board-edge-col: #111;                 /* coordinate labels and corners */
+    --board-square-border: black;           /* the line around each square */
     --piece-selectedStart-col: #a87c2a;     /* dark amber */
     --piece-dest-col: #4f8f5a;              /* green */
     --piece-checkKing-col: #7a1f1f;         /* dark oxblood */
@@ -145,9 +146,10 @@
 
 
 /* Light mode (Settings tab; main.js sets data-theme="light" on <html>).
-   Only the page around the board changes: the board, its pieces and the game
-   over colours stay as they are, as the piece colours are chosen to show up
-   on dark squares. */
+   The board turns light too, so the pieces get deeper colours: each is at
+   least 3.5:1 against both squares, as the white pieces' outline symbols are
+   thin. Each type keeps its hue from dark mode. The highlight colours and the
+   game over banner stay as they are. */
 :root[data-theme="light"] {
     color-scheme: light;
 
@@ -185,6 +187,26 @@
 
     --shadow-button: 0 2px 4px #0003;
     --shadow-button-hover: 0 4px 8px #0004;
+
+    --board-white-col: #ece4d2;             /* cream */
+    --board-black-col: #d2c6aa;             /* sand */
+    --board-edge-col: #e0d6c0;
+    --board-square-border: #9c9077;
+
+    --piece-wK: #7a5600;                    /* dark gold */
+    --piece-wQ: #b0105f;                    /* raspberry */
+    --piece-wR: #1257b0;                    /* blue */
+    --piece-wB: #b0300a;                    /* rust */
+    --piece-wN: #8f4700;                    /* burnt orange */
+    --piece-wP: #1b6e20;                    /* green */
+    --piece-bK: #6b5800;                    /* olive */
+    --piece-bQ: #7b1fa2;                    /* purple */
+    --piece-bR: #0b5e86;                    /* teal blue */
+    --piece-bB: #a3221a;                    /* brick */
+    --piece-bN: #8a4526;                    /* sienna */
+    --piece-bP: #2d6630;                    /* forest green */
+    --piece-white-side: #a34700;            /* amber */
+    --piece-black-side: #1f2430;            /* ink */
 }
 
 
@@ -1212,7 +1234,7 @@ input.switch:focus-visible {
     color: white;
     width: 3em;
     height: 3em;
-    border: black solid 1px;
+    border: var(--board-square-border) solid 1px;
     font-family: var(--font-mono);
     line-height: 1;
     text-align: center;
@@ -1393,6 +1415,12 @@ input.switch:focus-visible {
 .glyph-bB { color: var(--piece-bB); }
 .glyph-bN { color: var(--piece-bN); }
 .glyph-bP { color: var(--piece-bP); }
+
+/* Light mode: the white pieces' outline symbols are thin lines, which fade on
+   a light square, so thicken them with a shadow of their own colour */
+:root[data-theme="light"] :is(.glyph-wK, .glyph-wQ, .glyph-wR, .glyph-wB, .glyph-wN, .glyph-wP) {
+    text-shadow: 0 0 0.6px currentColor, 0 0 0.6px currentColor;
+}
 
 /* "Colour pieces by type" switched off (Settings tab; main.js puts .side-colours
    on <body>): every piece is its side's colour, so the sides are easier to
