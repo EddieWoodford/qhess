@@ -14,6 +14,7 @@
 //     " O-O" / " O-O-O"  castled towards the h-file / the a-file
 //   +             optional: automatic check
 //   <e8+ e4 h5>   optional: potential check on the king at e8, by the attackers on e4 and h5
+// On checkmate, the "+" of the check that mates is written "#" instead: "...e4(QR)#" or "<e8# e4 h5>".
 // Black's move 0 has no move: "0b. ", or "0b. <e2+ e7>" with a potential check.
 
 import { coordstext2coords } from "./utils.js";
@@ -71,10 +72,10 @@ function parseMoveText(moveText) {
 		move.notAKing = coordstext2coords(notAKing[1].trim());
 		rest = rest.slice(notAKing.index + notAKing[0].length);
 	}
-	// "<e8+ e4 h5>": potential check. The first square is the king, the rest are attackers.
+	// "<e8+ e4 h5>" (or "<e8# e4 h5>"): potential check. The first square is the king, the rest are attackers.
 	const pc = /<([^>]*)>?/.exec(rest);
 	if (pc) {
-		const [king, ...attackers] = pc[1].replaceAll("+", " ").trim().split(/\s+/);
+		const [king, ...attackers] = pc[1].replace(/[+#]/g, " ").trim().split(/\s+/);
 		move.pcKing = coordstext2coords(king);
 		move.pcAttackers = attackers.map(coordstext2coords);
 		rest = rest.slice(0, pc.index);

@@ -99,4 +99,4 @@
 49b. (QR)c1c4(QR)
 50w. (B)a6xc4(B)+
 50b. (K)g8h8(K)
-51w. (B)d6xe5(B)+<h8+ e5>
+51w. (B)d6xe5(B)#<h8+ e5>

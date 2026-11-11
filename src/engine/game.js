@@ -277,10 +277,9 @@ function endTurn(state) {
 		state.pcColor = "";
 	}
 
-	if (state.history.length > 0) {
-		state.history = state.history + "\r\n";
-	}
-	state.history = state.history + state.thisMove + pcMoveText(state);
+	// The ply is added to the history once the result is known, below, as checkmate changes its check mark
+	const moveText = state.thisMove;
+	const pcText = pcMoveText(state);
 
 	if (state.takenPiece !== null) {
 		state.takenPiece.captured = state.turnNumber;
@@ -300,6 +299,23 @@ function endTurn(state) {
 	state.thisMove = state.turnNumber.toString() + state.turnColor + ". ";
 	refreshChecks(state, state.turnColor);
 	state.result = gameResult(state);
+
+	if (state.history.length > 0) {
+		state.history = state.history + "\r\n";
+	}
+	state.history = state.history + checkmateText(moveText, pcText, state);
+}
+
+// The ply as written in the history. On checkmate, the "+" of the check that mates becomes "#": the automatic
+// check's "...e5(B)#", or else the potential check's "<h8# e5>".
+function checkmateText(moveText, pcText, state) {
+	if (state.result != "checkmate") {
+		return moveText + pcText;
+	}
+	if (state.autoCheck && moveText.endsWith("+")) {
+		return moveText.slice(0, -1) + "#" + pcText;
+	}
+	return moveText + pcText.replace("+", "#");
 }
 
 // Could the piece on `from` move to `to` without leaving its side in check, for some answer to any question

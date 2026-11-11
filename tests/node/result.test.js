@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { createInitialState } from "../../src/engine/state.js";
 import { applyMove, refreshChecks, gameResult, hasLegalTurn } from "../../src/engine/game.js";
 import { coordstext2coords as sq } from "../../src/engine/utils.js";
-import { exampleGames, moveFromLine } from "./helpers.js";
+import { exampleGames, moveFromLine, move } from "./helpers.js";
 
 // Option indexes for each type (see constants.js)
 const IDS = { P: [0, 1, 2, 3, 4, 5, 6, 7], R: [8, 9], N: [10, 11], B: [12, 13], Q: [14], K: [15] };
@@ -74,6 +74,19 @@ test("blocking the check is a way out", () => {
 	assert.equal(gameResult(state), null);
 	const noBlocker = position("b", { w: { a1: "R", c7: "Q", h1: "K" }, b: { a8: "K" } });
 	assert.equal(gameResult(noBlocker), "checkmate");
+});
+
+test("the mating move is written with # in place of +", () => {
+	// The queen goes to b7, guarded by the king on c6: the black king on a8 has nowhere to go
+	const state = position("w", { w: { b1: "Q", c6: "K" }, b: { a8: "K" } });
+	assert.deepEqual(applyMove(state, move("b1", "b7")), { ok: true });
+	assert.equal(state.result, "checkmate");
+	assert.equal(state.history, "30w. (Q)b1b7(Q)#");
+	// A check that isn't mate keeps its +
+	const check = position("w", { w: { b1: "Q", h1: "K" }, b: { a8: "K" } });
+	assert.deepEqual(applyMove(check, move("b1", "b7")), { ok: true });
+	assert.equal(check.result, null);
+	assert.equal(check.history, "30w. (Q)b1b7(Q)+");
 });
 
 test("Black's move 0 always has a legal turn", () => {

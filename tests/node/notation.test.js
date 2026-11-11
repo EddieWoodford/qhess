@@ -45,6 +45,9 @@ test("a ply is read into a move", () => {
 	assert.equal(parseMoveText("3w. (QRP)e5xd6(P) e.p.").enPassant, true);
 	assert.equal(parseMoveText("54w. (P)h7h8(P)=(QRNB)+<h2+ h8>").promotion, true);
 	assert.equal(parseMoveText("5w. (KQBNRP)e1c1(K) O-O-O").castle, true);
+	// Checkmate: "#" in place of "+"
+	const mate = parseMoveText("51w. (B)d6xe5(B)#<h8# e5>");
+	assert.deepEqual([mate.from, mate.to, mate.pcKing, mate.pcAttackers], [sq("d6"), sq("e5"), sq("h8"), [sq("e5")]]);
 });
 
 test("a ply typed by hand is read too", () => {
