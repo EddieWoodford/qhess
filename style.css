@@ -95,8 +95,8 @@
     --gap: 0.5rem;                                /* padding around and between the page areas */
 
     /* ---- Board colours ---- */
-    --board-white-col: #555;                /* darkened 'white' squares */
-    --board-black-col: #222;                /* darker black squares */
+    --board-white-col: #663;                /* darkened 'white' squares */
+    --board-black-col: #336;                /* darker black squares */
     --board-edge-col: #111;                 /* coordinate labels and corners */
     --piece-selectedStart-col: #a87c2a;     /* dark amber */
     --piece-dest-col: #4f8f5a;              /* green */
@@ -1319,10 +1319,25 @@ input.switch:focus-visible {
    their possibilities in a 3 x 2 grid at the square's own size; "collapsed"
    means only one possibility is left, so it is drawn large. */
 .whitepiececollapsed, .blackpiececollapsed {
-    font-size: 2.7em;
+    font-size: 2.2em;
 }
 
 /* Each piece symbol's colour (glyphs.js glyphHTML): glyph-{colour}{type} */
+.glyph {
+    border-radius: 1em;
+    padding: 0 0.1em;
+    margin: 0.3em 0.05em;
+    box-shadow: 1px 1px 3px black;
+    line-height: 1.4em;
+}
+.glyph-w {
+    background-color: #FFF3;
+    border: 1px solid white; 
+}
+.glyph-b {
+    background-color: #0003;
+    border: 1px solid black; 
+}
 .glyph-wK { color: var(--piece-wK); }
 .glyph-wQ { color: var(--piece-wQ); }
 .glyph-wR { color: var(--piece-wR); }
