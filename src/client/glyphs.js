@@ -10,7 +10,7 @@ const SYMBOLS = {
 
 // HTML for one piece symbol: wave is the type ("K", "Q", ...), color is "w" or "b"
 function glyphHTML(wave, color) {
-	return '<span class="glyph glyph-' + color + wave + '">' + SYMBOLS[color][wave] + '</span>';
+	return '<span class="glyph glyph-' + color + ' glyph-' + color + wave + '">' + SYMBOLS[color][wave] + '</span>';
 }
 
 // HTML for a piece with the given waves (e.g. "KQRP") and color ("w"/"b"):
