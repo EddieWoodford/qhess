@@ -144,6 +144,9 @@ check (counting declaring "Not a King" first, when they are in potential check).
 - **Checkmate**: they are in check or in potential check. The other side wins.
 - **Stalemate**: they are not in check. The game is drawn.
 
+You can also **surrender** on your turn, before you have made your move: the Submit button reads
+**Surrender** until a move is staged. After you confirm, the other side wins.
+
 The board then locks. There are no other draw rules (no 50-move rule or repetition).
 
 ## 7. Learning mode
@@ -173,3 +176,4 @@ Each line of the History tab is one move, for example:
 | `+` | Check |
 | `<e8+ e4 h5>` | Potential check on the piece on e8, by the pieces on e4 and h5 |
 | `#` | Checkmate: written in place of the `+` of the check that mates (`...e4(QR)#`, or `<e8# e4 h5>`) |
+| `resigns` | That side surrendered, as a line of its own (`12w. resigns`) |
