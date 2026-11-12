@@ -4,6 +4,7 @@
 
    CONTENTS
      1. Design tokens
+        1.1 Board themes        (the Theme dialog's choices)
      2. Base elements
      3. Page layout              (the grid: change layouts here and in 8)
      4. Menu button
@@ -108,10 +109,8 @@
     --button-height: 2.5em;
     --gap: 0.5rem;                                /* padding around and between the page areas */
 
-    /* ---- Board colours ---- */
-    --board-white-col: #a98;                /* darkened 'white' squares */
-    --board-black-col: #654;                /* darker black squares */
-    --board-edge-col: #111;                 /* coordinate labels and corners */
+    /* ---- Board colours (the squares' own colours come from the theme: 1.1) ---- */
+    --board-edge-col: #111;                /* coordinate labels and corners */
     --board-square-border: black;           /* the line around each square */
     --piece-selectedStart-col: #a87c2a;     /* dark amber */
     --piece-dest-col: #4f8f5a;              /* green */
@@ -136,8 +135,7 @@
     --piece-bB: #FF6347;                    /* tomato */
     --piece-bN: #FFA07A;                    /* light salmon */
     --piece-bP: #90EE90;                    /* light green */
-    /* One colour per side, when "Colour pieces by type" is switched off (7.4) */
-    --piece-white-side: #FFFFFF;            /* white */
+    /* Black's one colour when "Colour pieces by type" is switched off (7.4); White's comes from the theme (1.1) */
     --piece-black-side: #E8743B;            /* copper */
 
     /* ---- Status ---- */
@@ -188,8 +186,6 @@
     --shadow-button: 0 2px 4px #0003;
     --shadow-button-hover: 0 4px 8px #0004;
 
-    --board-white-col: #ece4d2;             /* cream */
-    --board-black-col: #d2c6aa;             /* sand */
     --board-edge-col: #e0d6c0;
     --board-square-border: #9c9077;
 
@@ -205,8 +201,81 @@
     --piece-bB: #a3221a;                    /* brick */
     --piece-bN: #8a4526;                    /* sienna */
     --piece-bP: #2d6630;                    /* forest green */
-    --piece-white-side: #a34700;            /* amber */
     --piece-black-side: #1f2430;            /* ink */
+}
+
+
+/* ---------- 1.1 Board themes ----------
+   The Theme dialog (Settings tab) picks one; main.js puts it on <html> as
+   data-board-theme, and each preview in the dialog carries its own.
+   A theme is only these variables, so a preview inside the page shows its own
+   theme, not the page's: every theme must set every one of them, in both
+   light and dark. (initial unsets one, so the property inherits as usual.)
+     --board-white-col / --board-black-col   the squares
+     --piece-white-side                      White's colour with "Colour pieces by type" off
+     --white-K ... --white-P                 White's symbols (Black's are always filled)
+     --glyph-*                               the box drawn round each piece symbol
+     --collapsed-size                        a piece with one type left
+     --bishop-on-light / --bishop-on-dark    a bishop's text-decoration, by its square
+   To add a theme: a dark block and a light block here, and a line in themes.js. */
+:root {
+    --outline-K: "\2654"; --outline-Q: "\2655"; --outline-R: "\2656";
+    --outline-B: "\2657"; --outline-N: "\2658"; --outline-P: "\2659";
+    --filled-K: "\265A"; --filled-Q: "\265B"; --filled-R: "\265C";
+    --filled-B: "\265D"; --filled-N: "\265E"; --filled-P: "\265F";
+}
+
+/* Classic: grey squares, White's pieces drawn in outline */
+[data-board-theme="classic"] {
+    --board-white-col: #555;                /* darkened 'white' squares */
+    --board-black-col: #222;                /* darker black squares */
+    --piece-white-side: #F4EBD0;            /* ivory */
+    --white-K: var(--outline-K); --white-Q: var(--outline-Q); --white-R: var(--outline-R);
+    --white-B: var(--outline-B); --white-N: var(--outline-N); --white-P: var(--outline-P);
+    --glyph-w-bg: transparent;
+    --glyph-b-bg: transparent;
+    --glyph-radius: 0;
+    --glyph-padding: 0;
+    --glyph-margin: 0;
+    --glyph-shadow: none;
+    --glyph-line-height: initial;
+    --collapsed-size: 2.7em;
+    --bishop-on-light: none;
+    --bishop-on-dark: none;
+}
+
+:root[data-theme="light"][data-board-theme="classic"],
+:root[data-theme="light"] [data-board-theme="classic"] {
+    --board-white-col: #ece4d2;             /* cream */
+    --board-black-col: #d2c6aa;             /* sand */
+    --piece-white-side: #a34700;            /* amber */
+}
+
+/* Pillbox: brown squares, every symbol filled, on a light or dark pill by
+   side, and bishops underlined in their square's colour */
+[data-board-theme="pillbox"] {
+    --board-white-col: #a98;
+    --board-black-col: #654;
+    --piece-white-side: #FFFFFF;            /* white */
+    --white-K: var(--filled-K); --white-Q: var(--filled-Q); --white-R: var(--filled-R);
+    --white-B: var(--filled-B); --white-N: var(--filled-N); --white-P: var(--filled-P);
+    --glyph-w-bg: #FFF6;
+    --glyph-b-bg: #0006;
+    --glyph-radius: 1em;
+    --glyph-padding: 0 0.1em;
+    --glyph-margin: 0.3em 0.05em;
+    --glyph-shadow: 1px 1px 3px black;
+    --glyph-line-height: 1.4em;
+    --collapsed-size: 2.2em;
+    --bishop-on-light: underline #FFF9 0.1em;
+    --bishop-on-dark: underline #0009 0.1em;
+}
+
+:root[data-theme="light"][data-board-theme="pillbox"],
+:root[data-theme="light"] [data-board-theme="pillbox"] {
+    --board-white-col: #ece4d2;             /* cream */
+    --board-black-col: #d2c6aa;             /* sand */
+    --piece-white-side: #a34700;            /* amber */
 }
 
 
@@ -709,6 +778,53 @@ input:checked + .tabTitle {
     max-width: 28em;
 }
 
+/* The Theme dialog (from the Settings tab): Light mode, then a row per theme
+   (themes.js): its button, and a light and a dark square drawn in that theme */
+.modalData.theme {
+    max-width: 28em;
+    text-align: left;
+}
+
+.modalData.theme h2 {
+    margin-top: 0;
+}
+
+.theme-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75em;
+    margin: 1em 0;
+}
+
+.theme-option {
+    display: flex;
+    align-items: center;
+    gap: 1em;
+}
+
+.theme-button {
+    flex: 1 1 auto;
+}
+
+/* The chosen theme */
+.theme-button[aria-pressed="true"] {
+    background-color: var(--accent);
+    color: var(--text-strong);
+}
+
+/* At this font size a square (3em) is about as big as on a small board */
+.theme-preview {
+    display: flex;
+    flex: none;
+    font-size: 1.3em;
+}
+
+.theme-square {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /* The Rules dialog (from the Info tab): reads like a page of text, so left aligned */
 .modalData.rules {
     text-align: left;
@@ -1148,6 +1264,11 @@ p.mp-problem {
     color: var(--text-muted);
 }
 
+/* A setting opened with a button (Theme), not a switch: only the button is clickable */
+div.setting {
+    cursor: default;
+}
+
 /* Reset to defaults, under the switches */
 .settings-buttons {
     margin-top: 0.75em;
@@ -1256,19 +1377,20 @@ input.switch:focus-visible {
 
 .whitesquare {
     background-color: var(--board-white-col);
-    .glyph-bB, .glyph-wB {
-        text-decoration:  underline #FFF9 0.1em;
-    }
 }
 
 .blacksquare {
     background-color: var(--board-black-col);
-    .glyph-bB, .glyph-wB {
-        text-decoration: underline #0009 0.1em;
-    }
 }
 
+/* Bishops, marked (or not) by the theme (1.1) with their square's colour */
+.whitesquare :is(.glyph-wB, .glyph-bB) {
+    text-decoration: var(--bishop-on-light);
+}
 
+.blacksquare :is(.glyph-wB, .glyph-bB) {
+    text-decoration: var(--bishop-on-dark);
+}
 
 
 /* ---------- 7.2 Square states ----------
@@ -1420,25 +1542,34 @@ input.switch:focus-visible {
    their possibilities in a 3 x 2 grid at the square's own size; "collapsed"
    means only one possibility is left, so it is drawn large. */
 .whitepiececollapsed, .blackpiececollapsed {
-    font-size: 2.2em;
+    font-size: var(--collapsed-size);
 }
 
-/* Each piece symbol's colour (glyphs.js glyphHTML): glyph-{colour}{type} */
+/* Each piece symbol (glyphs.js glyphHTML): <span class="glyph glyph-{colour} glyph-{colour}{type}">.
+   The theme (1.1) gives the box round it and White's symbols; the rules below give the colours. */
 .glyph {
-    border-radius: 1em;
-    padding: 0 0.1em;
-    margin: 0.3em 0.05em;
-    box-shadow: 1px 1px 3px black;
-    line-height: 1.4em;
+    border-radius: var(--glyph-radius);
+    padding: var(--glyph-padding);
+    margin: var(--glyph-margin);
+    box-shadow: var(--glyph-shadow);
+    line-height: var(--glyph-line-height);
 }
-.glyph-w {
-    background-color: #FFF6;
-    border: 0px solid white; 
-}
-.glyph-b {
-    background-color: #0006;
-    border: 0px solid black; 
-}
+.glyph-w { background-color: var(--glyph-w-bg); }
+.glyph-b { background-color: var(--glyph-b-bg); }
+
+.glyph-wK::before { content: var(--white-K); }
+.glyph-wQ::before { content: var(--white-Q); }
+.glyph-wR::before { content: var(--white-R); }
+.glyph-wB::before { content: var(--white-B); }
+.glyph-wN::before { content: var(--white-N); }
+.glyph-wP::before { content: var(--white-P); }
+.glyph-bK::before { content: var(--filled-K); }
+.glyph-bQ::before { content: var(--filled-Q); }
+.glyph-bR::before { content: var(--filled-R); }
+.glyph-bB::before { content: var(--filled-B); }
+.glyph-bN::before { content: var(--filled-N); }
+.glyph-bP::before { content: var(--filled-P); }
+
 .glyph-wK { color: var(--piece-wK); }
 .glyph-wQ { color: var(--piece-wQ); }
 .glyph-wR { color: var(--piece-wR); }
@@ -1454,27 +1585,16 @@ input.switch:focus-visible {
 
 /* Light mode: the white pieces' outline symbols are thin lines, which fade on
    a light square, so thicken them with a shadow of their own colour */
-:root[data-theme="light"] :is(.glyph-wK, .glyph-wQ, .glyph-wR, .glyph-wB, .glyph-wN, .glyph-wP) {
+:root[data-theme="light"] .glyph-w {
     text-shadow: 0 0 0.6px currentColor, 0 0 0.6px currentColor;
 }
 
 /* "Colour pieces by type" switched off (Settings tab; main.js puts .side-colours
    on <body>): every piece is its side's colour, so the sides are easier to
-   tell apart. */
-.side-colours {
-    --piece-wK: var(--piece-white-side);
-    --piece-wQ: var(--piece-white-side);
-    --piece-wR: var(--piece-white-side);
-    --piece-wB: var(--piece-white-side);
-    --piece-wN: var(--piece-white-side);
-    --piece-wP: var(--piece-white-side);
-    --piece-bK: var(--piece-black-side);
-    --piece-bQ: var(--piece-black-side);
-    --piece-bR: var(--piece-black-side);
-    --piece-bB: var(--piece-black-side);
-    --piece-bN: var(--piece-black-side);
-    --piece-bP: var(--piece-black-side);
-}
+   tell apart. Set on the symbol itself, so it takes White's colour from the
+   theme it is drawn in (1.1). */
+.side-colours .glyph-w { color: var(--piece-white-side); }
+.side-colours .glyph-b { color: var(--piece-black-side); }
 
 /* ---------- 7.5 Move animation ----------
    board-view.js slides a copy of a moving piece (a "ghost") from its old

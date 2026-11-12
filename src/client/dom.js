@@ -64,6 +64,7 @@ const dom = {
 		lightMode: $("settingLightMode"),
 		potentialCheck: $("settingPotentialCheck"),
 		showCoords: $("settingShowCoords"),
+		theme: $("themeList"), // the Theme dialog's buttons, one per theme (themes.js buildThemeList)
 	},
 
 	debug: $("debug"),

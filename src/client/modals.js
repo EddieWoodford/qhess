@@ -1,10 +1,11 @@
 "use strict";
 
-// Show/hide the modals: Edit / Import (from the History tab), Rules (from the Info tab), and the choice dialog below.
+// Show/hide the modals: Edit / Import (from the History tab), Rules (from the Info tab), Theme (from the Settings tab),
+// and the choice dialog below.
 // Each modal is a full-screen wrapper (click it to close) holding a content box (clicks inside don't close it),
 // opened by the button with id name + "Button".
 
-const MODALS = ["import", "rules"];
+const MODALS = ["import", "rules", "theme"];
 
 function showModal(name) {
 	document.getElementById(name + "Wrapper").style.display = "block";

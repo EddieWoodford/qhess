@@ -7,6 +7,7 @@ import * as game from "./controller.js";
 import { setFlippedBoard } from "./board-view.js";
 import { setupModals, showModal, hideModal, showChoice } from "./modals.js";
 import { setupSettings, resetSettings } from "./settings.js";
+import { buildThemeList } from "./themes.js";
 import { dom } from "./dom.js";
 import { normalizeCode } from "../shared/protocol.js";
 import { wakeServer } from "./server-address.js";
@@ -22,7 +23,8 @@ function onClick(id, handler) {
 
 setupModals();
 
-// Settings tab: what each switch does (settings.js)
+// Settings tab: what each switch does (settings.js). The Theme dialog's list is filled first, to show the theme on.
+buildThemeList(dom.settings.theme);
 setupSettings({
 	blackView: on => setFlippedBoard(on),
 	// Off: each side's pieces all in one colour (style.css 7.4 .side-colours)
@@ -32,6 +34,8 @@ setupSettings({
 	potentialCheck: on => game.setPotentialCheckRule(on),
 	// The file letters and rank numbers around the board (style.css 7.4)
 	showCoords: on => dom.board.classList.toggle("show-coords", on),
+	// The squares' colours and how the pieces are drawn (style.css 1.1)
+	theme: id => document.documentElement.dataset.boardTheme = id,
 });
 
 // Side panel: hidden until the menu button (☰) opens it.
@@ -118,6 +122,9 @@ onClick("importCancel", () => hideModal("import"));
 
 // Settings tab: every setting back to its default (Light mode follows the device again)
 onClick("settingsReset", () => resetSettings());
+
+// Theme dialog (modals.js opens it from the Settings tab)
+onClick("themeClose", () => hideModal("theme"));
 
 // Rules dialog (modals.js opens it from the Info tab)
 onClick("rulesClose", () => hideModal("rules"));
