@@ -1257,14 +1257,14 @@ input.switch:focus-visible {
 .whitesquare {
     background-color: var(--board-white-col);
     .glyph-bB, .glyph-wB {
-        text-decoration: underline white 6px;
+        text-decoration:  underline #FFF9 0.1em;
     }
 }
 
 .blacksquare {
     background-color: var(--board-black-col);
     .glyph-bB, .glyph-wB {
-        text-decoration: underline black 6px;
+        text-decoration: underline #0009 0.1em;
     }
 }
 
