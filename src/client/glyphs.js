@@ -4,7 +4,10 @@
 // Each symbol is a <span class="glyph glyph-{color}{type}">, e.g. glyph-wQ; style.css (section 7.4) colours them.
 
 const SYMBOLS = {
-	w: { K: "&#9812;", Q: "&#9813;", R: "&#9814;", B: "&#9815;", N: "&#9816;", P: "&#9817;" },
+// "white" unicode characters for pieces are outline. 
+//	w: { K: "&#9812;", Q: "&#9813;", R: "&#9814;", B: "&#9815;", N: "&#9816;", P: "&#9817;" },
+// "black" characters are filled in. We use them for both sides, and CSS style the difference
+	w: { K: "&#9818;", Q: "&#9819;", R: "&#9820;", B: "&#9821;", N: "&#9822;", P: "&#9823;" },
 	b: { K: "&#9818;", Q: "&#9819;", R: "&#9820;", B: "&#9821;", N: "&#9822;", P: "&#9823;" },
 };
 
