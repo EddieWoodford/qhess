@@ -37,7 +37,7 @@ const MIME = {
 // such as the server's own code, .git and node_modules, is refused. A path must start with one of these exactly as
 // written: on Windows other spellings reach the same file (".GIT", or the short name "GIT~1"), so a list of what
 // to hide can't be relied on.
-const PUBLIC = ["index.html", "style.css", "src", "tests", "example_games"];
+const PUBLIC = ["index.html", "style.css", "favicon.svg", "src", "tests", "example_games"];
 
 // The only file a browser may write: the test page's "Record new snapshots" saves it. Only from this computer
 // (the server is open to the whole network), only JSON, and only up to this size.
