@@ -93,14 +93,15 @@ const STEPS = {
 };
 
 // While stepping through the history, the buttons are replaced by this: play on from the position shown (the later
-// moves are dropped), or go back to the game as it was. At the newest move the two would be the same.
-const REPLAY = { button1: "Resume from here", button2: ctx => ctx.replayAtEnd ? null : "Back to game" };
+// moves are dropped), or go back to the game as it was. At the newest move the two do the same, but both stay, so
+// the way back to the game is always where it was.
+const REPLAY = { button1: "Resume from here", button2: "Back to game" };
 // ... and in a multiplayer game, where the game can't be taken back
 const REPLAY_MULTIPLAYER = { button1: "Back to game", button2: null };
 
 // The facts about the position that the prompt and buttons depend on.
 // pcRule: whether the player can declare potential checks (the Settings tab's switch; controller.js pcRule).
-function statusContext(game, state, multiplayer, pcRule, replayAtEnd) {
+function statusContext(game, state, multiplayer, pcRule) {
 	// The checks to describe in the prompt. While the side to move is declaring a potential check, these
 	// describe the side being checked.
 	let checks = { autoCheck: game.autoCheck, potCheck: game.potCheck };
@@ -113,7 +114,6 @@ function statusContext(game, state, multiplayer, pcRule, replayAtEnd) {
 	const intoCheck = state == "invalidMoveIntoCheck" ? findChecks(game, game.turnColor) : null;
 	return {
 		multiplayer,
-		replayAtEnd,
 		intoCheckKing: intoCheck ? coords2text(intoCheck.kingCoords) : "",
 		intoCheckAttackers: intoCheck ? intoCheck.attackerCoords.map(coords2text) : [],
 		pcKing: declared ? coords2text(declared.kingCoords) : "",
@@ -155,7 +155,7 @@ function setButton(button, label) {
 function drawStatus(view) {
 	const game = view.game;
 	const step = STEPS[view.state];
-	const ctx = statusContext(game, view.state, view.multiplayer, view.pcRule, view.replayNumber * 2 >= view.record.length);
+	const ctx = statusContext(game, view.state, view.multiplayer, view.pcRule);
 	const value = v => typeof v == "function" ? v(ctx) : v;
 
 	let heading = promptHeading(game, ctx.checks);

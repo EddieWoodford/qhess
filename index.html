@@ -195,13 +195,15 @@
             </div>
         </div>
     </div>
-    <!-- choice modal - en passant / promotion questions during a move (src/client/modals.js showChoice) -->
+    <!-- choice modal - en passant / promotion questions during a move, and Reset's "export first?"
+         (src/client/modals.js showChoice) -->
     <div id="choiceWrapper" class="modalWrapper">
         <div id="choiceDiv" class="modalData choice">
             <p id="choiceText"></p>
             <div class="button-row">
                 <button class="historyButton" id="choiceYes"></button>
                 <button class="historyButton" id="choiceNo"></button>
+                <button class="historyButton" id="choiceCancel" hidden></button>
             </div>
         </div>
     </div>
@@ -289,7 +291,7 @@
                         </div>
                         <div class="button-row history-buttons">
                             <button class="historyButton" id="reset"
-                                    title="Start a new game. The moves so far are lost, so Export them first to keep them.">Reset</button>
+                                    title="Start a new game. If this game hasn't been exported, it asks whether to Export it first.">Reset</button>
                             <button class="historyButton" id="exportButton"
                                     title="Save this game: copies the moves as text you can keep anywhere. To carry on later, Import them.">Export</button>
                             <button class="historyButton" id="importButton"
@@ -398,7 +400,8 @@
                             <span class="setting-text">
                                 <span class="setting-name">Light mode</span>
                                 <span class="setting-note">Light colours around the board. Off: dark. Until it
-                                    is switched, it follows the device's own setting.</span>
+                                    is switched (or after Reset to defaults), it follows the device's own
+                                    setting.</span>
                             </span>
                             <input class="switch" id="settingLightMode" type="checkbox" role="switch">
                         </label>
@@ -418,6 +421,10 @@
                             </span>
                             <input class="switch" id="settingShowCoords" type="checkbox" role="switch">
                         </label>
+                        <div class="button-row settings-buttons">
+                            <button class="historyButton" id="settingsReset"
+                                    title="Put every setting back to how it started. Light mode follows the device's own setting again.">Reset to defaults</button>
+                        </div>
                     </div>
                 </div>
             </div>

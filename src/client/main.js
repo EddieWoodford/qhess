@@ -5,8 +5,8 @@
 
 import * as game from "./controller.js";
 import { setFlippedBoard } from "./board-view.js";
-import { setupModals, showModal, hideModal } from "./modals.js";
-import { setupSettings } from "./settings.js";
+import { setupModals, showModal, hideModal, showChoice } from "./modals.js";
+import { setupSettings, resetSettings } from "./settings.js";
 import { dom } from "./dom.js";
 import { normalizeCode } from "../shared/protocol.js";
 import { wakeServer } from "./server-address.js";
@@ -67,22 +67,43 @@ dom.history.addEventListener("click", e => {
 
 // History buttons. Wrapped in arrow functions so the click event isn't passed in as an argument
 // (restoreGameHistory, for example, would treat it as the history text).
-onClick("reset", () => game.newGame());
 
 // Export copies the moves, and says so on the button for a moment. Where the page can't use the clipboard,
-// it opens the Edit / Import dialog with the moves selected instead, to copy by hand.
+// it opens the Edit / Import dialog with the moves selected instead, to copy by hand. Resolves to whether it copied.
 const EXPORT_LABEL = dom.exportButton.textContent;
 let exportTimer;
-onClick("exportButton", async () => {
+async function exportGame() {
 	if (await game.exportMoves()) {
 		dom.exportButton.textContent = "Copied ✓";
 		clearTimeout(exportTimer);
 		exportTimer = setTimeout(() => { dom.exportButton.textContent = EXPORT_LABEL; }, 1500);
-	} else {
-		game.openImport();
-		showModal("import");
-		dom.importText.select();
+		return true;
 	}
+	game.openImport();
+	showModal("import");
+	dom.importText.select();
+	return false;
+}
+onClick("exportButton", () => exportGame());
+
+// Reset starts a new game. If this game's moves haven't been exported, it asks first: export and reset, reset
+// anyway, or keep playing. If the moves can't be copied, the Edit / Import dialog opens to copy them by hand, and
+// the game isn't reset.
+onClick("reset", () => {
+	if (!game.hasUnexportedMoves()) {
+		game.newGame();
+		return;
+	}
+	showChoice({
+		text: "This game hasn't been exported, so its moves will be lost. Export it first?",
+		yes: "Export, then reset",
+		no: "Reset without exporting",
+		cancel: "Keep playing",
+	}, async answer => {
+		if (answer === null) { return; }
+		if (answer && !(await exportGame())) { return; }
+		game.newGame();
+	});
 });
 
 // Edit / Import dialog (modals.js opens it; this fills it with the current moves first)
@@ -94,6 +115,9 @@ onClick("importLoad", () => {
 	if (problem === null) { hideModal("import"); }
 });
 onClick("importCancel", () => hideModal("import"));
+
+// Settings tab: every setting back to its default (Light mode follows the device again)
+onClick("settingsReset", () => resetSettings());
 
 // Rules dialog (modals.js opens it from the Info tab)
 onClick("rulesClose", () => hideModal("rules"));

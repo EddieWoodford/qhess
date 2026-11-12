@@ -1148,6 +1148,11 @@ p.mp-problem {
     color: var(--text-muted);
 }
 
+/* Reset to defaults, under the switches */
+.settings-buttons {
+    margin-top: 0.75em;
+}
+
 /* A checkbox drawn as a sliding switch: a track with a knob that moves
    right, and turns the accent colour, when it is on */
 input.switch {

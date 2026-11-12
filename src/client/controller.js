@@ -598,6 +598,7 @@ function doMoveFromText(moveText) {
 async function exportMoves() {
 	try {
 		await navigator.clipboard.writeText(ui.record.join("\r\n"));
+		markExported();
 		return true;
 	} catch {
 		return false;
@@ -901,6 +902,31 @@ function saveRecord() {
 	}
 }
 
+// The record as last exported (kept in this tab, like the saved game, so a reload remembers it). Reset only asks
+// about exporting a game whose moves haven't been.
+const EXPORTED_STORAGE_KEY = "qhess.exported";
+
+function markExported() {
+	try {
+		sessionStorage.setItem(EXPORTED_STORAGE_KEY, ui.record.join("\n"));
+	} catch {
+		// The browser won't keep it: Reset will ask again
+	}
+}
+
+// Whether Reset would lose moves that haven't been exported: the game has moves beyond an empty Black's move 0,
+// and they aren't what was last exported. Always false in a multiplayer game, which can't be reset.
+function hasUnexportedMoves() {
+	if (isMultiplayer()) { return false; }
+	const text = ui.record.join("\n");
+	if (text.trim() == "" || text.trim() == "0b.") { return false; }
+	try {
+		return sessionStorage.getItem(EXPORTED_STORAGE_KEY) !== text;
+	} catch {
+		return true;
+	}
+}
+
 function loadSavedRecord() {
 	try {
 		return sessionStorage.getItem(GAME_STORAGE_KEY) ?? "";
@@ -986,6 +1012,7 @@ export {
 	jumpToPly,
 	restoreGameHistory,
 	exportMoves,
+	hasUnexportedMoves,
 	openImport,
 	importMoves,
 	startMultiplayer,
