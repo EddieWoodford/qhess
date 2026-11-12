@@ -3,7 +3,7 @@
 // The status bar under the board: the prompt (whose turn it is and what to do next), the staged move's
 // notation, and the two side buttons.
 
-import { oppColor } from "../engine/state.js";
+import { oppColor, getPieces } from "../engine/state.js";
 import { findChecks, findPotentialKings } from "../engine/check.js";
 import { pcMoveText } from "../engine/game.js";
 import { coords2text } from "../engine/utils.js";
@@ -20,20 +20,21 @@ const STEPS = {
 		button1: ctx => ctx.pcRule ? "Add PC" : null,
 		button2: "Pass to white",
 	},
+	// Until a move is staged, the Submit button's place offers Surrender instead
 	clear: {
 		prompt: "Select piece to move",
 		button1: ctx => ctx.inPotentialCheck ? "Declare 'Not a King'" : null,
-		button2: null,
+		button2: "Surrender",
 	},
 	highlightPotentialMoves: {
 		prompt: "Select piece to move",
 		button1: null,
-		button2: null,
+		button2: "Surrender",
 	},
 	showPartialMove: {
 		prompt: "Select destination",
 		button1: null,
-		button2: null,
+		button2: "Surrender",
 	},
 	showCompleteMove: {
 		prompt: ctx => ctx.canAddPC ? "Add Potential Check / Submit" : "Submit",
@@ -61,11 +62,11 @@ const STEPS = {
 		button1: null,
 		button2: ctx => ctx.hasPCAttackers ? "Submit" : null, // once at least one attacker is chosen
 	},
-	// Checkmate or stalemate
+	// Checkmate, stalemate or surrender. The side to move is the one that lost.
 	gameOver: {
-		prompt: ctx => ctx.result == "checkmate"
-			? "Checkmate: " + (ctx.toMove == "w" ? "Black" : "White") + " wins"
-			: "Stalemate: the game is a draw",
+		prompt: ctx => ctx.result == "stalemate"
+			? "Stalemate: the game is a draw"
+			: (ctx.result == "resigned" ? "Surrendered" : "Checkmate") + ": " + (ctx.toMove == "w" ? "Black" : "White") + " wins",
 		button1: null,
 		button2: null,
 	},
@@ -123,9 +124,16 @@ function statusContext(game, state, multiplayer, pcRule) {
 		toMove: game.turnColor,
 		pcRule,
 		inPotentialCheck: checks.potCheck,
-		canAddPC: pcRule && state == "showCompleteMove" && findPotentialKings(game).length > 0,
+		canAddPC: pcRule && state == "showCompleteMove" && !hasCollapsedKing(game, oppColor(game.turnColor))
+			&& findPotentialKings(game).length > 0,
 		hasPCAttackers: declared !== null && declared.attackerCoords.length > 0,
 	};
+}
+
+// Has `color` a piece on the board known to be its king? Then there is no Add PC against it (the engine would
+// still accept a potential check on it, as older game records have them).
+function hasCollapsedKing(game, color) {
+	return getPieces(game, color).some(p => p.captured == -1 && p.waves() == "K");
 }
 
 // The start of the prompt: whose turn it is, and any check against them, e.g. "White · Check"
@@ -194,12 +202,12 @@ function drawGameOver(view) {
 	const show = view.state == "gameOver" && view.replayNumber == -1 && game.history !== gameOverDismissed;
 	dom.gameOver.hidden = !show;
 	if (!show) { return; }
-	const checkmate = game.result == "checkmate";
+	const won = game.result != "stalemate"; // checkmate or surrender: the side to move lost
 	dom.gameOver.dataset.history = game.history;
-	dom.gameOver.classList.toggle("checkmate", checkmate);
-	dom.gameOver.classList.toggle("draw", !checkmate);
-	dom.gameOverTitle.textContent = checkmate ? "Checkmate" : "Draw";
-	dom.gameOverDetail.textContent = checkmate ? (game.turnColor == "w" ? "Black" : "White") + " wins" : "Stalemate";
+	dom.gameOver.classList.toggle("checkmate", won);
+	dom.gameOver.classList.toggle("draw", !won);
+	dom.gameOverTitle.textContent = game.result == "resigned" ? "Surrender" : won ? "Checkmate" : "Draw";
+	dom.gameOverDetail.textContent = won ? (game.turnColor == "w" ? "Black" : "White") + " wins" : "Stalemate";
 }
 
 // The line above the prompt in a multiplayer game: the code, your colour, and how the connections are

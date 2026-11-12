@@ -183,6 +183,20 @@ test("moves out of turn, illegal moves and junk are rejected, and the game carri
 	await playLine(players, lines, 1, snaps.games[games[0].name]);
 });
 
+test("a surrender ends the game for both players, and nothing can follow it", async () => {
+	const { lines } = games[0];
+	const players = await newGame("w");
+	await playLine(players, lines, 0);
+	await playLine(players, lines, 1);
+	const msg = await playLine(players, ["", "", "1b. resigns"], 2);
+	assert.equal(msg.move.resign, true);
+	for (const p of [players.w, players.b]) {
+		assert.equal(p.state.result, "resigned");
+		assert.equal(historyAsLines(p.state.history)[2], "1b. resigns");
+	}
+	assert.match((await players.b.request({ type: "move", seq: 3, move: moveFromLine(lines[2]) }, "rejected")).error, /over/);
+});
+
 test("nobody can move before the second player joins", async () => {
 	const c = await client("alone");
 	await c.request({ type: "create", color: "b" }, "welcome");

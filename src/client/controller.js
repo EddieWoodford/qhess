@@ -258,6 +258,27 @@ function sideButton2Action() {
 	} else if (ui.state == "invalidMoveIntoCheck") {
 		cancelTurn();
 		setState("clear");
+	} else if (["clear", "highlightPotentialMoves", "showPartialMove"].includes(ui.state)) {
+		surrender();
+	}
+}
+
+// Before a move is staged, the Submit button is Surrender. Asks first; a surrender is a turn of its own.
+const SURRENDER_CHOICE = { text: "Surrender the game? Your opponent wins.", yes: "Surrender", no: "Keep playing" };
+function surrender() {
+	const onAnswer = yes => {
+		if (!yes || game.result || !["clear", "highlightPotentialMoves", "showPartialMove"].includes(ui.state)) {
+			return; // changed its mind, or the game moved on while the dialog was open
+		}
+		cancelTurn();
+		turnMove.resign = true;
+		submitMove();
+		setState("clear");
+	};
+	if (choiceHandler) {
+		onAnswer(choiceHandler(SURRENDER_CHOICE.text));
+	} else {
+		showChoice(SURRENDER_CHOICE, onAnswer);
 	}
 }
 

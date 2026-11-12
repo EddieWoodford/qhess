@@ -6,7 +6,7 @@
 // Every message is one JSON object with a "type". Only moves cross the network, never game states: both
 // sides replay the same moves with the same engine (src/engine), so they arrive at the same position.
 // A move is plain data in the shape of notation.js parseMoveText (without "turn"):
-//   { notAKing, from, to, enPassant, promotion, castle, pcKing, pcAttackers }
+//   { notAKing, from, to, enPassant, promotion, castle, pcKing, pcAttackers, resign }
 //
 // Browser -> server
 //   { type: "create", color: "w" | "b" | "random" }   start a game; the server picks a join code

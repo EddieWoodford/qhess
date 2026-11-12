@@ -16,6 +16,7 @@
 //   <e8+ e4 h5>   optional: potential check on the king at e8, by the attackers on e4 and h5
 // On checkmate, the "+" of the check that mates is written "#" instead: "...e4(QR)#" or "<e8# e4 h5>".
 // Black's move 0 has no move: "0b. ", or "0b. <e2+ e7>" with a potential check.
+// A surrender is a ply of its own: "12w. resigns".
 
 import { coordstext2coords } from "./utils.js";
 
@@ -45,6 +46,7 @@ function getHistoryLines(historyText) {
 //   castle:      true/false
 //   pcKing:      [r,c] of the potential-check king, or null
 //   pcAttackers: list of [r,c] of the potential-check attackers
+//   resign:      true if the ply is a surrender (then nothing else is set)
 // }
 // It never throws. A square that can't be read comes out as something that isn't a square (such as [NaN, NaN]),
 // which game.js applyMove then refuses.
@@ -64,7 +66,11 @@ function parseMoveText(moveText) {
 		castle: rest.includes("O-O"),
 		pcKing: null,
 		pcAttackers: [],
+		resign: /^\s*resigns\b/.test(rest),
 	};
+	if (move.resign) {
+		return move;
+	}
 
 	// "[d2]": "Not a King" declaration
 	const notAKing = /\[([^\]]*)\]?/.exec(rest);

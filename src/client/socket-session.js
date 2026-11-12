@@ -454,6 +454,7 @@ function plainMove(move) {
 		castle: move.castle === true,
 		pcKing: move.pcKing ?? null,
 		pcAttackers: (move.pcAttackers ?? []).map(a => [a[0], a[1]]),
+		resign: move.resign === true,
 	};
 }
 

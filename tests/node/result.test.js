@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { createInitialState } from "../../src/engine/state.js";
 import { applyMove, refreshChecks, gameResult, hasLegalTurn } from "../../src/engine/game.js";
 import { coordstext2coords as sq } from "../../src/engine/utils.js";
-import { exampleGames, moveFromLine, move } from "./helpers.js";
+import { exampleGames, moveFromLine, move, historyAsLines } from "./helpers.js";
 
 // Option indexes for each type (see constants.js)
 const IDS = { P: [0, 1, 2, 3, 4, 5, 6, 7], R: [8, 9], N: [10, 11], B: [12, 13], Q: [14], K: [15] };
@@ -87,6 +87,16 @@ test("the mating move is written with # in place of +", () => {
 	assert.deepEqual(applyMove(check, move("b1", "b7")), { ok: true });
 	assert.equal(check.result, null);
 	assert.equal(check.history, "30w. (Q)b1b7(Q)+");
+});
+
+test("a surrender ends the game: the side to move loses, it is written down, and replays the same", () => {
+	const state = createInitialState();
+	assert.deepEqual(applyMove(state, moveFromLine("0b. ")), { ok: true });
+	assert.deepEqual(applyMove(state, moveFromLine("1w. resigns")), { ok: true });
+	assert.equal(state.result, "resigned");
+	assert.equal(state.turnColor, "w"); // White surrendered: Black wins
+	assert.deepEqual(historyAsLines(state.history), ["0b.", "1w. resigns"]);
+	assert.deepEqual(applyMove(state, moveFromLine("1w. (KQBNRP)e2e4(QRP)")), { ok: false, error: "the game is over" });
 });
 
 test("Black's move 0 always has a legal turn", () => {

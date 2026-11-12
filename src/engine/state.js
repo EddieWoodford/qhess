@@ -14,7 +14,8 @@
 //   pcColor:     colour of that king, or ""
 //   takenPiece:  the Piece captured by the move being made, or null
 //   autoCheck, potCheck: result of the most recent check search (see check.js)
-//   result:      null while the game goes on; "checkmate" or "stalemate" once the side to move has no legal turn
+//   result:      null while the game goes on; "checkmate" or "stalemate" once the side to move has no legal turn,
+//                or "resigned" once the side to move has surrendered
 // }
 
 import { Piece } from "./piece.js";

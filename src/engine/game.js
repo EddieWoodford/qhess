@@ -11,6 +11,8 @@
 // applyMove(state, move) runs a whole turn from parsed notation (see notation.js parseMoveText).
 // After each turn, endTurn sets state.result: "checkmate" or "stalemate" if the side now to move has no legal
 // turn (see gameResult), otherwise null. Once it is set, no more moves can be made.
+// A turn can instead be a surrender (move.resign): result "resigned", written "12w. resigns". The side to move
+// stays the one that surrendered, so as with checkmate, the side to move is the side that lost.
 
 import { isequal, ismember, coords2text, isSquare } from "./utils.js";
 import { cloneState, oppColor, getPieces, defPiece, attPiece } from "./state.js";
@@ -419,6 +421,11 @@ function playTurn(state, move, choices) {
 	const problem = malformed(move);
 	if (problem) {
 		return { ok: false, error: problem };
+	}
+	if (move.resign) {
+		state.result = "resigned";
+		state.history = state.history + (state.history.length > 0 ? "\r\n" : "") + state.thisMove.trim() + " resigns";
+		return { ok: true };
 	}
 	if (move.notAKing) {
 		const result = declareNotAKing(state);

@@ -36,6 +36,7 @@ function cleanMove(move) {
 		castle: move.castle === true,
 		pcKing: coordOrNull(move.pcKing),
 		pcAttackers: [],
+		resign: move.resign === true,
 	};
 	if (Object.values(clean).includes(undefined)) { return null; }
 	const attackers = move.pcAttackers ?? [];

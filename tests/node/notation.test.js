@@ -34,11 +34,11 @@ test("empty text has no plies; text without turn labels is one ply, kept so it c
 test("a ply is read into a move", () => {
 	assert.deepEqual(parseMoveText("12w. [d2](KQRP)e2xe4(QR)+<e8+ e4 h5>"), {
 		turn: "12w", notAKing: sq("d2"), from: sq("e2"), to: sq("e4"),
-		enPassant: false, promotion: false, castle: false, pcKing: sq("e8"), pcAttackers: [sq("e4"), sq("h5")],
+		enPassant: false, promotion: false, castle: false, pcKing: sq("e8"), pcAttackers: [sq("e4"), sq("h5")], resign: false,
 	});
 	assert.deepEqual(parseMoveText("0b. "), {
 		turn: "0b", notAKing: null, from: null, to: null,
-		enPassant: false, promotion: false, castle: false, pcKing: null, pcAttackers: [],
+		enPassant: false, promotion: false, castle: false, pcKing: null, pcAttackers: [], resign: false,
 	});
 	const move0 = parseMoveText("0b. <e2+ e7>");
 	assert.deepEqual([move0.from, move0.pcKing, move0.pcAttackers], [null, sq("e2"), [sq("e7")]]);
@@ -48,6 +48,9 @@ test("a ply is read into a move", () => {
 	// Checkmate: "#" in place of "+"
 	const mate = parseMoveText("51w. (B)d6xe5(B)#<h8# e5>");
 	assert.deepEqual([mate.from, mate.to, mate.pcKing, mate.pcAttackers], [sq("d6"), sq("e5"), sq("h8"), [sq("e5")]]);
+	// Surrender
+	assert.equal(parseMoveText("12w. resigns").resign, true);
+	assert.equal(parseMoveText("12w. (KQBNRP)e2e4(QRP)").resign, false);
 });
 
 test("a ply typed by hand is read too", () => {

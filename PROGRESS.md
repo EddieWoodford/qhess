@@ -3,6 +3,14 @@
 Compact notes for whoever works on this next. Tests: `npm test` (node only; the browser UI has no automated tests,
 check it with the `qhess` preview in `.claude/launch.json`).
 
+## Surrender, and no Add PC on a known king (2026-11-13)
+- Until a move is staged (clear / highlightPotentialMoves / showPartialMove), sideButton2 reads **Surrender**;
+  it asks first (choice dialog), then submits a turn `{ resign: true }`. Not offered at Black's move 0.
+- Engine: a resign turn sets `state.result = "resigned"`, writes the ply `12w. resigns`, and does not pass the turn,
+  so (as with checkmate) the side to move lost. parseMoveText reads it back; server cleanMove and plainMove carry it.
+- Add PC is hidden once the opponent has a collapsed (pure "K") king on the board: status-view `hasCollapsedKing`.
+  UI only: the engine still accepts a PC on a known king, because example game records contain such PCs.
+
 ## Board themes (2026-11-13)
 - Settings tab has a **Theme** button (top of the tab) opening the Theme dialog (`#themeWrapper`): the Light mode and
   Colour pieces by type switches, then one
