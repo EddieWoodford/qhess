@@ -1589,7 +1589,7 @@ input.switch:focus-visible {
     text-shadow: 0 0 0.6px currentColor, 0 0 0.6px currentColor;
 }
 
-/* "Colour pieces by type" switched off (Settings tab; main.js puts .side-colours
+/* "Colour pieces by type" switched off (Theme dialog; main.js puts .side-colours
    on <body>): every piece is its side's colour, so the sides are easier to
    tell apart. Set on the symbol itself, so it takes White's colour from the
    theme it is drawn in (1.1). */

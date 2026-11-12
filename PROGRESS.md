@@ -4,7 +4,8 @@ Compact notes for whoever works on this next. Tests: `npm test` (node only; the 
 check it with the `qhess` preview in `.claude/launch.json`).
 
 ## Board themes (2026-11-13)
-- Settings tab has a **Theme** button opening the Theme dialog (`#themeWrapper`): the Light mode switch, then one
+- Settings tab has a **Theme** button (top of the tab) opening the Theme dialog (`#themeWrapper`): the Light mode and
+  Colour pieces by type switches, then one
   button per theme with a light and a dark example square drawn in that theme.
 - Themes: `classic` (the look before PRs #8/#9: grey squares, White in outline symbols) and `pillbox` (PRs #8/#9:
   brown squares, filled symbols on pills, bishops underlined). Default `pillbox`.

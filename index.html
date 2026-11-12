@@ -210,7 +210,7 @@
             </div>
         </div>
     </div>
-    <!-- theme modal - from the Settings tab: Light mode, and the board themes (src/client/themes.js fills the list,
+    <!-- theme modal - from the Settings tab: Light mode, Colour pieces by type, and the board themes (src/client/themes.js fills the list,
          settings.js shows which is chosen) -->
     <div id="themeWrapper" class="modalWrapper">
         <div id="themeDiv" class="modalData theme">
@@ -222,6 +222,15 @@
                         is switched (or after Reset to defaults), it follows the device's own setting.</span>
                 </span>
                 <input class="switch" id="settingLightMode" type="checkbox" role="switch">
+            </label>
+            <label class="setting">
+                <span class="setting-text">
+                    <span class="setting-name">Colour pieces by type</span>
+                    <span class="setting-note">Each type of piece in its own colour, to spot every piece
+                        that could still be, say, a bishop. Off: one colour per side, to tell the
+                        sides apart.</span>
+                </span>
+                <input class="switch" id="settingColourByType" type="checkbox" role="switch">
             </label>
             <div class="theme-list" id="themeList"></div>
             <div class="button-row">
@@ -401,6 +410,14 @@
                          Each is a .setting label around its text and a checkbox drawn as a switch (style.css 6.9).
                          src/client/settings.js says how to add one. -->
                     <div class="tab-panel settings-tab" id="settingsTab">
+                        <div class="setting">
+                            <span class="setting-text">
+                                <span class="setting-name">Theme</span>
+                                <span class="setting-note">The colours of the board and pieces, Light mode,
+                                    and Colour pieces by type.</span>
+                            </span>
+                            <button class="historyButton" id="themeButton">Theme</button>
+                        </div>
                         <label class="setting">
                             <span class="setting-text">
                                 <span class="setting-name">Black's view</span>
@@ -409,23 +426,6 @@
                             </span>
                             <input class="switch" id="settingBlackView" type="checkbox" role="switch">
                         </label>
-                        <label class="setting">
-                            <span class="setting-text">
-                                <span class="setting-name">Colour pieces by type</span>
-                                <span class="setting-note">Each type of piece in its own colour, to spot every piece
-                                    that could still be, say, a bishop. Off: one colour per side, to tell the
-                                    sides apart.</span>
-                            </span>
-                            <input class="switch" id="settingColourByType" type="checkbox" role="switch">
-                        </label>
-                        <div class="setting">
-                            <span class="setting-text">
-                                <span class="setting-name">Theme</span>
-                                <span class="setting-note">The colours of the board and pieces, and Light
-                                    mode.</span>
-                            </span>
-                            <button class="historyButton" id="themeButton">Theme</button>
-                        </div>
                         <label class="setting">
                             <span class="setting-text">
                                 <span class="setting-name">Potential Check</span>

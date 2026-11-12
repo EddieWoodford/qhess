@@ -2,7 +2,7 @@
 
 // The Settings tab: one switch (a checkbox in index.html) per setting, and a button to put them all back to default.
 // The board theme is a setting too, chosen from a list of buttons (themes.js) in the Theme dialog, along with the
-// Light mode switch.
+// Light mode and Colour pieces by type switches.
 //
 // To add a setting: add its switch in index.html (see the comment there) and in dom.js settings, add it to
 // SETTINGS below, and give main.js setupSettings what to do when it changes.
