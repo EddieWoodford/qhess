@@ -41,7 +41,10 @@ const STEPS = {
 		button2: "Submit",
 	},
 	invalidMoveIntoCheck: {
-		prompt: "Invalid - moved into check",
+		// Names the squares, e.g. "Invalid - moved into check: e2 attacking f1"
+		prompt: ctx => "Invalid - moved into check" + (ctx.intoCheckAttackers.length > 0
+			? ": " + ctx.intoCheckAttackers.join(", ") + " attacking " + ctx.intoCheckKing
+			: ""),
 		button1: null,
 		button2: "Cancel",
 	},
@@ -106,9 +109,13 @@ function statusContext(game, state, multiplayer, pcRule, replayAtEnd) {
 	}
 	// The potential check being declared: the king's square and its attackers', e.g. "f1" and ["e2"]
 	const declared = state == "selectPCAttackers" ? findChecks(game, oppColor(game.turnColor)) : null;
+	// The check the mover has walked into: their king's square and its attackers'
+	const intoCheck = state == "invalidMoveIntoCheck" ? findChecks(game, game.turnColor) : null;
 	return {
 		multiplayer,
 		replayAtEnd,
+		intoCheckKing: intoCheck ? coords2text(intoCheck.kingCoords) : "",
+		intoCheckAttackers: intoCheck ? intoCheck.attackerCoords.map(coords2text) : [],
 		pcKing: declared ? coords2text(declared.kingCoords) : "",
 		pcAttackers: declared ? declared.attackerCoords.map(coords2text) : [],
 		checks,
