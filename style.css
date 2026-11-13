@@ -778,6 +778,12 @@ input:checked + .tabTitle {
     max-width: 28em;
 }
 
+/* Its labels can be long ("Reset without exporting"): let them wrap and the buttons grow to fit */
+.modalData.choice .button-row > button {
+    height: auto;
+    min-height: var(--button-height);
+}
+
 /* The Theme dialog (from the Settings tab): Light mode, then a row per theme
    (themes.js): its button, and a light and a dark square drawn in that theme */
 .modalData.theme {
