@@ -171,9 +171,10 @@ onClick("mpShareLink", () => {
 // A page opened as localhost makes its join links with this computer's network address instead
 networkHost().then(setNetworkHost);
 onClick("mpLeave", () => {
-	if (confirm("Leave this game? It ends the game for your opponent too.")) {
-		game.leaveMultiplayer();
-	}
+	showChoice({ text: "Leave this game? It ends the game for your opponent too.", yes: "Leave game", no: "Stay" },
+		leave => {
+			if (leave) { game.leaveMultiplayer(); }
+		});
 });
 onClick("mpBack", () => game.backToSinglePlayer());
 
