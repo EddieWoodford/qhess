@@ -263,12 +263,12 @@
     --white-B: var(--filled-B); --white-N: var(--filled-N); --white-P: var(--filled-P);
     --glyph-w-bg: #FFF6;
     --glyph-b-bg: #0006;
-    --glyph-radius: 1em;
-    --glyph-padding: 0 0.1em;
-    --glyph-margin: 0.3em 0.05em;
+    --glyph-radius: 0.25em;                 /* rounded boxes, each filling its cell of the square */
+    --glyph-padding: 0;
+    --glyph-margin: 2px;
     --glyph-shadow: 1px 1px 3px black;
-    --glyph-line-height: 1.4em;
-    --uncollapsed-size: 0.75em;             /* a pill (symbol + padding + margin) is 1.3em: three fit in a 3em square */
+    --glyph-line-height: 1;
+    --uncollapsed-size: 0.9em;
     --collapsed-size: 2.2em;
     --bishop-on-light: underline #FFF9 0.1em;
     --bishop-on-dark: underline #0009 0.1em;
@@ -1548,10 +1548,22 @@ input.switch:focus-visible {
 }
 
 /* Piece text inside a square (see glyphs.js). Uncollapsed pieces show all
-   their possibilities in a 3 x 2 grid at the square's own size; "collapsed"
+   their possibilities in a 3 x 2 grid filling the square; "collapsed"
    means only one possibility is left, so it is drawn large. */
+.whitepiece, .blackpiece,
+.whitepiececollapsed, .blackpiececollapsed {
+    display: grid;
+    width: 100%;
+    height: 100%;
+}
+
 .whitepiece, .blackpiece {
+    grid-template: repeat(2, 1fr) / repeat(3, 1fr);
     font-size: var(--uncollapsed-size);
+}
+
+.whitepiece br, .blackpiece br {
+    display: none;  /* the grid makes the rows */
 }
 
 .whitepiececollapsed, .blackpiececollapsed {
@@ -1561,6 +1573,11 @@ input.switch:focus-visible {
 /* Each piece symbol (glyphs.js glyphHTML): <span class="glyph glyph-{colour} glyph-{colour}{type}">.
    The theme (1.1) gives the box round it and White's symbols; the rules below give the colours. */
 .glyph {
+    display: flex;              /* fills its grid cell, symbol centred */
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 0;
     border-radius: var(--glyph-radius);
     padding: var(--glyph-padding);
     margin: var(--glyph-margin);
