@@ -28,6 +28,9 @@ check it with the `qhess` preview in `.claude/launch.json`).
 
 ## Known, not fixed (from the review of PRs #8/#9)
 - Pillbox: same symbol shapes for both sides, so with colours by type the sides are told apart mainly by the pill.
+  Since 2026-11-17 the pills are solid and set per mode (dark: warm umber / cool near-black behind the bright palette;
+  light: ivory / cool grey behind the deep palette), every piece colour at least ~3.6:1 on its pill. In dark mode the
+  two sides' pills are close in lightness (warm vs cool is the main cue).
 - (Fixed 2026-11-17: pills overflowed squares. Piece divs are now a CSS grid filling the square (3x2 uncollapsed, 1
   cell collapsed; the `<br>` is hidden) and each `.glyph` is a flex box filling its cell, so pillbox draws rounded
   rectangles that tile the square. `--uncollapsed-size` sets the uncollapsed symbol size per theme.)

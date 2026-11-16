@@ -250,16 +250,18 @@
     --piece-white-side: #a34700;            /* amber */
 }
 
-/* Pillbox: brown squares, every symbol filled, on a light or dark pill by
-   side */
+/* Pillbox: brown squares, every symbol filled, on a solid box per side.
+   The boxes suit each mode's piece colours (1): dark boxes behind dark mode's
+   bright colours, light boxes behind light mode's deep ones. White's box is
+   warm and lighter, Black's cool and darker, so the sides stay apart. */
 [data-board-theme="pillbox"] {
     --board-white-col: #a98;
     --board-black-col: #654;
     --piece-white-side: #FFFFFF;            /* white */
     --white-K: var(--filled-K); --white-Q: var(--filled-Q); --white-R: var(--filled-R);
     --white-B: var(--filled-B); --white-N: var(--filled-N); --white-P: var(--filled-P);
-    --glyph-w-bg: #FFF6;
-    --glyph-b-bg: #0006;
+    --glyph-w-bg: #3a3029;                  /* warm umber */
+    --glyph-b-bg: #121418;                  /* cool near-black */
     --glyph-radius: 0.25em;                 /* rounded boxes, each filling its cell of the square */
     --glyph-padding: 0;
     --glyph-margin: 2px;
@@ -274,6 +276,9 @@
     --board-white-col: #ece4d2;             /* cream */
     --board-black-col: #d2c6aa;             /* sand */
     --piece-white-side: #a34700;            /* amber */
+    --glyph-w-bg: #fffaf0;                  /* ivory */
+    --glyph-b-bg: #c4c8d2;                  /* cool grey */
+    --glyph-shadow: 0 1px 2px #0005;
 }
 
 
