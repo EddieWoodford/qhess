@@ -253,15 +253,17 @@
 /* Pillbox: brown squares, every symbol filled, on a solid box per side.
    The boxes suit each mode's piece colours (1): dark boxes behind dark mode's
    bright colours, light boxes behind light mode's deep ones. White's box is
-   warm and lighter, Black's cool and darker, so the sides stay apart. */
+   warm and lighter, Black's cool and darker, so the sides stay apart (in
+   dark mode mostly by hue: a lighter White box costs its blue and red
+   pieces their contrast). */
 [data-board-theme="pillbox"] {
     --board-white-col: #a98;
     --board-black-col: #654;
     --piece-white-side: #FFFFFF;            /* white */
     --white-K: var(--filled-K); --white-Q: var(--filled-Q); --white-R: var(--filled-R);
     --white-B: var(--filled-B); --white-N: var(--filled-N); --white-P: var(--filled-P);
-    --glyph-w-bg: #3a3029;                  /* warm umber */
-    --glyph-b-bg: #121418;                  /* cool near-black */
+    --glyph-w-bg: #4f3a26;                  /* warm brown */
+    --glyph-b-bg: #121a2a;                  /* navy */
     --glyph-radius: 0.25em;                 /* rounded boxes, each filling its cell of the square */
     --glyph-padding: 0;
     --glyph-margin: 2px;
