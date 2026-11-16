@@ -27,5 +27,7 @@ check it with the `qhess` preview in `.claude/launch.json`).
 
 ## Known, not fixed (from the review of PRs #8/#9)
 - Pillbox: same symbol shapes for both sides, so with colours by type the sides are told apart mainly by the pill.
-- Pillbox: the light-square bishop underline is near invisible in light mode; pills overflow small squares.
+- Pillbox: the light-square bishop underline is near invisible in light mode.
+- (Fixed 2026-11-17: pills overflowed squares. Theme variable `--uncollapsed-size` shrinks uncollapsed symbols; 0.75em
+  in pillbox so three 1.3em pills fit a 3em square.)
 - Bishop marker differs between the board (underline) and the captured list (small swatch).

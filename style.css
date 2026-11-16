@@ -215,6 +215,7 @@
      --piece-white-side                      White's colour with "Colour pieces by type" off
      --white-K ... --white-P                 White's symbols (Black's are always filled)
      --glyph-*                               the box drawn round each piece symbol
+     --uncollapsed-size                      the symbols of a piece with several types left
      --collapsed-size                        a piece with one type left
      --bishop-on-light / --bishop-on-dark    a bishop's text-decoration, by its square
    To add a theme: a dark block and a light block here, and a line in themes.js. */
@@ -239,6 +240,7 @@
     --glyph-margin: 0;
     --glyph-shadow: none;
     --glyph-line-height: initial;
+    --uncollapsed-size: 1em;
     --collapsed-size: 2.7em;
     --bishop-on-light: none;
     --bishop-on-dark: none;
@@ -266,6 +268,7 @@
     --glyph-margin: 0.3em 0.05em;
     --glyph-shadow: 1px 1px 3px black;
     --glyph-line-height: 1.4em;
+    --uncollapsed-size: 0.75em;             /* a pill (symbol + padding + margin) is 1.3em: three fit in a 3em square */
     --collapsed-size: 2.2em;
     --bishop-on-light: underline #FFF9 0.1em;
     --bishop-on-dark: underline #0009 0.1em;
@@ -1547,6 +1550,10 @@ input.switch:focus-visible {
 /* Piece text inside a square (see glyphs.js). Uncollapsed pieces show all
    their possibilities in a 3 x 2 grid at the square's own size; "collapsed"
    means only one possibility is left, so it is drawn large. */
+.whitepiece, .blackpiece {
+    font-size: var(--uncollapsed-size);
+}
+
 .whitepiececollapsed, .blackpiececollapsed {
     font-size: var(--collapsed-size);
 }
