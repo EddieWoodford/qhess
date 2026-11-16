@@ -38,6 +38,7 @@ check it with the `qhess` preview in `.claude/launch.json`).
   differ mainly by hue: a lighter White pill drops White's blue and orange-red below 3:1. The user wants the pills
   alone to tell the sides apart (no rims or other extra markers).
 - (Fixed 2026-11-17: pills overflowed squares. Piece divs are now a CSS grid filling the square (3x2 uncollapsed, 1
-  cell collapsed; the `<br>` is hidden) and each `.glyph` is a flex box filling its cell, so pillbox draws rounded
-  rectangles that tile the square. `--uncollapsed-size` sets the uncollapsed symbol size per theme.)
+  cell collapsed) and each `.glyph` is a flex box filling its cell, so pillbox draws rounded rectangles that tile the
+  square. `--uncollapsed-size` sets the uncollapsed symbol size per theme. waveHTML writes exactly six cells, an
+  empty `<span>` for each impossible type: `&nbsp;` text merged into one grid cell and squeezed/shifted the rest.)
 - The captured list marks a bishop's square colour (small swatch); the board no longer does.

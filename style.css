@@ -1552,12 +1552,8 @@ input.switch:focus-visible {
 }
 
 .whitepiece, .blackpiece {
-    grid-template: repeat(2, 1fr) / repeat(3, 1fr);
+    grid-template: repeat(2, minmax(0, 1fr)) / repeat(3, minmax(0, 1fr));  /* equal cells, whatever is in them */
     font-size: var(--uncollapsed-size);
-}
-
-.whitepiece br, .blackpiece br {
-    display: none;  /* the grid makes the rows */
 }
 
 .whitepiececollapsed, .blackpiececollapsed {

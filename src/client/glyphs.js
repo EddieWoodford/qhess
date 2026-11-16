@@ -11,16 +11,15 @@ function glyphHTML(wave, color) {
 
 // HTML for a piece with the given waves (e.g. "KQRP") and color ("w"/"b"):
 // a 3x2 grid of the possible types (K Q R / B N P), or one large symbol once fully collapsed.
+// The grid (style.css 7.4) places one element per cell, so a type that is not possible is an empty <span>:
+// loose text would merge with its neighbours into one cell and shift the rest.
 function waveHTML(waves, color) {
 	const side = color == "w" ? "whitepiece" : "blackpiece";
 	if (waves.length == 1) {
 		return '<div class="' + side + 'collapsed">' + glyphHTML(waves, color) + '</div>';
 	}
-	const cell = wave => waves.includes(wave) ? glyphHTML(wave, color) : "&nbsp;";
-	return '<div class="' + side + '">'
-		+ [..."KQR"].map(cell).join("") + "<br>"
-		+ [..."BNP"].map(cell).join("")
-		+ '</div>';
+	const cell = wave => waves.includes(wave) ? glyphHTML(wave, color) : "<span></span>";
+	return '<div class="' + side + '">' + [..."KQRBNP"].map(cell).join("") + '</div>';
 }
 
 export { glyphHTML, waveHTML };
