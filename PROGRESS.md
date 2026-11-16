@@ -26,6 +26,11 @@ check it with the `qhess` preview in `.claude/launch.json`).
 - Theme list: `src/client/themes.js`. Setting: `theme` in settings.js, a "choices" setting (buttons with
   `data-value`) beside the boolean switches; remembered in localStorage, reset by Reset to defaults.
 
+## Board highlight colour (2026-11-17)
+- `--piece-selectedStart-col` (side-to-move ring, hover, chosen start) is cyan `#3fd6e8` in dark mode and teal
+  `#0b8a9e` in light (was dark amber, lost on the brown Pillbox board). The rings are inset box-shadows, painted
+  under the pillbox boxes, so only the ~2px gap round the boxes shows them.
+
 ## Known, not fixed (from the review of PRs #8/#9)
 - Pillbox: same symbol shapes for both sides, so with colours by type the sides are told apart mainly by the pill.
   Since 2026-11-17 the pills are solid and set per mode (dark: warm brown / navy behind the bright palette; light:
