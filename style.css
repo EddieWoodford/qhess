@@ -217,7 +217,6 @@
      --glyph-*                               the box drawn round each piece symbol
      --uncollapsed-size                      the symbols of a piece with several types left
      --collapsed-size                        a piece with one type left
-     --bishop-on-light / --bishop-on-dark    a bishop's text-decoration, by its square
    To add a theme: a dark block and a light block here, and a line in themes.js. */
 :root {
     --outline-K: "\2654"; --outline-Q: "\2655"; --outline-R: "\2656";
@@ -242,8 +241,6 @@
     --glyph-line-height: initial;
     --uncollapsed-size: 1em;
     --collapsed-size: 2.7em;
-    --bishop-on-light: none;
-    --bishop-on-dark: none;
 }
 
 :root[data-theme="light"][data-board-theme="classic"],
@@ -254,7 +251,7 @@
 }
 
 /* Pillbox: brown squares, every symbol filled, on a light or dark pill by
-   side, and bishops underlined in their square's colour */
+   side */
 [data-board-theme="pillbox"] {
     --board-white-col: #a98;
     --board-black-col: #654;
@@ -270,8 +267,6 @@
     --glyph-line-height: 1;
     --uncollapsed-size: 0.9em;
     --collapsed-size: 2.2em;
-    --bishop-on-light: underline #FFF9 0.1em;
-    --bishop-on-dark: underline #0009 0.1em;
 }
 
 :root[data-theme="light"][data-board-theme="pillbox"],
@@ -1390,15 +1385,6 @@ input.switch:focus-visible {
 
 .blacksquare {
     background-color: var(--board-black-col);
-}
-
-/* Bishops, marked (or not) by the theme (1.1) with their square's colour */
-.whitesquare :is(.glyph-wB, .glyph-bB) {
-    text-decoration: var(--bishop-on-light);
-}
-
-.blacksquare :is(.glyph-wB, .glyph-bB) {
-    text-decoration: var(--bishop-on-dark);
 }
 
 

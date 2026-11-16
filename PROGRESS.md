@@ -16,7 +16,8 @@ check it with the `qhess` preview in `.claude/launch.json`).
   Colour pieces by type switches, then one
   button per theme with a light and a dark example square drawn in that theme.
 - Themes: `classic` (the look before PRs #8/#9: grey squares, White in outline symbols) and `pillbox` (PRs #8/#9:
-  brown squares, filled symbols on pills, bishops underlined). Default `pillbox`.
+  brown squares, filled symbols on rounded boxes filling the square; the bishop underline was removed 2026-11-17).
+  Default `pillbox`.
 - A theme is only CSS variables (style.css 1.1), under `[data-board-theme=…]`, plus a light block. The attribute is
   on `<html>`; each dialog preview carries its own, so every theme must set every variable (see the list there).
 - Piece symbols are drawn by CSS `::before` (glyph spans are empty), so a theme can choose White's symbols.
@@ -27,8 +28,7 @@ check it with the `qhess` preview in `.claude/launch.json`).
 
 ## Known, not fixed (from the review of PRs #8/#9)
 - Pillbox: same symbol shapes for both sides, so with colours by type the sides are told apart mainly by the pill.
-- Pillbox: the light-square bishop underline is near invisible in light mode.
 - (Fixed 2026-11-17: pills overflowed squares. Piece divs are now a CSS grid filling the square (3x2 uncollapsed, 1
   cell collapsed; the `<br>` is hidden) and each `.glyph` is a flex box filling its cell, so pillbox draws rounded
   rectangles that tile the square. `--uncollapsed-size` sets the uncollapsed symbol size per theme.)
-- Bishop marker differs between the board (underline) and the captured list (small swatch).
+- The captured list marks a bishop's square colour (small swatch); the board no longer does.
