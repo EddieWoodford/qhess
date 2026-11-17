@@ -26,6 +26,18 @@ check it with the `qhess` preview in `.claude/launch.json`).
 - Theme list: `src/client/themes.js`. Setting: `theme` in settings.js, a "choices" setting (buttons with
   `data-value`) beside the boolean switches; remembered in localStorage, reset by Reset to defaults.
 
+## Theme generator, custom theme (2026-11-18)
+- `tools/theme-generator.html`: standalone page (works from file:// or the server). A picker + hex field + lock per
+  board colour (squares, border, boxes, 12 piece colours, 2 side colours, 4 highlights), a preview that repeats the
+  board CSS of style.css 7.1-7.4 (keep in step if those change), contrast numbers per colour, Generate (best of up
+  to 400 random candidates scored against contrast targets; locked colours kept, others fitted to them; highlight
+  hues kept to their meanings: check red, moves green, attacker blue-violet, side-to-move elsewhere), and Export
+  (downloads custom.css). Remembers its state in localStorage `qhess.themeGenerator`.
+- The game links `themes/custom.css` (committed as an empty placeholder). themes.js lists a `custom` theme when that
+  file sets `--custom-theme-name`. One palette for both modes. The server's PUBLIC list includes themes/ and tools/.
+- style.css 1.0 now holds the board colours (pieces, highlights, square border) on `:root, :where([data-board-theme])`
+  (+ light), so each dialog preview resets to the built-in colours and a custom theme only colours its own preview.
+
 ## Board highlight colour (2026-11-17)
 - `--piece-selectedStart-col` (side-to-move ring, hover, chosen start) is cyan `#3fd6e8` in dark mode and teal
   `#0b8a9e` in light (was dark amber, lost on the brown Pillbox board). The rings are inset box-shadows, painted

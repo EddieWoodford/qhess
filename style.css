@@ -109,34 +109,11 @@
     --button-height: 2.5em;
     --gap: 0.5rem;                                /* padding around and between the page areas */
 
-    /* ---- Board colours (the squares' own colours come from the theme: 1.1) ---- */
+    /* ---- Around the board (the board's own colours: 1.0 and the theme, 1.1) ---- */
     --board-edge-col: #111;                /* coordinate labels and corners */
-    --board-square-border: black;           /* the line around each square */
-    --piece-selectedStart-col: #3fd6e8;     /* cyan: the side to move's ring, hover and chosen start */
-    --piece-dest-col: #4f8f5a;              /* green */
-    --piece-checkKing-col: #7a1f1f;         /* dark oxblood */
-    --piece-checkAttacker-col: #5a8fb5;     /* blue */
     --marker-clear: rgba(255,0,0,0);        /* transparent stop used by the move markers */
     --game-over-checkmate-col: #ff5a4f;     /* the game over banner (7.6) */
     --game-over-draw-col: #e9c46a;
-
-    /* ---- Piece colours (section 7.4) ---- */
-    /* White pieces: richer, warmer, darker shades for visibility */
-    --piece-wK: #FFD700;                    /* bright gold */
-    --piece-wQ: #FF69B4;                    /* hot pink */
-    --piece-wR: #1E90FF;                    /* dodger blue */
-    --piece-wB: #FF4500;                    /* orange-red */
-    --piece-wN: #FFA500;                    /* orange */
-    --piece-wP: #32CD32;                    /* lime green */
-    /* Black pieces: softer, slightly glowing pastels to pop on dark squares */
-    --piece-bK: #F0E68C;                    /* khaki */
-    --piece-bQ: #BA55D3;                    /* medium orchid */
-    --piece-bR: #87CEFA;                    /* light sky blue */
-    --piece-bB: #FF6347;                    /* tomato */
-    --piece-bN: #FFA07A;                    /* light salmon */
-    --piece-bP: #90EE90;                    /* light green */
-    /* Black's one colour when "Colour pieces by type" is switched off (7.4); White's comes from the theme (1.1) */
-    --piece-black-side: #E8743B;            /* copper */
 
     /* ---- Status ---- */
     --live: #32CD32;                        /* the multiplayer tab's dot while a game is on */
@@ -187,6 +164,40 @@
     --shadow-button-hover: 0 4px 8px #0004;
 
     --board-edge-col: #e0d6c0;
+}
+
+
+/* ---------- 1.0 Board colours ----------
+   The pieces, highlights and square border, for the built-in themes. Set on
+   the page and again (at no specificity, :where) on each theme preview in the
+   Theme dialog, so a custom theme (themes/custom.css), which sets these
+   itself, colours only the board and its own preview. */
+:root, :where([data-board-theme]) {
+    --board-square-border: black;           /* the line around each square */
+    --piece-selectedStart-col: #3fd6e8;     /* cyan: the side to move's ring, hover and chosen start */
+    --piece-dest-col: #4f8f5a;              /* green */
+    --piece-checkKing-col: #7a1f1f;         /* dark oxblood */
+    --piece-checkAttacker-col: #5a8fb5;     /* blue */
+
+    /* White pieces: richer, warmer, darker shades for visibility */
+    --piece-wK: #FFD700;                    /* bright gold */
+    --piece-wQ: #FF69B4;                    /* hot pink */
+    --piece-wR: #1E90FF;                    /* dodger blue */
+    --piece-wB: #FF4500;                    /* orange-red */
+    --piece-wN: #FFA500;                    /* orange */
+    --piece-wP: #32CD32;                    /* lime green */
+    /* Black pieces: softer, slightly glowing pastels to pop on dark squares */
+    --piece-bK: #F0E68C;                    /* khaki */
+    --piece-bQ: #BA55D3;                    /* medium orchid */
+    --piece-bR: #87CEFA;                    /* light sky blue */
+    --piece-bB: #FF6347;                    /* tomato */
+    --piece-bN: #FFA07A;                    /* light salmon */
+    --piece-bP: #90EE90;                    /* light green */
+    /* Black's one colour when "Colour pieces by type" is switched off (7.4); White's comes from the theme (1.1) */
+    --piece-black-side: #E8743B;            /* copper */
+}
+
+:root[data-theme="light"], :where(:root[data-theme="light"] [data-board-theme]) {
     --board-square-border: #9c9077;
     --piece-selectedStart-col: #0b8a9e;     /* deep teal */
 
@@ -218,7 +229,9 @@
      --glyph-*                               the box drawn round each piece symbol
      --uncollapsed-size                      the symbols of a piece with several types left
      --collapsed-size                        a piece with one type left
-   To add a theme: a dark block and a light block here, and a line in themes.js. */
+   To add a theme: a dark block and a light block here, and a line in themes.js.
+   A custom theme (tools/theme-generator.html, saved as themes/custom.css) also
+   sets the colours of 1.0, one set for both modes. */
 :root {
     --outline-K: "\2654"; --outline-Q: "\2655"; --outline-R: "\2656";
     --outline-B: "\2657"; --outline-N: "\2658"; --outline-P: "\2659";

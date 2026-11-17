@@ -12,6 +12,13 @@ const THEMES = [
 	{ id: "pillbox", name: "Pillbox" }, // brown squares, filled symbols on pills
 ];
 
+// A theme exported by tools/theme-generator.html and saved as themes/custom.css (index.html links it): listed when
+// that file names it with --custom-theme-name. Its one palette is used in both light and dark mode.
+const customName = getComputedStyle(document.documentElement).getPropertyValue("--custom-theme-name").trim();
+if (customName) {
+	THEMES.push({ id: "custom", name: customName.replace(/^["']|["']$/g, "") });
+}
+
 const DEFAULT_THEME = "pillbox";
 
 // Fill the dialog's list: per theme, its button and two example squares drawn in that theme.

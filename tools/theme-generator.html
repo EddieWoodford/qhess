@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Qhess board theme generator. Standalone: open this file in a browser (or /tools/theme-generator.html on the
+  local server). Pick or generate the board's colours, then Export: save the file as themes/custom.css in the
+  qhess folder and reload the game; the theme appears in Settings > Theme under the name given here.
+
+  The preview below repeats the board rules of style.css (sections 7.1 to 7.4) and uses the same CSS variables,
+  so it looks as the game will. If those rules change, change them here too.
+-->
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qhess Theme Generator</title>
+<style>
+:root {
+    --font-ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --ui-bg: #161618;
+    --ui-panel: #1f1f22;
+    --ui-raised: #2a2a2e;
+    --ui-border: #38383e;
+    --ui-text: #e8e8ea;
+    --ui-muted: #9a9aa2;
+    --ui-accent: #ff9500;
+    --ui-warn: #ff7a59;
+    --ui-ok: #6fcf7f;
+    color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; height: 100%; }
+
+body {
+    display: grid;
+    grid-template-columns: 360px minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas: "top top" "pickers preview";
+    background: var(--ui-bg);
+    color: var(--ui-text);
+    font-family: var(--font-ui);
+    font-size: 14px;
+}
+
+/* ---------- Top bar ---------- */
+.topbar {
+    grid-area: top;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    padding: 12px 16px;
+    background: var(--ui-panel);
+    border-bottom: 1px solid var(--ui-border);
+}
+.topbar h1 { font-size: 17px; font-weight: 600; margin: 0 8px 0 0; }
+.topbar label { display: inline-flex; align-items: center; gap: 6px; color: var(--ui-muted); }
+.topbar input[type="text"] {
+    width: 170px; padding: 6px 8px; border-radius: 6px;
+    border: 1px solid var(--ui-border); background: var(--ui-bg); color: var(--ui-text); font: inherit;
+}
+.spacer { flex: 1; }
+button {
+    font: inherit; padding: 7px 14px; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--ui-border); background: var(--ui-raised); color: var(--ui-text);
+}
+button:hover { border-color: var(--ui-muted); }
+button.primary { background: var(--ui-accent); border-color: var(--ui-accent); color: #111; font-weight: 600; }
+
+/* ---------- Colour pickers ---------- */
+.pickers {
+    grid-area: pickers;
+    overflow-y: auto;
+    padding: 8px 16px 24px;
+    background: var(--ui-panel);
+    border-right: 1px solid var(--ui-border);
+}
+.pickers h2 {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ui-muted); margin: 18px 0 6px;
+}
+.pickers .hint { color: var(--ui-muted); font-size: 12px; margin: 8px 0 0; line-height: 1.4; }
+.picker {
+    display: grid;
+    grid-template-columns: 22px 34px 78px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+}
+.picker input[type="checkbox"] { margin: 0; width: 16px; height: 16px; accent-color: var(--ui-accent); cursor: pointer; }
+.picker input[type="color"] {
+    width: 34px; height: 26px; padding: 0; border: 1px solid var(--ui-border); border-radius: 5px;
+    background: none; cursor: pointer;
+}
+.picker input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
+.picker input[type="color"]::-webkit-color-swatch { border: none; border-radius: 3px; }
+.picker .hex {
+    width: 78px; padding: 4px 6px; border-radius: 5px; border: 1px solid var(--ui-border);
+    background: var(--ui-bg); color: var(--ui-text); font-family: var(--font-mono); font-size: 13px;
+}
+.picker .hex.bad { border-color: var(--ui-warn); }
+.picker .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.picker .ratio { font-family: var(--font-mono); font-size: 12px; color: var(--ui-muted); min-width: 44px; text-align: right; }
+.picker .ratio.low { color: var(--ui-warn); }
+.picker.locked .name { color: var(--ui-accent); }
+
+/* ---------- Preview ---------- */
+.preview {
+    grid-area: preview;
+    overflow: auto;
+    padding: 20px 24px 40px;
+    background: #181818;              /* the game's page, dark mode */
+    color: #eee;
+    transition: background-color 0.15s;
+}
+.preview.page-light { background: #ebebee; color: #1d1d1f; }
+.preview h2 { font-size: 15px; font-weight: 600; margin: 26px 0 10px; }
+.preview h2:first-child { margin-top: 0; }
+.preview .note { font-size: 12px; opacity: 0.7; margin: -4px 0 12px; }
+
+.examples {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 14px;
+}
+.example { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; text-align: center; }
+.example .pair { display: flex; }
+.example .board { padding: 4px; }
+
+/* ===== The board, as style.css 7.1 to 7.4 draws it ===== */
+.board {
+    --square: 60px;
+    font-size: calc(var(--square) / 3);
+    display: inline-flex;
+    flex-direction: column;
+    padding: 0.5em;
+    border-radius: 8px;
+    background-color: #1a1a1a;
+}
+.preview.page-light .board { background-color: #fafafa; }
+.boardrow { display: flex; flex-direction: row; }
+.boardsquare {
+    flex-shrink: 0;
+    color: white;
+    width: 3em;
+    height: 3em;
+    border: var(--board-square-border) solid 1px;
+    font-family: var(--font-mono);
+    line-height: 1;
+    text-align: center;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.whitesquare { background-color: var(--board-white-col); }
+.blacksquare { background-color: var(--board-black-col); }
+
+.hovered { background-color: color-mix(in srgb, var(--piece-selectedStart-col) 60%, transparent); }
+.selectable { box-shadow: 0 0 0 3px var(--piece-selectedStart-col) inset; }
+.selectedStart { box-shadow: 0 0 0 6px var(--piece-selectedStart-col) inset; }
+.selectedEnd { box-shadow: 0 0 0 6px var(--piece-dest-col) inset; }
+.potKing { background-color: color-mix(in srgb, var(--piece-checkKing-col) 55%, transparent); }
+.potAttacker { background-color: color-mix(in srgb, var(--piece-checkAttacker-col) 55%, transparent); }
+.checkKing { box-shadow: 0 0 0 6px var(--piece-checkKing-col) inset; }
+.checkAttacker { box-shadow: 0 0 0 6px var(--piece-checkAttacker-col) inset; }
+
+.destination1, .destination2, .destination4, .destination6, .destination8 {
+    box-shadow: 0 0 0 3px var(--piece-dest-col) inset;
+}
+.destination1 {
+    background-image: radial-gradient(transparent, transparent, var(--piece-dest-col), transparent, transparent, transparent);
+}
+.destination2 {
+    background-image: linear-gradient(to bottom right, transparent, transparent, transparent, var(--piece-dest-col), transparent, transparent, transparent);
+}
+.destination4 {
+    background-image: linear-gradient(to bottom, transparent, transparent, transparent, var(--piece-dest-col), transparent, transparent, transparent);
+}
+.destination6 {
+    background-image: linear-gradient(to top right, transparent, transparent, transparent, var(--piece-dest-col), transparent, transparent, transparent);
+}
+.destination8 {
+    background-image: linear-gradient(to right, transparent, transparent, transparent, var(--piece-dest-col), transparent, transparent, transparent);
+}
+
+.whitepiece, .blackpiece, .whitepiececollapsed, .blackpiececollapsed {
+    display: grid;
+    width: 100%;
+    height: 100%;
+}
+.whitepiece, .blackpiece {
+    grid-template: repeat(2, minmax(0, 1fr)) / repeat(3, minmax(0, 1fr));
+    font-size: 0.9em;
+}
+.whitepiececollapsed, .blackpiececollapsed { font-size: 2.2em; }
+
+.glyph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 0;
+    border-radius: 0.25em;
+    margin: 2px;
+    box-shadow: 1px 1px 3px #0008;
+    line-height: 1;
+}
+.glyph-w { background-color: var(--glyph-w-bg); }
+.glyph-b { background-color: var(--glyph-b-bg); }
+.glyph-wK::before, .glyph-bK::before { content: "\265A"; }
+.glyph-wQ::before, .glyph-bQ::before { content: "\265B"; }
+.glyph-wR::before, .glyph-bR::before { content: "\265C"; }
+.glyph-wB::before, .glyph-bB::before { content: "\265D"; }
+.glyph-wN::before, .glyph-bN::before { content: "\265E"; }
+.glyph-wP::before, .glyph-bP::before { content: "\265F"; }
+.glyph-wK { color: var(--piece-wK); }
+.glyph-wQ { color: var(--piece-wQ); }
+.glyph-wR { color: var(--piece-wR); }
+.glyph-wB { color: var(--piece-wB); }
+.glyph-wN { color: var(--piece-wN); }
+.glyph-wP { color: var(--piece-wP); }
+.glyph-bK { color: var(--piece-bK); }
+.glyph-bQ { color: var(--piece-bQ); }
+.glyph-bR { color: var(--piece-bR); }
+.glyph-bB { color: var(--piece-bB); }
+.glyph-bN { color: var(--piece-bN); }
+.glyph-bP { color: var(--piece-bP); }
+.side-colours .glyph-w { color: var(--piece-white-side); }
+.side-colours .glyph-b { color: var(--piece-black-side); }
+
+/* ---------- Narrow screens: pickers above the preview ---------- */
+@media (max-width: 760px) {
+    body {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto auto auto;
+        grid-template-areas: "top" "pickers" "preview";
+        height: auto;
+    }
+    html, body { height: auto; }
+    .pickers { border-right: none; border-bottom: 1px solid var(--ui-border); }
+    .board { --square: 46px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+    <h1>Qhess theme generator</h1>
+    <label>Name <input type="text" id="themeName" value="My theme" maxlength="40"></label>
+    <button class="primary" id="generate" title="New colours for every colour that isn't locked">Generate random theme</button>
+    <button id="export" title="Save as themes/custom.css in the qhess folder">Export</button>
+    <span class="spacer"></span>
+    <label><input type="checkbox" id="byType" checked> Colour pieces by type</label>
+    <label><input type="checkbox" id="pageLight"> Light page</label>
+    <button id="reset" title="Back to the Pillbox theme's dark colours">Reset to Pillbox</button>
+</div>
+
+<div class="pickers" id="pickers">
+    <p class="hint">Tick a lock to keep that colour when generating. The number beside a colour is its contrast
+        (piece against its box, highlight against the squares and boxes): orange means hard to see.</p>
+</div>
+
+<div class="preview" id="preview">
+    <h2>In play</h2>
+    <p class="note">A board mid-game: White to move, a piece chosen and its moves shown, a king in check.</p>
+    <div id="playBoard"></div>
+
+    <h2>Pieces</h2>
+    <p class="note">Each type, once known, on both squares; and pieces that could still be several types.</p>
+    <div id="pieceBoard"></div>
+
+    <h2>Square states</h2>
+    <div class="examples" id="stateExamples"></div>
+</div>
+
+<script>
+"use strict";
+
+// ---------- The colours: one picker each, in this order. var is the CSS variable the game reads. ----------
+const COLOURS = [
+    { group: "Squares" },
+    { key: "light", var: "--board-white-col", name: "Light square", def: "#aa9988" },
+    { key: "dark", var: "--board-black-col", name: "Dark square", def: "#665544" },
+    { key: "border", var: "--board-square-border", name: "Square border", def: "#000000" },
+    { group: "Boxes" },
+    { key: "wbox", var: "--glyph-w-bg", name: "White's box", def: "#4f3a26" },
+    { key: "bbox", var: "--glyph-b-bg", name: "Black's box", def: "#121a2a" },
+    { group: "White pieces" },
+    { key: "wK", var: "--piece-wK", name: "King", def: "#ffd700" },
+    { key: "wQ", var: "--piece-wQ", name: "Queen", def: "#ff69b4" },
+    { key: "wR", var: "--piece-wR", name: "Rook", def: "#1e90ff" },
+    { key: "wB", var: "--piece-wB", name: "Bishop", def: "#ff4500" },
+    { key: "wN", var: "--piece-wN", name: "Knight", def: "#ffa500" },
+    { key: "wP", var: "--piece-wP", name: "Pawn", def: "#32cd32" },
+    { group: "Black pieces" },
+    { key: "bK", var: "--piece-bK", name: "King", def: "#f0e68c" },
+    { key: "bQ", var: "--piece-bQ", name: "Queen", def: "#ba55d3" },
+    { key: "bR", var: "--piece-bR", name: "Rook", def: "#87cefa" },
+    { key: "bB", var: "--piece-bB", name: "Bishop", def: "#ff6347" },
+    { key: "bN", var: "--piece-bN", name: "Knight", def: "#ffa07a" },
+    { key: "bP", var: "--piece-bP", name: "Pawn", def: "#90ee90" },
+    { group: "One colour per side", hint: "Used when \"Colour pieces by type\" is off." },
+    { key: "wSide", var: "--piece-white-side", name: "White", def: "#ffffff" },
+    { key: "bSide", var: "--piece-black-side", name: "Black", def: "#e8743b" },
+    { group: "Highlights" },
+    { key: "select", var: "--piece-selectedStart-col", name: "Side to move, chosen", def: "#3fd6e8" },
+    { key: "dest", var: "--piece-dest-col", name: "Moves", def: "#4f8f5a" },
+    { key: "checkKing", var: "--piece-checkKing-col", name: "King in check", def: "#7a1f1f" },
+    { key: "checkAttacker", var: "--piece-checkAttacker-col", name: "Checking piece", def: "#5a8fb5" },
+].filter(Boolean);
+const ENTRIES = COLOURS.filter(c => c.key);
+const TYPES = ["K", "Q", "R", "B", "N", "P"];
+const HIGHLIGHTS = ["select", "dest", "checkKing", "checkAttacker"];
+const STORE = "qhess.themeGenerator";
+
+const state = { colours: {}, locked: {} };
+
+// ---------- Colour maths ----------
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+const rnd = (lo, hi) => lo + Math.random() * (hi - lo);
+
+function hexToRgb(hex) {
+    const h = hex.replace("#", "");
+    return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16));
+}
+function rgbToHex(rgb) {
+    return "#" + rgb.map(v => Math.round(clamp(v, 0, 255)).toString(16).padStart(2, "0")).join("");
+}
+// h in degrees, s and l 0..1
+function hsl(h, s, l) {
+    h = ((h % 360) + 360) % 360;
+    s = clamp(s, 0, 1); l = clamp(l, 0, 1);
+    const k = n => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+    return rgbToHex([f(0), f(8), f(4)].map(v => v * 255));
+}
+function toHsl(hex) {
+    const [r, g, b] = hexToRgb(hex).map(v => v / 255);
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2, d = max - min;
+    if (!d) { return { h: 0, s: 0, l }; }
+    const s = d / (1 - Math.abs(2 * l - 1));
+    const h = max == r ? ((g - b) / d) % 6 : max == g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return { h: h * 60, s, l };
+}
+function luminance(hex) {
+    const c = hexToRgb(hex).map(v => v / 255).map(v => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+function contrast(a, b) {
+    const x = luminance(a), y = luminance(b);
+    return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+}
+// The lightness, moving from `from` towards lighter (dir 1) or darker (dir -1), at which colour (h, s) first has
+// `target` contrast with bg; or the end of the range if it never does.
+function solveLightness(h, s, bg, target, dir, from) {
+    let l = from;
+    while (l >= 0 && l <= 1) {
+        if (contrast(hsl(h, s, l), bg) >= target) { return hsl(h, s, l); }
+        l += dir * 0.01;
+    }
+    return hsl(h, s, dir > 0 ? 1 : 0);
+}
+// Of a range of lightnesses for (h, s), the one whose worst contrast against all of `against` is best
+function bestAgainst(h, s, against, lo, hi) {
+    let best = null, bestScore = -1;
+    for (let l = lo; l <= hi; l += 0.02) {
+        const c = hsl(h, s, l);
+        const score = Math.min(...against.map(bg => contrast(c, bg)));
+        if (score > bestScore) { best = c; bestScore = score; }
+    }
+    return best;
+}
+
+// ---------- What "good contrast" means, for the numbers beside the pickers and for scoring a random theme ----------
+const TARGET = { piece: 3.5, side: 4.5, boxes: 1.4, squares: 1.3, highlight: 1.5 };
+
+function boxOf(key) { return key[0] == "w" ? "wbox" : "bbox"; }
+
+// The checks: [colour key the number shows beside, its contrast, the target]
+function checks(c) {
+    const out = [];
+    for (const side of ["w", "b"]) {
+        for (const t of TYPES) { out.push([side + t, contrast(c[side + t], c[side + "box"]), TARGET.piece]); }
+    }
+    out.push(["wSide", contrast(c.wSide, c.wbox), TARGET.side]);
+    out.push(["bSide", contrast(c.bSide, c.bbox), TARGET.side]);
+    out.push(["bbox", contrast(c.wbox, c.bbox), TARGET.boxes]);
+    out.push(["dark", contrast(c.light, c.dark), TARGET.squares]);
+    for (const k of HIGHLIGHTS) {
+        out.push([k, Math.min(...[c.light, c.dark, c.wbox, c.bbox].map(bg => contrast(c[k], bg))), TARGET.highlight]);
+    }
+    return out;
+}
+
+// How well a set of colours meets the targets: the worst check's share of its target (1 = all met)
+function score(c) {
+    return Math.min(...checks(c).map(([, value, target]) => Math.min(1, value / target)));
+}
+
+// ---------- Random themes ----------
+// One candidate: every unlocked colour drawn at random within sensible ranges, each fitted to the colours it sits
+// on (which may be locked). Locked colours are kept as they are.
+function candidate() {
+    const c = {};
+    const pick = (key, make) => { c[key] = state.locked[key] ? state.colours[key] : make(); };
+
+    // Squares: one hue, the dark square a little darker than the light one
+    const boardHue = rnd(0, 360);
+    const boardSat = rnd(0.06, 0.4);
+    pick("light", () => hsl(boardHue, boardSat, rnd(0.5, 0.82)));
+    const light = toHsl(c.light);
+    pick("dark", () => hsl(light.h + rnd(-12, 12), clamp(light.s + rnd(-0.05, 0.1), 0, 1), light.l - rnd(0.18, 0.32)));
+    const dark = toHsl(c.dark);
+    pick("border", () => Math.random() < 0.4 ? "#000000" : hsl(dark.h, dark.s, Math.max(0, dark.l - rnd(0.12, 0.22))));
+
+    // Boxes: dark boxes for bright pieces, or light boxes for deep ones. The two sides differ in hue and lightness.
+    let darkBoxes = Math.random() < 0.5;
+    if (state.locked.wbox) { darkBoxes = luminance(state.colours.wbox) < 0.3; }
+    else if (state.locked.bbox) { darkBoxes = luminance(state.colours.bbox) < 0.3; }
+    const wHue = rnd(0, 360), bHue = wHue + rnd(140, 220);
+    pick("wbox", () => darkBoxes ? hsl(wHue, rnd(0.2, 0.5), rnd(0.2, 0.3)) : hsl(wHue, rnd(0.2, 0.6), rnd(0.9, 0.97)));
+    pick("bbox", () => darkBoxes ? hsl(bHue, rnd(0.25, 0.55), rnd(0.07, 0.14)) : hsl(bHue, rnd(0.12, 0.35), rnd(0.68, 0.8)));
+
+    // Pieces: one hue per type, shared by both sides (so a type looks alike on either side), spread round the
+    // wheel; each side's lightness fitted to its own box.
+    const base = rnd(0, 360);
+    TYPES.forEach((t, i) => {
+        const hue = base + i * 60 + rnd(-10, 10);
+        for (const side of ["w", "b"]) {
+            const box = c[side + "box"];
+            const away = luminance(box) < 0.3 ? 1 : -1;
+            const sat = side == "w" ? rnd(0.65, 0.95) : rnd(0.45, 0.8);
+            pick(side + t, () => solveLightness(hue + (side == "b" ? rnd(-12, 12) : 0), sat, box, TARGET.piece + 0.3,
+                away, away > 0 ? 0.45 : 0.55));
+        }
+    });
+
+    // One colour per side: strong contrast with its box
+    for (const side of ["w", "b"]) {
+        const box = c[side + "box"];
+        const away = luminance(box) < 0.3 ? 1 : -1;
+        pick(side + "Side", () => solveLightness(rnd(0, 360), side == "w" ? rnd(0.1, 0.5) : rnd(0.5, 0.85), box,
+            TARGET.side + 0.5, away, away > 0 ? 0.5 : 0.5));
+    }
+
+    // Highlights keep their meaning: check is red, moves green, the checking piece blue to violet; the side to
+    // move's colour is outside those three (amber to yellow, cyan, or magenta), as far from the squares' hue as it
+    // can be. Each lightness is the one that stands out best from the squares and the boxes together.
+    const against = [c.light, c.dark, c.wbox, c.bbox];
+    const hueGap = (a, b) => { const d = Math.abs(((a - b) % 360 + 360) % 360); return Math.min(d, 360 - d); };
+    const selectHues = [[35, 65], [172, 192], [290, 325]].flatMap(([lo, hi]) => [rnd(lo, hi), rnd(lo, hi)]);
+    const selectHue = selectHues.reduce((a, b) => hueGap(b, light.h) > hueGap(a, light.h) ? b : a);
+    pick("select", () => bestAgainst(selectHue, rnd(0.6, 0.95), against, 0.2, 0.85));
+    pick("dest", () => bestAgainst(rnd(95, 150), rnd(0.45, 0.85), against, 0.2, 0.8));
+    pick("checkKing", () => bestAgainst(rnd(-12, 12), rnd(0.6, 0.9), against, 0.2, 0.7));
+    pick("checkAttacker", () => bestAgainst(rnd(200, 270), rnd(0.45, 0.85), against, 0.2, 0.8));
+    return c;
+}
+
+// The best of many candidates (stopping early once one meets every target)
+function generate() {
+    let best = null, bestScore = -1;
+    for (let i = 0; i < 400 && bestScore < 1; i++) {
+        const c = candidate();
+        const s = score(c);
+        if (s > bestScore) { best = c; bestScore = s; }
+    }
+    Object.assign(state.colours, best);
+    refresh();
+}
+
+// ---------- Pickers ----------
+const pickers = document.getElementById("pickers");
+const rows = {};
+
+for (const item of COLOURS) {
+    if (item.group) {
+        const h = document.createElement("h2");
+        h.textContent = item.group;
+        pickers.append(h);
+        if (item.hint) {
+            const p = document.createElement("p");
+            p.className = "hint";
+            p.style.margin = "-2px 0 6px";
+            p.textContent = item.hint;
+            pickers.append(p);
+        }
+        continue;
+    }
+    const row = document.createElement("div");
+    row.className = "picker";
+    row.innerHTML = '<input type="checkbox" title="Lock: Generate keeps this colour">'
+        + '<input type="color">'
+        + '<input type="text" class="hex" maxlength="7" spellcheck="false">'
+        + '<span class="name"></span><span class="ratio"></span>';
+    const [lock, colour, hex] = row.querySelectorAll("input");
+    row.querySelector(".name").textContent = item.name;
+    lock.setAttribute("aria-label", "Lock " + item.name);
+    colour.setAttribute("aria-label", item.name);
+    hex.setAttribute("aria-label", item.name + " hex code");
+
+    lock.addEventListener("change", () => { state.locked[item.key] = lock.checked; refresh(); });
+    colour.addEventListener("input", () => { state.colours[item.key] = colour.value; refresh(); });
+    hex.addEventListener("input", () => {
+        let v = hex.value.trim();
+        if (!v.startsWith("#")) { v = "#" + v; }
+        if (/^#[0-9a-f]{3}$/i.test(v)) { v = "#" + [...v.slice(1)].map(ch => ch + ch).join(""); }
+        const ok = /^#[0-9a-f]{6}$/i.test(v);
+        hex.classList.toggle("bad", !ok);
+        if (ok) { state.colours[item.key] = v.toLowerCase(); refresh(hex); }
+    });
+    hex.addEventListener("blur", () => { hex.classList.remove("bad"); hex.value = state.colours[item.key]; });
+
+    pickers.append(row);
+    rows[item.key] = { row, lock, colour, hex, ratio: row.querySelector(".ratio") };
+}
+
+// Show the state: pickers, contrast numbers, preview; and remember it in this browser.
+// `editing` is a hex field being typed in, left as the user has it.
+function refresh(editing) {
+    const preview = document.getElementById("preview");
+    for (const item of ENTRIES) {
+        const r = rows[item.key], value = state.colours[item.key];
+        r.colour.value = value;
+        if (r.hex != editing) { r.hex.value = value; r.hex.classList.remove("bad"); }
+        r.lock.checked = !!state.locked[item.key];
+        r.row.classList.toggle("locked", !!state.locked[item.key]);
+        r.ratio.textContent = "";
+        preview.style.setProperty(item.var, value);
+    }
+    for (const [key, value, target] of checks(state.colours)) {
+        const r = rows[key].ratio;
+        r.textContent = value.toFixed(1);
+        r.classList.toggle("low", value < target);
+        r.title = "Contrast " + value.toFixed(2) + ":1 (aim for at least " + target + ")";
+    }
+    try {
+        localStorage.setItem(STORE, JSON.stringify({ ...state, name: document.getElementById("themeName").value }));
+    } catch {}
+}
+
+// ---------- The preview boards ----------
+function glyph(side, type) { return '<span class="glyph glyph-' + side + ' glyph-' + side + type + '"></span>'; }
+// A piece as waveHTML (src/client/glyphs.js) writes it
+function piece(side, waves) {
+    const cls = side == "w" ? "whitepiece" : "blackpiece";
+    if (waves.length == 1) { return '<div class="' + cls + 'collapsed">' + glyph(side, waves) + '</div>'; }
+    return '<div class="' + cls + '">'
+        + TYPES.map(t => waves.includes(t) ? glyph(side, t) : "<span></span>").join("") + '</div>';
+}
+// A board from rows of cells: [side, waves, extra classes]. The top-left square is light.
+function board(cells) {
+    return '<div class="board">' + cells.map((row, y) => '<div class="boardrow">' + row.map((cell, x) => {
+        const [side, waves, extra] = cell || [];
+        const colour = (x + y) % 2 ? "blacksquare" : "whitesquare";
+        return '<div class="boardsquare ' + colour + (extra ? " " + extra : "") + '">'
+            + (side ? piece(side, waves) : "") + '</div>';
+    }).join("") + '</div>').join("") + '</div>';
+}
+
+const ALL = "KQRBNP";
+// White to move: White's pieces ringed; the chosen rook's moves marked along its file and rank; Black's king
+// in check from a known White queen.
+document.getElementById("playBoard").innerHTML = board([
+    [["b", "R"], ["b", "KQRBNP"], ["b", "QB"], ["b", "K", "checkKing"], ["b", "KQRBNP"], ["b", "N"]],
+    [["b", "P"], ["b", "KP"], null, ["b", "P"], ["b", "BNP"], ["b", "P"]],
+    [null, null, [, , "destination8"], null, [, , "potAttacker"], null],
+    [[, , "destination4"], [, , "destination4"], ["w", "R", "selectedStart"], [, , "destination4"], [, , "hovered"], null],
+    [["w", "P", "selectable"], ["w", "KP", "selectable"], [, , "destination16 destination8"], ["w", "Q", "selectable checkAttacker"], ["w", "BNP", "selectable"], ["w", "P", "selectable"]],
+    [["w", "KQRBNP", "selectable"], ["w", "N", "selectable"], ["w", "B", "selectable"], ["w", "K", "selectable"], ["w", "KQRBNP", "selectable"], ["w", "QR", "selectable"]],
+]);
+
+// Each type twice, shifted by one, so it shows on both square colours
+const shifted = (side, by) => TYPES.map((t, i) => [side, TYPES[(i + by) % 6]]);
+document.getElementById("pieceBoard").innerHTML = board([
+    shifted("w", 0),
+    shifted("w", 1),
+    shifted("b", 0),
+    shifted("b", 1),
+    [["w", ALL], ["w", "KQR"], ["w", "BN"], ["b", ALL], ["b", "QRP"], ["b", "KN"]],
+]);
+
+const STATES = [
+    ["Side to move", "selectable", "w", "KQRBNP"],
+    ["Hover", "hovered", "w", "KQRBNP"],
+    ["Chosen piece", "selectedStart", "w", "Q"],
+    ["Chosen destination", "selectedEnd", null, ""],
+    ["Move: rook line", "destination4", null, ""],
+    ["Move: rook line", "destination8", null, ""],
+    ["Move: bishop line", "destination2", null, ""],
+    ["Move: bishop line", "destination6", null, ""],
+    ["Move: knight hop", "destination1", null, ""],
+    ["Capture", "destination4", "b", "N"],
+    ["King in check", "checkKing", "b", "K"],
+    ["Checking piece", "checkAttacker", "w", "R"],
+    ["Could be the king", "potKing", "b", "KQRBNP"],
+    ["Could be attacking", "potAttacker", "w", "KQRBNP"],
+];
+document.getElementById("stateExamples").innerHTML = STATES.map(([label, cls, side, waves]) =>
+    '<div class="example">' + board([[side ? [side, waves, cls] : [, , cls], side ? [side, waves, cls] : [, , cls]]])
+    + '<span>' + label + '</span></div>').join("");
+
+// ---------- Export: the theme as style.css 1.1 needs it, for themes/custom.css ----------
+function exportCss() {
+    const raw = document.getElementById("themeName").value.trim() || "Custom";
+    const name = raw.replace(/["\\\n\r]|\*\//g, "");
+    const c = state.colours;
+    const line = (v, value, note) => "    " + (v + ":").padEnd(30) + value + ";" + (note ? "  /* " + note + " */" : "");
+    const css = [
+        "/* Qhess board theme \"" + name + "\", made with tools/theme-generator.html.",
+        "   Save this file as themes/custom.css in the qhess folder and reload the game: it appears in",
+        "   Settings > Theme. One palette for light and dark mode alike; the page around the board still follows",
+        "   the Light mode switch. */",
+        "",
+        ":root {",
+        line("--custom-theme-name", '"' + name + '"', "the name in the Theme dialog"),
+        "}",
+        "",
+        ":root[data-board-theme=\"custom\"],",
+        "[data-board-theme=\"custom\"] {",
+        "    /* Squares */",
+        ...["light", "dark", "border"].map(k => line(ENTRIES.find(e => e.key == k).var, c[k])),
+        "",
+        "    /* Pieces: every symbol filled, on a box per side (as Pillbox) */",
+        "    --white-K: var(--filled-K); --white-Q: var(--filled-Q); --white-R: var(--filled-R);",
+        "    --white-B: var(--filled-B); --white-N: var(--filled-N); --white-P: var(--filled-P);",
+        line("--glyph-w-bg", c.wbox, "White's box"),
+        line("--glyph-b-bg", c.bbox, "Black's box"),
+        line("--glyph-radius", "0.25em"),
+        line("--glyph-padding", "0"),
+        line("--glyph-margin", "2px"),
+        line("--glyph-shadow", "1px 1px 3px #0008"),
+        line("--glyph-line-height", "1"),
+        line("--uncollapsed-size", "0.9em"),
+        line("--collapsed-size", "2.2em"),
+        ...["w", "b"].flatMap(side => TYPES.map(t => line("--piece-" + side + t, c[side + t]))),
+        "",
+        "    /* \"Colour pieces by type\" off */",
+        line("--piece-white-side", c.wSide),
+        line("--piece-black-side", c.bSide),
+        "",
+        "    /* Highlights */",
+        line("--piece-selectedStart-col", c.select, "side to move, hover, chosen piece"),
+        line("--piece-dest-col", c.dest, "moves"),
+        line("--piece-checkKing-col", c.checkKing, "king in check, could be the king"),
+        line("--piece-checkAttacker-col", c.checkAttacker, "checking piece, could be attacking"),
+        "}",
+        "",
+    ].join("\n");
+
+    const url = URL.createObjectURL(new Blob([css], { type: "text/css" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "custom.css";
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// ---------- Buttons and start-up ----------
+function defaults() {
+    for (const item of ENTRIES) { state.colours[item.key] = item.def; }
+}
+
+document.getElementById("generate").addEventListener("click", generate);
+document.getElementById("export").addEventListener("click", exportCss);
+document.getElementById("reset").addEventListener("click", () => { defaults(); refresh(); });
+document.getElementById("themeName").addEventListener("input", () => refresh());
+document.getElementById("byType").addEventListener("change", e =>
+    document.getElementById("preview").classList.toggle("side-colours", !e.target.checked));
+document.getElementById("pageLight").addEventListener("change", e =>
+    document.getElementById("preview").classList.toggle("page-light", e.target.checked));
+
+defaults();
+try {
+    const saved = JSON.parse(localStorage.getItem(STORE));
+    if (saved) {
+        for (const item of ENTRIES) {
+            if (/^#[0-9a-f]{6}$/i.test(saved.colours?.[item.key] ?? "")) { state.colours[item.key] = saved.colours[item.key]; }
+            state.locked[item.key] = saved.locked?.[item.key] === true;
+        }
+        if (typeof saved.name == "string") { document.getElementById("themeName").value = saved.name; }
+    }
+} catch {}
+refresh();
+</script>
+</body>
+</html>
