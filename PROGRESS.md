@@ -33,6 +33,9 @@ check it with the `qhess` preview in `.claude/launch.json`).
   to 400 random candidates scored against contrast targets; locked colours kept, others fitted to them; highlight
   hues kept to their meanings: check red, moves green, attacker blue-violet, side-to-move elsewhere), and Export
   (downloads custom.css). Remembers its state in localStorage `qhess.themeGenerator`.
+- Its preview fits the window without scrolling (the pickers scroll): the preview is a size container and the square
+  size comes from measured layout constants (in its CSS comment), with the 14 square states 7 or 5 to a row by the
+  container's aspect ratio. Below 760px wide it stacks and scrolls instead.
 - The game links `themes/custom.css` (committed as an empty placeholder). themes.js lists a `custom` theme when that
   file sets `--custom-theme-name`. One palette for both modes. The server's PUBLIC list includes themes/ and tools/.
 - style.css 1.0 now holds the board colours (pieces, highlights, square border) on `:root, :where([data-board-theme])`

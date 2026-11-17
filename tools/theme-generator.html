@@ -105,32 +105,59 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
 .picker .ratio.low { color: var(--ui-warn); }
 .picker.locked .name { color: var(--ui-accent); }
 
-/* ---------- Preview ---------- */
+/* ---------- Preview ----------
+   Everything fits in the preview area without scrolling: "In play" and
+   "Pieces" side by side, the 14 square states below them, 7 to a row where the
+   area is wide and 5 to a row where it is narrower. The square size is the
+   largest that fits both ways. The numbers are measured from the layout:
+   7 to a row is 8.33 squares + 115px tall and 13.83 squares + 124px wide,
+   5 to a row 9.33 squares + 146px tall and 12.67 squares + 24px wide (each
+   with ~10px to spare here); with the fixed parts counted, 5 to a row gives
+   the larger squares below an aspect ratio of about 1.37 (1.34 to 1.39 from
+   700px to 1000px tall). Change them if the layout changes. */
 .preview {
     grid-area: preview;
-    overflow: auto;
-    padding: 20px 24px 40px;
+    container-type: size;
+    overflow: hidden;
+    padding: 14px 20px;
     background: #181818;              /* the game's page, dark mode */
     color: #eee;
     transition: background-color 0.15s;
 }
 .preview.page-light { background: #ebebee; color: #1d1d1f; }
-.preview h2 { font-size: 15px; font-weight: 600; margin: 26px 0 10px; }
-.preview h2:first-child { margin-top: 0; }
-.preview .note { font-size: 12px; opacity: 0.7; margin: -4px 0 12px; }
+.preview-grid {
+    --per-row: 7;
+    --square: max(24px, min((100cqh - 125px) / 8.34, (100cqw - 134px) / 13.83));
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px 24px;
+}
+@container (aspect-ratio < 1.37) {
+    .preview-grid {
+        --per-row: 5;
+        --square: max(24px, min((100cqh - 156px) / 9.34, (100cqw - 34px) / 12.67));
+    }
+}
+.preview section.states { flex-basis: 100%; }
+.preview h2 { font-size: 14px; font-weight: 600; margin: 0 0 6px; }
+.preview h2 small { font-weight: 400; opacity: 0.65; margin-left: 6px; }
 
 .examples {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(var(--per-row), auto);
+    justify-content: start;
+    gap: 8px 12px;
 }
-.example { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; text-align: center; }
-.example .pair { display: flex; }
-.example .board { padding: 4px; }
+.example {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    font-size: 11px; line-height: 14px;
+}
+.example span { max-width: calc(2 * var(--square) + 8px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.example .board { padding: 3px; border-radius: 5px; }
 
 /* ===== The board, as style.css 7.1 to 7.4 draws it ===== */
 .board {
-    --square: 60px;
     font-size: calc(var(--square) / 3);
     display: inline-flex;
     flex-direction: column;
@@ -240,7 +267,9 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
     }
     html, body { height: auto; }
     .pickers { border-right: none; border-bottom: 1px solid var(--ui-border); }
-    .board { --square: 46px; }
+    .preview { container-type: normal; overflow: visible; }
+    .preview-grid { --square: 46px; }
+    .examples { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
 }
 </style>
 </head>
@@ -263,16 +292,20 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
 </div>
 
 <div class="preview" id="preview">
-    <h2>In play</h2>
-    <p class="note">A board mid-game: White to move, a piece chosen and its moves shown, a king in check.</p>
-    <div id="playBoard"></div>
-
-    <h2>Pieces</h2>
-    <p class="note">Each type, once known, on both squares; and pieces that could still be several types.</p>
-    <div id="pieceBoard"></div>
-
-    <h2>Square states</h2>
-    <div class="examples" id="stateExamples"></div>
+    <div class="preview-grid">
+        <section title="White to move, a rook chosen and its moves shown, Black's king in check">
+            <h2>In play</h2>
+            <div id="playBoard"></div>
+        </section>
+        <section title="Each type, once known, on both squares; then pieces that could still be several types">
+            <h2>Pieces</h2>
+            <div id="pieceBoard"></div>
+        </section>
+        <section class="states">
+            <h2>Square states <small>on a light and a dark square</small></h2>
+            <div class="examples" id="stateExamples"></div>
+        </section>
+    </div>
 </div>
 
 <script>
@@ -601,7 +634,7 @@ const STATES = [
 ];
 document.getElementById("stateExamples").innerHTML = STATES.map(([label, cls, side, waves]) =>
     '<div class="example">' + board([[side ? [side, waves, cls] : [, , cls], side ? [side, waves, cls] : [, , cls]]])
-    + '<span>' + label + '</span></div>').join("");
+    + '<span title="' + label + '">' + label + '</span></div>').join("");
 
 // ---------- Export: the theme as style.css 1.1 needs it, for themes/custom.css ----------
 function exportCss() {
