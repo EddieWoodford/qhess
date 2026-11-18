@@ -60,8 +60,6 @@ const dom = {
 	// Settings tab: one switch (checkbox) per setting
 	settings: {
 		blackView: $("settingBlackView"),
-		colourByType: $("settingColourByType"),
-		lightMode: $("settingLightMode"),
 		potentialCheck: $("settingPotentialCheck"),
 		showCoords: $("settingShowCoords"),
 		theme: $("themeList"), // the Theme dialog's buttons, one per theme (themes.js buildThemeList)

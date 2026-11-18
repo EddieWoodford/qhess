@@ -1,0 +1,46 @@
+/* Qhess board theme "Light Distinct": cream and sand squares, each type of piece in its own colour, on a box per
+   side.
+   The game lists every .css file in this folder (themes/index.json); see style.css 1.1 for what a theme sets.
+   .qhess-theme stands for this theme: the game puts the theme's own selector in its place. */
+.qhess-theme {
+    --theme-name: "Light Distinct";
+    --theme-page: light;                    /* the page around the board: dark or light */
+
+    /* Squares */
+    --board-white-col: #ece4d2;             /* cream */
+    --board-black-col: #d2c6aa;             /* sand */
+    --board-square-border: #9c9077;
+
+    /* Pieces: every symbol filled, on a box per side */
+    --white-K: var(--filled-K); --white-Q: var(--filled-Q); --white-R: var(--filled-R);
+    --white-B: var(--filled-B); --white-N: var(--filled-N); --white-P: var(--filled-P);
+    --glyph-w-bg: #fffaf0;                  /* White's box: ivory */
+    --glyph-b-bg: #c4c8d2;                  /* Black's box: cool grey */
+    --glyph-radius: 0.25em;
+    --glyph-padding: 0;
+    --glyph-margin: 2px;
+    --glyph-shadow: 0 1px 2px #0005;
+    --glyph-line-height: 1;
+    --uncollapsed-size: 0.9em;
+    --collapsed-size: 2.2em;
+
+    /* A colour per type */
+    --piece-wK: #7a5600;                    /* dark gold */
+    --piece-wQ: #b0105f;                    /* raspberry */
+    --piece-wR: #1257b0;                    /* blue */
+    --piece-wB: #b0300a;                    /* rust */
+    --piece-wN: #8f4700;                    /* burnt orange */
+    --piece-wP: #1b6e20;                    /* green */
+    --piece-bK: #6b5800;                    /* olive */
+    --piece-bQ: #7b1fa2;                    /* purple */
+    --piece-bR: #0b5e86;                    /* teal blue */
+    --piece-bB: #a3221a;                    /* brick */
+    --piece-bN: #8a4526;                    /* sienna */
+    --piece-bP: #2d6630;                    /* forest green */
+
+    /* Highlights */
+    --piece-selectedStart-col: #0b8a9e;     /* side to move, hover, chosen piece */
+    --piece-dest-col: #4f8f5a;              /* moves */
+    --piece-checkKing-col: #7a1f1f;         /* king in check, could be the king */
+    --piece-checkAttacker-col: #5a8fb5;     /* checking piece, could be attacking */
+}

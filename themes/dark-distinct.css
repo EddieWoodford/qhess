@@ -1,0 +1,45 @@
+/* Qhess board theme "Dark Distinct": brown squares, each type of piece in its own colour, on a box per side.
+   The game lists every .css file in this folder (themes/index.json); see style.css 1.1 for what a theme sets.
+   .qhess-theme stands for this theme: the game puts the theme's own selector in its place. */
+.qhess-theme {
+    --theme-name: "Dark Distinct";
+    --theme-page: dark;                     /* the page around the board: dark or light */
+
+    /* Squares */
+    --board-white-col: #aa9988;
+    --board-black-col: #665544;
+    --board-square-border: #000000;
+
+    /* Pieces: every symbol filled, on a box per side */
+    --white-K: var(--filled-K); --white-Q: var(--filled-Q); --white-R: var(--filled-R);
+    --white-B: var(--filled-B); --white-N: var(--filled-N); --white-P: var(--filled-P);
+    --glyph-w-bg: #4f3a26;                  /* White's box: warm brown */
+    --glyph-b-bg: #121a2a;                  /* Black's box: navy */
+    --glyph-radius: 0.25em;
+    --glyph-padding: 0;
+    --glyph-margin: 2px;
+    --glyph-shadow: 1px 1px 3px black;
+    --glyph-line-height: 1;
+    --uncollapsed-size: 0.9em;
+    --collapsed-size: 2.2em;
+
+    /* A colour per type */
+    --piece-wK: #ffd700;                    /* bright gold */
+    --piece-wQ: #ff69b4;                    /* hot pink */
+    --piece-wR: #1e90ff;                    /* dodger blue */
+    --piece-wB: #ff4500;                    /* orange-red */
+    --piece-wN: #ffa500;                    /* orange */
+    --piece-wP: #32cd32;                    /* lime green */
+    --piece-bK: #f0e68c;                    /* khaki */
+    --piece-bQ: #ba55d3;                    /* medium orchid */
+    --piece-bR: #87cefa;                    /* light sky blue */
+    --piece-bB: #ff6347;                    /* tomato */
+    --piece-bN: #ffa07a;                    /* light salmon */
+    --piece-bP: #90ee90;                    /* light green */
+
+    /* Highlights */
+    --piece-selectedStart-col: #3fd6e8;     /* side to move, hover, chosen piece */
+    --piece-dest-col: #4f8f5a;              /* moves */
+    --piece-checkKing-col: #7a1f1f;         /* king in check, could be the king */
+    --piece-checkAttacker-col: #5a8fb5;     /* checking piece, could be attacking */
+}

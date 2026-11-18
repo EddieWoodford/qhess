@@ -11,41 +11,47 @@ check it with the `qhess` preview in `.claude/launch.json`).
 - Add PC is hidden once the opponent has a collapsed (pure "K") king on the board: status-view `hasCollapsedKing`.
   UI only: the engine still accepts a PC on a known king, because example game records contain such PCs.
 
-## Board themes (2026-11-13)
-- Settings tab has a **Theme** button (top of the tab) opening the Theme dialog (`#themeWrapper`): the Light mode and
-  Colour pieces by type switches, then one
-  button per theme with a light and a dark example square drawn in that theme.
-- Themes: `classic` (the look before PRs #8/#9: grey squares, White in outline symbols) and `pillbox` (PRs #8/#9:
-  brown squares, filled symbols on rounded boxes filling the square; the bishop underline was removed 2026-11-17).
-  Default `pillbox`.
-- A theme is only CSS variables (style.css 1.1), under `[data-board-theme=…]`, plus a light block. The attribute is
-  on `<html>`; each dialog preview carries its own, so every theme must set every variable (see the list there).
+## Board themes: one file each in themes/ (2026-11-18)
+- Settings > **Theme** opens a dialog that is only a list: one button per theme, with a light and a dark example
+  square in that theme. No Light mode or Colour pieces by type switches any more: both are part of a theme.
+- A theme is a CSS file in `themes/` with one rule, `.qhess-theme { … }`, setting every variable listed in style.css
+  1.1 (tests/node/themes.test.js checks), including `--theme-name` and `--theme-page: dark|light` (the page around
+  the board). One colour per side = all six of a side's `--piece-*` the same.
+- themes.js `loadThemes` (awaited at the top of main.js) fetches `themes/index.json`, then each file, and puts each
+  rule under `[data-board-theme="{file name without .css}"]` in one <style>. The theme setting's choices are the
+  loaded ids; its default follows the device: `light-distinct` / `dark-distinct`. Applying a theme sets
+  data-board-theme and data-theme (page) on <html>, and keeps the page mode in localStorage `qhess.themePage` for
+  index.html's early script.
+- `themes/index.json` (sorted file names): GitHub Pages can't list a folder, so the list is a file. The local server
+  answers /themes/index.json from the folder and rewrites the file when it differs (npm test does too, via the
+  server test); a node test fails if the list doesn't match the folder. So: drop a file in, reload (local server),
+  commit the file + index.json.
+- Built-in themes: Dark Simple / Light Simple (the old Classic, one colour per side, White in outline) and
+  Dark Distinct / Light Distinct (the old Pillbox, a colour per type, boxes). Old ids (classic, pillbox) fall back to
+  the default.
 - Piece symbols are drawn by CSS `::before` (glyph spans are empty), so a theme can choose White's symbols.
-- "Colour pieces by type" off is applied on `.glyph-w/-b` themselves (not as variables on body) so previews get
-  their own theme's colours.
-- Theme list: `src/client/themes.js`. Setting: `theme` in settings.js, a "choices" setting (buttons with
-  `data-value`) beside the boolean switches; remembered in localStorage, reset by Reset to defaults.
 
-## Theme generator, custom theme (2026-11-18)
+## Theme generator (2026-11-18)
 - `tools/theme-generator.html`: standalone page (works from file:// or the server). A picker + hex field + lock per
   board colour (squares, border, boxes, 12 piece colours, 2 side colours, 4 highlights), a preview that repeats the
   board CSS of style.css 7.1-7.4 (keep in step if those change), contrast numbers per colour, Generate (best of up
   to 400 random candidates scored against contrast targets; locked colours kept, others fitted to them; highlight
-  hues kept to their meanings: check red, moves green, attacker blue-violet, side-to-move elsewhere), and Export
-  (downloads custom.css), and Import (button or drop a file on the page): reads the first value of each board colour
-  variable and `--custom-theme-name` from any CSS (an export, or style.css for the built-in defaults), keeps colours
-  it doesn't find and the locks. Remembers its state in localStorage `qhess.themeGenerator`.
+  hues kept to their meanings: check red, moves green, attacker blue-violet, side-to-move elsewhere).
+- Export writes a theme file (named from the theme name). Its two switches are part of the theme: Light page ->
+  `--theme-page`; Colour pieces by type off -> every piece exported in its side colour. Export is always filled
+  symbols on boxes: re-exporting a Simple theme gives it boxes (no "no boxes / outline" option yet).
+- Import (button or drop a file): first value of each board colour variable, `--theme-name` (or the old
+  `--custom-theme-name`) and `--theme-page`; a theme whose pieces are one colour per side sets the side colours and
+  switches by-type off; transparent values are skipped. Keeps colours it doesn't find and the locks. State in
+  localStorage `qhess.themeGenerator`.
 - Its preview fits the window without scrolling (the pickers scroll): the preview is a size container and the square
   size comes from measured layout constants (in its CSS comment), with the 14 square states 7 or 5 to a row by the
   container's aspect ratio. Below 760px wide it stacks and scrolls instead.
-- The game links `themes/custom.css` (committed as an empty placeholder). themes.js lists a `custom` theme when that
-  file sets `--custom-theme-name`. One palette for both modes. The server's PUBLIC list includes themes/ and tools/.
-- style.css 1.0 now holds the board colours (pieces, highlights, square border) on `:root, :where([data-board-theme])`
-  (+ light), so each dialog preview resets to the built-in colours and a custom theme only colours its own preview.
+- The server's PUBLIC list includes themes/ and tools/.
 
 ## Board highlight colour (2026-11-17)
-- `--piece-selectedStart-col` (side-to-move ring, hover, chosen start) is cyan `#3fd6e8` in dark mode and teal
-  `#0b8a9e` in light (was dark amber, lost on the brown Pillbox board). The rings are inset box-shadows, painted
+- `--piece-selectedStart-col` (side-to-move ring, hover, chosen start) is cyan `#3fd6e8` in the dark themes and teal
+  `#0b8a9e` in the light ones (was dark amber, lost on the brown Pillbox board). The rings are inset box-shadows, painted
   under the pillbox boxes, so only the ~2px gap round the boxes shows them.
 
 ## Known, not fixed (from the review of PRs #8/#9)

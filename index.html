@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-board-theme="pillbox">
+<html lang="en" data-board-theme="dark-distinct">
 
 <head>
     <meta charset="UTF-8">
@@ -7,14 +7,13 @@
     <title>Qhess</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
-    <!-- A theme made with tools/theme-generator.html (its Export), if one has been saved here; themes.js lists it -->
-    <link rel="stylesheet" href="themes/custom.css">
-    <!-- Light mode and the board theme before the page is drawn, so they don't flash the defaults first.
-         settings.js sets them properly. -->
+    <!-- The page light or dark, as the last theme had it, before the page is drawn, so it doesn't flash the other
+         first. The themes themselves are in themes/ (src/client/themes.js reads them); main.js sets them properly. -->
     <script>
         try {
             const saved = JSON.parse(localStorage.getItem("qhess.settings"));
-            const light = typeof saved?.lightMode == "boolean" ? saved.lightMode
+            const page = localStorage.getItem("qhess.themePage");
+            const light = typeof saved?.theme == "string" && page ? page == "light"
                 : matchMedia("(prefers-color-scheme: light)").matches;
             document.documentElement.dataset.theme = light ? "light" : "dark";
             if (typeof saved?.theme == "string") { document.documentElement.dataset.boardTheme = saved.theme; }
@@ -215,28 +214,11 @@
             </div>
         </div>
     </div>
-    <!-- theme modal - from the Settings tab: Light mode, Colour pieces by type, and the board themes (src/client/themes.js fills the list,
+    <!-- theme modal - from the Settings tab: one button per theme in themes/ (src/client/themes.js fills the list,
          settings.js shows which is chosen) -->
     <div id="themeWrapper" class="modalWrapper">
         <div id="themeDiv" class="modalData theme">
             <h2>Theme</h2>
-            <label class="setting">
-                <span class="setting-text">
-                    <span class="setting-name">Light mode</span>
-                    <span class="setting-note">Light colours, on the board and around it. Off: dark. Until it
-                        is switched (or after Reset to defaults), it follows the device's own setting.</span>
-                </span>
-                <input class="switch" id="settingLightMode" type="checkbox" role="switch">
-            </label>
-            <label class="setting">
-                <span class="setting-text">
-                    <span class="setting-name">Colour pieces by type</span>
-                    <span class="setting-note">Each type of piece in its own colour, to spot every piece
-                        that could still be, say, a bishop. Off: one colour per side, to tell the
-                        sides apart.</span>
-                </span>
-                <input class="switch" id="settingColourByType" type="checkbox" role="switch">
-            </label>
             <div class="theme-list" id="themeList"></div>
             <div class="button-row">
                 <button class="historyButton" id="themeClose">Close</button>
@@ -418,8 +400,8 @@
                         <div class="setting">
                             <span class="setting-text">
                                 <span class="setting-name">Theme</span>
-                                <span class="setting-note">The colours of the board and pieces, Light mode,
-                                    and Colour pieces by type.</span>
+                                <span class="setting-note">The colours of the board and pieces, and of the page
+                                    around them.</span>
                             </span>
                             <button class="historyButton" id="themeButton">Theme</button>
                         </div>
@@ -449,7 +431,7 @@
                         </label>
                         <div class="button-row settings-buttons">
                             <button class="historyButton" id="settingsReset"
-                                    title="Put every setting back to how it started, the theme too. Light mode follows the device's own setting again.">Reset to defaults</button>
+                                    title="Put every setting back to how it started. The theme follows the device's own light or dark setting again.">Reset to defaults</button>
                         </div>
                     </div>
                 </div>

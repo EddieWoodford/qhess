@@ -1,0 +1,43 @@
+/* Qhess board theme "eddie1", made with tools/theme-generator.html.
+   The game lists every .css file in this folder (themes/index.json); see style.css 1.1 for what a theme sets.
+   .qhess-theme stands for this theme: the game puts the theme's own selector in its place. */
+.qhess-theme {
+    --theme-name: "eddie1";
+    --theme-page: dark;                     /* the page around the board: dark or light */
+
+    /* Squares */
+    --board-white-col:            #e4d5d3;
+    --board-black-col:            #4e3d3b;
+    --board-square-border:        #14100f;
+
+    /* Pieces: every symbol filled, on a box per side */
+    --white-K: var(--filled-K); --white-Q: var(--filled-Q); --white-R: var(--filled-R);
+    --white-B: var(--filled-B); --white-N: var(--filled-N); --white-P: var(--filled-P);
+    --glyph-w-bg:                 #ababab;  /* White's box */
+    --glyph-b-bg:                 #221716;  /* Black's box */
+    --glyph-radius:               0.25em;
+    --glyph-padding:              0;
+    --glyph-margin:               2px;
+    --glyph-shadow:               1px 1px 3px #0008;
+    --glyph-line-height:          1;
+    --uncollapsed-size:           0.9em;
+    --collapsed-size:             2.2em;
+    --piece-wK:                   #0b514e;
+    --piece-wQ:                   #1c1ce8;
+    --piece-wR:                   #7a1698;
+    --piece-wB:                   #95120e;
+    --piece-wN:                   #5d4504;
+    --piece-wP:                   #125610;
+    --piece-bK:                   #29bdb3;
+    --piece-bQ:                   #7964d3;
+    --piece-bR:                   #b24aca;
+    --piece-bB:                   #c44f50;
+    --piece-bN:                   #ad7d38;
+    --piece-bP:                   #2abc3a;
+
+    /* Highlights */
+    --piece-selectedStart-col:    #178280;  /* side to move, hover, chosen piece */
+    --piece-dest-col:             #2d7f24;  /* moves */
+    --piece-checkKing-col:        #d23023;  /* king in check, could be the king */
+    --piece-checkAttacker-col:    #8f55d2;  /* checking piece, could be attacking */
+}

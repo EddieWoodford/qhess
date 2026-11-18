@@ -1,8 +1,8 @@
 "use strict";
 
 // The Settings tab: one switch (a checkbox in index.html) per setting, and a button to put them all back to default.
-// The board theme is a setting too, chosen from a list of buttons (themes.js) in the Theme dialog, along with the
-// Light mode and Colour pieces by type switches.
+// The theme is a setting too, chosen from a list of buttons (themes.js) in the Theme dialog. Until one is chosen
+// it follows the device's own light / dark setting.
 //
 // To add a setting: add its switch in index.html (see the comment there) and in dom.js settings, add it to
 // SETTINGS below, and give main.js setupSettings what to do when it changes.
@@ -11,7 +11,7 @@
 // The others start at their default every time.
 
 import { dom } from "./dom.js";
-import { THEMES, DEFAULT_THEME } from "./themes.js";
+import { THEMES, defaultTheme } from "./themes.js";
 
 // The device's own light / dark setting
 const lightQuery = window.matchMedia?.("(prefers-color-scheme: light)");
@@ -22,15 +22,15 @@ function devicePrefersLight() {
 }
 
 // name: { default: its value (or a function giving it) when nothing is remembered, remember: whether to keep it
-// in this browser, choices: for a setting chosen from buttons (each with data-value) rather than a switch, the
-// values it can take }
+// in this browser, choices: for a setting chosen from buttons (each with data-value) rather than a switch, a
+// function giving the values it can take }
 const SETTINGS = {
 	blackView: { default: false, remember: false }, // multiplayer sets it to your own side, so it isn't kept
-	colourByType: { default: true, remember: true },
-	lightMode: { default: devicePrefersLight, remember: true }, // follows the device until it is switched
 	potentialCheck: { default: true, remember: true }, // render.js drawSettings locks it on in a multiplayer game
 	showCoords: { default: false, remember: true },
-	theme: { default: DEFAULT_THEME, remember: true, choices: THEMES.map(theme => theme.id) },
+	// The themes are read from themes/ (themes.js loadThemes) before setupSettings runs
+	theme: { default: () => defaultTheme(devicePrefersLight()), remember: true,
+		choices: () => THEMES.map(theme => theme.id) },
 };
 
 const STORAGE_KEY = "qhess.settings";
@@ -66,7 +66,7 @@ function remember(name, value) {
 
 // Whether a value could be this setting's (a remembered one might be from an older version of the page)
 function isValid(setting, value) {
-	return setting.choices ? setting.choices.includes(value) : typeof value == "boolean";
+	return setting.choices ? setting.choices().includes(value) : typeof value == "boolean";
 }
 
 function isRemembered(name) {
@@ -116,15 +116,15 @@ function setupSettings(apply) {
 			input.addEventListener("change", () => change(name, input.checked));
 		}
 	}
-	// Until Light mode is switched, it follows the device, even when the device changes while the page is open
+	// Until a theme is chosen, it follows the device, even when the device changes while the page is open
 	lightQuery?.addEventListener?.("change", () => {
-		if (!isRemembered("lightMode")) {
-			set("lightMode", devicePrefersLight());
+		if (!isRemembered("theme")) {
+			set("theme", defaultValue(SETTINGS.theme));
 		}
 	});
 }
 
-// Every setting back to its default, and nothing remembered, so Light mode follows the device again.
+// Every setting back to its default, and nothing remembered, so the theme follows the device again.
 // A setting that can't be changed just now (Black's view in a multiplayer game) is left as it is.
 function resetSettings() {
 	try {

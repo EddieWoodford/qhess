@@ -339,6 +339,15 @@ function rawStatus(path, { method = "GET", headers = {}, body } = {}) {
 	});
 }
 
+test("lists the theme files in themes/", async () => {
+	const res = await fetch("http://127.0.0.1:" + server.port + "/themes/index.json");
+	assert.equal(res.status, 200);
+	const list = await res.json();
+	assert.ok(list.includes("dark-distinct.css"));
+	assert.ok(list.every(f => f.endsWith(".css")));
+	assert.deepEqual(list, [...list].sort());
+});
+
 test("serves the game's files and nothing it shouldn't", async () => {
 	const url = p => "http://127.0.0.1:" + server.port + p;
 	const home = await fetch(url("/"));

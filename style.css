@@ -109,7 +109,7 @@
     --button-height: 2.5em;
     --gap: 0.5rem;                                /* padding around and between the page areas */
 
-    /* ---- Around the board (the board's own colours: 1.0 and the theme, 1.1) ---- */
+    /* ---- Around the board (the board's own colours come from the theme: 1.1) ---- */
     --board-edge-col: #111;                /* coordinate labels and corners */
     --marker-clear: rgba(255,0,0,0);        /* transparent stop used by the move markers */
     --game-over-checkmate-col: #ff5a4f;     /* the game over banner (7.6) */
@@ -120,11 +120,9 @@
 }
 
 
-/* Light mode (Settings tab; main.js sets data-theme="light" on <html>).
-   The board turns light too, so the pieces get deeper colours: each is at
-   least 3.5:1 against both squares, as the white pieces' outline symbols are
-   thin. Each type keeps its hue from dark mode. The highlight colours and the
-   game over banner stay as they are. */
+/* The page around the board in light colours, for a theme whose --theme-page
+   is light (main.js sets data-theme="light" on <html>). The board's own
+   colours come from the theme (1.1). */
 :root[data-theme="light"] {
     color-scheme: light;
 
@@ -167,134 +165,31 @@
 }
 
 
-/* ---------- 1.0 Board colours ----------
-   The pieces, highlights and square border, for the built-in themes. Set on
-   the page and again (at no specificity, :where) on each theme preview in the
-   Theme dialog, so a custom theme (themes/custom.css), which sets these
-   itself, colours only the board and its own preview. */
-:root, :where([data-board-theme]) {
-    --board-square-border: black;           /* the line around each square */
-    --piece-selectedStart-col: #3fd6e8;     /* cyan: the side to move's ring, hover and chosen start */
-    --piece-dest-col: #4f8f5a;              /* green */
-    --piece-checkKing-col: #7a1f1f;         /* dark oxblood */
-    --piece-checkAttacker-col: #5a8fb5;     /* blue */
-
-    /* White pieces: richer, warmer, darker shades for visibility */
-    --piece-wK: #FFD700;                    /* bright gold */
-    --piece-wQ: #FF69B4;                    /* hot pink */
-    --piece-wR: #1E90FF;                    /* dodger blue */
-    --piece-wB: #FF4500;                    /* orange-red */
-    --piece-wN: #FFA500;                    /* orange */
-    --piece-wP: #32CD32;                    /* lime green */
-    /* Black pieces: softer, slightly glowing pastels to pop on dark squares */
-    --piece-bK: #F0E68C;                    /* khaki */
-    --piece-bQ: #BA55D3;                    /* medium orchid */
-    --piece-bR: #87CEFA;                    /* light sky blue */
-    --piece-bB: #FF6347;                    /* tomato */
-    --piece-bN: #FFA07A;                    /* light salmon */
-    --piece-bP: #90EE90;                    /* light green */
-    /* Black's one colour when "Colour pieces by type" is switched off (7.4); White's comes from the theme (1.1) */
-    --piece-black-side: #E8743B;            /* copper */
-}
-
-:root[data-theme="light"], :where(:root[data-theme="light"] [data-board-theme]) {
-    --board-square-border: #9c9077;
-    --piece-selectedStart-col: #0b8a9e;     /* deep teal */
-
-    --piece-wK: #7a5600;                    /* dark gold */
-    --piece-wQ: #b0105f;                    /* raspberry */
-    --piece-wR: #1257b0;                    /* blue */
-    --piece-wB: #b0300a;                    /* rust */
-    --piece-wN: #8f4700;                    /* burnt orange */
-    --piece-wP: #1b6e20;                    /* green */
-    --piece-bK: #6b5800;                    /* olive */
-    --piece-bQ: #7b1fa2;                    /* purple */
-    --piece-bR: #0b5e86;                    /* teal blue */
-    --piece-bB: #a3221a;                    /* brick */
-    --piece-bN: #8a4526;                    /* sienna */
-    --piece-bP: #2d6630;                    /* forest green */
-    --piece-black-side: #1f2430;            /* ink */
-}
-
-
 /* ---------- 1.1 Board themes ----------
-   The Theme dialog (Settings tab) picks one; main.js puts it on <html> as
-   data-board-theme, and each preview in the dialog carries its own.
-   A theme is only these variables, so a preview inside the page shows its own
-   theme, not the page's: every theme must set every one of them, in both
-   light and dark. (initial unsets one, so the property inherits as usual.)
+   Each theme is a file in themes/ (src/client/themes.js reads them all, as
+   listed in themes/index.json). Its rule, written .qhess-theme, is put under
+   [data-board-theme="{id}"]: main.js sets that on <html> for the chosen theme,
+   and each preview in the Theme dialog carries its own, so every theme sets
+   every one of these (tests/node/themes.test.js checks):
+     --theme-name                            its name in the Theme dialog
+     --theme-page                            dark or light: the page around the board (1)
      --board-white-col / --board-black-col   the squares
-     --piece-white-side                      White's colour with "Colour pieces by type" off
-     --white-K ... --white-P                 White's symbols (Black's are always filled)
-     --glyph-*                               the box drawn round each piece symbol
+     --board-square-border                   the line round each square
+     --white-K ... --white-P                 White's symbols, outline or filled (Black's are always filled)
+     --glyph-*                               the box drawn round each piece symbol (initial or transparent: none)
      --uncollapsed-size                      the symbols of a piece with several types left
      --collapsed-size                        a piece with one type left
-   To add a theme: a dark block and a light block here, and a line in themes.js.
-   A custom theme (tools/theme-generator.html, saved as themes/custom.css) also
-   sets the colours of 1.0, one set for both modes. */
+     --piece-wK ... --piece-bP               each piece's colour (one colour per side: all six the same)
+     --piece-selectedStart-col               side to move, hover, chosen piece (7.2)
+     --piece-dest-col                        moves (7.3)
+     --piece-checkKing-col / --piece-checkAttacker-col   check (7.2)
+   To add a theme: tools/theme-generator.html, Export, and save the file in
+   themes/; or copy a theme file there and change it. */
 :root {
     --outline-K: "\2654"; --outline-Q: "\2655"; --outline-R: "\2656";
     --outline-B: "\2657"; --outline-N: "\2658"; --outline-P: "\2659";
     --filled-K: "\265A"; --filled-Q: "\265B"; --filled-R: "\265C";
     --filled-B: "\265D"; --filled-N: "\265E"; --filled-P: "\265F";
-}
-
-/* Classic: grey squares, White's pieces drawn in outline */
-[data-board-theme="classic"] {
-    --board-white-col: #555;                /* darkened 'white' squares */
-    --board-black-col: #222;                /* darker black squares */
-    --piece-white-side: #F4EBD0;            /* ivory */
-    --white-K: var(--outline-K); --white-Q: var(--outline-Q); --white-R: var(--outline-R);
-    --white-B: var(--outline-B); --white-N: var(--outline-N); --white-P: var(--outline-P);
-    --glyph-w-bg: transparent;
-    --glyph-b-bg: transparent;
-    --glyph-radius: 0;
-    --glyph-padding: 0;
-    --glyph-margin: 0;
-    --glyph-shadow: none;
-    --glyph-line-height: initial;
-    --uncollapsed-size: 1em;
-    --collapsed-size: 2.7em;
-}
-
-:root[data-theme="light"][data-board-theme="classic"],
-:root[data-theme="light"] [data-board-theme="classic"] {
-    --board-white-col: #ece4d2;             /* cream */
-    --board-black-col: #d2c6aa;             /* sand */
-    --piece-white-side: #a34700;            /* amber */
-}
-
-/* Pillbox: brown squares, every symbol filled, on a solid box per side.
-   The boxes suit each mode's piece colours (1): dark boxes behind dark mode's
-   bright colours, light boxes behind light mode's deep ones. White's box is
-   warm and lighter, Black's cool and darker, so the sides stay apart (in
-   dark mode mostly by hue: a lighter White box costs its blue and red
-   pieces their contrast). */
-[data-board-theme="pillbox"] {
-    --board-white-col: #a98;
-    --board-black-col: #654;
-    --piece-white-side: #FFFFFF;            /* white */
-    --white-K: var(--filled-K); --white-Q: var(--filled-Q); --white-R: var(--filled-R);
-    --white-B: var(--filled-B); --white-N: var(--filled-N); --white-P: var(--filled-P);
-    --glyph-w-bg: #4f3a26;                  /* warm brown */
-    --glyph-b-bg: #121a2a;                  /* navy */
-    --glyph-radius: 0.25em;                 /* rounded boxes, each filling its cell of the square */
-    --glyph-padding: 0;
-    --glyph-margin: 2px;
-    --glyph-shadow: 1px 1px 3px black;
-    --glyph-line-height: 1;
-    --uncollapsed-size: 0.9em;
-    --collapsed-size: 2.2em;
-}
-
-:root[data-theme="light"][data-board-theme="pillbox"],
-:root[data-theme="light"] [data-board-theme="pillbox"] {
-    --board-white-col: #ece4d2;             /* cream */
-    --board-black-col: #d2c6aa;             /* sand */
-    --piece-white-side: #a34700;            /* amber */
-    --glyph-w-bg: #fffaf0;                  /* ivory */
-    --glyph-b-bg: #c4c8d2;                  /* cool grey */
-    --glyph-shadow: 0 1px 2px #0005;
 }
 
 
@@ -803,8 +698,8 @@ input:checked + .tabTitle {
     min-height: var(--button-height);
 }
 
-/* The Theme dialog (from the Settings tab): Light mode, then a row per theme
-   (themes.js): its button, and a light and a dark square drawn in that theme */
+/* The Theme dialog (from the Settings tab): a row per theme (themes.js): its
+   button, and a light and a dark square drawn in that theme */
 .modalData.theme {
     max-width: 28em;
     text-align: left;
@@ -1616,18 +1511,12 @@ input.switch:focus-visible {
 .glyph-bN { color: var(--piece-bN); }
 .glyph-bP { color: var(--piece-bP); }
 
-/* Light mode: the white pieces' outline symbols are thin lines, which fade on
-   a light square, so thicken them with a shadow of their own colour */
+/* A light page (a theme's --theme-page): the white pieces' outline symbols are
+   thin lines, which fade on a light square, so thicken them with a shadow of
+   their own colour */
 :root[data-theme="light"] .glyph-w {
     text-shadow: 0 0 0.6px currentColor, 0 0 0.6px currentColor;
 }
-
-/* "Colour pieces by type" switched off (Theme dialog; main.js puts .side-colours
-   on <body>): every piece is its side's colour, so the sides are easier to
-   tell apart. Set on the symbol itself, so it takes White's colour from the
-   theme it is drawn in (1.1). */
-.side-colours .glyph-w { color: var(--piece-white-side); }
-.side-colours .glyph-b { color: var(--piece-black-side); }
 
 /* ---------- 7.5 Move animation ----------
    board-view.js slides a copy of a moving piece (a "ghost") from its old

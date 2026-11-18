@@ -2,8 +2,11 @@
 <html lang="en">
 <!--
   Qhess board theme generator. Standalone: open this file in a browser (or /tools/theme-generator.html on the
-  local server). Pick or generate the board's colours, then Export: save the file as themes/custom.css in the
-  qhess folder and reload the game; the theme appears in Settings > Theme under the name given here.
+  local server). Pick or generate the board's colours, then Export: save the file in the qhess folder's themes/
+  and reload the game (started with start.bat, which updates themes/index.json); the theme appears in
+  Settings > Theme under the name given here. Commit the file and themes/index.json to put it on GitHub Pages.
+  The two switches are part of the theme: Light page sets the page around the board, and with Colour pieces by
+  type off every piece is exported in its side's one colour.
 
   The preview below repeats the board rules of style.css (sections 7.1 to 7.4) and uses the same CSS variables,
   so it looks as the game will. If those rules change, change them here too.
@@ -282,14 +285,16 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
     <h1>Qhess theme generator</h1>
     <label>Name <input type="text" id="themeName" value="My theme" maxlength="40"></label>
     <button class="primary" id="generate" title="New colours for every colour that isn't locked">Generate random theme</button>
-    <button id="export" title="Save as themes/custom.css in the qhess folder">Export</button>
+    <button id="export" title="Save the file in the qhess folder's themes/ and reload the game">Export</button>
     <button id="import" title="Load the colours from an exported theme's CSS file (or drop the file on this page)">Import</button>
     <input type="file" id="importFile" accept=".css,text/css" hidden>
     <span id="importStatus" class="status" role="status"></span>
     <span class="spacer"></span>
-    <label><input type="checkbox" id="byType" checked> Colour pieces by type</label>
-    <label><input type="checkbox" id="pageLight"> Light page</label>
-    <button id="reset" title="Back to the Pillbox theme's dark colours">Reset to Pillbox</button>
+    <label title="Part of the theme. Off: every piece is exported in its side's one colour">
+        <input type="checkbox" id="byType" checked> Colour pieces by type</label>
+    <label title="Part of the theme: the page around the board light, not dark">
+        <input type="checkbox" id="pageLight"> Light page</label>
+    <button id="reset" title="Back to the Dark Distinct theme's colours">Reset to Dark Distinct</button>
 </div>
 
 <div class="pickers" id="pickers">
@@ -581,7 +586,9 @@ function refresh(editing) {
         r.title = "Contrast " + value.toFixed(2) + ":1 (aim for at least " + target + ")";
     }
     try {
-        localStorage.setItem(STORE, JSON.stringify({ ...state, name: document.getElementById("themeName").value }));
+        localStorage.setItem(STORE, JSON.stringify({ ...state, name: document.getElementById("themeName").value,
+            byType: document.getElementById("byType").checked,
+            pageLight: document.getElementById("pageLight").checked }));
     } catch {}
 }
 
@@ -646,28 +653,27 @@ document.getElementById("stateExamples").innerHTML = STATES.map(([label, cls, si
     '<div class="example">' + board([[side ? [side, waves, cls] : [, , cls], side ? [side, waves, cls] : [, , cls]]])
     + '<span title="' + label + '">' + label + '</span></div>').join("");
 
-// ---------- Export: the theme as style.css 1.1 needs it, for themes/custom.css ----------
+// ---------- Export: a theme file for themes/ (style.css 1.1 lists what it sets) ----------
 function exportCss() {
     const raw = document.getElementById("themeName").value.trim() || "Custom";
     const name = raw.replace(/["\\\n\r]|\*\//g, "");
+    const byType = document.getElementById("byType").checked;
+    const page = document.getElementById("pageLight").checked ? "light" : "dark";
     const c = state.colours;
+    const piece = (side, t) => byType ? c[side + t] : c[side + "Side"];
     const line = (v, value, note) => "    " + (v + ":").padEnd(30) + value + ";" + (note ? "  /* " + note + " */" : "");
     const css = [
         "/* Qhess board theme \"" + name + "\", made with tools/theme-generator.html.",
-        "   Save this file as themes/custom.css in the qhess folder and reload the game: it appears in",
-        "   Settings > Theme. One palette for light and dark mode alike; the page around the board still follows",
-        "   the Light mode switch. */",
+        "   The game lists every .css file in this folder (themes/index.json); see style.css 1.1 for what a theme sets.",
+        "   .qhess-theme stands for this theme: the game puts the theme's own selector in its place. */",
+        ".qhess-theme {",
+        line("--theme-name", '"' + name + '"', "its name in the Theme dialog"),
+        line("--theme-page", page, "the page around the board: dark or light"),
         "",
-        ":root {",
-        line("--custom-theme-name", '"' + name + '"', "the name in the Theme dialog"),
-        "}",
-        "",
-        ":root[data-board-theme=\"custom\"],",
-        "[data-board-theme=\"custom\"] {",
         "    /* Squares */",
         ...["light", "dark", "border"].map(k => line(ENTRIES.find(e => e.key == k).var, c[k])),
         "",
-        "    /* Pieces: every symbol filled, on a box per side (as Pillbox) */",
+        "    /* Pieces: every symbol filled, on a box per side */",
         "    --white-K: var(--filled-K); --white-Q: var(--filled-Q); --white-R: var(--filled-R);",
         "    --white-B: var(--filled-B); --white-N: var(--filled-N); --white-P: var(--filled-P);",
         line("--glyph-w-bg", c.wbox, "White's box"),
@@ -679,11 +685,9 @@ function exportCss() {
         line("--glyph-line-height", "1"),
         line("--uncollapsed-size", "0.9em"),
         line("--collapsed-size", "2.2em"),
-        ...["w", "b"].flatMap(side => TYPES.map(t => line("--piece-" + side + t, c[side + t]))),
         "",
-        "    /* \"Colour pieces by type\" off */",
-        line("--piece-white-side", c.wSide),
-        line("--piece-black-side", c.bSide),
+        byType ? "    /* A colour per type */" : "    /* One colour per side */",
+        ...["w", "b"].flatMap(side => TYPES.map(t => line("--piece-" + side + t, piece(side, t)))),
         "",
         "    /* Highlights */",
         line("--piece-selectedStart-col", c.select, "side to move, hover, chosen piece"),
@@ -697,7 +701,7 @@ function exportCss() {
     const url = URL.createObjectURL(new Blob([css], { type: "text/css" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = "custom.css";
+    a.download = (name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "custom") + ".css";
     document.body.append(a);
     a.click();
     a.remove();
@@ -705,32 +709,48 @@ function exportCss() {
 }
 
 // ---------- Import: the colours (and name) from a theme's CSS, such as an earlier Export ----------
-// Any colour the browser understands (#abc, #aabbcc, rgb(), names), as #rrggbb; null if it isn't one
+// Any colour the browser understands (#abc, #aabbcc, rgb(), names), as #rrggbb; null if it isn't one, or is
+// see-through (a theme with no boxes has transparent ones)
 function toHex(value) {
     const probe = document.createElement("i");
     probe.style.color = value;
     if (!probe.style.color) { return null; }
     document.body.append(probe);
-    const rgb = getComputedStyle(probe).color.match(/[\d.]+/g).slice(0, 3).map(Number);
+    const parts = getComputedStyle(probe).color.match(/[\d.]+/g).map(Number);
     probe.remove();
-    return rgbToHex(rgb);
+    return parts.length > 3 && parts[3] == 0 ? null : rgbToHex(parts.slice(0, 3));
 }
 
 // Set every colour the CSS gives (the first value for each variable), keep the rest and the locks, and say how
-// many were found.
+// many were found. Reads theme files (themes/) and the older exports (themes/custom.css) alike.
 function importCss(css, fileName) {
     const values = {};
     for (const [, name, value] of css.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)) {
         if (!(name in values)) { values[name] = value.trim(); }
     }
+    // One colour per side (all six of a side's pieces the same): that is the side's colour, and the switch is off
+    const sideColour = side => {
+        const hexes = TYPES.map(t => values["--piece-" + side + t] && toHex(values["--piece-" + side + t]));
+        return hexes[0] && hexes.every(h => h == hexes[0]) ? hexes[0] : null;
+    };
+    const oneColour = sideColour("w") && sideColour("b");
+    if (oneColour) {
+        values["--piece-white-side"] = sideColour("w");
+        values["--piece-black-side"] = sideColour("b");
+    }
     const missing = [];
     let found = 0;
     for (const item of ENTRIES) {
-        const hex = values[item.var] ? toHex(values[item.var]) : null;
+        // A one-colour theme's pieces are its side colours, not colours per type: keep those as they are
+        const hex = oneColour && /^[wb][KQRBNP]$/.test(item.key) ? null
+            : values[item.var] ? toHex(values[item.var]) : null;
         if (hex) { state.colours[item.key] = hex; found++; } else { missing.push(item.group + ": " + item.name); }
     }
-    const name = values["--custom-theme-name"]?.replace(/^["']|["']$/g, "");
+    const name = (values["--theme-name"] ?? values["--custom-theme-name"])?.replace(/^["']|["']$/g, "");
     if (found && name) { document.getElementById("themeName").value = name; }
+    if (found) {
+        setToggles(!oneColour, values["--theme-page"] == "light");
+    }
 
     const status = document.getElementById("importStatus");
     status.classList.toggle("warn", found < ENTRIES.length);
@@ -768,12 +788,21 @@ function defaults() {
 
 document.getElementById("generate").addEventListener("click", generate);
 document.getElementById("export").addEventListener("click", exportCss);
-document.getElementById("reset").addEventListener("click", () => { defaults(); refresh(); });
+document.getElementById("reset").addEventListener("click", () => { defaults(); setToggles(true, false); refresh(); });
 document.getElementById("themeName").addEventListener("input", () => refresh());
-document.getElementById("byType").addEventListener("change", e =>
-    document.getElementById("preview").classList.toggle("side-colours", !e.target.checked));
-document.getElementById("pageLight").addEventListener("change", e =>
-    document.getElementById("preview").classList.toggle("page-light", e.target.checked));
+// The two switches (part of the theme, see exportCss): set them and show them in the preview
+function setToggles(byType, pageLight) {
+    document.getElementById("byType").checked = byType;
+    document.getElementById("pageLight").checked = pageLight;
+    document.getElementById("preview").classList.toggle("side-colours", !byType);
+    document.getElementById("preview").classList.toggle("page-light", pageLight);
+}
+const toggled = () => {
+    setToggles(document.getElementById("byType").checked, document.getElementById("pageLight").checked);
+    refresh();
+};
+document.getElementById("byType").addEventListener("change", toggled);
+document.getElementById("pageLight").addEventListener("change", toggled);
 
 defaults();
 try {
@@ -784,6 +813,7 @@ try {
             state.locked[item.key] = saved.locked?.[item.key] === true;
         }
         if (typeof saved.name == "string") { document.getElementById("themeName").value = saved.name; }
+        setToggles(saved.byType !== false, saved.pageLight === true);
     }
 } catch {}
 refresh();

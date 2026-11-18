@@ -7,7 +7,7 @@ import * as game from "./controller.js";
 import { setFlippedBoard } from "./board-view.js";
 import { setupModals, showModal, hideModal, showChoice } from "./modals.js";
 import { setupSettings, resetSettings } from "./settings.js";
-import { buildThemeList } from "./themes.js";
+import { loadThemes, buildThemeList, themeById } from "./themes.js";
 import { dom } from "./dom.js";
 import { normalizeCode } from "../shared/protocol.js";
 import { wakeServer } from "./server-address.js";
@@ -23,19 +23,23 @@ function onClick(id, handler) {
 
 setupModals();
 
-// Settings tab: what each switch does (settings.js). The Theme dialog's list is filled first, to show the theme on.
+// Settings tab: what each switch does (settings.js). The themes are read from themes/ first, and the Theme dialog's
+// list filled, to show the theme on.
+await loadThemes();
 buildThemeList(dom.settings.theme);
 setupSettings({
 	blackView: on => setFlippedBoard(on),
-	// Off: each side's pieces all in one colour (style.css 7.4 .side-colours)
-	colourByType: on => document.body.classList.toggle("side-colours", !on),
-	// The page around the board in light colours (style.css 1, :root[data-theme="light"])
-	lightMode: on => document.documentElement.dataset.theme = on ? "light" : "dark",
 	potentialCheck: on => game.setPotentialCheckRule(on),
 	// The file letters and rank numbers around the board (style.css 7.4)
 	showCoords: on => dom.board.classList.toggle("show-coords", on),
-	// The squares' colours and how the pieces are drawn (style.css 1.1)
-	theme: id => document.documentElement.dataset.boardTheme = id,
+	// The board's colours and how the pieces are drawn (style.css 1.1), and the page around it light or dark
+	// (style.css 1, :root[data-theme="light"]). The page's mode is kept for index.html, to draw it before this runs.
+	theme: id => {
+		const page = themeById(id)?.page ?? "dark";
+		document.documentElement.dataset.boardTheme = id;
+		document.documentElement.dataset.theme = page;
+		try { localStorage.setItem("qhess.themePage", page); } catch {}
+	},
 });
 
 // Side panel: hidden until the menu button (☰) opens it.
@@ -120,7 +124,7 @@ onClick("importLoad", () => {
 });
 onClick("importCancel", () => hideModal("import"));
 
-// Settings tab: every setting back to its default (Light mode follows the device again)
+// Settings tab: every setting back to its default (the theme follows the device again)
 onClick("settingsReset", () => resetSettings());
 
 // Theme dialog (modals.js opens it from the Settings tab)

@@ -1,0 +1,37 @@
+/* Qhess board theme "Dark Simple": grey squares, one colour per side, White drawn in outline.
+   The game lists every .css file in this folder (themes/index.json); see style.css 1.1 for what a theme sets.
+   .qhess-theme stands for this theme: the game puts the theme's own selector in its place. */
+.qhess-theme {
+    --theme-name: "Dark Simple";
+    --theme-page: dark;                     /* the page around the board: dark or light */
+
+    /* Squares */
+    --board-white-col: #555555;
+    --board-black-col: #222222;
+    --board-square-border: #000000;
+
+    /* Pieces: White in outline, Black filled, no boxes */
+    --white-K: var(--outline-K); --white-Q: var(--outline-Q); --white-R: var(--outline-R);
+    --white-B: var(--outline-B); --white-N: var(--outline-N); --white-P: var(--outline-P);
+    --glyph-w-bg: transparent;
+    --glyph-b-bg: transparent;
+    --glyph-radius: 0;
+    --glyph-padding: 0;
+    --glyph-margin: 0;
+    --glyph-shadow: none;
+    --glyph-line-height: initial;
+    --uncollapsed-size: 1em;
+    --collapsed-size: 2.7em;
+
+    /* One colour per side */
+    --piece-wK: #f4ebd0; --piece-wQ: #f4ebd0; --piece-wR: #f4ebd0;    /* ivory */
+    --piece-wB: #f4ebd0; --piece-wN: #f4ebd0; --piece-wP: #f4ebd0;
+    --piece-bK: #e8743b; --piece-bQ: #e8743b; --piece-bR: #e8743b;    /* copper */
+    --piece-bB: #e8743b; --piece-bN: #e8743b; --piece-bP: #e8743b;
+
+    /* Highlights */
+    --piece-selectedStart-col: #3fd6e8;     /* side to move, hover, chosen piece */
+    --piece-dest-col: #4f8f5a;              /* moves */
+    --piece-checkKing-col: #7a1f1f;         /* king in check, could be the king */
+    --piece-checkAttacker-col: #5a8fb5;     /* checking piece, could be attacking */
+}

@@ -7,7 +7,7 @@
 // Single player needs nothing from the server beyond the files.
 
 import http from "node:http";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile, readdir } from "node:fs/promises";
 import { networkInterfaces } from "node:os";
 import { exec } from "node:child_process";
 import path from "node:path";
@@ -64,6 +64,13 @@ async function serveFile(req, res) {
 		res.writeHead(200, { "Content-Type": MIME[".json"], "Cache-Control": "no-store" });
 		return res.end(JSON.stringify({ addresses: lanAddresses() }));
 	}
+	// The list of themes (src/client/themes.js), made from the files in themes/, and saved there too so that a
+	// commit takes it to GitHub Pages, which can't list a folder itself
+	if (rel == THEME_LIST && (req.method == "GET" || req.method == "HEAD")) {
+		const list = await updateThemeList();
+		res.writeHead(200, { "Content-Type": MIME[".json"], "Cache-Control": "no-store" });
+		return res.end(req.method == "HEAD" ? undefined : list);
+	}
 	if (rel == "" || rel.endsWith("/")) { rel += "index.html"; }
 	const full = path.resolve(ROOT, rel);
 	const relToRoot = path.relative(ROOT, full);
@@ -86,6 +93,25 @@ async function serveFile(req, res) {
 	} catch {
 		sendText(res, 404, "Not found: " + rel);
 	}
+}
+
+// themes/index.json: the theme files in themes/, as a JSON list of file names in alphabetical order
+const THEME_LIST = "themes/index.json";
+
+async function themeListText() {
+	const files = (await readdir(path.join(ROOT, "themes"))).filter(f => f.toLowerCase().endsWith(".css")).sort();
+	return JSON.stringify(files, null, "\t") + "\n";
+}
+
+// The list as the folder has it, written to themes/index.json when that is out of date
+async function updateThemeList() {
+	const list = await themeListText();
+	const file = path.join(ROOT, THEME_LIST);
+	const saved = await readFile(file, "utf8").catch(() => null);
+	if (saved?.replace(/\r\n/g, "\n") != list) {
+		await writeFile(file, list).catch(() => {}); // a read-only copy still serves the list
+	}
+	return list;
 }
 
 // A PUT of the one writable file (see WRITABLE)
