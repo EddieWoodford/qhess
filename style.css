@@ -698,22 +698,21 @@ input:checked + .tabTitle {
     min-height: var(--button-height);
 }
 
-/* The Theme dialog (from the Settings tab): a row per theme (themes.js): its
-   button, and a light and a dark square drawn in that theme */
-.modalData.theme {
-    max-width: 28em;
-    text-align: left;
-}
-
-.modalData.theme h2 {
-    margin-top: 0;
+/* The themes, in the Settings tab under the switches: a row per theme
+   (themes.js): its button, and a light and a dark square drawn in that theme */
+.theme-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15em;
+    padding: 0.6em 0.5em;
+    border-bottom: 1px solid var(--border-faint);
 }
 
 .theme-list {
     display: flex;
     flex-direction: column;
-    gap: 0.75em;
-    margin: 1em 0;
+    gap: 0.6em;
+    margin-top: 0.6em;
 }
 
 .theme-option {
@@ -1182,11 +1181,6 @@ p.mp-problem {
     font-size: 0.85em;
     line-height: 1.35;
     color: var(--text-muted);
-}
-
-/* A setting opened with a button (Theme), not a switch: only the button is clickable */
-div.setting {
-    cursor: default;
 }
 
 /* Reset to defaults, under the switches */

@@ -23,8 +23,8 @@ function onClick(id, handler) {
 
 setupModals();
 
-// Settings tab: what each switch does (settings.js). The themes are read from themes/ first, and the Theme dialog's
-// list filled, to show the theme on.
+// Settings tab: what each switch does (settings.js). The themes are read from themes/ first, and the tab's list of
+// them filled, to show the theme on.
 await loadThemes();
 buildThemeList(dom.settings.theme);
 setupSettings({
@@ -126,9 +126,6 @@ onClick("importCancel", () => hideModal("import"));
 
 // Settings tab: every setting back to its default (the theme follows the device again)
 onClick("settingsReset", () => resetSettings());
-
-// Theme dialog (modals.js opens it from the Settings tab)
-onClick("themeClose", () => hideModal("theme"));
 
 // Rules dialog (modals.js opens it from the Info tab)
 onClick("rulesClose", () => hideModal("rules"));

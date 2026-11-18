@@ -62,7 +62,7 @@ const dom = {
 		blackView: $("settingBlackView"),
 		potentialCheck: $("settingPotentialCheck"),
 		showCoords: $("settingShowCoords"),
-		theme: $("themeList"), // the Theme dialog's buttons, one per theme (themes.js buildThemeList)
+		theme: $("themeList"), // the Settings tab's theme buttons, one per theme (themes.js buildThemeList)
 	},
 
 	debug: $("debug"),

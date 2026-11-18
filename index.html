@@ -214,17 +214,6 @@
             </div>
         </div>
     </div>
-    <!-- theme modal - from the Settings tab: one button per theme in themes/ (src/client/themes.js fills the list,
-         settings.js shows which is chosen) -->
-    <div id="themeWrapper" class="modalWrapper">
-        <div id="themeDiv" class="modalData theme">
-            <h2>Theme</h2>
-            <div class="theme-list" id="themeList"></div>
-            <div class="button-row">
-                <button class="historyButton" id="themeClose">Close</button>
-            </div>
-        </div>
-    </div>
     <!-- END MODALS -->
 
     <main class="container">
@@ -397,14 +386,6 @@
                          Each is a .setting label around its text and a checkbox drawn as a switch (style.css 6.9).
                          src/client/settings.js says how to add one. -->
                     <div class="tab-panel settings-tab" id="settingsTab">
-                        <div class="setting">
-                            <span class="setting-text">
-                                <span class="setting-name">Theme</span>
-                                <span class="setting-note">The colours of the board and pieces, and of the page
-                                    around them.</span>
-                            </span>
-                            <button class="historyButton" id="themeButton">Theme</button>
-                        </div>
                         <label class="setting">
                             <span class="setting-text">
                                 <span class="setting-name">Black's view</span>
@@ -429,6 +410,14 @@
                             </span>
                             <input class="switch" id="settingShowCoords" type="checkbox" role="switch">
                         </label>
+                        <!-- The themes: one button per file in themes/, with a light and a dark square drawn in it
+                             (src/client/themes.js fills the list, settings.js shows which is chosen) -->
+                        <div class="theme-section">
+                            <span class="setting-name">Theme</span>
+                            <span class="setting-note">The colours of the board and pieces, and of the page around
+                                them.</span>
+                            <div class="theme-list" id="themeList"></div>
+                        </div>
                         <div class="button-row settings-buttons">
                             <button class="historyButton" id="settingsReset"
                                     title="Put every setting back to how it started. The theme follows the device's own light or dark setting again.">Reset to defaults</button>

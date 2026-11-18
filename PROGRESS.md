@@ -12,8 +12,9 @@ check it with the `qhess` preview in `.claude/launch.json`).
   UI only: the engine still accepts a PC on a known king, because example game records contain such PCs.
 
 ## Board themes: one file each in themes/ (2026-11-18)
-- Settings > **Theme** opens a dialog that is only a list: one button per theme, with a light and a dark example
-  square in that theme. No Light mode or Colour pieces by type switches any more: both are part of a theme.
+- The Settings tab lists the themes under its switches (`.theme-section`, `#themeList`): one button per theme, with a
+  light and a dark example square in that theme. No Theme dialog, and no Light mode or Colour pieces by type
+  switches any more: both are part of a theme.
 - A theme is a CSS file in `themes/` with one rule, `.qhess-theme { … }`, setting every variable listed in style.css
   1.1 (tests/node/themes.test.js checks), including `--theme-name` and `--theme-page: dark|light` (the page around
   the board). One colour per side = all six of a side's `--piece-*` the same.
