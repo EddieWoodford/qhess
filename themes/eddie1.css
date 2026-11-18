@@ -2,7 +2,7 @@
    The game lists every .css file in this folder (themes/index.json); see style.css 1.1 for what a theme sets.
    .qhess-theme stands for this theme: the game puts the theme's own selector in its place. */
 .qhess-theme {
-    --theme-name: "eddie1";
+    --theme-name: "Eddie Test 1";
     --theme-page: dark;                     /* the page around the board: dark or light */
 
     /* Squares */
