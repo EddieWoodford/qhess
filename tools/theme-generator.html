@@ -61,6 +61,9 @@ body {
     border: 1px solid var(--ui-border); background: var(--ui-bg); color: var(--ui-text); font: inherit;
 }
 .spacer { flex: 1; }
+.status { font-size: 12px; color: var(--ui-muted); }
+.status.warn { color: var(--ui-warn); }
+body.dropping .preview { outline: 3px dashed var(--ui-accent); outline-offset: -8px; }
 button {
     font: inherit; padding: 7px 14px; border-radius: 6px; cursor: pointer;
     border: 1px solid var(--ui-border); background: var(--ui-raised); color: var(--ui-text);
@@ -280,6 +283,9 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
     <label>Name <input type="text" id="themeName" value="My theme" maxlength="40"></label>
     <button class="primary" id="generate" title="New colours for every colour that isn't locked">Generate random theme</button>
     <button id="export" title="Save as themes/custom.css in the qhess folder">Export</button>
+    <button id="import" title="Load the colours from an exported theme's CSS file (or drop the file on this page)">Import</button>
+    <input type="file" id="importFile" accept=".css,text/css" hidden>
+    <span id="importStatus" class="status" role="status"></span>
     <span class="spacer"></span>
     <label><input type="checkbox" id="byType" checked> Colour pieces by type</label>
     <label><input type="checkbox" id="pageLight"> Light page</label>
@@ -343,7 +349,11 @@ const COLOURS = [
     { key: "checkKing", var: "--piece-checkKing-col", name: "King in check", def: "#7a1f1f" },
     { key: "checkAttacker", var: "--piece-checkAttacker-col", name: "Checking piece", def: "#5a8fb5" },
 ].filter(Boolean);
-const ENTRIES = COLOURS.filter(c => c.key);
+// Each colour, with the name of the group it is listed under
+const ENTRIES = COLOURS.reduce((list, c) => {
+    if (c.group) { list.group = c.group; } else { list.push({ ...c, group: list.group }); }
+    return list;
+}, []);
 const TYPES = ["K", "Q", "R", "B", "N", "P"];
 const HIGHLIGHTS = ["select", "dest", "checkKing", "checkAttacker"];
 const STORE = "qhess.themeGenerator";
@@ -693,6 +703,63 @@ function exportCss() {
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+// ---------- Import: the colours (and name) from a theme's CSS, such as an earlier Export ----------
+// Any colour the browser understands (#abc, #aabbcc, rgb(), names), as #rrggbb; null if it isn't one
+function toHex(value) {
+    const probe = document.createElement("i");
+    probe.style.color = value;
+    if (!probe.style.color) { return null; }
+    document.body.append(probe);
+    const rgb = getComputedStyle(probe).color.match(/[\d.]+/g).slice(0, 3).map(Number);
+    probe.remove();
+    return rgbToHex(rgb);
+}
+
+// Set every colour the CSS gives (the first value for each variable), keep the rest and the locks, and say how
+// many were found.
+function importCss(css, fileName) {
+    const values = {};
+    for (const [, name, value] of css.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)) {
+        if (!(name in values)) { values[name] = value.trim(); }
+    }
+    const missing = [];
+    let found = 0;
+    for (const item of ENTRIES) {
+        const hex = values[item.var] ? toHex(values[item.var]) : null;
+        if (hex) { state.colours[item.key] = hex; found++; } else { missing.push(item.group + ": " + item.name); }
+    }
+    const name = values["--custom-theme-name"]?.replace(/^["']|["']$/g, "");
+    if (found && name) { document.getElementById("themeName").value = name; }
+
+    const status = document.getElementById("importStatus");
+    status.classList.toggle("warn", found < ENTRIES.length);
+    status.textContent = !found ? "No theme colours in " + fileName
+        : "Imported " + found + " of " + ENTRIES.length + " colours from " + fileName
+            + (missing.length ? "; " + missing.length + " kept as they were" : "");
+    status.title = found && missing.length ? "Kept as they were:\n" + missing.join("\n") : "";
+    refresh();
+}
+
+async function importFile(file) {
+    if (file) { importCss(await file.text(), file.name); }
+}
+
+const fileInput = document.getElementById("importFile");
+document.getElementById("import").addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", () => { importFile(fileInput.files[0]); fileInput.value = ""; });
+
+// Or drop the file anywhere on the page
+window.addEventListener("dragover", e => {
+    if (e.dataTransfer.types.includes("Files")) { e.preventDefault(); document.body.classList.add("dropping"); }
+});
+window.addEventListener("dragleave", e => { if (!e.relatedTarget) { document.body.classList.remove("dropping"); } });
+window.addEventListener("drop", e => {
+    if (!e.dataTransfer.files.length) { return; }
+    e.preventDefault();
+    document.body.classList.remove("dropping");
+    importFile(e.dataTransfer.files[0]);
+});
 
 // ---------- Buttons and start-up ----------
 function defaults() {

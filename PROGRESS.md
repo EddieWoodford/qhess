@@ -32,7 +32,9 @@ check it with the `qhess` preview in `.claude/launch.json`).
   board CSS of style.css 7.1-7.4 (keep in step if those change), contrast numbers per colour, Generate (best of up
   to 400 random candidates scored against contrast targets; locked colours kept, others fitted to them; highlight
   hues kept to their meanings: check red, moves green, attacker blue-violet, side-to-move elsewhere), and Export
-  (downloads custom.css). Remembers its state in localStorage `qhess.themeGenerator`.
+  (downloads custom.css), and Import (button or drop a file on the page): reads the first value of each board colour
+  variable and `--custom-theme-name` from any CSS (an export, or style.css for the built-in defaults), keeps colours
+  it doesn't find and the locks. Remembers its state in localStorage `qhess.themeGenerator`.
 - Its preview fits the window without scrolling (the pickers scroll): the preview is a size container and the square
   size comes from measured layout constants (in its CSS comment), with the 14 square states 7 or 5 to a row by the
   container's aspect ratio. Below 760px wide it stacks and scrolls instead.
