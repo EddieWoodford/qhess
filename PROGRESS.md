@@ -38,17 +38,18 @@ check it with the `qhess` preview in `.claude/launch.json`).
   board CSS of style.css 7.1-7.4 (keep in step if those change), contrast numbers per colour, Generate (best of up
   to 400 random candidates scored against contrast targets; locked colours kept, others fitted to them; highlight
   hues kept to their meanings: check red, moves green, attacker blue-violet, side-to-move elsewhere).
-- Export writes a theme file (named from the theme name). Its three switches are part of the theme: Simple -> no
-  boxes and White in outline (as Dark/Light Simple), else filled symbols on boxes; Light page -> `--theme-page`;
-  Colour pieces by type off -> every piece exported in its side colour.
-- The switches also decide what is checked and generated: only exported colours are checked (unused groups dimmed);
-  in Simple mode pieces and highlights are measured against both squares, both squares are made dark or both light,
-  and with one colour per side the two side colours must differ (contrast 1.6, a score-only check).
+- Export writes a theme file (named from the theme name). Part of the theme: the style toggle, **Simple** (one
+  colour per side, no boxes, White in outline, as Dark/Light Simple) or **Distinct** (a colour per type, filled
+  symbols on boxes) - colour by type and boxes always go together, by the user's choice - and Light page ->
+  `--theme-page`.
+- The style decides what is checked and generated (`unusedGroups`): only exported colours are checked (the others
+  dimmed); in Simple pieces and highlights are measured against both squares, both squares are made dark or both
+  light, and the two side colours must differ (contrast 1.6, a score-only check).
 - Import (button or drop a file): first value of each board colour variable, `--theme-name` (or the old
-  `--custom-theme-name`) and `--theme-page`; a theme whose pieces are one colour per side sets the side colours and
-  switches by-type off; outline White or transparent boxes switches Simple on; transparent values are skipped.
-  Keeps colours it doesn't find and the locks. The Simple themes round-trip exactly. State in localStorage
-  `qhess.themeGenerator`.
+  `--custom-theme-name`) and `--theme-page`; Simple if the pieces are one colour per side, White is in outline or the
+  boxes are transparent, else Distinct; transparent values are skipped. Keeps colours it doesn't find and the locks,
+  and reports found / needed for that style. The Simple themes round-trip exactly (the Distinct ones differ only in
+  --glyph-shadow, which export always writes as 1px 1px 3px #0008). State in localStorage `qhess.themeGenerator`.
 - Its preview fits the window without scrolling (the pickers scroll): the preview is a size container and the square
   size comes from measured layout constants (in its CSS comment), with the 14 square states 7 or 5 to a row by the
   container's aspect ratio. Below 760px wide it stacks and scrolls instead.

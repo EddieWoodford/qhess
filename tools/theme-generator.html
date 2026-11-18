@@ -5,8 +5,8 @@
   local server). Pick or generate the board's colours, then Export: save the file in the qhess folder's themes/
   and reload the game (started with start.bat, which updates themes/index.json); the theme appears in
   Settings > Theme under the name given here. Commit the file and themes/index.json to put it on GitHub Pages.
-  The two switches are part of the theme: Light page sets the page around the board, and with Colour pieces by
-  type off every piece is exported in its side's one colour.
+  The style and Light page are part of the theme: Distinct is a colour per type on boxes, Simple one colour per
+  side with no boxes and White in outline; Light page sets the page around the board.
 
   The preview below repeats the board rules of style.css (sections 7.1 to 7.4) and uses the same CSS variables,
   so it looks as the game will. If those rules change, change them here too.
@@ -64,6 +64,13 @@ body {
     border: 1px solid var(--ui-border); background: var(--ui-bg); color: var(--ui-text); font: inherit;
 }
 .spacer { flex: 1; }
+/* Simple / Distinct: two radio buttons drawn as one two-part switch */
+.segmented { display: inline-flex; border: 1px solid var(--ui-border); border-radius: 6px; overflow: hidden; }
+.topbar .segmented label { gap: 0; padding: 6px 12px; cursor: pointer; color: var(--ui-text); background: var(--ui-raised); }
+.segmented label + label { border-left: 1px solid var(--ui-border); }
+.segmented input { position: absolute; opacity: 0; pointer-events: none; }
+.topbar .segmented label:has(input:checked) { background: var(--ui-accent); color: #111; font-weight: 600; }
+.segmented label:has(input:focus-visible) { outline: 2px solid var(--ui-text); outline-offset: -2px; }
 .status { font-size: 12px; color: var(--ui-muted); }
 .status.warn { color: var(--ui-warn); }
 body.dropping .preview { outline: 3px dashed var(--ui-accent); outline-offset: -8px; }
@@ -110,7 +117,7 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
 .picker .ratio { font-family: var(--font-mono); font-size: 12px; color: var(--ui-muted); min-width: 44px; text-align: right; }
 .picker .ratio.low { color: var(--ui-warn); }
 .picker.locked .name { color: var(--ui-accent); }
-/* A colour the export won't use with the switches as they are (Simple: the boxes; by type or not: the other set) */
+/* A colour the export won't use in the style chosen (Simple: boxes and type colours; Distinct: side colours) */
 .pickers .unused { opacity: 0.4; }
 
 /* ---------- Preview ----------
@@ -322,10 +329,12 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
     <input type="file" id="importFile" accept=".css,text/css" hidden>
     <span id="importStatus" class="status" role="status"></span>
     <span class="spacer"></span>
-    <label title="Part of the theme: no boxes behind the pieces, and White drawn in outline">
-        <input type="checkbox" id="simple"> Simple</label>
-    <label title="Part of the theme. Off: every piece is exported in its side's one colour">
-        <input type="checkbox" id="byType" checked> Colour pieces by type</label>
+    <div class="segmented" role="radiogroup" aria-label="Style">
+        <label title="Part of the theme: one colour per side, no boxes, White drawn in outline">
+            <input type="radio" name="style" id="simple" value="simple"> Simple</label>
+        <label title="Part of the theme: each type of piece in its own colour, on a box per side">
+            <input type="radio" name="style" id="distinct" value="distinct" checked> Distinct</label>
+    </div>
     <label title="Part of the theme: the page around the board light, not dark">
         <input type="checkbox" id="pageLight"> Light page</label>
     <button id="reset" title="Back to the Dark Distinct theme's colours">Reset to Dark Distinct</button>
@@ -379,7 +388,7 @@ const COLOURS = [
     { key: "bB", var: "--piece-bB", name: "Bishop", def: "#ff6347" },
     { key: "bN", var: "--piece-bN", name: "Knight", def: "#ffa07a" },
     { key: "bP", var: "--piece-bP", name: "Pawn", def: "#90ee90" },
-    { group: "One colour per side", hint: "Exported when \"Colour pieces by type\" is off." },
+    { group: "One colour per side", hint: "Exported in the Simple style." },
     { key: "wSide", var: "--piece-white-side", name: "White", def: "#ffffff" },
     { key: "bSide", var: "--piece-black-side", name: "Black", def: "#e8743b" },
     { group: "Highlights" },
@@ -459,12 +468,16 @@ function bestAgainst(h, s, against, lo, hi) {
 // ---------- What "good contrast" means, for the numbers beside the pickers and for scoring a random theme ----------
 const TARGET = { piece: 3.5, side: 4.5, boxes: 1.4, squares: 1.3, highlight: 1.5, sidesApart: 1.6 };
 
-// The switches, which are part of the theme (see exportCss)
+// The style, which is part of the theme (see exportCss): Simple (one colour per side, no boxes, White in outline)
+// or Distinct (a colour per type, on boxes)
 function mode() {
-    return {
-        simple: document.getElementById("simple").checked,
-        byType: document.getElementById("byType").checked,
-    };
+    const simple = document.getElementById("simple").checked;
+    return { simple, byType: !simple };
+}
+
+// The colour groups a style doesn't export: Simple has no boxes and no colours per type, Distinct no side colours
+function unusedGroups(simple) {
+    return new Set(simple ? ["Boxes", "White pieces", "Black pieces"] : ["One colour per side"]);
 }
 
 // What a piece of this side ("w" or "b") is drawn on: its box, or in Simple mode (no boxes) both squares
@@ -664,11 +677,8 @@ function refresh(editing) {
         // Simple mode: no boxes to see (the colours are kept, for switching back)
         preview.style.setProperty(item.var, simple && boxKeys.includes(item.key) ? "transparent" : value);
     }
-    // Dim the groups the export won't use with the switches as they are
-    const unused = new Set([
-        ...(simple ? ["Boxes"] : []),
-        ...(byType ? ["One colour per side"] : ["White pieces", "Black pieces"]),
-    ]);
+    // Dim the groups the export won't use in the style chosen
+    const unused = unusedGroups(simple);
     for (const el of pickers.querySelectorAll("[data-group]")) {
         el.classList.toggle("unused", unused.has(el.dataset.group));
     }
@@ -681,7 +691,7 @@ function refresh(editing) {
     }
     try {
         localStorage.setItem(STORE, JSON.stringify({ ...state, name: document.getElementById("themeName").value,
-            byType, simple, pageLight: document.getElementById("pageLight").checked }));
+            simple, pageLight: document.getElementById("pageLight").checked }));
     } catch {}
 }
 
@@ -846,27 +856,30 @@ function importCss(css, fileName) {
         values["--piece-white-side"] = sideColour("w");
         values["--piece-black-side"] = sideColour("b");
     }
+    // Simple: one colour per side, White drawn in outline, or no boxes
+    const simple = oneColour || /outline/.test(values["--white-K"] ?? "") || values["--glyph-w-bg"] == "transparent";
+    // The colours that style uses; the others are set if the file has them, but not missed if it hasn't
+    const needed = ENTRIES.filter(item => !unusedGroups(simple).has(item.group));
     const missing = [];
     let found = 0;
     for (const item of ENTRIES) {
         // A one-colour theme's pieces are its side colours, not colours per type: keep those as they are
         const hex = oneColour && /^[wb][KQRBNP]$/.test(item.key) ? null
             : values[item.var] ? toHex(values[item.var]) : null;
-        if (hex) { state.colours[item.key] = hex; found++; } else { missing.push(item.group + ": " + item.name); }
+        if (hex) { state.colours[item.key] = hex; }
+        if (needed.includes(item)) {
+            if (hex) { found++; } else { missing.push(item.group + ": " + item.name); }
+        }
     }
     const name = (values["--theme-name"] ?? values["--custom-theme-name"])?.replace(/^["']|["']$/g, "");
     if (found && name) { document.getElementById("themeName").value = name; }
-    if (found) {
-        // Simple: White drawn in outline, or no boxes
-        const simple = /outline/.test(values["--white-K"] ?? "") || values["--glyph-w-bg"] == "transparent";
-        setToggles(!oneColour, values["--theme-page"] == "light", simple);
-    }
+    if (found) { setToggles(simple, values["--theme-page"] == "light"); }
 
     const status = document.getElementById("importStatus");
-    status.classList.toggle("warn", found < ENTRIES.length);
+    status.classList.toggle("warn", found < needed.length);
     status.textContent = !found ? "No theme colours in " + fileName
-        : "Imported " + found + " of " + ENTRIES.length + " colours from " + fileName
-            + (missing.length ? "; " + missing.length + " kept as they were" : "");
+        : "Imported " + found + " of " + needed.length + " colours (" + (simple ? "Simple" : "Distinct") + ") from "
+            + fileName + (missing.length ? "; " + missing.length + " kept as they were" : "");
     status.title = found && missing.length ? "Kept as they were:\n" + missing.join("\n") : "";
     refresh();
 }
@@ -898,23 +911,22 @@ function defaults() {
 
 document.getElementById("generate").addEventListener("click", generate);
 document.getElementById("export").addEventListener("click", exportCss);
-document.getElementById("reset").addEventListener("click", () => { defaults(); setToggles(true, false, false); refresh(); });
+document.getElementById("reset").addEventListener("click", () => { defaults(); setToggles(false, false); refresh(); });
 document.getElementById("themeName").addEventListener("input", () => refresh());
-// The two switches (part of the theme, see exportCss): set them and show them in the preview
-function setToggles(byType, pageLight, simple) {
-    document.getElementById("byType").checked = byType;
+// The style (Simple or Distinct) and Light page, part of the theme (see exportCss): set them and show them in the
+// preview
+function setToggles(simple, pageLight) {
+    document.getElementById(simple ? "simple" : "distinct").checked = true;
     document.getElementById("pageLight").checked = pageLight;
-    document.getElementById("simple").checked = simple;
-    document.getElementById("preview").classList.toggle("side-colours", !byType);
+    document.getElementById("preview").classList.toggle("side-colours", simple);
     document.getElementById("preview").classList.toggle("page-light", pageLight);
     document.getElementById("preview").classList.toggle("simple", simple);
 }
 const toggled = () => {
-    setToggles(document.getElementById("byType").checked, document.getElementById("pageLight").checked,
-        document.getElementById("simple").checked);
+    setToggles(document.getElementById("simple").checked, document.getElementById("pageLight").checked);
     refresh();
 };
-for (const id of ["byType", "pageLight", "simple"]) { document.getElementById(id).addEventListener("change", toggled); }
+for (const id of ["simple", "distinct", "pageLight"]) { document.getElementById(id).addEventListener("change", toggled); }
 
 defaults();
 try {
@@ -925,7 +937,7 @@ try {
             state.locked[item.key] = saved.locked?.[item.key] === true;
         }
         if (typeof saved.name == "string") { document.getElementById("themeName").value = saved.name; }
-        setToggles(saved.byType !== false, saved.pageLight === true, saved.simple === true);
+        setToggles(saved.simple === true, saved.pageLight === true);
     }
 } catch {}
 refresh();
