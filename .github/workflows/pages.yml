@@ -1,0 +1,52 @@
+# Deploys the page to GitHub Pages on every push to main, once the tests pass.
+# The deployed copy of index.html is stamped with each script's version (deploy/stamp-versions.js), so a browser
+# never runs an old cached script with a new page. The repo itself is left as it is.
+# Needs the repo's Settings > Pages > Source set to "GitHub Actions".
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; a newer push replaces one still waiting
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm test
+
+      # The site is the repo as it was served from the branch, less what a browser never needs
+      - name: Copy the site
+        run: rsync -a --exclude .git --exclude .github --exclude node_modules --exclude _site ./ _site/
+
+      - name: Stamp script versions
+        run: node deploy/stamp-versions.js _site
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

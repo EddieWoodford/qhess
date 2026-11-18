@@ -63,6 +63,10 @@ The page is hosted on GitHub Pages, and the multiplayer server on Render
   server sleeps after about 15 minutes unused and takes up to a minute to start; until it
   has, the Multiplayer tab says the server is starting. Games in progress are lost when it
   sleeps or restarts.
+- `.github/workflows/pages.yml` deploys the page on each push to `main`, once the tests pass (the repo's
+  Settings > Pages > Source must be "GitHub Actions"). The deployed copy of `index.html` is stamped with each
+  script's and the stylesheet's version (`deploy/stamp-versions.js`): Pages lets browsers keep files for 10 minutes,
+  and without the versions a new page could run with an old cached script.
 - `.nojekyll` tells GitHub Pages to serve the files as they are.
 
 ## How it fits together

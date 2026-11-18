@@ -55,6 +55,16 @@ check it with the `qhess` preview in `.claude/launch.json`).
   container's aspect ratio. Below 760px wide it stacks and scrolls instead.
 - The server's PUBLIC list includes themes/ and tools/.
 
+## Deploy: versioned scripts on GitHub Pages (2026-11-18)
+- Pages sends `max-age=600` on every file, each cached on its own, so after a push a new index.html could run with an
+  old cached module (seen: modals.js looking for the removed Theme button).
+- `.github/workflows/pages.yml` (push to main): npm ci, npm test, copy the repo to `_site`, `node
+  deploy/stamp-versions.js _site`, deploy. The stamp adds an import map to the deployed index.html sending every
+  `src/**/*.js` to `?v=<sha256 prefix>` (Pages ignores the query), and stamps main.js's script tag and style.css.
+  The repo's index.html is never stamped. Needs Settings > Pages > Source = "GitHub Actions" (the user's to set).
+- Left: index.html itself can be up to 10 minutes stale (an old page may then fetch a newly changed module).
+  Data (themes/*.css, index.json) is fetched with `cache: "no-store"`.
+
 ## Board highlight colour (2026-11-17)
 - `--piece-selectedStart-col` (side-to-move ring, hover, chosen start) is cyan `#3fd6e8` in the dark themes and teal
   `#0b8a9e` in the light ones (was dark amber, lost on the brown Pillbox board). The rings are inset box-shadows, painted
