@@ -110,6 +110,8 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
 .picker .ratio { font-family: var(--font-mono); font-size: 12px; color: var(--ui-muted); min-width: 44px; text-align: right; }
 .picker .ratio.low { color: var(--ui-warn); }
 .picker.locked .name { color: var(--ui-accent); }
+/* A colour the export won't use with the switches as they are (Simple: the boxes; by type or not: the other set) */
+.pickers .unused { opacity: 0.4; }
 
 /* ---------- Preview ----------
    Everything fits in the preview area without scrolling: "In play" and
@@ -225,9 +227,31 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
 }
 .whitepiece, .blackpiece {
     grid-template: repeat(2, minmax(0, 1fr)) / repeat(3, minmax(0, 1fr));
-    font-size: 0.9em;
+    font-size: var(--uncollapsed-size);
 }
-.whitepiececollapsed, .blackpiececollapsed { font-size: 2.2em; }
+.whitepiececollapsed, .blackpiececollapsed { font-size: var(--collapsed-size); }
+
+/* How the pieces are drawn: as a theme sets it (exportCss), boxes or Simple */
+.preview {
+    --glyph-radius: 0.25em;
+    --glyph-margin: 2px;
+    --glyph-shadow: 1px 1px 3px #0008;
+    --glyph-line-height: 1;
+    --uncollapsed-size: 0.9em;
+    --collapsed-size: 2.2em;
+    --white-K: "\265A"; --white-Q: "\265B"; --white-R: "\265C";
+    --white-B: "\265D"; --white-N: "\265E"; --white-P: "\265F";
+}
+.preview.simple {
+    --glyph-radius: 0;
+    --glyph-margin: 0;
+    --glyph-shadow: none;
+    --glyph-line-height: initial;
+    --uncollapsed-size: 1em;
+    --collapsed-size: 2.7em;
+    --white-K: "\2654"; --white-Q: "\2655"; --white-R: "\2656";
+    --white-B: "\2657"; --white-N: "\2658"; --white-P: "\2659";
+}
 
 .glyph {
     display: flex;
@@ -235,19 +259,27 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
     justify-content: center;
     min-width: 0;
     min-height: 0;
-    border-radius: 0.25em;
-    margin: 2px;
-    box-shadow: 1px 1px 3px #0008;
-    line-height: 1;
+    border-radius: var(--glyph-radius);
+    margin: var(--glyph-margin);
+    box-shadow: var(--glyph-shadow);
+    line-height: var(--glyph-line-height);
 }
 .glyph-w { background-color: var(--glyph-w-bg); }
 .glyph-b { background-color: var(--glyph-b-bg); }
-.glyph-wK::before, .glyph-bK::before { content: "\265A"; }
-.glyph-wQ::before, .glyph-bQ::before { content: "\265B"; }
-.glyph-wR::before, .glyph-bR::before { content: "\265C"; }
-.glyph-wB::before, .glyph-bB::before { content: "\265D"; }
-.glyph-wN::before, .glyph-bN::before { content: "\265E"; }
-.glyph-wP::before, .glyph-bP::before { content: "\265F"; }
+.glyph-wK::before { content: var(--white-K); }
+.glyph-wQ::before { content: var(--white-Q); }
+.glyph-wR::before { content: var(--white-R); }
+.glyph-wB::before { content: var(--white-B); }
+.glyph-wN::before { content: var(--white-N); }
+.glyph-wP::before { content: var(--white-P); }
+.glyph-bK::before { content: "\265A"; }
+.glyph-bQ::before { content: "\265B"; }
+.glyph-bR::before { content: "\265C"; }
+.glyph-bB::before { content: "\265D"; }
+.glyph-bN::before { content: "\265E"; }
+.glyph-bP::before { content: "\265F"; }
+/* A light page thickens the white pieces' symbols, as the game does (style.css 7.4) */
+.page-light .glyph-w { text-shadow: 0 0 0.6px currentColor, 0 0 0.6px currentColor; }
 .glyph-wK { color: var(--piece-wK); }
 .glyph-wQ { color: var(--piece-wQ); }
 .glyph-wR { color: var(--piece-wR); }
@@ -290,6 +322,8 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
     <input type="file" id="importFile" accept=".css,text/css" hidden>
     <span id="importStatus" class="status" role="status"></span>
     <span class="spacer"></span>
+    <label title="Part of the theme: no boxes behind the pieces, and White drawn in outline">
+        <input type="checkbox" id="simple"> Simple</label>
     <label title="Part of the theme. Off: every piece is exported in its side's one colour">
         <input type="checkbox" id="byType" checked> Colour pieces by type</label>
     <label title="Part of the theme: the page around the board light, not dark">
@@ -345,7 +379,7 @@ const COLOURS = [
     { key: "bB", var: "--piece-bB", name: "Bishop", def: "#ff6347" },
     { key: "bN", var: "--piece-bN", name: "Knight", def: "#ffa07a" },
     { key: "bP", var: "--piece-bP", name: "Pawn", def: "#90ee90" },
-    { group: "One colour per side", hint: "Used when \"Colour pieces by type\" is off." },
+    { group: "One colour per side", hint: "Exported when \"Colour pieces by type\" is off." },
     { key: "wSide", var: "--piece-white-side", name: "White", def: "#ffffff" },
     { key: "bSide", var: "--piece-black-side", name: "Black", def: "#e8743b" },
     { group: "Highlights" },
@@ -423,23 +457,41 @@ function bestAgainst(h, s, against, lo, hi) {
 }
 
 // ---------- What "good contrast" means, for the numbers beside the pickers and for scoring a random theme ----------
-const TARGET = { piece: 3.5, side: 4.5, boxes: 1.4, squares: 1.3, highlight: 1.5 };
+const TARGET = { piece: 3.5, side: 4.5, boxes: 1.4, squares: 1.3, highlight: 1.5, sidesApart: 1.6 };
 
-function boxOf(key) { return key[0] == "w" ? "wbox" : "bbox"; }
+// The switches, which are part of the theme (see exportCss)
+function mode() {
+    return {
+        simple: document.getElementById("simple").checked,
+        byType: document.getElementById("byType").checked,
+    };
+}
 
-// The checks: [colour key the number shows beside, its contrast, the target]
+// What a piece of this side ("w" or "b") is drawn on: its box, or in Simple mode (no boxes) both squares
+function grounds(c, side, simple) {
+    return simple ? [c.light, c.dark] : [c[side + "box"]];
+}
+const worst = (colour, against) => Math.min(...against.map(bg => contrast(colour, bg)));
+
+// The checks, of the colours the export will use: [colour key the number shows beside (null: none), its
+// contrast, the target]
 function checks(c) {
+    const { simple, byType } = mode();
     const out = [];
-    for (const side of ["w", "b"]) {
-        for (const t of TYPES) { out.push([side + t, contrast(c[side + t], c[side + "box"]), TARGET.piece]); }
+    if (byType) {
+        for (const side of ["w", "b"]) {
+            for (const t of TYPES) { out.push([side + t, worst(c[side + t], grounds(c, side, simple)), TARGET.piece]); }
+        }
+    } else {
+        out.push(["wSide", worst(c.wSide, grounds(c, "w", simple)), TARGET.side]);
+        out.push(["bSide", worst(c.bSide, grounds(c, "b", simple)), TARGET.side]);
+        // In Simple mode only the colours (and White's outline) tell the sides apart
+        if (simple) { out.push([null, contrast(c.wSide, c.bSide), TARGET.sidesApart]); }
     }
-    out.push(["wSide", contrast(c.wSide, c.wbox), TARGET.side]);
-    out.push(["bSide", contrast(c.bSide, c.bbox), TARGET.side]);
-    out.push(["bbox", contrast(c.wbox, c.bbox), TARGET.boxes]);
+    if (!simple) { out.push(["bbox", contrast(c.wbox, c.bbox), TARGET.boxes]); }
     out.push(["dark", contrast(c.light, c.dark), TARGET.squares]);
-    for (const k of HIGHLIGHTS) {
-        out.push([k, Math.min(...[c.light, c.dark, c.wbox, c.bbox].map(bg => contrast(c[k], bg))), TARGET.highlight]);
-    }
+    const behind = simple ? [c.light, c.dark] : [c.light, c.dark, c.wbox, c.bbox];
+    for (const k of HIGHLIGHTS) { out.push([k, worst(c[k], behind), TARGET.highlight]); }
     return out;
 }
 
@@ -454,13 +506,20 @@ function score(c) {
 function candidate() {
     const c = {};
     const pick = (key, make) => { c[key] = state.locked[key] ? state.colours[key] : make(); };
+    const { simple } = mode();
 
-    // Squares: one hue, the dark square a little darker than the light one
+    // Squares: one hue, the dark square a little darker than the light one. In Simple mode the pieces stand on the
+    // squares themselves, so both squares are dark (for light pieces) or both light (for deep ones).
     const boardHue = rnd(0, 360);
     const boardSat = rnd(0.06, 0.4);
-    pick("light", () => hsl(boardHue, boardSat, rnd(0.5, 0.82)));
+    let darkBoard = Math.random() < 0.5;
+    if (state.locked.light) { darkBoard = luminance(state.colours.light) < 0.3; }
+    else if (state.locked.dark) { darkBoard = luminance(state.colours.dark) < 0.1; }
+    pick("light", () => hsl(boardHue, boardSat,
+        !simple ? rnd(0.5, 0.82) : darkBoard ? rnd(0.28, 0.4) : rnd(0.86, 0.93)));
     const light = toHsl(c.light);
-    pick("dark", () => hsl(light.h + rnd(-12, 12), clamp(light.s + rnd(-0.05, 0.1), 0, 1), light.l - rnd(0.18, 0.32)));
+    pick("dark", () => hsl(light.h + rnd(-12, 12), clamp(light.s + rnd(-0.05, 0.1), 0, 1),
+        Math.max(0.05, light.l - (simple ? rnd(0.1, 0.2) : rnd(0.18, 0.32)))));
     const dark = toHsl(c.dark);
     pick("border", () => Math.random() < 0.4 ? "#000000" : hsl(dark.h, dark.s, Math.max(0, dark.l - rnd(0.12, 0.22))));
 
@@ -472,32 +531,52 @@ function candidate() {
     pick("wbox", () => darkBoxes ? hsl(wHue, rnd(0.2, 0.5), rnd(0.2, 0.3)) : hsl(wHue, rnd(0.2, 0.6), rnd(0.9, 0.97)));
     pick("bbox", () => darkBoxes ? hsl(bHue, rnd(0.25, 0.55), rnd(0.07, 0.14)) : hsl(bHue, rnd(0.12, 0.35), rnd(0.68, 0.8)));
 
+    // What each side's pieces stand on (their box, or in Simple mode both squares), and which way to move a
+    // colour's lightness to stand out from it: lighter on dark ground, darker on light
+    const ground = side => grounds(c, side, simple);
+    const away = side => Math.max(...ground(side).map(luminance)) < 0.3 ? 1 : -1;
+    // The first lightness, moving away from the ground, with `target` contrast against all of it (and, if given,
+    // `apart` contrast with the colour `other`)
+    const fit = (h, s, side, target, other, apart) => {
+        const dir = away(side);
+        for (let l = dir > 0 ? 0.45 : 0.55; l >= 0 && l <= 1; l += dir * 0.01) {
+            const col = hsl(h, s, l);
+            if (worst(col, ground(side)) >= target && (!other || contrast(col, other) >= apart)) { return col; }
+        }
+        return hsl(h, s, dir > 0 ? 1 : 0);
+    };
+
     // Pieces: one hue per type, shared by both sides (so a type looks alike on either side), spread round the
-    // wheel; each side's lightness fitted to its own box.
+    // wheel; each side's lightness fitted to what it stands on.
     const base = rnd(0, 360);
     TYPES.forEach((t, i) => {
         const hue = base + i * 60 + rnd(-10, 10);
         for (const side of ["w", "b"]) {
-            const box = c[side + "box"];
-            const away = luminance(box) < 0.3 ? 1 : -1;
             const sat = side == "w" ? rnd(0.65, 0.95) : rnd(0.45, 0.8);
-            pick(side + t, () => solveLightness(hue + (side == "b" ? rnd(-12, 12) : 0), sat, box, TARGET.piece + 0.3,
-                away, away > 0 ? 0.45 : 0.55));
+            pick(side + t, () => fit(hue + (side == "b" ? rnd(-12, 12) : 0), sat, side, TARGET.piece + 0.3));
         }
     });
 
-    // One colour per side: strong contrast with its box
-    for (const side of ["w", "b"]) {
-        const box = c[side + "box"];
-        const away = luminance(box) < 0.3 ? 1 : -1;
-        pick(side + "Side", () => solveLightness(rnd(0, 360), side == "w" ? rnd(0.1, 0.5) : rnd(0.5, 0.85), box,
-            TARGET.side + 0.5, away, away > 0 ? 0.5 : 0.5));
+    // One colour per side: strong contrast with what it stands on. White's is soft, Black's strong, in hues well
+    // apart. In Simple mode both stand on the squares, and the colours (with White's outline) are all that tells the
+    // sides apart, so the second is pushed further than the first until they differ too: on a dark board White is
+    // the brighter (as ivory on grey), on a light board Black the darker (as ink on cream).
+    const wSideHue = rnd(0, 360), bSideHue = wSideHue + rnd(120, 240);
+    const wSat = rnd(0.1, 0.5), bSat = rnd(0.55, 0.9);
+    const apart = simple ? TARGET.sidesApart + 0.2 : 0;
+    if (away("w") > 0) {
+        pick("bSide", () => fit(bSideHue, bSat, "b", TARGET.side + 0.3));
+        pick("wSide", () => fit(wSideHue, wSat, "w", TARGET.side + 0.3, c.bSide, apart));
+    } else {
+        pick("wSide", () => fit(wSideHue, wSat, "w", TARGET.side + 0.3));
+        pick("bSide", () => fit(bSideHue, bSat, "b", TARGET.side + 0.3, c.wSide, apart));
     }
 
     // Highlights keep their meaning: check is red, moves green, the checking piece blue to violet; the side to
     // move's colour is outside those three (amber to yellow, cyan, or magenta), as far from the squares' hue as it
-    // can be. Each lightness is the one that stands out best from the squares and the boxes together.
-    const against = [c.light, c.dark, c.wbox, c.bbox];
+    // can be. Each lightness is the one that stands out best from the squares and the boxes together (in Simple
+    // mode just the squares).
+    const against = simple ? [c.light, c.dark] : [c.light, c.dark, c.wbox, c.bbox];
     const hueGap = (a, b) => { const d = Math.abs(((a - b) % 360 + 360) % 360); return Math.min(d, 360 - d); };
     const selectHues = [[35, 65], [172, 192], [290, 325]].flatMap(([lo, hi]) => [rnd(lo, hi), rnd(lo, hi)]);
     const selectHue = selectHues.reduce((a, b) => hueGap(b, light.h) > hueGap(a, light.h) ? b : a);
@@ -528,18 +607,21 @@ for (const item of COLOURS) {
     if (item.group) {
         const h = document.createElement("h2");
         h.textContent = item.group;
+        h.dataset.group = item.group;
         pickers.append(h);
         if (item.hint) {
             const p = document.createElement("p");
             p.className = "hint";
             p.style.margin = "-2px 0 6px";
             p.textContent = item.hint;
+            p.dataset.group = item.group;
             pickers.append(p);
         }
         continue;
     }
     const row = document.createElement("div");
     row.className = "picker";
+    row.dataset.group = ENTRIES.find(e => e.key == item.key).group;
     row.innerHTML = '<input type="checkbox" title="Lock: Generate keeps this colour">'
         + '<input type="color">'
         + '<input type="text" class="hex" maxlength="7" spellcheck="false">'
@@ -570,6 +652,8 @@ for (const item of COLOURS) {
 // `editing` is a hex field being typed in, left as the user has it.
 function refresh(editing) {
     const preview = document.getElementById("preview");
+    const { simple, byType } = mode();
+    const boxKeys = ["wbox", "bbox"];
     for (const item of ENTRIES) {
         const r = rows[item.key], value = state.colours[item.key];
         r.colour.value = value;
@@ -577,9 +661,19 @@ function refresh(editing) {
         r.lock.checked = !!state.locked[item.key];
         r.row.classList.toggle("locked", !!state.locked[item.key]);
         r.ratio.textContent = "";
-        preview.style.setProperty(item.var, value);
+        // Simple mode: no boxes to see (the colours are kept, for switching back)
+        preview.style.setProperty(item.var, simple && boxKeys.includes(item.key) ? "transparent" : value);
+    }
+    // Dim the groups the export won't use with the switches as they are
+    const unused = new Set([
+        ...(simple ? ["Boxes"] : []),
+        ...(byType ? ["One colour per side"] : ["White pieces", "Black pieces"]),
+    ]);
+    for (const el of pickers.querySelectorAll("[data-group]")) {
+        el.classList.toggle("unused", unused.has(el.dataset.group));
     }
     for (const [key, value, target] of checks(state.colours)) {
+        if (!key) { continue; }
         const r = rows[key].ratio;
         r.textContent = value.toFixed(1);
         r.classList.toggle("low", value < target);
@@ -587,8 +681,7 @@ function refresh(editing) {
     }
     try {
         localStorage.setItem(STORE, JSON.stringify({ ...state, name: document.getElementById("themeName").value,
-            byType: document.getElementById("byType").checked,
-            pageLight: document.getElementById("pageLight").checked }));
+            byType, simple, pageLight: document.getElementById("pageLight").checked }));
     } catch {}
 }
 
@@ -657,7 +750,7 @@ document.getElementById("stateExamples").innerHTML = STATES.map(([label, cls, si
 function exportCss() {
     const raw = document.getElementById("themeName").value.trim() || "Custom";
     const name = raw.replace(/["\\\n\r]|\*\//g, "");
-    const byType = document.getElementById("byType").checked;
+    const { simple, byType } = mode();
     const page = document.getElementById("pageLight").checked ? "light" : "dark";
     const c = state.colours;
     const piece = (side, t) => byType ? c[side + t] : c[side + "Side"];
@@ -673,18 +766,33 @@ function exportCss() {
         "    /* Squares */",
         ...["light", "dark", "border"].map(k => line(ENTRIES.find(e => e.key == k).var, c[k])),
         "",
-        "    /* Pieces: every symbol filled, on a box per side */",
-        "    --white-K: var(--filled-K); --white-Q: var(--filled-Q); --white-R: var(--filled-R);",
-        "    --white-B: var(--filled-B); --white-N: var(--filled-N); --white-P: var(--filled-P);",
-        line("--glyph-w-bg", c.wbox, "White's box"),
-        line("--glyph-b-bg", c.bbox, "Black's box"),
-        line("--glyph-radius", "0.25em"),
-        line("--glyph-padding", "0"),
-        line("--glyph-margin", "2px"),
-        line("--glyph-shadow", "1px 1px 3px #0008"),
-        line("--glyph-line-height", "1"),
-        line("--uncollapsed-size", "0.9em"),
-        line("--collapsed-size", "2.2em"),
+        ...(simple ? [
+            "    /* Pieces: White in outline, Black filled, no boxes */",
+            "    --white-K: var(--outline-K); --white-Q: var(--outline-Q); --white-R: var(--outline-R);",
+            "    --white-B: var(--outline-B); --white-N: var(--outline-N); --white-P: var(--outline-P);",
+            line("--glyph-w-bg", "transparent"),
+            line("--glyph-b-bg", "transparent"),
+            line("--glyph-radius", "0"),
+            line("--glyph-padding", "0"),
+            line("--glyph-margin", "0"),
+            line("--glyph-shadow", "none"),
+            line("--glyph-line-height", "initial"),
+            line("--uncollapsed-size", "1em"),
+            line("--collapsed-size", "2.7em"),
+        ] : [
+            "    /* Pieces: every symbol filled, on a box per side */",
+            "    --white-K: var(--filled-K); --white-Q: var(--filled-Q); --white-R: var(--filled-R);",
+            "    --white-B: var(--filled-B); --white-N: var(--filled-N); --white-P: var(--filled-P);",
+            line("--glyph-w-bg", c.wbox, "White's box"),
+            line("--glyph-b-bg", c.bbox, "Black's box"),
+            line("--glyph-radius", "0.25em"),
+            line("--glyph-padding", "0"),
+            line("--glyph-margin", "2px"),
+            line("--glyph-shadow", "1px 1px 3px #0008"),
+            line("--glyph-line-height", "1"),
+            line("--uncollapsed-size", "0.9em"),
+            line("--collapsed-size", "2.2em"),
+        ]),
         "",
         byType ? "    /* A colour per type */" : "    /* One colour per side */",
         ...["w", "b"].flatMap(side => TYPES.map(t => line("--piece-" + side + t, piece(side, t)))),
@@ -749,7 +857,9 @@ function importCss(css, fileName) {
     const name = (values["--theme-name"] ?? values["--custom-theme-name"])?.replace(/^["']|["']$/g, "");
     if (found && name) { document.getElementById("themeName").value = name; }
     if (found) {
-        setToggles(!oneColour, values["--theme-page"] == "light");
+        // Simple: White drawn in outline, or no boxes
+        const simple = /outline/.test(values["--white-K"] ?? "") || values["--glyph-w-bg"] == "transparent";
+        setToggles(!oneColour, values["--theme-page"] == "light", simple);
     }
 
     const status = document.getElementById("importStatus");
@@ -788,21 +898,23 @@ function defaults() {
 
 document.getElementById("generate").addEventListener("click", generate);
 document.getElementById("export").addEventListener("click", exportCss);
-document.getElementById("reset").addEventListener("click", () => { defaults(); setToggles(true, false); refresh(); });
+document.getElementById("reset").addEventListener("click", () => { defaults(); setToggles(true, false, false); refresh(); });
 document.getElementById("themeName").addEventListener("input", () => refresh());
 // The two switches (part of the theme, see exportCss): set them and show them in the preview
-function setToggles(byType, pageLight) {
+function setToggles(byType, pageLight, simple) {
     document.getElementById("byType").checked = byType;
     document.getElementById("pageLight").checked = pageLight;
+    document.getElementById("simple").checked = simple;
     document.getElementById("preview").classList.toggle("side-colours", !byType);
     document.getElementById("preview").classList.toggle("page-light", pageLight);
+    document.getElementById("preview").classList.toggle("simple", simple);
 }
 const toggled = () => {
-    setToggles(document.getElementById("byType").checked, document.getElementById("pageLight").checked);
+    setToggles(document.getElementById("byType").checked, document.getElementById("pageLight").checked,
+        document.getElementById("simple").checked);
     refresh();
 };
-document.getElementById("byType").addEventListener("change", toggled);
-document.getElementById("pageLight").addEventListener("change", toggled);
+for (const id of ["byType", "pageLight", "simple"]) { document.getElementById(id).addEventListener("change", toggled); }
 
 defaults();
 try {
@@ -813,7 +925,7 @@ try {
             state.locked[item.key] = saved.locked?.[item.key] === true;
         }
         if (typeof saved.name == "string") { document.getElementById("themeName").value = saved.name; }
-        setToggles(saved.byType !== false, saved.pageLight === true);
+        setToggles(saved.byType !== false, saved.pageLight === true, saved.simple === true);
     }
 } catch {}
 refresh();

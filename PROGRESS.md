@@ -37,13 +37,17 @@ check it with the `qhess` preview in `.claude/launch.json`).
   board CSS of style.css 7.1-7.4 (keep in step if those change), contrast numbers per colour, Generate (best of up
   to 400 random candidates scored against contrast targets; locked colours kept, others fitted to them; highlight
   hues kept to their meanings: check red, moves green, attacker blue-violet, side-to-move elsewhere).
-- Export writes a theme file (named from the theme name). Its two switches are part of the theme: Light page ->
-  `--theme-page`; Colour pieces by type off -> every piece exported in its side colour. Export is always filled
-  symbols on boxes: re-exporting a Simple theme gives it boxes (no "no boxes / outline" option yet).
+- Export writes a theme file (named from the theme name). Its three switches are part of the theme: Simple -> no
+  boxes and White in outline (as Dark/Light Simple), else filled symbols on boxes; Light page -> `--theme-page`;
+  Colour pieces by type off -> every piece exported in its side colour.
+- The switches also decide what is checked and generated: only exported colours are checked (unused groups dimmed);
+  in Simple mode pieces and highlights are measured against both squares, both squares are made dark or both light,
+  and with one colour per side the two side colours must differ (contrast 1.6, a score-only check).
 - Import (button or drop a file): first value of each board colour variable, `--theme-name` (or the old
   `--custom-theme-name`) and `--theme-page`; a theme whose pieces are one colour per side sets the side colours and
-  switches by-type off; transparent values are skipped. Keeps colours it doesn't find and the locks. State in
-  localStorage `qhess.themeGenerator`.
+  switches by-type off; outline White or transparent boxes switches Simple on; transparent values are skipped.
+  Keeps colours it doesn't find and the locks. The Simple themes round-trip exactly. State in localStorage
+  `qhess.themeGenerator`.
 - Its preview fits the window without scrolling (the pickers scroll): the preview is a size container and the square
   size comes from measured layout constants (in its CSS comment), with the 14 square states 7 or 5 to a row by the
   container's aspect ratio. Below 760px wide it stacks and scrolls instead.
