@@ -8,6 +8,10 @@
   The style and Light page are part of the theme: Distinct is a colour per type on boxes, Simple one colour per
   side with no boxes and White in outline; Light page sets the page around the board.
 
+  Colour-blind safe (top bar) adds checks that the colours still work for the three standard kinds of colour
+  blindness (colour-vision.js simulates them), steers Generate towards meeting them, and shows the preview as each
+  kind sees it.
+
   The preview below repeats the board rules of style.css (sections 7.1 to 7.4) and uses the same CSS variables,
   so it looks as the game will. If those rules change, change them here too.
 -->
@@ -71,6 +75,7 @@ body {
 .segmented input { position: absolute; opacity: 0; pointer-events: none; }
 .topbar .segmented label:has(input:checked) { background: var(--ui-accent); color: #111; font-weight: 600; }
 .segmented label:has(input:focus-visible) { outline: 2px solid var(--ui-text); outline-offset: -2px; }
+.segmented[hidden] { display: none; }
 .status { font-size: 12px; color: var(--ui-muted); }
 .status.warn { color: var(--ui-warn); }
 body.dropping .preview { outline: 3px dashed var(--ui-accent); outline-offset: -8px; }
@@ -117,6 +122,12 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
 .picker .ratio { font-family: var(--font-mono); font-size: 12px; color: var(--ui-muted); min-width: 44px; text-align: right; }
 .picker .ratio.low { color: var(--ui-warn); }
 .picker.locked .name { color: var(--ui-accent); }
+/* The colour-blind checks: what is met, and which colours look too alike */
+.cvd-report { margin: 10px 0 0; padding: 8px 10px; border: 1px solid var(--ui-border); border-radius: 6px; font-size: 12px; line-height: 1.45; }
+.cvd-report[hidden] { display: none; }
+.cvd-report .ok { color: var(--ui-ok); }
+.cvd-report .warn { color: var(--ui-warn); }
+.cvd-report ul { margin: 4px 0 0; padding-left: 18px; }
 /* A colour the export won't use in the style chosen (Simple: boxes and type colours; Distinct: side colours) */
 .pickers .unused { opacity: 0.4; }
 
@@ -337,12 +348,16 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
     </div>
     <label title="Part of the theme: the page around the board light, not dark">
         <input type="checkbox" id="pageLight"> Light page</label>
+    <label title="Also check the colours for the three standard kinds of colour blindness (protanopia, deuteranopia, tritanopia), and generate themes that meet those checks">
+        <input type="checkbox" id="cvd"> Colour-blind safe</label>
+    <div class="segmented" id="cvdView" role="radiogroup" aria-label="Show the preview as seen with" hidden></div>
     <button id="reset" title="Back to the Dark Distinct theme's colours">Reset to Dark Distinct</button>
 </div>
 
 <div class="pickers" id="pickers">
     <p class="hint">Tick a lock to keep that colour when generating. The number beside a colour is its contrast
         (piece against its box, highlight against the squares and boxes): orange means hard to see.</p>
+    <div class="cvd-report" id="cvdReport" role="status" hidden></div>
 </div>
 
 <div class="preview" id="preview">
@@ -362,6 +377,7 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
     </div>
 </div>
 
+<script src="colour-vision.js"></script>
 <script>
 "use strict";
 
@@ -436,9 +452,15 @@ function toHsl(hex) {
     const h = max == r ? ((g - b) / d) % 6 : max == g ? (b - r) / d + 2 : (r - g) / d + 4;
     return { h: h * 60, s, l };
 }
+// (remembered: Generate asks about the same colours many times over)
+const luminances = new Map();
 function luminance(hex) {
-    const c = hexToRgb(hex).map(v => v / 255).map(v => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
-    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+    if (!luminances.has(hex)) {
+        const c = hexToRgb(hex).map(v => v / 255).map(v => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+        if (luminances.size > 50000) { luminances.clear(); }
+        luminances.set(hex, 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]);
+    }
+    return luminances.get(hex);
 }
 function contrast(a, b) {
     const x = luminance(a), y = luminance(b);
@@ -465,8 +487,48 @@ function bestAgainst(h, s, against, lo, hi) {
     return best;
 }
 
+// Colour-blind safe: the same, with each colour as it looks with normal vision and with each kind of colour blindness
+const KIND_IDS = ColourVision.KINDS.map(k => k.id);
+const VISIONS = [null, ...KIND_IDS];
+const seen = (hex, vision) => vision ? ColourVision.simulate(hex, vision) : hex;
+function worstSeen(colour, against) {
+    let least = Infinity;
+    for (const v of VISIONS) {
+        for (const bg of against) { least = Math.min(least, contrast(seen(colour, v), seen(bg, v))); }
+    }
+    return least;
+}
+// How different a colour looks from the most alike of `others`, with whichever kind of colour blindness makes them
+// most alike
+function apartness(colour, others) {
+    let least = Infinity;
+    for (const v of KIND_IDS) {
+        for (const o of others) { least = Math.min(least, ColourVision.deltaE(seen(colour, v), seen(o, v))); }
+    }
+    return least;
+}
+// Of a range of lightnesses for (h, s), among those with at least `enough` contrast against all of `against` (as
+// every kind of vision sees them), the one that looks most different from all of `others`; if none has enough
+// contrast, the one with the most
+function apartFrom(h, s, against, lo, hi, others, enough) {
+    let best = null, bestApart = -1, fallback = null, fallbackScore = -1;
+    for (let l = lo; l <= hi + 1e-9; l += 0.03) {
+        const c = hsl(h, s, l);
+        const contrastScore = worstSeen(c, against);
+        if (contrastScore > fallbackScore) { fallback = c; fallbackScore = contrastScore; }
+        if (contrastScore < enough) { continue; }
+        const apart = apartness(c, others);
+        if (apart > bestApart) { best = c; bestApart = apart; }
+    }
+    return best ?? fallback;
+}
+
 // ---------- What "good contrast" means, for the numbers beside the pickers and for scoring a random theme ----------
 const TARGET = { piece: 3.5, side: 4.5, boxes: 1.4, squares: 1.3, highlight: 1.5, sidesApart: 1.6 };
+// Colour-blind safe only: how different (colour-vision.js deltaE: 2 just noticeable, 10 clearly different) colours
+// that mean different things must still look. The types also differ in shape, so theirs is lower.
+const APART = { types: 5, highlights: 8 };
+const { KINDS, simulate, deltaE } = ColourVision;
 
 // The style, which is part of the theme (see exportCss): Simple (one colour per side, no boxes, White in outline)
 // or Distinct (a colour per type, on boxes)
@@ -486,9 +548,43 @@ function grounds(c, side, simple) {
 }
 const worst = (colour, against) => Math.min(...against.map(bg => contrast(colour, bg)));
 
-// The checks, of the colours the export will use: [colour key the number shows beside (null: none), its
-// contrast, the target]
+// Colour-blind safe: the switch in the top bar
+function cvdOn() { return document.getElementById("cvd").checked; }
+
+// The colours as someone with this kind of colour blindness (a colour-vision.js KINDS id) sees them; null: as they are
+function seenWith(c, kind) {
+    if (!kind) { return c; }
+    const seen = {};
+    for (const key in c) { seen[key] = simulate(c[key], kind); }
+    return seen;
+}
+
+// The contrast checks, with normal vision and (when colour-blind safe) with each kind of colour blindness:
+// { key: the colour the number shows beside (null: none), value: its contrast, target, vision: KINDS id or null }
 function checks(c) {
+    return (cvdOn() ? VISIONS : [null]).flatMap(vision => contrastChecks(seenWith(c, vision))
+        .map(([key, value, target]) => ({ key, value, target, vision })));
+}
+
+// Colour-blind safe only: colours that mean different things, which must still look different with each kind of
+// colour blindness: each side's six types (Distinct), and the four highlights.
+// { a, b: the two colours' keys, value: how different they look, target, vision }
+function apartChecks(c) {
+    if (!cvdOn()) { return []; }
+    const pairs = [];
+    const allPairs = (keys, target) => keys.forEach((a, i) => keys.slice(i + 1).forEach(b => pairs.push([a, b, target])));
+    if (mode().byType) {
+        for (const side of ["w", "b"]) { allPairs(TYPES.map(t => side + t), APART.types); }
+    }
+    allPairs(HIGHLIGHTS, APART.highlights);
+    return KINDS.flatMap(({ id }) => {
+        const seen = seenWith(c, id);
+        return pairs.map(([a, b, target]) => ({ a, b, value: deltaE(seen[a], seen[b]), target, vision: id }));
+    });
+}
+
+// The contrast checks of the colours the export will use, as [key, contrast, target] (see checks)
+function contrastChecks(c) {
     const { simple, byType } = mode();
     const out = [];
     if (byType) {
@@ -509,8 +605,12 @@ function checks(c) {
 }
 
 // How well a set of colours meets the targets: the worst check's share of its target (1 = all met)
-function score(c) {
-    return Math.min(...checks(c).map(([, value, target]) => Math.min(1, value / target)));
+// below: a score already beaten. If normal vision alone scores no better, the colour-blind checks aren't worth doing.
+function score(c, below = -1) {
+    const of = list => Math.min(...list.map(({ value, target }) => Math.min(1, value / target)));
+    const normal = of(contrastChecks(c).map(([, value, target]) => ({ value, target })));
+    if (!cvdOn() || normal <= below) { return normal; }
+    return Math.min(normal, of([...checks(c).filter(x => x.vision), ...apartChecks(c)]));
 }
 
 // ---------- Random themes ----------
@@ -520,6 +620,7 @@ function candidate() {
     const c = {};
     const pick = (key, make) => { c[key] = state.locked[key] ? state.colours[key] : make(); };
     const { simple } = mode();
+    const cvd = cvdOn();
 
     // Squares: one hue, the dark square a little darker than the light one. In Simple mode the pieces stand on the
     // squares themselves, so both squares are dark (for light pieces) or both light (for deep ones).
@@ -549,26 +650,42 @@ function candidate() {
     const ground = side => grounds(c, side, simple);
     const away = side => Math.max(...ground(side).map(luminance)) < 0.3 ? 1 : -1;
     // The first lightness, moving away from the ground, with `target` contrast against all of it (and, if given,
-    // `apart` contrast with the colour `other`)
+    // `apart` contrast with the colour `other`). Colour-blind safe: as every kind of vision sees it.
+    const worstHere = cvd ? worstSeen : worst;
     const fit = (h, s, side, target, other, apart) => {
         const dir = away(side);
         for (let l = dir > 0 ? 0.45 : 0.55; l >= 0 && l <= 1; l += dir * 0.01) {
             const col = hsl(h, s, l);
-            if (worst(col, ground(side)) >= target && (!other || contrast(col, other) >= apart)) { return col; }
+            if (worstHere(col, ground(side)) >= target && (!other || worstHere(col, [other]) >= apart)) { return col; }
         }
         return hsl(h, s, dir > 0 ? 1 : 0);
     };
 
     // Pieces: one hue per type, shared by both sides (so a type looks alike on either side), spread round the
-    // wheel; each side's lightness fitted to what it stands on.
+    // wheel; each side's lightness fitted to what it stands on. Colour-blind safe: hue alone can't tell the types
+    // apart (with two kinds of cone the wheel folds in two), so each type's lightness is the one, of those with
+    // enough contrast as every kind of vision sees it, that looks most different from the side's types chosen
+    // before it (taken in a random order): that spreads them out in lightness as well as hue.
     const base = rnd(0, 360);
-    TYPES.forEach((t, i) => {
+    const typesChosen = { w: [], b: [] };
+    for (const side of ["w", "b"]) {
+        typesChosen[side] = TYPES.filter(t => state.locked[side + t]).map(t => state.colours[side + t]);
+    }
+    const order = TYPES.map((t, i) => i);
+    if (cvd) { order.sort(() => Math.random() - 0.5); }
+    for (const i of order) {
         const hue = base + i * 60 + rnd(-10, 10);
         for (const side of ["w", "b"]) {
             const sat = side == "w" ? rnd(0.65, 0.95) : rnd(0.45, 0.8);
-            pick(side + t, () => fit(hue + (side == "b" ? rnd(-12, 12) : 0), sat, side, TARGET.piece + 0.3));
+            const h = hue + (side == "b" ? rnd(-12, 12) : 0);
+            pick(side + TYPES[i], () => {
+                if (!cvd) { return fit(h, sat, side, TARGET.piece + 0.3); }
+                const col = apartFrom(h, sat, ground(side), 0, 1, typesChosen[side], TARGET.piece + 0.2);
+                typesChosen[side].push(col);
+                return col;
+            });
         }
-    });
+    }
 
     // One colour per side: strong contrast with what it stands on. White's is soft, Black's strong, in hues well
     // apart. In Simple mode both stand on the squares, and the colours (with White's outline) are all that tells the
@@ -593,19 +710,40 @@ function candidate() {
     const hueGap = (a, b) => { const d = Math.abs(((a - b) % 360 + 360) % 360); return Math.min(d, 360 - d); };
     const selectHues = [[35, 65], [172, 192], [290, 325]].flatMap(([lo, hi]) => [rnd(lo, hi), rnd(lo, hi)]);
     const selectHue = selectHues.reduce((a, b) => hueGap(b, light.h) > hueGap(a, light.h) ? b : a);
-    pick("select", () => bestAgainst(selectHue, rnd(0.6, 0.95), against, 0.2, 0.85));
-    pick("dest", () => bestAgainst(rnd(95, 150), rnd(0.45, 0.85), against, 0.2, 0.8));
-    pick("checkKing", () => bestAgainst(rnd(-12, 12), rnd(0.6, 0.9), against, 0.2, 0.7));
-    pick("checkAttacker", () => bestAgainst(rnd(200, 270), rnd(0.45, 0.85), against, 0.2, 0.8));
+    // Colour-blind safe: of the lightnesses that stand out well enough as every kind of vision sees them, the one
+    // that looks most different from the highlights already chosen (check and moves first: red and green are the
+    // pair most often confused)
+    const chosen = HIGHLIGHTS.filter(k => state.locked[k]).map(k => state.colours[k]);
+    const best = (h, s, lo, hi) => {
+        const col = cvd ? apartFrom(h, s, against, lo, hi, chosen, TARGET.highlight + 0.1) : bestAgainst(h, s, against, lo, hi);
+        chosen.push(col);
+        return col;
+    };
+    // (Colour-blind safe lets them go lighter and darker: red, for one, looks much darker to many.)
+    const wide = cvd ? 0.08 : 0;
+    pick("checkKing", () => best(rnd(-12, 12), rnd(0.6, 0.9), 0.2 - wide, 0.7 + wide * 2));
+    pick("dest", () => best(rnd(95, 150), rnd(0.45, 0.85), 0.2 - wide, 0.8 + wide));
+    pick("checkAttacker", () => best(rnd(200, 270), rnd(0.45, 0.85), 0.2 - wide, 0.8 + wide));
+    // Colour-blind safe: of its hues, the one that ends up looking most different from the other three
+    pick("select", () => {
+        const sat = rnd(0.6, 0.95);
+        if (!cvd) { return best(selectHue, sat, 0.2, 0.85); }
+        const enough = TARGET.highlight + 0.1;
+        const rank = c => (worstSeen(c, against) >= enough ? 1000 : 0) + apartness(c, chosen);
+        return selectHues.map(h => apartFrom(h, sat, against, 0.2 - wide, 0.85 + wide, chosen, enough))
+            .reduce((a, b) => rank(b) > rank(a) ? b : a);
+    });
     return c;
 }
 
 // The best of many candidates (stopping early once one meets every target)
 function generate() {
     let best = null, bestScore = -1;
-    for (let i = 0; i < 400 && bestScore < 1; i++) {
+    // Colour-blind safe has more to meet, so it tries more, but for a couple of seconds at most
+    const deadline = performance.now() + 2500;
+    for (let i = 0, tries = cvdOn() ? 1000 : 400; i < tries && bestScore < 1 && performance.now() < deadline; i++) {
         const c = candidate();
-        const s = score(c);
+        const s = score(c, bestScore);
         if (s > bestScore) { best = c; bestScore = s; }
     }
     Object.assign(state.colours, best);
@@ -682,18 +820,85 @@ function refresh(editing) {
     for (const el of pickers.querySelectorAll("[data-group]")) {
         el.classList.toggle("unused", unused.has(el.dataset.group));
     }
-    for (const [key, value, target] of checks(state.colours)) {
-        if (!key) { continue; }
+    // Beside each colour: its worst contrast check (with colour-blind safe on, perhaps as one kind sees it)
+    const checked = checks(state.colours);
+    const shown = {};
+    for (const check of checked) {
+        const was = shown[check.key];
+        if (check.key && (!was || check.value / check.target < was.value / was.target)) { shown[check.key] = check; }
+    }
+    for (const { key, value, target, vision } of Object.values(shown)) {
         const r = rows[key].ratio;
         r.textContent = value.toFixed(1);
         r.classList.toggle("low", value < target);
-        r.title = "Contrast " + value.toFixed(2) + ":1 (aim for at least " + target + ")";
+        r.title = "Contrast " + value.toFixed(2) + ":1 (aim for at least " + target + ")"
+            + (vision ? ", as seen with " + kindName(vision).toLowerCase() : "");
     }
+    drawCvdReport(checked);
     try {
         localStorage.setItem(STORE, JSON.stringify({ ...state, name: document.getElementById("themeName").value,
-            simple, pageLight: document.getElementById("pageLight").checked }));
+            simple, pageLight: document.getElementById("pageLight").checked, cvd: cvdOn(), cvdView: cvdView() }));
     } catch {}
 }
+
+// ---------- Colour-blind safe: the report under the hint, and the preview as each kind sees it ----------
+const kindName = id => KINDS.find(k => k.id == id).name;
+// "White king", "Moves", ...
+function colourName(key) {
+    const e = ENTRIES.find(x => x.key == key);
+    return / pieces$/.test(e.group) ? e.group.replace(/ pieces$/, "") + " " + e.name.toLowerCase() : e.name;
+}
+
+// What is met, or each check that isn't (the contrast ones also show orange beside their colour)
+function drawCvdReport(checked) {
+    const report = document.getElementById("cvdReport");
+    report.hidden = !cvdOn();
+    if (!cvdOn()) { return; }
+    const problems = [
+        ...checked.filter(x => x.vision && x.value < x.target).map(x => kindName(x.vision) + ": "
+            + (x.key ? colourName(x.key) : "the two sides") + " contrast " + x.value.toFixed(2) + " (aim for " + x.target + ")"),
+        ...apartChecks(state.colours).filter(x => x.value < x.target).map(x => kindName(x.vision) + ": "
+            + colourName(x.a) + " and " + colourName(x.b).toLowerCase() + " look alike (" + x.value.toFixed(1)
+            + ", aim for " + x.target + ")"),
+    ];
+    const names = KINDS.map(k => k.name.toLowerCase());
+    const head = document.createElement("div");
+    head.className = problems.length ? "warn" : "ok";
+    head.textContent = problems.length
+        ? problems.length + " colour-blind check" + (problems.length == 1 ? "" : "s") + " not met:"
+        : "Meets the colour-blind checks for " + names.slice(0, -1).join(", ") + " and " + names.at(-1) + ".";
+    const ul = document.createElement("ul");
+    const MAX = 12;
+    for (const text of [...problems.slice(0, MAX), ...(problems.length > MAX ? ["and " + (problems.length - MAX) + " more"] : [])]) {
+        const li = document.createElement("li");
+        li.textContent = text;
+        ul.append(li);
+    }
+    report.replaceChildren(head, ...(problems.length ? [ul] : []));
+}
+
+// The SVG filters that show the preview as each kind sees it (the same matrices as the checks)
+document.body.insertAdjacentHTML("beforeend", '<svg width="0" height="0" style="position: absolute" aria-hidden="true">'
+    + KINDS.map(k => '<filter id="cvd-' + k.id + '" color-interpolation-filters="linearRGB"><feColorMatrix type="matrix" values="'
+        + ColourVision.svgMatrix(k.id) + '"/></filter>').join("") + '</svg>');
+
+// View as: Normal, or as one kind sees it. Shown while colour-blind safe is on.
+const cvdViewGroup = document.getElementById("cvdView");
+cvdViewGroup.innerHTML = [{ id: "normal", name: "Normal", note: "the colours as they are" }, ...KINDS].map(k =>
+    '<label title="' + k.name + ": " + k.note + '"><input type="radio" name="cvdView" value="' + k.id + '"'
+    + (k.id == "normal" ? " checked" : "") + "> " + k.name + "</label>").join("");
+function cvdView() {
+    return cvdViewGroup.querySelector("input:checked")?.value ?? "normal";
+}
+// Set the switch and the view, and show the preview that way
+function showCvd(on, view) {
+    document.getElementById("cvd").checked = on;
+    (cvdViewGroup.querySelector('input[value="' + view + '"]') ?? cvdViewGroup.querySelector("input")).checked = true;
+    cvdViewGroup.hidden = !on;
+    document.querySelector(".preview-grid").style.filter = on && cvdView() != "normal" ? "url(#cvd-" + cvdView() + ")" : "";
+}
+document.getElementById("cvd").addEventListener("change", () => { showCvd(cvdOn(), cvdView()); refresh(); });
+cvdViewGroup.addEventListener("change", () => { showCvd(true, cvdView()); refresh(); });
 
 // ---------- The preview boards ----------
 function glyph(side, type) { return '<span class="glyph glyph-' + side + ' glyph-' + side + type + '"></span>'; }
@@ -938,6 +1143,7 @@ try {
         }
         if (typeof saved.name == "string") { document.getElementById("themeName").value = saved.name; }
         setToggles(saved.simple === true, saved.pageLight === true);
+        showCvd(saved.cvd === true, saved.cvdView);
     }
 } catch {}
 refresh();

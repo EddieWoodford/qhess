@@ -96,6 +96,22 @@ check it with the `qhess` preview in `.claude/launch.json`).
   container's aspect ratio. Below 760px wide it stacks and scrolls instead.
 - The server's PUBLIC list includes themes/ and tools/.
 
+## Theme generator: colour-blind safe (2026-11-19)
+- Top-bar switch **Colour-blind safe** (saved with the generator's state). When on: every contrast check also runs on
+  the colours as seen with protanopia, deuteranopia and tritanopia (the number beside a colour is its worst, its
+  title says which vision), plus "look apart" checks (OKLab deltaE x100): each side's six type colours >= 5
+  (Distinct only; types also differ in shape) and the four highlights pairwise >= 8. A report under the pickers
+  lists what isn't met. "View as" toggles (Normal / the three) filter the preview with SVG feColorMatrix filters.
+- `tools/colour-vision.js`: classic script (file:// still works) setting globalThis.ColourVision: Machado 2009
+  matrices at full severity on linear RGB (passing dichromacy covers the milder, commoner anomalies), simulate,
+  deltaE (OKLab), svgMatrix; both memoised. tests/node/colour-vision.test.js.
+- Generate steering when on: fit uses worst contrast over all visions; each piece type's lightness is chosen
+  (greedy, random type order) to look most different from that side's types already chosen while keeping contrast
+  (apartFrom); highlights likewise, check and moves first, wider lightness range, and the side-to-move colour tries
+  all six candidate hues. Measured: ~18% of Distinct and ~46% of Simple candidates pass everything at ~25 ms each;
+  Generate stops at the first pass or after 2.5 s (typically 20-150 ms). Off: unchanged.
+- Not covered: achromatopsia (total colour blindness, very rare).
+
 ## Deploy: versioned scripts on GitHub Pages (2026-11-18)
 - Pages sends `max-age=600` on every file, each cached on its own, so after a push a new index.html could run with an
   old cached module (seen: modals.js looking for the removed Theme button).
