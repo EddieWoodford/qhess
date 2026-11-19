@@ -26,6 +26,7 @@
         7.4 Coordinates and piece text
         7.5 Move animation
         7.6 Game over banner
+        7.7 Demo play-through    (thought bubble and its bar)
      8. Responsive overrides     (must stay last)
 
    NOTES
@@ -282,6 +283,7 @@ body {
     grid-area: play;
     display: grid;
     grid-template-rows: minmax(0, 1fr) auto;
+    grid-auto-rows: auto;   /* the demo bar (7.7), when it shows */
     gap: var(--gap);
     min-width: 0;
     min-height: 0;
@@ -1603,6 +1605,105 @@ input.switch:focus-visible {
 
 @media (prefers-reduced-motion: reduce) {
     .game-over-card { animation: none; }
+}
+
+
+/* ---------- 7.7 Demo play-through ----------
+   tour.js puts the thought bubble beside the square it is about: to its
+   .left or .right, with its tail at --tail-y. The speaker's colour is that side's
+   king colour in the theme. The bar under the status bar holds its buttons.
+   While it runs the side buttons are disabled (the tour presses them, showing
+   .tour-press as it does). */
+.tour-bubble {
+    --speaker-col: var(--accent);
+    position: absolute;
+    z-index: 2;
+    box-sizing: border-box;
+    width: max-content;
+    max-width: min(22em, 46cqw);
+    padding: 0.6em 0.8em;
+    border: 2px solid var(--speaker-col);
+    border-radius: 1.2em;
+    background: var(--bg-raised);
+    color: var(--text);
+    font-size: var(--ui-font);
+    line-height: 1.35;
+    box-shadow: var(--shadow-button-hover);
+    pointer-events: none;   /* the board under it can still be seen and pointed at */
+    transition: left 0.3s ease, top 0.3s ease;
+}
+
+.tour-bubble[hidden] {
+    display: none;
+}
+
+.tour-bubble[data-speaker="w"] { --speaker-col: var(--piece-wK); }
+.tour-bubble[data-speaker="b"] { --speaker-col: var(--piece-bK); }
+
+.tour-speaker {
+    display: block;
+    font-size: 0.8em;
+    font-weight: bold;
+    color: var(--speaker-col);
+}
+
+/* The tail: two small circles towards the square, as a thought bubble has */
+.tour-bubble.left::before,
+.tour-bubble.left::after,
+.tour-bubble.right::before,
+.tour-bubble.right::after {
+    content: "";
+    position: absolute;
+    top: var(--tail-y);
+    border: 2px solid var(--speaker-col);
+    border-radius: 50%;
+    background: var(--bg-raised);
+    translate: 0 -50%;
+}
+.tour-bubble::before { width: 0.7em; height: 0.7em; }
+.tour-bubble::after  { width: 0.4em; height: 0.4em; }
+.tour-bubble.left::before  { left: calc(100% + 0.15em); }
+.tour-bubble.left::after   { left: calc(100% + 1.1em); }
+.tour-bubble.right::before { right: calc(100% + 0.15em); }
+.tour-bubble.right::after  { right: calc(100% + 1.1em); }
+
+@media (prefers-reduced-motion: reduce) {
+    .tour-bubble { transition: none; }
+}
+
+.tour-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25em var(--gap);
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 48rem;
+    margin: 0 auto;
+}
+
+.tour-bar[hidden] {
+    display: none;
+}
+
+.tour-count {
+    flex: 0 0 auto;
+    font-size: 0.9em;
+    color: var(--text-muted);
+}
+
+.tour-buttons {
+    flex: 1 1 24em;
+    gap: var(--gap);
+}
+
+.sidebutton:disabled {
+    cursor: default;
+}
+
+.sidebutton.tour-press {
+    background-color: var(--accent);
+    color: var(--text-strong);
 }
 
 

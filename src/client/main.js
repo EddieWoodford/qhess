@@ -4,6 +4,7 @@
 // Loaded from index.html as <script type="module">, which runs after the page has been parsed.
 
 import * as game from "./controller.js";
+import * as tour from "./tour.js";
 import { setFlippedBoard } from "./board-view.js";
 import { setupModals, showModal, hideModal, showChoice } from "./modals.js";
 import { setupSettings, resetSettings } from "./settings.js";
@@ -28,7 +29,7 @@ setupModals();
 await loadThemes();
 buildThemeList(dom.settings.theme);
 setupSettings({
-	blackView: on => setFlippedBoard(on),
+	blackView: on => { setFlippedBoard(on); tour.refresh(); },
 	potentialCheck: on => game.setPotentialCheckRule(on),
 	// The file letters and rank numbers around the board (style.css 7.4)
 	showCoords: on => dom.board.classList.toggle("show-coords", on),
@@ -63,10 +64,11 @@ onClick("sideButton1", () => game.sideButton1Click());
 onClick("sideButton2", () => game.sideButton2Click());
 
 // Replay stepping
-onClick("back2", () => game.stepBackAll());
-onClick("back1", () => game.stepBackMove());
-onClick("forward1", () => game.stepForwardMove());
-onClick("forward2", () => game.stepForwardAll());
+// (during the demo play-through, < and > step through it)
+onClick("back2", () => tour.running() || game.stepBackAll());
+onClick("back1", () => tour.running() ? tour.back() : game.stepBackMove());
+onClick("forward1", () => tour.running() ? tour.next() : game.stepForwardMove());
+onClick("forward2", () => tour.running() || game.stepForwardAll());
 // A click on a line of the move history shows the position after that ply (history-view.js numbers the lines)
 dom.history.addEventListener("click", e => {
 	const line = e.target.closest(".historyLine");
@@ -98,6 +100,7 @@ onClick("exportButton", () => exportGame());
 // anyway, or keep playing. If the moves can't be copied, the Edit / Import dialog opens to copy them by hand, and
 // the game isn't reset.
 onClick("reset", () => {
+	tour.stop();
 	if (!game.hasUnexportedMoves()) {
 		game.newGame();
 		return;
@@ -115,7 +118,7 @@ onClick("reset", () => {
 });
 
 // Edit / Import dialog (modals.js opens it; this fills it with the current moves first)
-onClick("importButton", () => game.openImport());
+onClick("importButton", () => { tour.stop(); game.openImport(); });
 onClick("importLoad", () => {
 	// A move that can't be played keeps the dialog open, saying which, so it can be put right
 	const problem = game.importMoves();
@@ -132,6 +135,7 @@ onClick("rulesClose", () => hideModal("rules"));
 
 // Multiplayer tab
 onClick("mpCreate", () => {
+	tour.stop();
 	const color = document.querySelector("input[name=mpColor]:checked")?.value ?? "random";
 	game.startMultiplayer({ create: color });
 });
@@ -146,6 +150,7 @@ function joinFromInput() {
 	}
 	error.textContent = "";
 	input.value = "";
+	tour.stop();
 	game.startMultiplayer({ join: code });
 }
 onClick("mpJoin", joinFromInput);
@@ -188,3 +193,13 @@ if (joinCode) {
 
 // Make the board's squares and start the first game
 game.init(joinCode);
+
+// The demo play-through: from the Info tab, and offered once to a new player (no game of their own yet)
+onClick("tourButton", () => { setPanelOpen(false); tour.start(); });
+const DEMO_OFFERED_KEY = "qhess.demoOffered";
+let demoOffered = true;
+try { demoOffered = localStorage.getItem(DEMO_OFFERED_KEY) !== null; localStorage.setItem(DEMO_OFFERED_KEY, "1"); } catch {}
+if (!demoOffered && !joinCode && !game.isMultiplayer() && ["", "0b."].includes(game.loadSavedRecord().trim())) {
+	showChoice({ text: "New to Qhess? Watch a short demo game: it shows how the pieces work things out as they move.",
+		yes: "Watch the demo", no: "Just play" }, watch => { if (watch) { tour.start(); } });
+}

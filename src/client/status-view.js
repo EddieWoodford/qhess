@@ -180,6 +180,8 @@ function drawStatus(view) {
 	const buttons = view.replayNumber > -1 ? (view.multiplayer ? REPLAY_MULTIPLAYER : REPLAY) : step;
 	setButton(dom.sideButton1, value(buttons.button1));
 	setButton(dom.sideButton2, value(buttons.button2));
+	// During the demo play-through the buttons show what the player would press, but the tour presses them
+	dom.sideButton1.disabled = dom.sideButton2.disabled = view.tour;
 	// The same cursors as the board's (style.css 7.2), so the tick and cross on the squares are easy to learn
 	dom.sideButton2.classList.toggle("submitOnClick", buttons === step && dom.sideButton2.innerText == "Submit");
 	dom.sideButton2.classList.toggle("cancelOnClick", buttons === step && dom.sideButton2.innerText == "Cancel");

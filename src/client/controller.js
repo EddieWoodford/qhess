@@ -68,6 +68,9 @@ const ui = {
 	// The Settings tab's Potential Check switch. Off: no Add PC, and Black's move 0 is passed by itself.
 	// A multiplayer game always uses the rule (see pcRule), as both players must play by the same rules.
 	potentialCheck: true,
+	// True while the demo play-through (tour.js) is driving the board: the player's clicks on the board and the
+	// side buttons do nothing, the game isn't saved, and potential checks are allowed whatever the switch says.
+	tour: false,
 };
 
 // The steps when the player can't do anything (see the list at the top): a multiplayer game's waits, and the end
@@ -180,13 +183,14 @@ function isMultiplayer() {
 // Whether the player can declare potential checks: the Settings switch, except that a multiplayer game always can.
 // (A potential check already declared still has to be answered either way: the engine's rules don't change.)
 function pcRule() {
-	return ui.potentialCheck || isMultiplayer();
+	return ui.potentialCheck || isMultiplayer() || ui.tour;
 }
 
 // The Settings tab's Potential Check switch changed. Takes effect straight away.
 function setPotentialCheckRule(on) {
 	ui.potentialCheck = on;
 	if (!squares) { return; } // the page is still starting: init() starts the game with the rule as set
+	if (ui.tour) { draw(); return; } // the demo play-through always has the rule: it takes effect after it
 	if (on && !isMultiplayer() && ui.replay == -1 && committed.history.trim() == "0b.") {
 		// Nothing has happened beyond the skipped move 0: start again at move 0, so Black can use it
 		newGame();
@@ -218,6 +222,7 @@ function cancelTurn() {
 // Button Actions
 ////////////////////////////////
 function sideButton1Click() {
+	if (ui.tour) {return}
 	if (ui.replay > -1 && isMultiplayer()) {
 		// In a multiplayer game, sideButton1 is 'Back to game' while replaying
 		exitReplay();
@@ -242,6 +247,7 @@ function sideButton1Action() {
 }
 
 function sideButton2Click() {
+	if (ui.tour) {return}
 	if (ui.replay > -1) {
 		// When in replay mode (single player), sideButton2 is 'Back to game': the whole record, as it was
 		ui.replay = -1;
@@ -315,7 +321,7 @@ function submitMove() {
 // Hovering is only a preview, for a mouse (or pen): a piece's moves are shown while the pointer is over it.
 // Nothing depends on it. A tap (or a click without hovering first) picks the piece straight away.
 function squareEnter(coords, event) {
-	if (event.pointerType == "touch") {return}
+	if (event.pointerType == "touch" || ui.tour) {return}
 	if (ui.state == "clear") {
 		highlightPotentialMoves(coords);
 	}
@@ -329,7 +335,7 @@ function squareLeave(coords, event) {
 }
 
 function squareClick(coords) {
-	if (ui.replay > -1) {return}
+	if (ui.replay > -1 || ui.tour) {return}
 	if (WAITING_STATES.includes(ui.state)) {return}
 	if (ui.state == "highlightPotentialMoves" || ui.state == "clear") {
 		pickPiece(coords);
@@ -700,6 +706,7 @@ function stepForwardAll() {
 // Show the position after the ply on line i of the record (a click on a History tab line). The newest line, outside
 // replay, is the game as it is: nothing to do.
 function jumpToPly(i) {
+	if (ui.tour) {return}
 	if (i < 0 || i >= ui.record.length) {return}
 	if (ui.replay == -1 && i == ui.record.length - 1) {return}
 	if (isMultiplayer() && i == ui.record.length - 1) {
@@ -897,6 +904,7 @@ function draw(animate = false) {
 		multiplayer: ui.multiplayer,
 		pcRule: pcRule(),
 		pcSetting: ui.potentialCheck,
+		tour: ui.tour,
 		animate,
 	});
 }
@@ -912,7 +920,7 @@ const GAME_STORAGE_KEY = "qhess.game";
 let savedRecord = null; // the record as last saved, so it is only written when it changes
 
 function saveRecord() {
-	if (isMultiplayer()) { return; }
+	if (isMultiplayer() || ui.tour) { return; }
 	const text = ui.record.join("\n");
 	if (text === savedRecord) { return; }
 	savedRecord = text;
@@ -964,6 +972,19 @@ function resumeSavedGame() {
 	} else {
 		restoreGameHistory(text);
 	}
+}
+
+// The demo play-through (tour.js) starts or stops driving the board. Not in a multiplayer game.
+function setTour(on) {
+	if (on && isMultiplayer()) { return false; }
+	ui.tour = on;
+	ui.replay = -1;
+	return true;
+}
+
+// The turn being made (as for session.submitMove), for the demo play-through to see what is staged
+function currentTurn() {
+	return turnMove;
 }
 
 // Called once when the page loads: make the board and its squares, then start a game.
@@ -1039,6 +1060,11 @@ export {
 	startMultiplayer,
 	leaveMultiplayer,
 	backToSinglePlayer,
+	isMultiplayer,
+	loadSavedRecord,
+	setTour,
+	currentTurn,
+	declareNotAKing,
 
 	// Used by tests/test.html and tests/generate.html to drive and inspect the game
 	setup,              // a new game at Black's move 0, whatever the Potential Check switch says

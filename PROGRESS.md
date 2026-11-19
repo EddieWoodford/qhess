@@ -3,6 +3,27 @@
 Compact notes for whoever works on this next. Tests: `npm test` (node only; the browser UI has no automated tests,
 check it with the `qhess` preview in `.claude/launch.json`).
 
+## Demo play-through (2026-11-19)
+- Info tab "Watch the demo", and offered once (choice dialog, localStorage `qhess.demoOffered`) to a player with no
+  saved game. Steps through a short scripted game with thought bubbles; bar under the status bar: Back / Next /
+  Play from here / Exit (keys ← → Esc; the History tab's < > step it too).
+- Script: `src/client/tour-text.js` (a JS module so it's versioned with the scripts on deploy), format in
+  `tour-script.js` (`parseTour`): plies exactly as the engine writes them, `# [@sq] note` steps, `> thought` per ply
+  (required), `? sq TYPES` / `? pc sq` checks. tests/node/tour.test.js plays every ply, checks it's written back
+  identically, runs the checks, and that a collapse, PC, Not a King and a capture appear.
+- `src/client/tour.js` never draws the board: Next acts a ply out through the controller's own calls (showPartialMove,
+  showCompleteMove, sideButton1Action for Add PC / Not a King, selectPCKing/Attackers, sideButton2Action), 1.2s per
+  stage, flashing the side button it "presses" (.tour-press); so theme, highlights, prompts and slide animation are
+  the game's own. Back/jumps use restoreGameHistory. If acting ends on a different line than the script, it warns
+  in the console and shows the ply as written.
+- controller `ui.tour`: board clicks/hover and side-button clicks ignored, record not saved, pcRule forced on,
+  jumpToPly ignored. Exit restores the game saved at start; Play from here keeps the shown position. Reset, Import,
+  multiplayer Create/Join stop the tour first. Not available in multiplayer.
+- Bubble (style.css 7.7): beside the anchor square (left of it on the right half, right on the left half), white /
+  black border from `--piece-wK` / `--piece-bK`; narrator notes centred unless `@sq`. Follows resize and Black's view.
+- Left: the bubble can still cover a square the thought is about (e.g. e7 in 1b.); no auto-play; script is only 9
+  plies (no known king, real check or checkmate yet).
+
 ## Surrender, and no Add PC on a known king (2026-11-13)
 - Until a move is staged (clear / highlightPotentialMoves / showPartialMove), sideButton2 reads **Surrender**;
   it asks first (choice dialog), then submits a turn `{ resign: true }`. Not offered at Black's move 0.

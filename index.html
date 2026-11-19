@@ -231,6 +231,11 @@
                         <span class="game-over-hint">Click to see the board</span>
                     </span>
                 </button>
+                <!-- DEMO: the demo play-through's thought bubble, next to the square it is about (src/client/tour.js) -->
+                <div class="tour-bubble" id="tourBubble" role="status" aria-live="polite" hidden>
+                    <span class="tour-speaker" id="tourSpeaker"></span>
+                    <span class="tour-text" id="tourText"></span>
+                </div>
             </div>
 
             <!-- STATUS BAR: whose turn it is, what to do next, the move being made, and the buttons for it
@@ -248,6 +253,17 @@
                 </div>
                 <!-- messages from debugPrint() in src/client/render.js: shown briefly above the status bar -->
                 <div class="debug" id="debug" role="status"></div>
+            </div>
+
+            <!-- DEMO BAR: the demo play-through's controls, under the status bar while it runs (src/client/tour.js) -->
+            <div class="tour-bar" id="tourBar" hidden>
+                <span class="tour-count" id="tourCount"></span>
+                <div class="button-row tour-buttons">
+                    <button class="historyButton" id="tourBack" title="Back a step (←)">◀ Back</button>
+                    <button class="historyButton" id="tourNext" title="Next step (→)">Next ▶</button>
+                    <button class="historyButton" id="tourPlay" title="Carry on this game yourself, from the position shown">Play from here</button>
+                    <button class="historyButton" id="tourExit" title="Back to your own game (Esc)">Exit</button>
+                </div>
             </div>
         </div>
 
@@ -372,6 +388,7 @@
                         <p>Simply: it is your daily insanity chess!</p>
                         <p><a href="http://wiki.thorx.net/wiki/QuantumChess" target="_blank" rel="noopener">Qhess on ThorxWiki</a></p>
                         <div class="button-row">
+                            <button class="historyButton" id="tourButton">Watch the demo</button>
                             <button class="historyButton" id="rulesButton">Rules</button>
                         </div>
                         <h3>Credit</h3>
