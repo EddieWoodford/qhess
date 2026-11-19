@@ -894,29 +894,6 @@ input:checked + .tabTitle {
     line-height: 1.1;
 }
 
-/* A bishop and its swatch stay together when the line wraps */
-.captured-type {
-    white-space: nowrap;
-}
-
-/* The small square after a bishop: the colour of square it was on */
-.bishop-square {
-    display: inline-block;
-    width: 0.35em;
-    height: 0.35em;
-    margin-left: 0.05em;
-    border: 1px solid var(--text-muted);
-    vertical-align: baseline;
-}
-
-.bishop-square-light {
-    background-color: #ddd;
-}
-
-.bishop-square-dark {
-    background-color: #111;
-}
-
 
 /* ---------- 6.6 Debug messages ---------- */
 /* Messages from debugPrint() (render.js): shown for a few seconds just above

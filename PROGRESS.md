@@ -163,4 +163,5 @@ check it with the `qhess` preview in `.claude/launch.json`).
   cell collapsed) and each `.glyph` is a flex box filling its cell, so pillbox draws rounded rectangles that tile the
   square. `--uncollapsed-size` sets the uncollapsed symbol size per theme. waveHTML writes exactly six cells, an
   empty `<span>` for each impossible type: `&nbsp;` text merged into one grid cell and squeezed/shifted the rest.)
-- The captured list marks a bishop's square colour (small swatch); the board no longer does.
+- Nothing shows a bishop's square colour any more: not the board, nor (since 2026-11-19, at the user's request) the
+  captured list, which shows a plain bishop symbol. piece.wavesWithBishopColor is kept (rules.test.js uses it).
