@@ -48,8 +48,41 @@ const TOUR_TEXT = String.raw`
 4b. (KQBRP)e8xf7(KQBP)
 > I take back, one square diagonally. A rook couldn't do that, so e8 is no rook.
 ? f7 KQBP
-# @f7 That's the heart of Qhess: every move, capture and check narrows down what the pieces are, until each side's king can be found and checked as in ordinary chess.
-# Your turn: press "Play from here" to carry on this game yourself, or Exit to go back to your own game. The Rules (Info tab) say the rest.
+# @f7 That's the heart of Qhess: every move, capture and check narrows down what the pieces are. Next: how a king is found for certain, and checkmated.
+
+5w. (KQBNRP)f1c4(QB)
+> A long diagonal step: only a bishop or a queen could do that. And it points straight at f7.
+? c4 QB
+
+5b. (KQBRP)f8g7(KQB)
+> One step diagonally, to clear f8. I have a plan for that square.
+
+6w. (KQBNRP)d2d3(KQRP)
+> A quiet step forward, opening the diagonal behind it.
+
+6b. (KQBRP)h8f8(K) O-O-O
+> Castling! If h8 is my king, it can castle two squares to f8, with the unmoved piece on d8 as its rook. That settles where my king is for good.
+? f8 K
+? g8 R
+# @f8 Castling collapsed both pieces: f8 is Black's king and g8 a rook, and no other Black piece can be the king now. With the king known, ordinary check applies: it may never be left where any White piece could take it.
+
+7w. (KQBNRP)f2c5(QB)
+> Bishop or queen again. From c5 it looks along the diagonal through e7 to the king on f8, so e7 can't move away from in front of it.
+? c5 QB
+
+7b. (QRP)g6xe4(Q)
+> The rook-or-queen on e4 is loose. I take it diagonally, so this piece must be my queen.
+? e4 Q
+? e7 RP
+? g7 B
+# @e7 But the army must add up, and Black has only one queen: nothing else of Black's can be a queen any more. Look at e7 (rook or pawn) and g7 (only a bishop now).
+
+8w. (QB)c4xf7(QB)#
+> I take on f7, next to the king. As a queen, this piece attacks f8: check. And there's no way out.
+? f7 QB
+# @f7 Checkmate. The king can't take f7: the unmoved piece on a2 could still be a bishop or queen, and the diagonal from a2 to f7 is open. A square is guarded if any piece could attack it as any of its types.
+# @e7 Nothing else can take f7 either. g7 is only a bishop, so it can't step sideways. e7 could be a rook, but it is pinned: moving it would open c5's diagonal to the king. And the only empty square, e8, is covered from f7.
+# That's Qhess. Exit to go back to your own game, or step Back and press "Play from here" at any point to take over the game from there. The Rules (Info tab) say the rest.
 `;
 
 export { TOUR_TEXT };

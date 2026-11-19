@@ -10,7 +10,11 @@ check it with the `qhess` preview in `.claude/launch.json`).
 - Script: `src/client/tour-text.js` (a JS module so it's versioned with the scripts on deploy), format in
   `tour-script.js` (`parseTour`): plies exactly as the engine writes them, `# [@sq] note` steps, `> thought` per ply
   (required), `? sq TYPES` / `? pc sq` checks. tests/node/tour.test.js plays every ply, checks it's written back
-  identically, runs the checks, and that a collapse, PC, Not a King and a capture appear.
+  identically, runs the checks, and that a collapse, PC, Not a King, a capture, castling and mate appear.
+- The game (16 plies, 29 steps): PCs and Not a King, knight collapses, army adds up (two known knights), captures;
+  then Black castles h8->f8 with d8 (collapses K and R: the king is known), White pins e7 with c5, Black takes e4 as
+  its only queen (so e7/g7 lose Q), 8w. c4xf7# - mate because a2 (unmoved, could be Q/B) guards f7 under the strict
+  check rule. Found with a small helpmate search over getMoveDestinations + applyMove (not kept in the repo).
 - `src/client/tour.js` never draws the board: Next acts a ply out through the controller's own calls (showPartialMove,
   showCompleteMove, sideButton1Action for Add PC / Not a King, selectPCKing/Attackers, sideButton2Action), 1.2s per
   stage, flashing the side button it "presses" (.tour-press); so theme, highlights, prompts and slide animation are
@@ -21,8 +25,8 @@ check it with the `qhess` preview in `.claude/launch.json`).
   multiplayer Create/Join stop the tour first. Not available in multiplayer.
 - Bubble (style.css 7.7): beside the anchor square (left of it on the right half, right on the left half), white /
   black border from `--piece-wK` / `--piece-bK`; narrator notes centred unless `@sq`. Follows resize and Black's view.
-- Left: the bubble can still cover a square the thought is about (e.g. e7 in 1b.); no auto-play; script is only 9
-  plies (no known king, real check or checkmate yet).
+- The game's own Checkmate banner shows on the mating ply; the tour clicks it away for the notes after it.
+- Left: the bubble can still cover a square the thought is about (e.g. e7 in 1b.); no auto-play.
 
 ## Surrender, and no Add PC on a known king (2026-11-13)
 - Until a move is staged (clear / highlightPotentialMoves / showPartialMove), sideButton2 reads **Surrender**;

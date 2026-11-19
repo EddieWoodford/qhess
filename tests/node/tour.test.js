@@ -33,15 +33,17 @@ test("every ply of the tour plays, as the engine writes it, and its checks hold"
 			}
 		}
 	}
-	assert.equal(state.result, null, "the tour ends with the game still on, to play from");
+	assert.ok(state.result === null || state.result == "checkmate", "the tour ends in play or in checkmate");
 });
 
-test("the tour shows the key ideas: a collapse to one type, a potential check, Not a King, a capture", () => {
+test("the tour shows the key ideas: a collapse to one type, a potential check, Not a King, a capture, castling, mate", () => {
 	const plies = steps.filter(s => s.kind == "ply");
 	assert.ok(plies.some(p => p.checks.some(c => c.types?.length == 1)), "a collapse");
 	assert.ok(plies.some(p => p.text.includes("<")), "a potential check");
 	assert.ok(plies.some(p => p.text.includes("[")), "Not a King");
 	assert.ok(plies.some(p => p.text.includes("x")), "a capture");
+	assert.ok(plies.some(p => p.text.includes("O-O")), "castling (a known king)");
+	assert.ok(plies.some(p => p.text.includes("#")), "checkmate");
 });
 
 test("parseTour: notes, thoughts, checks and mistakes", () => {

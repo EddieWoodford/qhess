@@ -87,6 +87,8 @@ function show(i, act) {
 		actOut(step);
 	} else {
 		game.restoreGameHistory(pliesUpTo(steps, i).text);
+		// A note after the last move looks at the board: put the game over banner away, as a click on it does
+		if (step.kind == "note" && !$("gameOver").hidden) { $("gameOver").click(); }
 		const move = step.kind == "ply" ? parseMoveText(step.text) : null;
 		showBubble(step, step.kind == "note" ? square(step.at) : move.to ?? move.pcKing);
 	}
