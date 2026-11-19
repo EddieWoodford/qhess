@@ -65,6 +65,17 @@ check it with the `qhess` preview in `.claude/launch.json`).
 - Left: index.html itself can be up to 10 minutes stale (an old page may then fetch a newly changed module).
   Data (themes/*.css, index.json) is fetched with `cache: "no-store"`.
 
+## Idea, not done: arrow move markers (2026-11-19)
+- `tools/move-markers-mockup.html` (from the server) shows every theme's board with the move markers now (style.css
+  7.3: green stripes, rings for knight hops) beside a proposal: a small green `>` per square pointing the direction
+  of motion (rotated by the existing 1-16 bearing), a solid dot for a knight's landing, and captures in another
+  colour (arrow/dot plus a thin ring, as the marker covers the piece). Markers are square ::before (dark edge) and
+  ::after (colour) masked with SVG; no ring on non-captures.
+- Capture colour would be a new theme variable `--piece-capture-col` (mockup: magenta `#ff4fd8` dark, `#c0137a`
+  light; orange clashes with several themes' pieces, red means check). Needs: the theme files, REQUIRED in
+  themes.test.js, the generator, and controller/board-view marking which destinations capture.
+- The user asked to park it, not to build it yet.
+
 ## Board highlight colour (2026-11-17)
 - `--piece-selectedStart-col` (side-to-move ring, hover, chosen start) is cyan `#3fd6e8` in the dark themes and teal
   `#0b8a9e` in the light ones (was dark amber, lost on the brown Pillbox board). The rings are inset box-shadows, painted

@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Move Markers Mockup</title>
+<!-- A mockup, not part of the game: the game's boards in every theme in themes/, with the move markers drawn now
+     beside a proposed version (">" arrows in the direction of motion, a dot for a knight's hop, and a capture colour).
+     Open it from the server (npm start, then /tools/move-markers-mockup.html): it loads style.css and the themes. -->
+<base href="../">
+<link rel="stylesheet" href="style.css">
+<style>
+    html, body { height: auto; overflow: auto; }
+    body { display: block; margin: 0; padding: 16px; background: #222; color: #eee; font-family: system-ui, sans-serif; text-align: left; }
+    h1 { font-size: 1.2rem; margin: 0 0 4px; }
+    p.note { margin: 0 0 16px; color: #aaa; font-size: 0.9rem; max-width: 70ch; }
+    .theme-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+    .theme-row.page-light { background: #eee; color: #222; }
+    .theme-row.page-dark { background: #181818; color: #eee; }
+    .theme-row h2 { width: 100%; margin: 0; font-size: 1rem; color: inherit; }
+    .theme-row.page-light .board { background: #d8d8d8; }
+    figure { margin: 0; }
+    figcaption { font-size: 0.85rem; margin-bottom: 4px; opacity: 0.8; }
+    .board-box { width: 340px; height: 340px; container-type: size; }
+
+    /* ---- Proposed markers ----
+       --bearing: the direction of the move, 0-15 sixteenths of a turn clockwise from up the board.
+       ::before is a dark edge so the marker shows on any square or piece; ::after is the marker in its colour.
+       A capture uses --piece-capture-col, and also gets a ring in that colour, as its marker covers a piece. */
+    .boardsquare.mk { position: relative; }
+    .boardsquare.mk::before, .boardsquare.mk::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        transform: rotate(calc(var(--bearing) * 22.5deg));
+        -webkit-mask: var(--mk-shape) center / 100% 100% no-repeat;
+        mask: var(--mk-shape) center / 100% 100% no-repeat;
+    }
+    .boardsquare.mk::before { background: #000a; --mk-shape: var(--mk-edge); }
+    .boardsquare.mk::after { background: var(--mk-col); }
+    .boardsquare.mk { --mk-col: var(--piece-dest-col); }
+    .boardsquare.mk.mk-capture { --mk-col: var(--piece-capture-col); box-shadow: 0 0 0 3px var(--piece-capture-col) inset; }
+
+    .boardsquare.mk-arrow {
+        --mk-shape: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M36 62 L50 40 L64 62' fill='none' stroke='black' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+        --mk-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M36 62 L50 40 L64 62' fill='none' stroke='black' stroke-width='17' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    }
+    .boardsquare.mk-dot {
+        --mk-shape: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='12'/></svg>");
+        --mk-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='16'/></svg>");
+    }
+
+    /* Capture colours tried for the mockup (a theme would set --piece-capture-col itself) */
+    .theme-row.page-dark  { --piece-capture-col: #ff4fd8; }   /* magenta: orange is taken by several themes' pieces */
+    .theme-row.page-light { --piece-capture-col: #c0137a; }   /* deep magenta */
+</style>
+</head>
+<body>
+<h1>Move markers: now and proposed</h1>
+<p class="note">The hovered piece on d4 could be a queen or a knight. Proposed: a green ">" pointing the way the
+piece moves, a dot where a knight would land, and magenta (arrow or dot, plus a ring) where the move captures.</p>
+<div id="rows"></div>
+
+<script type="module">
+import { loadThemes, THEMES } from "./src/client/themes.js";
+import { waveHTML } from "./src/client/glyphs.js";
+
+await loadThemes();
+
+// The position: [row, column] with row 0 = rank 8, column 0 = file a
+const PIECES = {
+    "4,3": ["QN", "w"],     // d4, hovered
+    "0,4": ["K", "b"],      // e8
+    "1,3": ["RP", "b"],     // d7: capture up the file
+    "1,6": ["B", "b"],      // g7: capture on the diagonal
+    "2,4": ["NP", "b"],     // e6: knight capture
+    "4,0": ["QRBNP", "b"],  // a4: capture along the rank
+    "4,7": ["RBNP", "w"],   // h4: own piece, blocks
+    "6,5": ["P", "w"],      // f2: own piece, blocks
+    "7,6": ["K", "w"],      // g1
+};
+const FROM = [4, 3];
+
+const at = (r, c) => PIECES[r + "," + c];
+const onBoard = (r, c) => r >= 0 && r < 8 && c >= 0 && c < 8;
+
+// Where the hovered piece can go: queen rays (stopping at a piece, taking it if it's Black's) and knight hops
+function moves() {
+    const out = [];
+    const add = (r, c, knight) => {
+        const p = at(r, c);
+        if (p && p[1] == "w") { return false; }
+        out.push({ r, c, knight, capture: !!p });
+        return !p;
+    };
+    for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]]) {
+        for (let r = FROM[0] + dr, c = FROM[1] + dc; onBoard(r, c) && add(r, c, false); r += dr, c += dc) {}
+    }
+    for (const [dr, dc] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]) {
+        if (onBoard(FROM[0] + dr, FROM[1] + dc)) { add(FROM[0] + dr, FROM[1] + dc, true); }
+    }
+    return out;
+}
+
+// The same bearing as controller.js markDestinations: 1-16, 1 = NNE, 4 = E, 16 = N
+function bearing(r, c) {
+    const delY = FROM[0] - r, delX = c - FROM[1];
+    return (Math.round(((Math.atan2(delX, delY) * 180) / Math.PI) / 22.5) + 16 - 1) % 16 + 1;
+}
+
+function board(proposed) {
+    const el = document.createElement("div");
+    el.className = "board";
+    const marks = new Map(moves().map(m => [m.r + "," + m.c, m]));
+    for (let r = 0; r < 8; r++) {
+        const row = document.createElement("div");
+        row.className = "boardrow";
+        for (let c = 0; c < 8; c++) {
+            const sq = document.createElement("button");
+            sq.className = "boardsquare " + ((r + c) % 2 == 0 ? "whitesquare" : "blacksquare");
+            const p = at(r, c);
+            if (p) { sq.innerHTML = waveHTML(p[0], p[1]); }
+            if (r == FROM[0] && c == FROM[1]) { sq.classList.add("hovered"); }
+            const m = marks.get(r + "," + c);
+            if (m && !proposed) { sq.classList.add("destination" + bearing(r, c)); }
+            if (m && proposed) {
+                sq.classList.add("mk", m.knight ? "mk-dot" : "mk-arrow");
+                if (m.capture) { sq.classList.add("mk-capture"); }
+                sq.style.setProperty("--bearing", bearing(r, c) % 16);
+            }
+            row.append(sq);
+        }
+        el.append(row);
+    }
+    return el;
+}
+
+const rows = document.getElementById("rows");
+for (const theme of THEMES) {
+    const row = document.createElement("section");
+    row.className = "theme-row page-" + theme.page;
+    row.dataset.boardTheme = theme.id;
+    row.innerHTML = "<h2></h2>";
+    row.querySelector("h2").textContent = theme.name;
+    for (const proposed of [false, true]) {
+        const fig = document.createElement("figure");
+        fig.innerHTML = '<figcaption>' + (proposed ? "Proposed" : "Now") + '</figcaption><div class="board-box"></div>';
+        fig.querySelector(".board-box").append(board(proposed));
+        row.append(fig);
+    }
+    rows.append(row);
+}
+</script>
+</body>
+</html>
