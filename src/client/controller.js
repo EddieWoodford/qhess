@@ -1025,6 +1025,11 @@ function currentTurn() {
 	return turnMove;
 }
 
+// Resolves once init() has made the board and started the game. main.js loads the themes before it calls init(),
+// so this module can be loaded before the game has started: tests/test.html and generate.html wait for this.
+let markReady;
+const ready = new Promise(resolve => { markReady = resolve; });
+
 // Called once when the page loads: make the board and its squares, then start a game.
 // joinCode: the code of a game to join, when the page was opened from its join link (join-link.js)
 function init(joinCode = null) {
@@ -1051,6 +1056,7 @@ function init(joinCode = null) {
 	} else if (seat) {
 		startMultiplayer({ resume: seat });
 	}
+	markReady();
 }
 
 // Start a new game for the player: the Reset Game button, and when there's no saved game (see resumeSavedGame)
@@ -1106,6 +1112,7 @@ export {
 	declareNotAKing,
 
 	// Used by tests/test.html and tests/generate.html to drive and inspect the game
+	ready,              // a promise: the page has started its game, so the rest can be used
 	setup,              // a new game at Black's move 0, whatever the Potential Check switch says
 	game,
 	sideButton1Action,

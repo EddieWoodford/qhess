@@ -87,19 +87,30 @@ const SETTINGS_CHECKS = {
 // If the client code (src/client/controller.js) changes shape, update these functions to match.
 ////////////////////////////////
 
-// Load a fresh copy of the game page into the frame.
+// Load a fresh copy of the game page into the frame, once it has started its game.
 // Returns { game, win }: the game module's exports and the frame's window.
 // Importing the module from inside the frame gives the same instance the page is running,
 // and its exported variables (TURNNUMBER etc.) are live, so they always show the current value.
+// The frame's load event can come before the game has started (main.js loads the themes first), so this
+// waits for the module's ready promise too.
 const GAME_MODULE_URL = new URL("../src/client/controller.js", location.href).href;
+const START_MS = 10000;
 function loadGame(frameId = "game", keepSeat = false, keepGame = false) {
-	return new Promise(resolve => {
+	return new Promise((resolve, reject) => {
 		const frame = document.getElementById(frameId);
 		frame.onload = async () => {
-			const win = frame.contentWindow;
-			const game = await win.eval("import('" + GAME_MODULE_URL + "')");
-			resolve({ game, win });
+			try {
+				const win = frame.contentWindow;
+				const game = await win.eval("import('" + GAME_MODULE_URL + "')");
+				await Promise.race([game.ready, new Promise((_, timedOut) =>
+					setTimeout(() => timedOut(new Error("The game page didn't start within " + START_MS + " ms")), START_MS))]);
+				resolve({ game, win });
+			} catch (err) {
+				reject(err);
+			}
 		};
+		// The demo play-through is offered once to a new player (main.js): never in the test frames
+		localStorage.setItem("qhess.demoOffered", "1");
 		// A multiplayer game saved in this tab would be resumed by the page: tests start in single player,
 		// unless the test is reloading a multiplayer page on purpose (keepSeat)
 		if (!keepSeat) {
@@ -156,12 +167,13 @@ function writtenHistory(ctx) {
 }
 
 // What the page is showing: every square's classes and contents, the prompt, buttons,
-// staged move, captured lists and history panel, as one string
+// staged move, captured lists and history panel, as one string.
+// Only the board's own squares: the Settings tab's theme previews are squares too, but not the game.
 function captureView(ctx) {
 	const doc = ctx.win.document;
 	const el = id => doc.getElementById(id);
 	const parts = [];
-	doc.querySelectorAll(".boardsquare").forEach(sq => parts.push(sq.id + "|" + sq.className + "|" + sq.innerHTML));
+	doc.querySelectorAll("#board .boardsquare").forEach(sq => parts.push(sq.id + "|" + sq.className + "|" + sq.innerHTML));
 	parts.push(el("prompt").innerHTML);
 	// Visibility as the page shows it ("visible" / "hidden"), however the page code hides things
 	const visibility = e => ctx.win.getComputedStyle(e).visibility;
@@ -450,8 +462,13 @@ async function checkReloadKeepsGame(ctx) {
 	expect("Reloading while replaying should come back at the end of the game, history is '" + ctx.game.game.history + "'",
 		norm(ctx.game.game.history) == before && ctx.game.ui.replay == -1);
 
-	// Reset Game is the way to start again, and that is kept too
-	ctx.win.document.getElementById("reset").click();
+	// Reset Game is the way to start again, and that is kept too. The game hasn't been exported, so Reset asks
+	// first (main.js): reset without exporting.
+	const doc = ctx.win.document;
+	doc.getElementById("reset").click();
+	expect("Reset Game should ask before losing a game that hasn't been exported",
+		ctx.win.getComputedStyle(doc.getElementById("choiceWrapper")).display != "none");
+	doc.getElementById("choiceNo").click();
 	ctx = await reload();
 	expect("After Reset Game and reloading, the game should be new, history is '" + ctx.game.game.history + "'",
 		ctx.game.game.turnNumber == 0 && ctx.game.ui.record.length == 0);

@@ -35,17 +35,26 @@ function mulberry32(a) {
 	};
 }
 
-// Load a fresh copy of the game into the frame. Returns the frame's window and the game module's exports
-// (imported from inside the frame, so it is the same instance the page is running).
+// Load a fresh copy of the game into the frame, once it has started its game. Returns the frame's window and the
+// game module's exports (imported from inside the frame, so it is the same instance the page is running).
+// The frame's load event can come before the game has started (see test.html loadGame).
 const GAME_MODULE_URL = new URL("../src/client/controller.js", location.href).href;
+const START_MS = 10000;
 function loadFrame() {
-	return new Promise(resolve => {
+	return new Promise((resolve, reject) => {
 		const frame = document.getElementById("game");
 		frame.onload = async () => {
-			const win = frame.contentWindow;
-			const game = await win.eval("import('" + GAME_MODULE_URL + "')");
-			resolve({ win, game });
+			try {
+				const win = frame.contentWindow;
+				const game = await win.eval("import('" + GAME_MODULE_URL + "')");
+				await Promise.race([game.ready, new Promise((_, timedOut) =>
+					setTimeout(() => timedOut(new Error("The game page didn't start within " + START_MS + " ms")), START_MS))]);
+				resolve({ win, game });
+			} catch (err) {
+				reject(err);
+			}
 		};
+		localStorage.setItem("qhess.demoOffered", "1"); // no demo offer (see test.html loadGame)
 		sessionStorage.removeItem("qhess.multiplayer"); // always single player (see test.html loadGame)
 		localStorage.removeItem("qhess.settings");      // the Settings tab's switches at their defaults
 		sessionStorage.removeItem("qhess.game");        // a new game, not the one this tab saved
