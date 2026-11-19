@@ -8,7 +8,9 @@ check it with the `qhess` preview in `.claude/launch.json`).
   the types it has lost since the start of the turn, faded and grey (`.glyph-lost`, style.css 7.4: opacity 0.3 +
   grayscale), in their places in its 3x2 grid; a piece the move collapses keeps its grid until Submit. That includes
   army-adds-up losses on other pieces (e.g. the second known knight fades N on the side's other pieces).
-- controller draw passes `before: committed` (null while replaying); board-view `lostTypes` compares each piece's
+- Stepping through the history shows the same for the ply that led to the position shown: replayPly keeps
+  `beforeLastPly` (a clone of the state before it; setup clears it), and draw passes it as `before` while replaying.
+- controller draw passes `before: committed` (beforeLastPly while replaying); board-view `lostTypes` compares each piece's
   waves with `before.pieces[color][i]`; glyphs.js waveHTML(waves, color, lost). The theme generator's preview has the
   same rule, shown on the second piece of the Pieces board's last row.
 

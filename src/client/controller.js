@@ -48,6 +48,8 @@ let viewSession = null; // multiplayer only: a LocalSession for stepping through
 let committed; // the session's game state at the start of the current turn: see src/engine/state.js
 let game;      // the game state being shown and changed by clicks: a working copy of `committed`
 let turnMove;  // the turn being made, as a move for session.submitMove (see newTurnMove)
+let beforeLastPly = null; // the game state before the last ply replayed (replayPly): while stepping through the
+                          // history, the board fades the types that ply ruled out, as it does before Submit
 
 // Page state: everything about what the page is showing, apart from the game itself
 const ui = {
@@ -610,6 +612,7 @@ function restoreGameHistory(historyText,nMoves) {
 function replayPly(moveText) {
 	// Apply one ply of notation to the game, without redrawing. Returns false (and shows why) if it can't be played.
 	let move = parseMoveText(moveText);
+	beforeLastPly = cloneState(committed);
 	// Check that the move number eg "3w. " is correct.
 	if (move.turn != game.turnNumber.toString() + game.turnColor) {
 		debugPrint("Move text number + colour did not match expected");
@@ -939,7 +942,7 @@ function draw(animate = false) {
 		pcRule: pcRule(),
 		pcSetting: ui.potentialCheck,
 		tour: ui.tour,
-		before: ui.replay == -1 ? committed : null,
+		before: ui.replay == -1 ? committed : beforeLastPly,
 		animate,
 	});
 }
@@ -1060,6 +1063,7 @@ function newGame() {
 // The squares' highlight flags are cleared by setState("move0").
 function setup() {
 	boardSession().reset(); // its onChange sets committed, game and turnMove
+	beforeLastPly = null;
 	ui.start = [];
 	ui.end = [];
 	ui.lastStart = [];
