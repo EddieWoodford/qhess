@@ -3,6 +3,22 @@
 Compact notes for whoever works on this next. Tests: `npm test` (node only; the browser UI has no automated tests,
 check it with the `qhess` preview in `.claude/launch.json`).
 
+## Multiplayer rewind (2026-11-19)
+- Stepping back in a multiplayer game now offers **Resume from here** (button1; "Back to game" moved to button2) once
+  the opponent has joined. It asks the opponent to take the game back to the position shown.
+- Protocol (protocol.js): `rewind {keep}` (keep = moves to keep, 0 <= keep < moves; replaces any open request),
+  `rewindAnswer {agree}`, `rewindCancel` (asker only); server sends `rewind {keep, by}` to both (again on resume)
+  and `rewindEnded {keep, by, result}`, result agreed / declined / cancelled / moved (any move played closes it).
+  On agree the server truncates the moves, saves, sends `sync` then `rewindEnded`. Requests live on the room only
+  (not the store).
+- SocketSession: requestRewind / answerRewind / cancelRewind, info().rewind `{keep, mine, undo}`, events
+  rewindAsked / rewindEnded (+ a non-fatal message). The asker can't submit a move while their request is open.
+  sync now drops a pending move whose seq isn't the next one (it was played, or rewound away).
+- Controller: the asked player is jumped to the position (showPosition) with the prompt "Your opponent wishes to
+  rewind to the position shown, undoing N moves. Agree?" and Agree / Decline; the asker sees "Waiting…" with
+  Withdraw (+ Back to game while replaying). Agreed: both go back to the live game; declined: the asker stays where
+  they were looking. Status overrides in status-view.js REWIND_ASKED / REWIND_WAITING.
+
 ## Demo play-through (2026-11-19)
 - Info tab "Watch the demo", and offered once (choice dialog, localStorage `qhess.demoOffered`) to a player with no
   saved game. Steps through a short scripted game with thought bubbles; bar under the status bar: Back / Next /

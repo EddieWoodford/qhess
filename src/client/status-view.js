@@ -97,8 +97,25 @@ const STEPS = {
 // moves are dropped), or go back to the game as it was. At the newest move the two do the same, but both stay, so
 // the way back to the game is always where it was.
 const REPLAY = { button1: "Resume from here", button2: "Back to game" };
-// ... and in a multiplayer game, where the game can't be taken back
-const REPLAY_MULTIPLAYER = { button1: "Back to game", button2: null };
+// ... and in a multiplayer game, where resuming from an earlier position asks the opponent first (once there is one)
+const REPLAY_MULTIPLAYER = {
+	button1: ctx => ctx.multiplayer?.phase == "playing" && ctx.multiplayer.opponent != "waiting" ? "Resume from here" : null,
+	button2: "Back to game",
+};
+
+// While a rewind request is open (multiplayer only), the prompt and buttons are about it instead.
+// The asked player is shown the position the opponent wants to go back to (controller.js multiplayerEvent).
+const movesText = n => n + (n == 1 ? " move" : " moves");
+const REWIND_ASKED = {
+	prompt: ctx => "Your opponent wishes to rewind to the position shown, undoing " + movesText(ctx.multiplayer.rewind.undo) + ". Agree?",
+	button1: "Agree",
+	button2: "Decline",
+};
+const REWIND_WAITING = {
+	prompt: ctx => "Asked your opponent to rewind, undoing " + movesText(ctx.multiplayer.rewind.undo) + ". Waiting for their answer",
+	button1: "Withdraw",
+	button2: ctx => ctx.replaying ? "Back to game" : null,
+};
 
 // The facts about the position that the prompt and buttons depend on.
 // pcRule: whether the player can declare potential checks (the Settings tab's switch; controller.js pcRule).
@@ -173,11 +190,14 @@ function drawStatus(view) {
 	const prompt = document.createElement("span");
 	prompt.className = "prompt-who";
 	prompt.textContent = heading;
-	dom.prompt.replaceChildren(prompt, " — " + value(step.prompt));
+	const rewind = view.multiplayer?.rewind;
+	const rewindStep = rewind ? (rewind.mine ? REWIND_WAITING : REWIND_ASKED) : null;
+	ctx.replaying = view.replayNumber > -1;
+	dom.prompt.replaceChildren(prompt, " — " + value((rewindStep ?? step).prompt));
 
 	drawMultiplayerBadge(view.multiplayer);
 
-	const buttons = view.replayNumber > -1 ? (view.multiplayer ? REPLAY_MULTIPLAYER : REPLAY) : step;
+	const buttons = rewindStep ?? (view.replayNumber > -1 ? (view.multiplayer ? REPLAY_MULTIPLAYER : REPLAY) : step);
 	setButton(dom.sideButton1, value(buttons.button1));
 	setButton(dom.sideButton2, value(buttons.button2));
 	// During the demo play-through the buttons show what the player would press, but the tour presses them

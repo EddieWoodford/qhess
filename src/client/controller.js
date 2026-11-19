@@ -223,9 +223,18 @@ function cancelTurn() {
 ////////////////////////////////
 function sideButton1Click() {
 	if (ui.tour) {return}
-	if (ui.replay > -1 && isMultiplayer()) {
-		// In a multiplayer game, sideButton1 is 'Back to game' while replaying
-		exitReplay();
+	const rewind = ui.multiplayer?.rewind;
+	if (rewind) {
+		// A rewind request is open: 'Agree' to the opponent's, or 'Withdraw' this player's own
+		if (rewind.mine) {
+			session.cancelRewind();
+		} else {
+			session.answerRewind(true);
+		}
+	} else if (ui.replay > -1 && isMultiplayer()) {
+		// In a multiplayer game, 'Resume from here' asks the opponent to rewind the game to the position shown
+		const result = session.requestRewind(2 * ui.replay);
+		if (!result.ok) { debugPrint(result.error); }
 	} else if (ui.replay > -1) {
 		// When in replay mode, sideButton1 is 'Resume Game From Here': the moves up to the one shown become the game
 		const plies = 2 * ui.replay;
@@ -248,6 +257,14 @@ function sideButton1Action() {
 
 function sideButton2Click() {
 	if (ui.tour) {return}
+	if (ui.multiplayer?.rewind && !ui.multiplayer.rewind.mine) {
+		session.answerRewind(false); // 'Decline'
+		return;
+	}
+	if (ui.replay > -1 && isMultiplayer()) {
+		exitReplay(); // 'Back to game'
+		return;
+	}
 	if (ui.replay > -1) {
 		// When in replay mode (single player), sideButton2 is 'Back to game': the whole record, as it was
 		ui.replay = -1;
@@ -717,6 +734,12 @@ function jumpToPly(i) {
 	restoreGameHistory(null, i + 1);
 }
 
+// Step through the history to the position after the first `plies` plies of the record
+function showPosition(plies) {
+	ui.replay = plies / 2;
+	restoreGameHistory(null, plies);
+}
+
 // Multiplayer: stop stepping through the history and show the game as it is now
 function exitReplay() {
 	ui.replay = -1;
@@ -781,6 +804,17 @@ function multiplayerEvent(s, event) {
 	if (s.color && s.color != wasColor) {
 		// Your own side at the bottom of the board
 		setFlippedBoard(s.color == "b");
+	}
+	if (event.type == "rewindAsked" && !event.mine) {
+		// The opponent asks to rewind: show the position they want to go back to
+		showPosition(event.keep);
+		return;
+	}
+	if (event.type == "rewindEnded" && ui.replay > -1 && (event.result == "agreed" || !event.mine)) {
+		// Rewound (or the question is over): back to the game as it now is. A player whose own request was
+		// turned down stays where they were looking.
+		exitReplay();
+		return;
 	}
 	if (ui.replay == -1 && (WAITING_STATES.includes(ui.state) || ui.state == "clear" || ui.state == "move0" || ui.multiplayer.phase != "playing")) {
 		setState("clear"); // works out again whether the player can move

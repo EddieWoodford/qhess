@@ -16,10 +16,16 @@
 // Besides the LocalSession interface:
 //   start({ create: "w" | "b" | "random" })  or  start({ join: code })  or  start({ resume: { code, token } })
 //   leave()               leave the game (the opponent is told) and close the connection
+//   requestRewind(keep)   ask the opponent to take the game back to its first keep moves; { ok } or { ok: false, error }
+//   answerRewind(agree)   answer the opponent's rewind request
+//   cancelRewind()        withdraw this player's rewind request
 //   onEvent(listener)     listener(event) for what the page should show:
 //                           { type: "status" }    something in info() changed
 //                           { type: "error", message, fatal }  fatal: the session is over (see info().phase)
-//   info()                { phase, code, color, opponent, connection, pending, serverStarting }
+//                           { type: "rewindAsked", keep, mine }  a rewind request was made (mine: by this player)
+//                           { type: "rewindEnded", result, mine }  ... and is over (protocol.js REWIND); on
+//                                                 "agreed" the game has already gone back (onChange)
+//   info()                { phase, code, color, opponent, connection, pending, serverStarting, rewind }
 //                           phase:      "connecting" (first connection, or creating/joining), "playing",
 //                                       "ended" (the game is over or couldn't be joined), "left"
 //                           serverStarting: still connecting after a few seconds. The hosted server sleeps
@@ -27,12 +33,14 @@
 //                           connection: "connected" | "reconnecting"
 //                           opponent:   "waiting" | "connected" | "disconnected" (protocol.js OPPONENT)
 //                           endedReason: why phase is "ended" (protocol.js ENDED / ERRORS code)
+//                           rewind:     the open rewind request, { keep, mine, undo } (undo: how many moves it
+//                                       takes back), or null
 //   pending               the move waiting for the server's answer, or null
 
 import { createInitialState, cloneState } from "../engine/state.js";
 import { applyMove } from "../engine/game.js";
 import { positionHash } from "../engine/position-hash.js";
-import { ERRORS } from "../shared/protocol.js";
+import { ERRORS, REWIND } from "../shared/protocol.js";
 import { socketUrl, usesHostedServer } from "./server-address.js";
 
 const STORAGE_KEY = "qhess.multiplayer";
@@ -93,6 +101,7 @@ class SocketSession {
 		this.color = null;
 		this.endedReason = null;
 		this.pending = null;     // { seq, move }
+		this.rewind = null;      // the open rewind request: { keep, by }
 		this.request = null;     // what to send once connected: create / join / resume
 		this.retries = 0;
 		this.timers = {};
@@ -134,6 +143,9 @@ class SocketSession {
 		}
 		if (this.opponent == "waiting") {
 			return { ok: false, error: "Wait for your opponent to join" };
+		}
+		if (this.rewind?.by == this.color) {
+			return { ok: false, error: "Withdraw your rewind request first" };
 		}
 		// Check it here first (on a copy), so an impossible move never leaves the page
 		const result = applyMove(cloneState(this.state), move);
@@ -194,6 +206,35 @@ class SocketSession {
 		this.finish("left");
 	}
 
+	////////////////////////////////
+	// Rewinding
+	////////////////////////////////
+
+	requestRewind(keep) {
+		if (this.phase != "playing" || this.connection != "connected") {
+			return { ok: false, error: "Not connected to the game" };
+		}
+		if (this.opponent == "waiting") {
+			return { ok: false, error: "Wait for your opponent to join" };
+		}
+		if (this.pending) {
+			return { ok: false, error: "Still sending the last move" };
+		}
+		if (!Number.isInteger(keep) || keep < 0 || keep >= this.moves.length) {
+			return { ok: false, error: "That's the position now" };
+		}
+		this.send({ type: "rewind", keep });
+		return { ok: true };
+	}
+
+	answerRewind(agree) {
+		this.send({ type: "rewindAnswer", agree: agree === true });
+	}
+
+	cancelRewind() {
+		this.send({ type: "rewindCancel" });
+	}
+
 	onEvent(listener) {
 		this.eventListeners.push(listener);
 	}
@@ -208,6 +249,11 @@ class SocketSession {
 			pending: this.pending !== null,
 			endedReason: this.endedReason,
 			serverStarting: this.serverStarting,
+			rewind: this.rewind && {
+				keep: this.rewind.keep,
+				mine: this.rewind.by == this.color,
+				undo: this.moves.length - this.rewind.keep,
+			},
 		};
 	}
 
@@ -318,6 +364,8 @@ class SocketSession {
 			case "move": return this.moveMessage(message);
 			case "rejected": return this.rejected(message);
 			case "sync": return this.sync(message.moves);
+			case "rewind": return this.rewindAsked(message);
+			case "rewindEnded": return this.rewindEnded(message);
 			case "opponent":
 				this.opponent = message.status;
 				return this.emit({ type: "status" });
@@ -341,6 +389,7 @@ class SocketSession {
 		// From now on, a reconnect resumes this seat
 		this.request = { type: "resume", code: this.code, token: this.token };
 		this.saveSeat();
+		this.rewind = null; // the server says again if one is still open
 		this.sync(message.moves);
 		// A move sent before the connection dropped: if the server didn't get it, send it again (if it did, the
 		// server just confirms it)
@@ -380,11 +429,33 @@ class SocketSession {
 
 	sync(moves) {
 		this.useMoves(moves);
-		if (this.pending && this.pending.seq < this.moves.length) {
-			// It was played
+		if (this.pending && this.pending.seq != this.moves.length) {
+			// It was played (or the game was rewound to before it)
 			this.pending = null;
 		}
 		this.notify();
+	}
+
+	rewindAsked({ keep, by }) {
+		this.rewind = { keep, by };
+		this.emit({ type: "status" });
+		this.emit({ type: "rewindAsked", keep, mine: by == this.color });
+	}
+
+	rewindEnded({ by, result }) {
+		this.rewind = null;
+		const mine = by == this.color;
+		this.emit({ type: "status" });
+		this.emit({ type: "rewindEnded", result, mine });
+		const message = {
+			[REWIND.AGREED]: "The game was rewound.",
+			[REWIND.DECLINED]: mine ? "Your opponent didn't agree to rewind." : null,
+			[REWIND.CANCELLED]: mine ? null : "Your opponent withdrew the rewind request.",
+			[REWIND.MOVED]: "The rewind request lapsed: a move was played.",
+		}[result];
+		if (message) {
+			this.emit({ type: "error", message, fatal: false });
+		}
 	}
 
 	serverError({ code, message }) {

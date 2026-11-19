@@ -197,3 +197,38 @@ test("the server address: the page's own server, or the hosted one from GitHub P
 	assert.equal(usesHostedServer(at("http://localhost:8000/")), false);
 	assert.equal(usesHostedServer(undefined), false);
 });
+
+test("a rewind: asked by one session, shown to the other, agreed, and both go back", async () => {
+	const { lines } = games[0];
+	const players = await newGame("w");
+	for (let seq = 0; seq < 5; seq++) { await play(players, lines, seq); }
+	const events = { w: [], b: [] };
+	players.w.onEvent(e => { if (e.type.startsWith("rewind")) { events.w.push(e); } });
+	players.b.onEvent(e => { if (e.type.startsWith("rewind")) { events.b.push(e); } });
+	assert.equal(players.w.requestRewind(5).ok, false, "not the position now");
+	assert.deepEqual(players.w.requestRewind(2), { ok: true });
+	await waitFor("the request", () => players.w.info().rewind && players.b.info().rewind);
+	assert.deepEqual(players.b.info().rewind, { keep: 2, mine: false, undo: 3 });
+	assert.deepEqual(players.w.info().rewind, { keep: 2, mine: true, undo: 3 });
+	assert.deepEqual(events.b, [{ type: "rewindAsked", keep: 2, mine: false }]);
+	// The asker can't move while waiting (after 5 moves it's White's turn)
+	assert.match(players.w.submitMove(moveFromLine(lines[5])).error, /rewind/);
+	players.b.answerRewind(true);
+	await waitFor("the rewind", () => players.w.moves.length == 2 && players.b.moves.length == 2 && !players.w.info().rewind);
+	assert.deepEqual(events.w.at(-1), { type: "rewindEnded", result: "agreed", mine: true });
+	assert.equal(players.b.info().rewind, null);
+	await play(players, lines, 2);
+});
+
+test("a declined rewind leaves the game as it was", async () => {
+	const { lines } = games[0];
+	const players = await newGame("b");
+	for (let seq = 0; seq < 3; seq++) { await play(players, lines, seq); }
+	players.w.requestRewind(1);
+	await waitFor("the request", () => players.b.info().rewind);
+	players.b.answerRewind(false);
+	await waitFor("the answer", () => !players.w.info().rewind);
+	assert.ok(players.w.errors.some(e => /didn't agree/.test(e.message)));
+	assert.equal(players.w.moves.length, 3);
+	await play(players, lines, 3);
+});
