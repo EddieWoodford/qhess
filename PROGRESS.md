@@ -3,6 +3,15 @@
 Compact notes for whoever works on this next. Tests: `npm test` (node only; the browser UI has no automated tests,
 check it with the `qhess` preview in `.claude/launch.json`).
 
+## Ruled-out types shown faded until Submit (2026-11-19)
+- While a turn has changes not yet submitted (a staged move, Add PC attackers, Not a King), every piece also shows
+  the types it has lost since the start of the turn, faded and grey (`.glyph-lost`, style.css 7.4: opacity 0.3 +
+  grayscale), in their places in its 3x2 grid; a piece the move collapses keeps its grid until Submit. That includes
+  army-adds-up losses on other pieces (e.g. the second known knight fades N on the side's other pieces).
+- controller draw passes `before: committed` (null while replaying); board-view `lostTypes` compares each piece's
+  waves with `before.pieces[color][i]`; glyphs.js waveHTML(waves, color, lost). The theme generator's preview has the
+  same rule, shown on the second piece of the Pieces board's last row.
+
 ## Multiplayer rewind (2026-11-19)
 - Stepping back in a multiplayer game now offers **Resume from here** (button1; "Back to game" moved to button2) once
   the opponent has joined. It asks the opponent to take the game back to the position shown.

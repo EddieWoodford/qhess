@@ -21,3 +21,20 @@ test("a collapsed piece is one large symbol", () => {
 	assert.equal(waveHTML("B", "b"),
 		'<div class="blackpiececollapsed"><span class="glyph glyph-b glyph-bB"></span></div>');
 });
+
+test("types the move being made has ruled out are still drawn, marked lost", () => {
+	const c = cells(waveHTML("QR", "w", "KP"));
+	assert.equal(c.length, 6);
+	assert.match(c[0], /glyph-wK glyph-lost/);
+	assert.doesNotMatch(c[1], /glyph-lost/);
+	assert.match(c[1], /glyph-wQ/);
+	assert.equal(c[3], "<span></span>", "a type it couldn't be before either stays empty");
+	assert.match(c[5], /glyph-wP glyph-lost/);
+});
+
+test("a piece the move collapses keeps its grid until it's submitted", () => {
+	const c = cells(waveHTML("N", "b", "KQBRP"));
+	assert.equal(c.length, 6);
+	assert.equal(c.filter(x => /glyph-lost/.test(x)).length, 5);
+	assert.doesNotMatch(c[4], /glyph-lost/);
+});

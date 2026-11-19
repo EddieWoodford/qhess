@@ -25,11 +25,12 @@ class SquareView {
 	resetButtonClasses() {
 		this.button.className = "boardsquare " + (this.color == "w" ? "whitesquare" : "blacksquare");
 	}
-	setWavetext(piece) {
+	// lost: the types the move being made has ruled out for this piece (see lostTypes)
+	setWavetext(piece, lost = "") {
 		if (piece === null) {
 			this.button.innerHTML = "";
 		} else {
-			this.button.innerHTML = waveHTML(piece.waves(), piece.color);
+			this.button.innerHTML = waveHTML(piece.waves(), piece.color, lost);
 		}
 	}
 }
@@ -169,6 +170,14 @@ function runAnimations(plan) {
 	}
 }
 
+// The types a piece could be at the start of the turn (before: that state) that the move being made has ruled out,
+// e.g. "BN"; "" if none, or no move is being made
+function lostTypes(piece, before) {
+	if (!before || piece === null) { return ""; }
+	const now = piece.waves();
+	return [...before.pieces[piece.color][piece.i].waves()].filter(t => !now.includes(t)).join("");
+}
+
 // Draw every square: its piece, and the classes for its highlights (see style.css sections 7.2 and 7.3).
 // view: see render.js
 function drawBoard(view) {
@@ -197,7 +206,7 @@ function drawBoard(view) {
 			const classes = sqr.button.classList;
 
 			sqr.resetButtonClasses();
-			sqr.setWavetext(piece);
+			sqr.setWavetext(piece, lostTypes(piece, view.before));
 
 			if (STATE == "clear" && view.replayNumber == -1) {
 				if (piece !== null && piece.color == game.turnColor) {

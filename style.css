@@ -1484,6 +1484,13 @@ input.switch:focus-visible {
 .glyph-bN { color: var(--piece-bN); }
 .glyph-bP { color: var(--piece-bP); }
 
+/* A type the move being made has ruled out (glyphs.js): still shown, faded and
+   grey, until the move is submitted, so the player sees what the move costs */
+.glyph-lost {
+    opacity: 0.3;
+    filter: grayscale(1);
+}
+
 /* A light page (a theme's --theme-page): the white pieces' outline symbols are
    thin lines, which fade on a light square, so thicken them with a shadow of
    their own colour */

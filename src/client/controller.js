@@ -939,6 +939,7 @@ function draw(animate = false) {
 		pcRule: pcRule(),
 		pcSetting: ui.potentialCheck,
 		tour: ui.tour,
+		before: ui.replay == -1 ? committed : null,
 		animate,
 	});
 }

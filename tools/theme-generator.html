@@ -312,6 +312,8 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
 .glyph-bP { color: var(--piece-bP); }
 .side-colours .glyph-w { color: var(--piece-white-side); }
 .side-colours .glyph-b { color: var(--piece-black-side); }
+/* A type the move being made has ruled out: faded until it is submitted */
+.glyph-lost { opacity: 0.3; filter: grayscale(1); }
 
 /* ---------- Narrow screens: pickers above the preview ---------- */
 @media (max-width: 760px) {
@@ -366,7 +368,7 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
             <h2>In play</h2>
             <div id="playBoard"></div>
         </section>
-        <section title="Each type, once known, on both squares; then pieces that could still be several types">
+        <section title="Each type, once known, on both squares; then pieces that could still be several types (the second has three faded: types a move not yet submitted has ruled out)">
             <h2>Pieces</h2>
             <div id="pieceBoard"></div>
         </section>
@@ -901,21 +903,23 @@ document.getElementById("cvd").addEventListener("change", () => { showCvd(cvdOn(
 cvdViewGroup.addEventListener("change", () => { showCvd(true, cvdView()); refresh(); });
 
 // ---------- The preview boards ----------
-function glyph(side, type) { return '<span class="glyph glyph-' + side + ' glyph-' + side + type + '"></span>'; }
-// A piece as waveHTML (src/client/glyphs.js) writes it
-function piece(side, waves) {
-    const cls = side == "w" ? "whitepiece" : "blackpiece";
-    if (waves.length == 1) { return '<div class="' + cls + 'collapsed">' + glyph(side, waves) + '</div>'; }
-    return '<div class="' + cls + '">'
-        + TYPES.map(t => waves.includes(t) ? glyph(side, t) : "<span></span>").join("") + '</div>';
+function glyph(side, type, lost) {
+    return '<span class="glyph glyph-' + side + ' glyph-' + side + type + (lost ? " glyph-lost" : "") + '"></span>';
 }
-// A board from rows of cells: [side, waves, extra classes]. The top-left square is light.
+// A piece as waveHTML (src/client/glyphs.js) writes it. lost: types just ruled out, shown faded.
+function piece(side, waves, lost = "") {
+    const cls = side == "w" ? "whitepiece" : "blackpiece";
+    if (waves.length == 1 && !lost) { return '<div class="' + cls + 'collapsed">' + glyph(side, waves) + '</div>'; }
+    return '<div class="' + cls + '">' + TYPES.map(t => waves.includes(t) ? glyph(side, t)
+        : lost.includes(t) ? glyph(side, t, true) : "<span></span>").join("") + '</div>';
+}
+// A board from rows of cells: [side, waves, extra classes, lost types]. The top-left square is light.
 function board(cells) {
     return '<div class="board">' + cells.map((row, y) => '<div class="boardrow">' + row.map((cell, x) => {
-        const [side, waves, extra] = cell || [];
+        const [side, waves, extra, lost] = cell || [];
         const colour = (x + y) % 2 ? "blacksquare" : "whitesquare";
         return '<div class="boardsquare ' + colour + (extra ? " " + extra : "") + '">'
-            + (side ? piece(side, waves) : "") + '</div>';
+            + (side ? piece(side, waves, lost) : "") + '</div>';
     }).join("") + '</div>').join("") + '</div>';
 }
 
@@ -938,7 +942,8 @@ document.getElementById("pieceBoard").innerHTML = board([
     shifted("w", 1),
     shifted("b", 0),
     shifted("b", 1),
-    [["w", ALL], ["w", "KQR"], ["w", "BN"], ["b", ALL], ["b", "QRP"], ["b", "KN"]],
+    // (the White KQR has just lost B, N and P to a move not yet submitted: shown faded)
+    [["w", ALL], ["w", "KQR", "", "BNP"], ["w", "BN"], ["b", ALL], ["b", "QRP"], ["b", "KN"]],
 ]);
 
 const STATES = [

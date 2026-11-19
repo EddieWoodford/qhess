@@ -29,6 +29,8 @@ import { dom } from "./dom.js";
 //   pcRule:      whether the player can declare potential checks (controller.js pcRule)
 //   pcSetting:   the Settings tab's Potential Check switch (controller.js ui.potentialCheck)
 //   tour:        the demo play-through is driving the board (tour.js): the side buttons can't be pressed
+//   before:      the game state at the start of the turn, or null (while stepping through the history): the board
+//                shows the types the move being made has ruled out, faded, until it is submitted
 //   animate:     slide the pieces that moved since the last draw (board-view.js); only for a move in live play
 // }
 function render(view) {
