@@ -27,6 +27,7 @@
         7.5 Move animation
         7.6 Game over banner
         7.7 Demo play-through    (thought bubble and its bar)
+        7.8 Dragging a piece
      8. Responsive overrides     (must stay last)
 
    NOTES
@@ -1728,6 +1729,33 @@ input.switch:focus-visible {
 .sidebutton.tour-press {
     background-color: var(--accent);
     color: var(--text-strong);
+}
+
+/* ---------- 7.8 Dragging a piece ----------
+   board-view.js sets data-drag on the board to the colour whose pieces a press
+   can drag now. Their squares take no touch gestures (the page never scrolls),
+   so a finger drags the piece. While one is dragged, the root has
+   .piece-dragging, a copy of it (.piece-lifted, a 7.5 ghost) follows the
+   pointer unless the board shows its move, and its own square is .dragOrigin. */
+.board[data-drag="w"] .boardsquare:has(> .whitepiece, > .whitepiececollapsed),
+.board[data-drag="b"] .boardsquare:has(> .blackpiece, > .blackpiececollapsed) {
+    cursor: grab;
+    touch-action: none;
+}
+
+.piece-dragging,
+.piece-dragging * {
+    cursor: grabbing !important;  /* over every square and the page round the board */
+    user-select: none;
+}
+
+.piece-lifted {
+    z-index: 3;
+    filter: drop-shadow(0 0.15em 0.25em #0009);
+}
+
+.dragOrigin > * {
+    opacity: 0.35;
 }
 
 

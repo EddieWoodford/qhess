@@ -178,6 +178,43 @@ function runAnimations(plan) {
 	}
 }
 
+////////////////////////////////
+// Dragging a piece
+////////////////////////////////
+// While a piece is dragged (controller.js), a copy of it follows the pointer (style.css 7.8), above a finger so the
+// finger doesn't hide it. It is hidden while the board shows the move to the square under the pointer instead.
+
+let lifted = null; // { ghost, w, h, up }
+
+function liftPiece(button, touch) {
+	dropLifted();
+	const rect = button.getBoundingClientRect();
+	const ghost = makeGhost({ html: button.innerHTML, fontSize: getComputedStyle(button).fontSize, fromRect: rect });
+	ghost.classList.add("piece-lifted");
+	lifted = { ghost, w: rect.width, h: rect.height, up: touch ? 0.8 * rect.height : 0 };
+	document.documentElement.classList.add("piece-dragging");
+}
+
+// Centre the copy on the pointer at (x, y) (client coordinates)
+function moveLifted(x, y) {
+	if (!lifted) {return}
+	lifted.ghost.style.left = (x - lifted.w / 2) + "px";
+	lifted.ghost.style.top = (y - lifted.h / 2 - lifted.up) + "px";
+}
+
+function dropLifted() {
+	lifted?.ghost.remove();
+	lifted = null;
+	document.documentElement.classList.remove("piece-dragging");
+}
+
+// The [r, c] of the board square at (x, y) (client coordinates), or null if there isn't one there
+function squareAt(x, y) {
+	const button = document.elementFromPoint(x, y)?.closest(".boardsquare");
+	const match = button && dom.board.contains(button) ? /^square(\d)(\d)$/.exec(button.id) : null;
+	return match ? [Number(match[1]), Number(match[2])] : null;
+}
+
 // The types a piece could be at the start of the turn (before: that state) that the move being made has ruled out,
 // e.g. "BN"; "" if none, or no move is being made
 function lostTypes(piece, before) {
@@ -209,6 +246,14 @@ function drawBoard(view) {
 	}
 	const showChecks = checks.autoCheck || checks.potCheck || STATE == "selectPCAttackers";
 
+	// Whose pieces a press can drag (style.css 7.8), and the dragged piece's copy: shown unless the board shows its move
+	if (view.draggable) {
+		dom.board.dataset.drag = view.draggable;
+	} else {
+		delete dom.board.dataset.drag;
+	}
+	if (lifted) { lifted.ghost.style.visibility = view.drag?.lifted ? "visible" : "hidden"; }
+
 	for (let r = 0; r <= 7; r++) {
 		for (let c = 0; c <= 7; c++) {
 			const sqr = view.squares[r][c];
@@ -230,6 +275,9 @@ function drawBoard(view) {
 			}
 			if (isequal([r,c], view.end)) {
 				classes.add("selectedEnd");
+			}
+			if (view.drag?.lifted && isequal([r,c], view.start)) {
+				classes.add("dragOrigin"); // the dragged piece's place, while its copy follows the pointer
 			}
 			// While a move is staged, show what a click will do (see controller.js squareClick): the staged
 			// destination submits it, any other square cancels it. A move into check can only be cancelled.
@@ -277,7 +325,8 @@ function drawBoard(view) {
 			if (sqr.highlighted) {
 				classes.add("hovered");
 			}
-			if (sqr.potentialMove > 0) {
+			// (not on the square a dragged piece is shown on: it is ringed as the destination instead)
+			if (sqr.potentialMove > 0 && !(STATE == "dragging" && isequal([r,c], view.end))) {
 				classes.add("destination" + sqr.potentialMove);
 			}
 		}
@@ -384,4 +433,4 @@ function setFlippedBoard(flipped) {
 	return resting;
 }
 
-export { SquareView, buildBoard, drawBoard, setFlippedBoard, setCoordsShown };
+export { SquareView, buildBoard, drawBoard, setFlippedBoard, setCoordsShown, squareAt, liftPiece, moveLifted, dropLifted };

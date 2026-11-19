@@ -36,6 +36,15 @@ const STEPS = {
 		button1: null,
 		button2: "Surrender",
 	},
+	// Over a square it can move to, the board shows the move there (ctx.drag: see render.js)
+	dragging: {
+		prompt: ctx => !ctx.drag?.over ? "Drop on a square it can move to"
+			: ctx.drag.intoCheck ? "Invalid - moves into check"
+			: ctx.drag.question ? "Drop here, then answer: " + ctx.drag.question
+			: "Drop here, then Submit",
+		button1: null,
+		button2: null,
+	},
 	showCompleteMove: {
 		prompt: ctx => ctx.canAddPC ? "Add Potential Check / Submit" : "Submit",
 		button1: ctx => ctx.canAddPC ? "Add PC" : null,
@@ -119,7 +128,7 @@ const REWIND_WAITING = {
 
 // The facts about the position that the prompt and buttons depend on.
 // pcRule: whether the player can declare potential checks (the Settings tab's switch; controller.js pcRule).
-function statusContext(game, state, multiplayer, pcRule) {
+function statusContext(game, state, multiplayer, pcRule, drag) {
 	// The checks to describe in the prompt. While the side to move is declaring a potential check, these
 	// describe the side being checked.
 	let checks = { autoCheck: game.autoCheck, potCheck: game.potCheck };
@@ -132,6 +141,7 @@ function statusContext(game, state, multiplayer, pcRule) {
 	const intoCheck = state == "invalidMoveIntoCheck" ? findChecks(game, game.turnColor) : null;
 	return {
 		multiplayer,
+		drag,
 		intoCheckKing: intoCheck ? coords2text(intoCheck.kingCoords) : "",
 		intoCheckAttackers: intoCheck ? intoCheck.attackerCoords.map(coords2text) : [],
 		pcKing: declared ? coords2text(declared.kingCoords) : "",
@@ -180,7 +190,7 @@ function setButton(button, label) {
 function drawStatus(view) {
 	const game = view.game;
 	const step = STEPS[view.state];
-	const ctx = statusContext(game, view.state, view.multiplayer, view.pcRule);
+	const ctx = statusContext(game, view.state, view.multiplayer, view.pcRule, view.drag);
 	const value = v => typeof v == "function" ? v(ctx) : v;
 
 	let heading = promptHeading(game, ctx.checks);

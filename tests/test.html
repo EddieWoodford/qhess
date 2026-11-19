@@ -80,6 +80,7 @@ const SETTINGS_CHECKS = {
 	"settings: Potential Check off": checkNoPotentialCheck,
 	"saved game: reloading carries on": checkReloadKeepsGame,
 	"import: a bad move leaves the game as it was": checkImportChecksFirst,
+	"drag: a dropped piece waits for Submit": checkDragMove,
 };
 
 ////////////////////////////////
@@ -504,6 +505,80 @@ async function checkImportChecksFirst(ctx) {
 	el("importButton").click();
 	expect("Opening Import again shouldn't show the old problem", el("importError").textContent == "");
 	el("importCancel").click();
+	return problems;
+}
+
+// Dragging a piece, with the pointer events a mouse or finger makes: over a square it can move to, the board shows
+// the move (the piece there, its ruled-out types faded); dropping stages it, which still waits for Submit. Back on
+// its own square it stays picked; Esc, or a square it can't move to, puts it back. An ambiguous move asks on the drop.
+async function checkDragMove(ctx) {
+	const problems = [];
+	const expect = (what, ok) => { if (!ok) { problems.push(what); } };
+	const g = ctx.game;
+	const doc = ctx.win.document;
+	const el = id => doc.getElementById(id);
+	const sq = (r, c) => el("square" + r + c);
+	const centre = (r, c) => { const b = sq(r, c).getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; };
+	let pointerType = "mouse";
+	const pointer = (type, target, [x, y]) => target.dispatchEvent(new ctx.win.PointerEvent(type,
+		{ bubbles: true, cancelable: true, pointerId: 1, pointerType, isPrimary: true, button: 0, clientX: x, clientY: y }));
+	const drag = (from, over) => { pointer("pointerdown", sq(...from), centre(...from)); pointer("pointermove", doc, centre(...over)); };
+	const moveTo = at => pointer("pointermove", doc, centre(...at));
+	const drop = at => pointer("pointerup", doc, centre(...at));
+	const lifted = () => doc.querySelector(".piece-lifted");
+	const prompt = () => el("prompt").textContent;
+
+	g.restoreGameHistory("0b.");
+	expect("White's pieces should take no touch gestures (so a finger drags them), Black's should",
+		ctx.win.getComputedStyle(sq(6, 4)).touchAction == "none" && ctx.win.getComputedStyle(sq(1, 4)).touchAction != "none");
+
+	drag([6, 4], [5, 0]); // e2, over a3: it can't go there
+	expect("Over a square it can't move to, a copy should follow the pointer and e2 show it's lifted, is at " + g.ui.state,
+		g.ui.state == "dragging" && lifted()?.style.visibility == "visible" && sq(6, 4).classList.contains("dragOrigin"));
+	moveTo([4, 4]);
+	expect("Over e4, the board should show the move: e2 empty, e4 with its ruled-out types faded, no copy",
+		sq(6, 4).innerHTML == "" && sq(4, 4).querySelectorAll(".glyph-lost").length > 0 && lifted()?.style.visibility == "hidden");
+	expect("... and say to drop it, says '" + prompt() + "'", prompt().includes("Drop here, then Submit"));
+	drop([4, 4]);
+	expect("Dropped on e4, the move should wait for Submit, is at " + g.ui.state + " with '" + el("sideButton2").innerText + "'",
+		g.ui.state == "showCompleteMove" && el("sideButton2").innerText == "Submit" && g.ui.record.length == 1);
+	expect("... and the copy be gone", lifted() === null);
+	g.sideButton2Action();
+	expect("Submitted, the move should be written as clicking makes it, is '" + g.ui.record[1] + "'",
+		g.ui.record[1] == "1w. (KQBNRP)e2e4(QRP)");
+
+	drag([1, 1], [2, 1]); // b7 over b6, then back
+	moveTo([1, 1]);
+	drop([1, 1]);
+	expect("Dropped back on its own square, b7 should stay picked, is at " + g.ui.state + " " + g.ui.start,
+		g.ui.state == "showPartialMove" && g.ui.start.join() == "1,1");
+	drag([1, 1], [2, 1]);
+	doc.dispatchEvent(new ctx.win.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+	drop([2, 1]);
+	expect("Esc should put the piece back, is at " + g.ui.state,
+		g.ui.state == "clear" && lifted() === null && sq(1, 1).innerHTML != "" && sq(2, 1).innerHTML == "");
+	drag([1, 1], [0, 1]); // over b8, its own piece
+	drop([0, 1]);
+	expect("Dropped where it can't go, the piece should go back, is at " + g.ui.state, g.ui.state == "clear");
+
+	pointerType = "touch";
+	drag([1, 1], [5, 7]); // over h3, which it can't reach
+	const copy = lifted()?.getBoundingClientRect();
+	expect("Dragged by a finger, the copy should be drawn above it", copy && copy.bottom < centre(5, 7)[1]);
+	drop([5, 7]);
+	pointerType = "mouse";
+
+	// e5 to d6 could be an en passant (if e5 is a pawn) or a queen's move: asked on the drop
+	const ep = await fetchText("../example_games/04_en_passant.txt");
+	g.restoreGameHistory(historyLines(ctx, ep).slice(0, 5).join("\n"));
+	drag([3, 4], [2, 3]);
+	expect("Over d6 the move needs an answer: the prompt should say so, says '" + prompt() + "'", prompt().includes("En passant?"));
+	drop([2, 3]);
+	const asked = ctx.win.getComputedStyle(el("choiceWrapper")).display != "none";
+	expect("Dropped on d6, en passant should be asked", asked);
+	if (asked) { el("choiceYes").click(); }
+	expect("Answered, the en passant should wait for Submit, is at " + g.ui.state + ", staged '" + el("thismove").textContent + "'",
+		g.ui.state == "showCompleteMove" && el("thismove").textContent.includes("e.p."));
 	return problems;
 }
 

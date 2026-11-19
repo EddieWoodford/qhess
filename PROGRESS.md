@@ -1,7 +1,26 @@
 # Progress
 
-Compact notes for whoever works on this next. Tests: `npm test` (node only; the browser UI has no automated tests,
-check it with the `qhess` preview in `.claude/launch.json`).
+Compact notes for whoever works on this next. Tests: `npm test` (node), and the browser page `tests/test.html`
+(start_test.bat, or the `qhess` preview in `.claude/launch.json` at /tests/test.html, then Run tests: replays the
+example games against tests/snapshots.json, plus multiplayer and page-feature checks).
+
+## Drag-and-drop moves (2026-11-20)
+- Press one of the mover's pieces and move 4px (mouse) / 8px (touch): it's dragged (state `dragging`). Over a square
+  it can move to, the board shows that move (startMove on a clone of `game`, tried each time the square changes):
+  piece there, every collapse, ruled-out types faded, prompt "Drop here, then Submit". Elsewhere a copy follows the
+  pointer (`.piece-lifted`, a 7.5 ghost; drawn above a finger) and the start square is faded (`.dragOrigin`).
+- Drop on a destination = clicking it (showCompleteMove): **the move still waits for Submit / Add PC** (the user
+  wanted that stop kept). An ambiguous move (en passant / promotion / castle) shows no position while hovered (prompt
+  names the question) and asks on the drop; a move into check shows the check and drops into invalidMoveIntoCheck,
+  as a click does. Back on its own square: stays picked (showPartialMove). Elsewhere, Esc, pointercancel: clear.
+- controller.js "Dragging a piece": window pointer listeners while pressed (no pointer capture); `ignoreClick`
+  swallows the click a release can make (reset by the next pointerdown); setState to any other state ends a drag
+  (e.g. a multiplayer catch-up). draw passes the hovered move's state as `game`, plus `drag` and `draggable`.
+- board-view sets `data-drag` on the board (whose pieces can be dragged); style.css 7.8 gives those squares
+  `touch-action: none` + grab cursor via `:has` (squares' classes unchanged, so the view snapshots still hold).
+- tests/test.html "drag: a dropped piece waits for Submit" drives it with synthetic PointerEvents.
+- The Browser pane's click/drag tool loses a press that lands right after the mouse moves onto a piece in "clear"
+  (the hover preview redraws the square first; older than this feature). Hover first, then drag, when testing there.
 
 ## start.bat sets everything up (2026-11-20)
 - A fresh clone needs only start.bat. Node.js 20+: the one on PATH, else `%ProgramFiles%\nodejs` (installed, but the
@@ -154,21 +173,6 @@ check it with the `qhess` preview in `.claude/launch.json`).
 - Capture colour would be a new theme variable `--piece-capture-col` (mockup: magenta `#ff4fd8` dark, `#c0137a`
   light; orange clashes with several themes' pieces, red means check). Needs: the theme files, REQUIRED in
   themes.test.js, the generator, and controller/board-view marking which destinations capture.
-- The user asked to park it, not to build it yet.
-
-## Idea, not done: drag-and-drop moves (2026-11-19)
-- Drag a piece; while it hovers a legal square the board shows the position after that move (all collapses, ruled-out
-  types fading); dropping plays and submits it (no Submit). Drop off-board / on its start square / Esc cancels;
-  an into-check square shows as illegal and refuses the drop. A press without moving stays the click-click flow.
-- Plan: pointer events (not HTML5 DnD, no touch), `touch-action: none` on the board, ghost piece offset above a
-  finger. New controller state `dragging`; on drag start try every destination once (startMove on clones, as
-  showCompleteMove does) and cache the results, so hovering only renders a cached state. Drop = showCompleteMove +
-  submitMove. No slide animation for dragged moves. Engine/server unchanged.
-- Open points: potential check (today added after the move, before Submit) -> an "Add PC" toggle armed before the
-  drag; when on, the drop goes to selectPCKing instead of submitting (no undo window: multiplayer moves can't be
-  taken back). Promotion / en passant / castle questions: hover shows the move with the choice open (e.g. `?`),
-  the drop asks, cancelling the dialog cancels the move. Maybe a setting "submit on drop / ask first" against
-  mis-drops. Pairs with the arrow move markers above.
 - The user asked to park it, not to build it yet.
 
 ## Board highlight colour (2026-11-17)

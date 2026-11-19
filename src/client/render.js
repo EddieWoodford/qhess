@@ -20,7 +20,11 @@ import { dom } from "./dom.js";
 //   game:        the game state being shown
 //   state:       the click-flow state ("clear", "move0", "showPartialMove", ... see controller.js)
 //   squares:     8 x 8 SquareViews
-//   start, end:  [r,c] of the move being made, or []
+//   start, end:  [r,c] of the move being made, or [] (while dragging, end is the square the board shows its move to)
+//   draggable:   the colour whose pieces a press can drag now (style.css 7.8), or null
+//   drag:        null, or while a piece is dragged (controller.js): { lifted: its copy follows the pointer (no move
+//                shown), over: it is over a square it can move to, question: the move there is ambiguous (asked on
+//                the drop) or null, intoCheck: the move there leaves the mover in check }
 //   lastStart, lastEnd: [r,c] of the last submitted move (highlighted during replay)
 //   replayNumber: -1, or the replay position (see controller.js)
 //   record:      the game record for the History tab, one ply per line (array of strings)

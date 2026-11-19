@@ -13,6 +13,7 @@
 //   "clear"                    waiting for the player to pick a piece
 //   "highlightPotentialMoves"  a mouse is hovering over one of their pieces (its moves are shown); touch skips this
 //   "showPartialMove"          a piece is picked; waiting for its destination
+//   "dragging"                 a piece is being dragged (see Dragging a piece); dropping it stages the move
 //   "showCompleteMove"         the move is made; Submit, or Add PC (potential check)
 //   "invalidMoveIntoCheck"     the move leaves the player in check; it can only be cancelled
 //   "selectPCKing"             choosing which opponent piece to declare potential check on
@@ -36,7 +37,7 @@ import { getMoveDestinations } from "../engine/castling.js";
 import { findPotentialKings, findPCAttackers } from "../engine/check.js";
 import { declareNotAKing as engineDeclareNotAKing, startMove, choosePCKing, addPCAttacker, applyMove } from "../engine/game.js";
 import { getHistoryLines, parseMoveText } from "../engine/notation.js";
-import { SquareView, buildBoard, setFlippedBoard } from "./board-view.js";
+import { SquareView, buildBoard, setFlippedBoard, squareAt, liftPiece, moveLifted, dropLifted } from "./board-view.js";
 import { render, debugPrint } from "./render.js";
 import { dom } from "./dom.js";
 import { showChoice } from "./modals.js";
@@ -354,6 +355,7 @@ function squareLeave(coords, event) {
 }
 
 function squareClick(coords) {
+	if (ignoreClick) { ignoreClick = false; return; } // the release at the end of a drag, not a click
 	if (ui.replay > -1 || ui.tour) {return}
 	if (WAITING_STATES.includes(ui.state)) {return}
 	if (ui.state == "highlightPotentialMoves" || ui.state == "clear") {
@@ -486,6 +488,123 @@ function showCompleteMove(endCoords,doEP,doPromotion,doCastle) {
 		setState("invalidMoveIntoCheck", animate);
 	} else {
 		setState("showCompleteMove", animate);
+	}
+}
+
+////////////////////////////////
+// Dragging a piece
+////////////////////////////////
+// Pressing one of the mover's pieces and moving the pointer drags it (mouse, pen or touch). While it is over a
+// square it can move to, the board shows the position after that move: the piece on that square and every
+// collapse, with the ruled-out types faded. Elsewhere a copy of the piece follows the pointer. Dropping it on such a
+// square stages the move, exactly as clicking the square does, so it still waits for Submit (or Add PC). Dropped
+// back on its own square it stays picked; dropped anywhere else, or Esc, it goes back. A press without moving is
+// left to the click flow above.
+
+const DRAG_STATES = ["clear", "highlightPotentialMoves", "showPartialMove"]; // where a press can pick a piece
+const DRAG_PX = { mouse: 4, touch: 8 }; // how far the pointer moves before a press becomes a drag
+
+// The press on a piece: { pointerId, start: [r,c], x, y, touch, active (dragging), destinations, over: [r,c] or
+// null, hover: the move tried there (dragPreview) }
+let drag = null;
+let ignoreClick = false; // a drag has just ended: the click the release may make isn't one (cleared by the next press)
+
+// Whether the player can drag their pieces now
+function canDrag() {
+	return ui.replay == -1 && !ui.tour && DRAG_STATES.includes(ui.state);
+}
+
+function squarePointerDown(coords, event) {
+	ignoreClick = false;
+	const piece = game.board[coords[0]][coords[1]];
+	if (drag || !event.isPrimary || event.button != 0 || !canDrag() || piece?.color != game.turnColor) {return}
+	drag = { pointerId: event.pointerId, start: coords, x: event.clientX, y: event.clientY,
+		touch: event.pointerType == "touch", active: false, destinations: [], over: null, hover: null };
+	window.addEventListener("pointermove", dragMove);
+	window.addEventListener("pointerup", dragUp);
+	window.addEventListener("pointercancel", dragCancel);
+	window.addEventListener("keydown", dragKey);
+}
+
+function dragMove(event) {
+	if (event.pointerId != drag.pointerId) {return}
+	if (!drag.active) {
+		if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < DRAG_PX[drag.touch ? "touch" : "mouse"]) {return}
+		if (!canDrag()) { endDrag(); return; } // the game moved on since the press
+		setState("clear"); // drop the hover preview, or a piece picked before
+		ui.start = drag.start;
+		drag.destinations = getMoveDestinations(game, drag.start);
+		markDestinations(drag.start);
+		liftPiece(squares[drag.start[0]][drag.start[1]].button, drag.touch);
+		drag.active = true;
+		setState("dragging");
+	}
+	moveLifted(event.clientX, event.clientY);
+	const over = squareAt(event.clientX, event.clientY);
+	if (!isequal(over ?? [], drag.over ?? [])) {
+		drag.over = over;
+		drag.hover = dragPreview(over);
+		draw();
+	}
+}
+
+function dragUp(event) {
+	if (event.pointerId != drag.pointerId) {return}
+	if (!drag.active) { endDrag(); return; } // a press without dragging: the click that follows does the rest
+	const start = drag.start;
+	const target = squareAt(event.clientX, event.clientY);
+	const preview = dragPreview(target);
+	endDrag();
+	if (preview?.question) {
+		setState("showPartialMove"); // the piece back on its square while the question is asked
+		showCompleteMove(target);
+	} else if (preview) {
+		showCompleteMove(target); // the board already shows this move, so nothing slides
+	} else if (isequal(target ?? [], start)) {
+		setState("showPartialMove");
+	} else {
+		setState("clear");
+	}
+}
+
+function dragCancel(event) {
+	if (event.pointerId == drag.pointerId) { cancelDrag(); }
+}
+
+function dragKey(event) {
+	if (event.key == "Escape") { cancelDrag(); }
+}
+
+function cancelDrag() {
+	const wasActive = drag.active;
+	endDrag();
+	if (wasActive) { setState("clear"); }
+}
+
+// Stop following the pointer
+function endDrag() {
+	if (!drag) {return}
+	ignoreClick = drag.active;
+	drag = null;
+	dropLifted();
+	window.removeEventListener("pointermove", dragMove);
+	window.removeEventListener("pointerup", dragUp);
+	window.removeEventListener("pointercancel", dragCancel);
+	window.removeEventListener("keydown", dragKey);
+}
+
+// The dragged piece's move to coords, tried on a copy of the working state: { state, intoCheck }, or { question }
+// when the move is ambiguous (asked on the drop, see showCompleteMove), or null if the piece can't move there
+function dragPreview(coords) {
+	if (!coords || !ismember(coords, drag.destinations)) {return null}
+	const trial = cloneState(game);
+	try {
+		const result = startMove(trial, drag.start, coords, { ask: choiceHandler ?? askInPage });
+		return result.ok ? { state: trial, intoCheck: result.movedIntoCheck } : null;
+	} catch (err) {
+		if (err instanceof ChoiceNeeded) { return { question: err.question }; }
+		console.error(err);
+		return null;
 	}
 }
 
@@ -885,6 +1004,9 @@ function multiplayerWait() {
 // Move to a new step of the turn: reset the highlights that don't belong to it, then redraw.
 // animate: slide the pieces that moved since the last draw (see draw)
 function setState(stateIn, animate = false) {
+	if (stateIn != "dragging" && drag?.active) {
+		endDrag(); // the game moved on under a dragged piece (e.g. a multiplayer catch-up)
+	}
 	if (stateIn == "clear" && game.turnNumber == 0) {
 		stateIn = "move0";
 	}
@@ -909,7 +1031,7 @@ function setState(stateIn, animate = false) {
 				sqr.highlightPotKing = 0;
 				sqr.highlightPotAttacker = 0;
 			}
-			if (ui.state == "showPartialMove") {
+			if (ui.state == "showPartialMove" || ui.state == "dragging") {
 				sqr.highlighted = 0;
 			}
 			if (ui.state == "showCompleteMove" || ui.state == "invalidMoveIntoCheck") {
@@ -928,12 +1050,17 @@ function setState(stateIn, animate = false) {
 // (board-view.js), for a move in live play.
 function draw(animate = false) {
 	saveRecord();
+	// While a piece is dragged over a square it can move to, the board shows the move made there
+	const dragging = ui.state == "dragging" && drag !== null;
+	const hover = dragging ? drag.hover : null;
 	render({
-		game,
+		game: hover?.state ?? game,
 		state: ui.state,
 		squares,
 		start: ui.start,
-		end: ui.end,
+		end: hover ? drag.over : ui.end,
+		draggable: canDrag() ? game.turnColor : null,
+		drag: dragging ? { lifted: !hover?.state, over: hover !== null, question: hover?.question ?? null, intoCheck: hover?.intoCheck ?? false } : null,
 		lastStart: ui.lastStart,
 		lastEnd: ui.lastEnd,
 		replayNumber: ui.replay,
@@ -1043,6 +1170,7 @@ function init(joinCode = null) {
 			sqr.button.addEventListener("pointerenter", event => squareEnter(coords, event));
 			sqr.button.addEventListener("pointerleave", event => squareLeave(coords, event));
 			sqr.button.addEventListener("click", () => squareClick(coords));
+			sqr.button.addEventListener("pointerdown", event => squarePointerDown(coords, event));
 			viewRow.push(sqr);
 		}
 		squares.push(viewRow);
