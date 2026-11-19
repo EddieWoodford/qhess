@@ -9,16 +9,18 @@ The rules are in [Chess Variant Rules and How to Play.md](Chess%20Variant%20Rule
 
 ## Running it
 
-You need [Node.js](https://nodejs.org/) 20 or later (`winget install OpenJS.NodeJS.LTS` on Windows).
+On Windows, double-click `start.bat`. That is all: the first time, it installs what is missing
+(Node.js 20 or later, with winget, which Windows asks you to allow; then the npm packages). After a
+`git pull` that changes the packages, it installs them again.
 
-Double-click `start.bat`, or run:
+Elsewhere, with [Node.js](https://nodejs.org/) 20 or later, run:
 
 ```
 npm install
 npm start
 ```
 
-This starts the Qhess server and opens the game at http://localhost:8000/. The window
+Either way, this starts the Qhess server and opens the game at http://localhost:8000/. The window
 also prints an "On your network" address that other devices on the same network can open.
 
 Single player (both sides on one screen) is the default and needs nothing else.

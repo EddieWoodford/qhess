@@ -3,6 +3,18 @@
 Compact notes for whoever works on this next. Tests: `npm test` (node only; the browser UI has no automated tests,
 check it with the `qhess` preview in `.claude/launch.json`).
 
+## start.bat sets everything up (2026-11-20)
+- A fresh clone needs only start.bat. Node.js 20+: the one on PATH, else `%ProgramFiles%\nodejs` (installed, but the
+  window's PATH predates it, or an older node comes first), else `winget install OpenJS.NodeJS.LTS` (machine-wide
+  MSI with a UAC prompt: winget has no user-scope Node installer any more), then put first on this window's PATH.
+  No winget, or the install fails: it points to nodejs.org and pauses.
+- Packages: `npm ci` when package-lock.json is newer than node_modules/.package-lock.json (fresh clone, or a pull that
+  changed it); npm ci never rewrites the lock file. A failed install stops before the server.
+- node / npm / winget all run via `call`: a .cmd shim run without it never returns, and its `>nul` sticks.
+  start_test.bat = start.bat --open tests/test.html. `.gitattributes` checks *.bat out CRLF (cmd misreads labels in
+  LF files).
+- Tested on a temp clone with a fake PATH / ProgramFiles / winget.cmd; the real winget install was not run.
+
 ## Ruled-out types shown faded until Submit (2026-11-19)
 - While a turn has changes not yet submitted (a staged move, Add PC attackers, Not a King), every piece also shows
   the types it has lost since the start of the turn, faded and grey (`.glyph-lost`, style.css 7.4: opacity 0.3 +
