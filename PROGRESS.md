@@ -76,6 +76,21 @@ check it with the `qhess` preview in `.claude/launch.json`).
   themes.test.js, the generator, and controller/board-view marking which destinations capture.
 - The user asked to park it, not to build it yet.
 
+## Idea, not done: drag-and-drop moves (2026-11-19)
+- Drag a piece; while it hovers a legal square the board shows the position after that move (all collapses, ruled-out
+  types fading); dropping plays and submits it (no Submit). Drop off-board / on its start square / Esc cancels;
+  an into-check square shows as illegal and refuses the drop. A press without moving stays the click-click flow.
+- Plan: pointer events (not HTML5 DnD, no touch), `touch-action: none` on the board, ghost piece offset above a
+  finger. New controller state `dragging`; on drag start try every destination once (startMove on clones, as
+  showCompleteMove does) and cache the results, so hovering only renders a cached state. Drop = showCompleteMove +
+  submitMove. No slide animation for dragged moves. Engine/server unchanged.
+- Open points: potential check (today added after the move, before Submit) -> an "Add PC" toggle armed before the
+  drag; when on, the drop goes to selectPCKing instead of submitting (no undo window: multiplayer moves can't be
+  taken back). Promotion / en passant / castle questions: hover shows the move with the choice open (e.g. `?`),
+  the drop asks, cancelling the dialog cancels the move. Maybe a setting "submit on drop / ask first" against
+  mis-drops. Pairs with the arrow move markers above.
+- The user asked to park it, not to build it yet.
+
 ## Board highlight colour (2026-11-17)
 - `--piece-selectedStart-col` (side-to-move ring, hover, chosen start) is cyan `#3fd6e8` in the dark themes and teal
   `#0b8a9e` in the light ones (was dark amber, lost on the brown Pillbox board). The rings are inset box-shadows, painted
