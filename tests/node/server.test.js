@@ -285,6 +285,67 @@ test("resuming from a second tab takes the seat over from the first", async () =
 	assert.equal((await other.request({ type: "resume", code, token: "wrong" }, "error")).code, "bad_token");
 });
 
+////////////////////////////////
+// Rewinding
+////////////////////////////////
+
+test("a rewind the opponent agrees to takes both players back to the position asked for", async () => {
+	const { lines } = games[0];
+	const players = await newGame("w");
+	for (let seq = 0; seq < 5; seq++) { await playLine(players, lines, seq); }
+	// Bad requests: nothing to rewind to at or after the latest move, or not a number
+	for (const keep of [5, 6, -1, "2"]) {
+		assert.equal((await players.w.request({ type: "rewind", keep }, "error")).code, "bad_request");
+	}
+	players.w.send({ type: "rewind", keep: 2 });
+	for (const p of [players.w, players.b]) {
+		assert.deepEqual(await p.next("rewind"), { type: "rewind", keep: 2, by: "w" });
+	}
+	// The asker can't answer their own request
+	players.w.send({ type: "rewindAnswer", agree: true });
+	players.b.send({ type: "rewindAnswer", agree: true });
+	for (const p of [players.w, players.b]) {
+		assert.equal((await p.next("sync")).moves.length, 2);
+		assert.equal((await p.next("rewindEnded")).result, "agreed");
+		assert.equal(p.moves.length, 2);
+	}
+	assert.equal(players.w.inbox.filter(m => m.type == "rewindEnded").length, 0, "ended once");
+	// Play goes on from there: move 2 is White's again
+	await playLine(players, lines, 2);
+});
+
+test("a rewind can be declined, withdrawn, or passed over by playing a move", async () => {
+	const { lines } = games[0];
+	const players = await newGame("b");
+	for (let seq = 0; seq < 4; seq++) { await playLine(players, lines, seq); }
+	const ended = async result => {
+		for (const p of [players.w, players.b]) { assert.equal((await p.next("rewindEnded")).result, result); }
+	};
+	players.b.send({ type: "rewind", keep: 1 });
+	players.w.send({ type: "rewindAnswer", agree: false });
+	await ended("declined");
+	players.b.send({ type: "rewind", keep: 1 });
+	players.w.send({ type: "rewindCancel" }); // only the asker can withdraw it
+	players.b.send({ type: "rewindCancel" });
+	await ended("cancelled");
+	players.w.send({ type: "rewind", keep: 3 });
+	await playLine(players, lines, 4); // White to move plays instead of waiting
+	await ended("moved");
+	assert.equal(players.w.moves.length, 5, "nothing was rewound");
+});
+
+test("a rewind request still open is shown again to a player who resumes", async () => {
+	const { lines } = games[0];
+	const players = await newGame("w");
+	for (let seq = 0; seq < 3; seq++) { await playLine(players, lines, seq); }
+	players.w.send({ type: "rewind", keep: 1 });
+	await players.b.next("rewind");
+	players.b.kill();
+	const back = await client("black again");
+	await back.request({ type: "resume", code: players.code, token: players.b.token }, "welcome");
+	assert.deepEqual(await back.next("rewind"), { type: "rewind", keep: 1, by: "w" });
+});
+
 test("a game nobody is connected to is closed after a while", async () => {
 	const players = await newGame("w");
 	const { code, token } = players.w;

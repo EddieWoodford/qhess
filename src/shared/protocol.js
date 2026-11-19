@@ -15,6 +15,10 @@
 //   { type: "move", seq, move }                       play a turn. seq = the number of moves played before it,
 //                                                     so a move resent after a reconnect is never played twice
 //   { type: "sync" }                                  ask for the whole move list again
+//   { type: "rewind", keep }                          ask the opponent to take the game back to its first keep
+//                                                     moves (0 <= keep < moves played). Replaces any request.
+//   { type: "rewindAnswer", agree }                   answer the opponent's rewind request (true / false)
+//   { type: "rewindCancel" }                          withdraw your own rewind request
 //   { type: "leave" }                                 leave the game (the other player is told)
 //   { type: "ping" }                                  keep-alive; the server answers "pong"
 //
@@ -27,6 +31,9 @@
 //                     server's positionHash (src/engine/position-hash.js) after it, to catch copies that differ.
 //   { type: "rejected", seq, error }   your move wasn't accepted (the game is unchanged)
 //   { type: "sync", moves }            the whole move list: replace your copy of the game with it
+//   { type: "rewind", keep, by }       a rewind is asked for by colour `by` (to both players; sent again on resume)
+//   { type: "rewindEnded", keep, by, result }   the rewind request is over (REWIND). On "agreed" a "sync"
+//                                      with the shortened move list comes just before it.
 //   { type: "opponent", status }       the other player's connection changed (OPPONENT)
 //   { type: "ended", reason }          the game is over and closed (ENDED)
 //   { type: "error", code, message }   a request failed (ERRORS)
@@ -50,6 +57,14 @@ const ENDED = {
 	EXPIRED: "expired",           // nobody was connected for too long
 };
 
+// rewindEnded result
+const REWIND = {
+	AGREED: "agreed",
+	DECLINED: "declined",
+	CANCELLED: "cancelled",       // the asker withdrew it
+	MOVED: "moved",               // a move was played instead, so it no longer applies
+};
+
 // error code
 const ERRORS = {
 	BAD_REQUEST: "bad_request",
@@ -69,4 +84,4 @@ function normalizeCode(text) {
 	return m ? m[1] + "-" + m[2] : null;
 }
 
-export { PROTOCOL_VERSION, SOCKET_PATH, OPPONENT, ENDED, ERRORS, normalizeCode };
+export { PROTOCOL_VERSION, SOCKET_PATH, OPPONENT, ENDED, REWIND, ERRORS, normalizeCode };

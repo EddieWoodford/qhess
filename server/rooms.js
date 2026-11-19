@@ -9,7 +9,7 @@ import { createInitialState, cloneState } from "../src/engine/state.js";
 import { applyMove } from "../src/engine/game.js";
 import { isSquare } from "../src/engine/utils.js";
 import { positionHash } from "../src/engine/position-hash.js";
-import { OPPONENT, ENDED, ERRORS, normalizeCode } from "../src/shared/protocol.js";
+import { OPPONENT, ENDED, REWIND, ERRORS, normalizeCode } from "../src/shared/protocol.js";
 import { randomCode } from "./codes.js";
 import { MemoryGameStore } from "./store.js";
 
@@ -57,7 +57,8 @@ class GameServer {
 		this.random = options.random ?? Math.random;
 		this.log = options.log ?? (() => {});
 		// The games being played, by code: { record (see store.js), state (engine state), conns: { w, b },
-		// emptyTimer }. The record is saved to the store after every change.
+		// emptyTimer, rewind }. The record is saved to the store after every change. rewind: the open rewind
+		// request, { keep, by }, or null (not saved: a server restart forgets it).
 		this.rooms = new Map();
 		// Which game and seat each connection is in: conn -> { room, color }
 		this.seats = new Map();
@@ -105,6 +106,9 @@ class GameServer {
 			case "resume": return this.resume(conn, message);
 			case "move": return this.move(conn, message);
 			case "sync": return this.sync(conn);
+			case "rewind": return this.askRewind(conn, message);
+			case "rewindAnswer": return this.answerRewind(conn, message);
+			case "rewindCancel": return this.cancelRewind(conn);
 			case "leave": return this.leave(conn);
 			case "ping": return send(conn, { type: "pong" });
 			default: return this.error(conn, ERRORS.BAD_REQUEST, "unknown message type");
@@ -245,6 +249,7 @@ class GameServer {
 		room.state = next;
 		moves.push(clean);
 		await this.save(room);
+		this.endRewind(room, REWIND.MOVED);
 		// To both players: for the mover it's the confirmation
 		this.broadcast(room, this.moveMessage(room, seq));
 	}
@@ -255,6 +260,62 @@ class GameServer {
 			return this.error(conn, ERRORS.NOT_IN_GAME, "You're not in a game");
 		}
 		send(conn, { type: "sync", moves: seat.room.record.moves });
+	}
+
+	////////////////////////////////
+	// Rewinding: one player asks to take the game back to an earlier position, the other agrees or not
+	////////////////////////////////
+
+	async askRewind(conn, { keep }) {
+		const seat = this.seats.get(conn);
+		if (!seat) {
+			return this.error(conn, ERRORS.NOT_IN_GAME, "You're not in a game");
+		}
+		const { room, color } = seat;
+		if (!Number.isInteger(keep) || keep < 0 || keep >= room.record.moves.length) {
+			return this.error(conn, ERRORS.BAD_REQUEST, "keep must be a number of moves before the latest");
+		}
+		if (room.record.seats[other(color)] === null) {
+			return this.error(conn, ERRORS.BAD_REQUEST, "Wait for your opponent to join");
+		}
+		room.rewind = { keep, by: color };
+		this.broadcast(room, { type: "rewind", ...room.rewind });
+	}
+
+	async answerRewind(conn, { agree }) {
+		const seat = this.seats.get(conn);
+		if (!seat) {
+			return this.error(conn, ERRORS.NOT_IN_GAME, "You're not in a game");
+		}
+		const { room, color } = seat;
+		if (!room.rewind || room.rewind.by == color) { return; } // nothing to answer (it may just have ended)
+		if (agree !== true) {
+			return this.endRewind(room, REWIND.DECLINED);
+		}
+		const keep = room.rewind.keep;
+		const state = createInitialState();
+		room.record.moves.slice(0, keep).forEach(m => applyMove(state, m));
+		room.state = state;
+		room.record.moves.length = keep;
+		await this.save(room);
+		this.log("Game " + room.record.code + ": rewound to " + keep + " moves");
+		this.broadcast(room, { type: "sync", moves: room.record.moves });
+		this.endRewind(room, REWIND.AGREED);
+	}
+
+	cancelRewind(conn) {
+		const seat = this.seats.get(conn);
+		if (seat?.room.rewind?.by == seat?.color) {
+			this.endRewind(seat.room, REWIND.CANCELLED);
+		}
+	}
+
+	// Close the room's rewind request, if it has one, telling both players why
+	endRewind(room, result) {
+		if (!room.rewind) { return; }
+		const message = { type: "rewindEnded", ...room.rewind, result };
+		room.rewind = null;
+		this.broadcast(room, message);
 	}
 
 	// Leave the game conn is in, if any: the game is closed, and the other player told
@@ -275,7 +336,7 @@ class GameServer {
 	////////////////////////////////
 
 	addRoom(record, state) {
-		const room = { record, state, conns: { w: null, b: null }, emptyTimer: null };
+		const room = { record, state, conns: { w: null, b: null }, emptyTimer: null, rewind: null };
 		this.rooms.set(record.code, room);
 		return room;
 	}
@@ -337,6 +398,9 @@ class GameServer {
 		});
 		if (room.conns[opp]) {
 			send(room.conns[opp], { type: "opponent", status: OPPONENT.CONNECTED });
+		}
+		if (room.rewind) {
+			send(conn, { type: "rewind", ...room.rewind });
 		}
 	}
 
