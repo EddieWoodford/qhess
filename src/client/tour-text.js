@@ -2,6 +2,8 @@
 
 // The demo play-through's script: how to write it is in tour-script.js. Each ply must be exactly what the engine
 // writes in the history (npm test checks, tests/node/tour.test.js), so the board acting it out matches.
+// Where a bubble would hide the pieces a step is about, start its note or thought with [left], [right], [above]
+// or [below] to put the bubble on that side of its square (as seen from White's side; see tour-script.js).
 // Kept in a module, not a text file, so the deployed page gets the version that goes with its scripts.
 
 const TOUR_TEXT = String.raw`
@@ -19,7 +21,7 @@ const TOUR_TEXT = String.raw`
 # @e4 Declaring the check cost White something: to attack e7, the piece on e4 must be a rook or queen. The pawn is gone from its letters.
 
 1b. [e7](KQBNRP)g8f6(N)
-> I can answer a potential check by saying the threatened piece is "Not a King". e7 loses its K. Then I still make a move: jumping out from behind my pawns, which only a knight can do.
+> [below] I can answer a potential check by saying the threatened piece is "Not a King". e7 loses its K. Then I still make a move: jumping out from behind my pawns, which only a knight can do.
 ? e7 QBNRP
 ? f6 N
 # @f6 One move, and f6 has collapsed to a single type: it is a knight. Nothing else could have jumped there.
@@ -38,7 +40,7 @@ const TOUR_TEXT = String.raw`
 ? pc d7
 
 3b. [d7](KQBRP)g7g6(KQRP)
-> d7 is not my king, I say. Then one step forward: anything but a bishop (it moved straight) or a knight (I've none left).
+> [below] d7 is not my king, I say. Then one step forward: anything but a bishop (it moved straight) or a knight (I've none left).
 ? d7 QBRP
 ? g6 KQRP
 
@@ -55,19 +57,19 @@ const TOUR_TEXT = String.raw`
 ? c4 QB
 
 5b. (KQBRP)f8g7(KQB)
-> One step diagonally, to clear f8. I have a plan for that square.
+> [below] One step diagonally, to clear f8. I have a plan for that square.
 
 6w. (KQBNRP)d2d3(KQRP)
 > A quiet step forward, opening the diagonal behind it.
 
 6b. (KQBRP)h8f8(K) O-O-O
-> Castling! If h8 is my king, it can castle two squares to f8, with the unmoved piece on d8 as its rook. That settles where my king is for good.
+> [below] Castling! If h8 is my king, it can castle two squares to f8, with the unmoved piece on d8 as its rook. That settles where my king is for good.
 ? f8 K
 ? g8 R
 # @f8 Castling collapsed both pieces: f8 is Black's king and g8 a rook, and no other Black piece can be the king now. With the king known, ordinary check applies: it may never be left where any White piece could take it.
 
 7w. (KQBNRP)f2c5(QB)
-> Bishop or queen again. From c5 it looks along the diagonal through e7 to the king on f8, so e7 can't move away from in front of it.
+> [below] Bishop or queen again. From c5 it looks along the diagonal through e7 to the king on f8, so e7 can't move away from in front of it.
 ? c5 QB
 
 7b. (QRP)g6xe4(Q)

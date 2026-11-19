@@ -176,31 +176,53 @@ function showBubble(step, at) {
 	placeBubble(at);
 }
 
-// Put the bubble beside the square at [r,c] (to its left on the right half of the board, to its right on the left
-// half, so the file it is on stays in view), or over the middle of the board for null. Measured from the square's
-// button, so a flipped board works too.
+const OPPOSITE = { left: "right", right: "left", above: "below", below: "above" };
+
+// Put the bubble beside the square at [r,c], or over the middle of the board for null. The step's place
+// (tour-script.js: left, right, above or below, as seen from White's side) says which side of the square, or for
+// null which edge of the board; without one it goes on the side of the square nearer the middle of the board (to
+// its left on the right half), so the file it is on stays in view. If it doesn't fit on that side it goes on the
+// other, else on one of the sides across (nearer the middle first), else wherever there is most room: on a small
+// board a long bubble may not fit anywhere. Measured from the square's button, so a flipped board works too.
 function placeBubble(at) {
 	anchor = at;
 	if (el.bubble.hidden) { return; }
 	const area = el.area.getBoundingClientRect();
 	const b = el.bubble;
-	b.classList.remove("left", "right");
+	const w = b.offsetWidth;
+	const h = b.offsetHeight;
+	const within = (value, size, room) => Math.min(Math.max(0, value), Math.max(0, room - size));
+	let place = steps[index].place;
+	if (place && $("board").classList.contains("flipped")) { place = OPPOSITE[place]; }
+	b.classList.remove("left", "right", "above", "below");
 	if (!at) {
-		b.style.left = Math.max(0, (area.width - b.offsetWidth) / 2) + "px";
-		b.style.top = Math.max(0, (area.height - b.offsetHeight) / 2) + "px";
+		const left = place == "left" ? 0 : place == "right" ? area.width : (area.width - w) / 2;
+		const top = place == "above" ? 0 : place == "below" ? area.height : (area.height - h) / 2;
+		b.style.left = within(left, w, area.width) + "px";
+		b.style.top = within(top, h, area.height) + "px";
 		return;
 	}
 	const sq = $("square" + at[0] + at[1]).getBoundingClientRect();
 	const x = sq.left + sq.width / 2 - area.left;
 	const y = sq.top + sq.height / 2 - area.top;
-	const toLeft = x > area.width / 2;
 	const gap = sq.width * 0.8;
-	const left = toLeft ? Math.max(0, x - gap - b.offsetWidth) : Math.min(x + gap, Math.max(0, area.width - b.offsetWidth));
-	const top = Math.min(Math.max(0, y - b.offsetHeight / 2), Math.max(0, area.height - b.offsetHeight));
+	// How much room is spare on each side of the square, once the bubble is there
+	const spare = { left: x - gap - w, right: area.width - x - gap - w, above: y - gap - h, below: area.height - y - gap - h };
+	const towardsMiddle = { across: x > area.width / 2 ? "left" : "right", down: y > area.height / 2 ? "above" : "below" };
+	place ??= towardsMiddle.across;
+	const across = place == "left" || place == "right" ? towardsMiddle.down : towardsMiddle.across;
+	const order = [place, OPPOSITE[place], across, OPPOSITE[across]];
+	place = order.find(p => spare[p] >= 0) ?? order.reduce((most, p) => spare[p] > spare[most] ? p : most);
+	const beside = place == "left" || place == "right";
+	const left = within(beside ? (place == "left" ? x - gap - w : x + gap) : x - w / 2, w, area.width);
+	const top = within(beside ? y - h / 2 : (place == "above" ? y - gap - h : y + gap), h, area.height);
 	b.style.left = left + "px";
 	b.style.top = top + "px";
-	b.style.setProperty("--tail-y", (y - top) + "px");
-	b.classList.add(toLeft ? "left" : "right");
+	// The tail points at the square, kept off the bubble's rounded corners
+	const corner = parseFloat(getComputedStyle(b).fontSize) * 1.2;
+	const tail = (pos, size) => Math.min(Math.max(pos, corner), size - corner) + "px";
+	b.style.setProperty(beside ? "--tail-y" : "--tail-x", beside ? tail(y - top, h) : tail(x - left, w));
+	b.classList.add(place);
 }
 
 function drawBar() {

@@ -1625,13 +1625,17 @@ input.switch:focus-visible {
 
 
 /* ---------- 7.7 Demo play-through ----------
-   tour.js puts the thought bubble beside the square it is about: to its
-   .left or .right, with its tail at --tail-y. The speaker's colour is that side's
-   king colour in the theme. The bar under the status bar holds its buttons.
-   While it runs the side buttons are disabled (the tour presses them, showing
-   .tour-press as it does). */
+   tour.js puts the thought bubble beside the square it is about: .left,
+   .right, .above or .below it (as the script says, or by itself), with its
+   tail at --tail-y beside the square or --tail-x above or below it. Its
+   background is only --bubble-opacity solid, so the pieces under it still
+   show. The speaker's colour is that side's king colour in the theme. The bar
+   under the status bar holds its buttons. While it runs the side buttons are
+   disabled (the tour presses them, showing .tour-press as it does). */
 .tour-bubble {
     --speaker-col: var(--accent);
+    --bubble-opacity: 60%;
+    --bubble-fill: color-mix(in srgb, var(--bg-raised) var(--bubble-opacity), transparent);
     position: absolute;
     z-index: 2;
     box-sizing: border-box;
@@ -1639,8 +1643,8 @@ input.switch:focus-visible {
     max-width: min(22em, 46cqw);
     padding: 0.6em 0.8em;
     border: 2px solid var(--speaker-col);
-    border-radius: 1.2em;
-    background: var(--bg-raised);
+    border-radius: 1.2em;  /* (tour.js keeps the tail off these corners) */
+    background: var(--bubble-fill);
     color: var(--text);
     font-size: var(--ui-font);
     line-height: 1.35;
@@ -1664,24 +1668,28 @@ input.switch:focus-visible {
 }
 
 /* The tail: two small circles towards the square, as a thought bubble has */
-.tour-bubble.left::before,
-.tour-bubble.left::after,
-.tour-bubble.right::before,
-.tour-bubble.right::after {
+.tour-bubble:is(.left, .right, .above, .below)::before,
+.tour-bubble:is(.left, .right, .above, .below)::after {
     content: "";
     position: absolute;
-    top: var(--tail-y);
     border: 2px solid var(--speaker-col);
     border-radius: 50%;
-    background: var(--bg-raised);
-    translate: 0 -50%;
+    background: var(--bubble-fill);
 }
 .tour-bubble::before { width: 0.7em; height: 0.7em; }
 .tour-bubble::after  { width: 0.4em; height: 0.4em; }
+.tour-bubble:is(.left, .right)::before,
+.tour-bubble:is(.left, .right)::after { top: var(--tail-y); translate: 0 -50%; }
+.tour-bubble:is(.above, .below)::before,
+.tour-bubble:is(.above, .below)::after { left: var(--tail-x); translate: -50% 0; }
 .tour-bubble.left::before  { left: calc(100% + 0.15em); }
 .tour-bubble.left::after   { left: calc(100% + 1.1em); }
 .tour-bubble.right::before { right: calc(100% + 0.15em); }
 .tour-bubble.right::after  { right: calc(100% + 1.1em); }
+.tour-bubble.above::before { top: calc(100% + 0.15em); }
+.tour-bubble.above::after  { top: calc(100% + 1.1em); }
+.tour-bubble.below::before { bottom: calc(100% + 0.15em); }
+.tour-bubble.below::after  { bottom: calc(100% + 1.1em); }
 
 @media (prefers-reduced-motion: reduce) {
     .tour-bubble { transition: none; }
