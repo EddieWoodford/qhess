@@ -51,9 +51,17 @@ function buildBoard(boardEl = dom.board) {
 		el.append(...cells);
 		return el;
 	};
+	// (the text in a span, which style.css 7.1 turns upright while the board turns)
+	const label = (className, text) => {
+		const el = cell("div", className);
+		const span = document.createElement("span");
+		span.textContent = text;
+		el.append(span);
+		return el;
+	};
 	const fileRow = () => row([
 		cell("div", "cornercoord"),
-		...[...FILES].map(f => cell("div", "filecoord", f)),
+		...[...FILES].map(f => label("filecoord", f)),
 		cell("div", "cornercoord"),
 	]);
 
@@ -67,7 +75,7 @@ function buildBoard(boardEl = dom.board) {
 			sq.id = "square" + r + c;
 			squares.push(sq);
 		}
-		boardEl.append(row([cell("div", "rankcoord", rank), ...squares, cell("div", "rankcoord", rank)]));
+		boardEl.append(row([label("rankcoord", rank), ...squares, label("rankcoord", rank)]));
 	}
 	boardEl.append(fileRow());
 }
@@ -184,10 +192,12 @@ function drawBoard(view) {
 	const game = view.game;
 	const STATE = view.state;
 
-	// Any move still sliding lands now; then work out this draw's animations before the squares change
+	// Any move still sliding lands now; then work out this draw's animations before the squares change. (Not while
+	// the board is turning round: the squares' places on screen are on the move.)
 	for (const anim of runningAnimations.slice()) { anim.finish(); }
 	const positions = piecePositions(game);
-	const plan = view.animate && !prefersReducedMotion() ? planAnimations(view.squares, drawnPositions, positions) : [];
+	const plan = view.animate && !turnFrame && !prefersReducedMotion()
+		? planAnimations(view.squares, drawnPositions, positions) : [];
 	drawnPositions = positions;
 
 	// Check to show on the board: on the side to move, or while choosing potential-check attackers, on the
@@ -276,11 +286,102 @@ function drawBoard(view) {
 	runAnimations(plan);
 }
 
-// Show Black's view (flipped true: Black at the bottom) or White's view. The CSS for .flipped reverses the rows
-// and columns. The Settings tab's switch always shows which view it is, whether it or a multiplayer game set it.
-function setFlippedBoard(flipped) {
-	dom.board.classList.toggle("flipped", flipped);
-	dom.settings.blackView.checked = flipped;
+// Show the file letters and rank numbers round the board, or hide them. The strip they are in widens or narrows,
+// and the squares shrink or grow with it, as a transition (style.css 7.1 and 7.4); but before the board is made
+// (the page opening with them on) they just show.
+function setCoordsShown(shown) {
+	const board = dom.board;
+	const instant = board.childElementCount == 0;
+	if (instant) { board.style.transition = "none"; }
+	board.classList.toggle("show-coords", shown);
+	if (instant) {
+		getComputedStyle(board).getPropertyValue("--coord-strip"); // (takes the new width now, with no transition)
+		board.style.removeProperty("transition");
+	}
 }
 
-export { SquareView, buildBoard, drawBoard, setFlippedBoard };
+////////////////////////////////
+// Turning the board round
+////////////////////////////////
+// When the view changes between White's and Black's, the new view is laid out at once, and the board drawn turned
+// half a turn, which looks just as the old view did; then it turns to rest. As it turns it shrinks, so its corners
+// stay inside its place, and its pieces and labels turn back the other way, so they stay upright (style.css 7.1).
+
+const TURN_MS = 500;
+
+let turnAngle = 0; // how far the board is turned from rest as drawn, in degrees clockwise
+let turnFrame = 0; // the next frame of the turn, while it is turning
+let atRest = [];   // the promises setFlippedBoard gave, to resolve when the board stops
+
+function easeInOut(t) {
+	return t < 0.5 ? 4 * t ** 3 : 1 - (2 - 2 * t) ** 3 / 2;
+}
+
+function drawTurn(angle) {
+	const board = dom.board;
+	turnAngle = angle;
+	board.classList.toggle("turning", angle != 0);
+	if (angle == 0) {
+		board.style.removeProperty("--turn");
+		board.style.removeProperty("--turn-scale");
+		return;
+	}
+	const rad = angle * Math.PI / 180;
+	const sin = Math.abs(Math.sin(rad));
+	// As large as it can be with its corners inside its place, but no larger than 72% through the middle of the
+	// turn, so it doesn't swell back to full size at a quarter turn
+	const scale = Math.min(1 / (Math.abs(Math.cos(rad)) + sin), 1 - 0.28 * Math.sqrt(sin));
+	board.style.setProperty("--turn", angle + "deg");
+	board.style.setProperty("--turn-scale", scale);
+}
+
+// Draw the board turned by from degrees, then turn it to rest (taking a time in proportion to how far that is)
+function turnFrom(from) {
+	drawTurn(from);
+	if (from == 0) { return; }
+	const start = performance.now();
+	const ms = TURN_MS * Math.abs(from) / 180;
+	const step = now => {
+		const t = Math.min(1, Math.max(0, (now - start) / ms));
+		drawTurn(from * (1 - easeInOut(t)));
+		if (t < 1) {
+			turnFrame = requestAnimationFrame(step);
+		} else {
+			turnFrame = 0;
+			comeToRest();
+		}
+	};
+	turnFrame = requestAnimationFrame(step);
+}
+
+function comeToRest() {
+	for (const resolve of atRest.splice(0)) { resolve(); }
+}
+
+// Show Black's view (flipped true: Black at the bottom) or White's view. The CSS for .flipped reverses the rows
+// and columns. The Settings tab's switch always shows which view it is, whether it or a multiplayer game set it.
+// Once the board has been made, a change of view turns the board round (above): clockwise to Black's view, back
+// the other way to White's. Returns a promise of the board being at rest in its new view.
+function setFlippedBoard(flipped) {
+	const board = dom.board;
+	dom.settings.blackView.checked = flipped;
+	if (board.classList.contains("flipped") != flipped) {
+		board.classList.toggle("flipped", flipped);
+		cancelAnimationFrame(turnFrame);
+		turnFrame = 0;
+		if (board.childElementCount == 0 || prefersReducedMotion()) {
+			drawTurn(0);
+		} else if (turnAngle == 0) {
+			turnFrom(flipped ? -180 : 180);
+		} else {
+			// Changed back while still turning: half a turn on from where it was drawn looks the same in this view,
+			// so it turns back from there
+			turnFrom(turnAngle - Math.sign(turnAngle) * 180);
+		}
+	}
+	const resting = new Promise(resolve => atRest.push(resolve));
+	if (!turnFrame) { comeToRest(); }
+	return resting;
+}
+
+export { SquareView, buildBoard, drawBoard, setFlippedBoard, setCoordsShown };

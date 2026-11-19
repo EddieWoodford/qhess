@@ -5,7 +5,7 @@
 
 import * as game from "./controller.js";
 import * as tour from "./tour.js";
-import { setFlippedBoard } from "./board-view.js";
+import { setFlippedBoard, setCoordsShown } from "./board-view.js";
 import { setupModals, showModal, hideModal, showChoice } from "./modals.js";
 import { setupSettings, resetSettings } from "./settings.js";
 import { loadThemes, buildThemeList, themeById } from "./themes.js";
@@ -29,10 +29,11 @@ setupModals();
 await loadThemes();
 buildThemeList(dom.settings.theme);
 setupSettings({
-	blackView: on => { setFlippedBoard(on); tour.refresh(); },
+	// (the demo's bubble moves to its square's new place once the board has turned round)
+	blackView: on => setFlippedBoard(on).then(() => tour.refresh()),
 	potentialCheck: on => game.setPotentialCheckRule(on),
 	// The file letters and rank numbers around the board (style.css 7.4)
-	showCoords: on => dom.board.classList.toggle("show-coords", on),
+	showCoords: on => setCoordsShown(on),
 	// The board's colours and how the pieces are drawn (style.css 1.1), and the page around it light or dark
 	// (style.css 1, :root[data-theme="light"]). The page's mode is kept for index.html, to draw it before this runs.
 	theme: id => {
