@@ -14,27 +14,29 @@ import { dom, setVisible } from "./dom.js";
 //   button1, button2: the side buttons' labels, or null to hide the button.
 //             controller.js sideButton1Action / sideButton2Action decide what a click does.
 // A value can be a function of ctx (see statusContext) when it depends on the position.
+// Until a move is staged, the Submit button's place offers Surrender instead; not in the demo play-through, which
+// never surrenders (it would flash up before and after each of its moves).
+const SURRENDER = ctx => ctx.tour ? null : "Surrender";
 const STEPS = {
 	move0: {
 		prompt: ctx => ctx.pcRule ? "Add Potential Check?" : "Pass to white",
 		button1: ctx => ctx.pcRule ? "Add PC" : null,
 		button2: "Pass to white",
 	},
-	// Until a move is staged, the Submit button's place offers Surrender instead
 	clear: {
 		prompt: "Select piece to move",
 		button1: ctx => ctx.inPotentialCheck ? "Declare 'Not a King'" : null,
-		button2: "Surrender",
+		button2: SURRENDER,
 	},
 	highlightPotentialMoves: {
 		prompt: "Select piece to move",
 		button1: null,
-		button2: "Surrender",
+		button2: SURRENDER,
 	},
 	showPartialMove: {
 		prompt: "Select destination",
 		button1: null,
-		button2: "Surrender",
+		button2: SURRENDER,
 	},
 	// Over a square it can move to, the board shows the move there (ctx.drag: see render.js)
 	dragging: {
@@ -203,6 +205,7 @@ function drawStatus(view) {
 	const rewind = view.multiplayer?.rewind;
 	const rewindStep = rewind ? (rewind.mine ? REWIND_WAITING : REWIND_ASKED) : null;
 	ctx.replaying = view.replayNumber > -1;
+	ctx.tour = view.tour;
 	dom.prompt.replaceChildren(prompt, " — " + value((rewindStep ?? step).prompt));
 
 	drawMultiplayerBadge(view.multiplayer);

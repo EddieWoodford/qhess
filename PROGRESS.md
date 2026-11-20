@@ -112,6 +112,9 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
   comes back when let go (Reset Settings meanwhile sets that to the default). tour.js re-places the bubble on the
   board's `--coord-strip` transitionend (the squares shrink as the strip slides in). tests/test.html "demo: the
   coordinates always show".
+- No Surrender in the demo (status-view.js `SURRENDER` is null when `ctx.tour`): it flashed up before and after
+  every acted-out move, as the states before a move is staged offer it. tests/test.html "demo: no Surrender between
+  its moves" (fails without the fix).
 - Bubble (style.css 7.7): beside the anchor square (left of it on the right half, right on the left half), white /
   black border from `--piece-wK` / `--piece-bK`; narrator notes centred unless `@sq`. Follows resize and Black's view.
 - The game's own Checkmate banner shows on the mating ply; the tour clicks it away for the notes after it.

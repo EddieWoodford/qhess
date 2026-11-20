@@ -84,6 +84,7 @@ const SETTINGS_CHECKS = {
 	"move markers: direction, knight hops, captures": checkMoveMarkers,
 	"move arrow: the last move, or the one being made": checkMoveArrow,
 	"demo: the coordinates always show": checkDemoShowsCoords,
+	"demo: no Surrender between its moves": checkDemoNoSurrender,
 };
 
 ////////////////////////////////
@@ -661,6 +662,27 @@ async function checkDemoShowsCoords(ctx) {
 	expect("Reset Settings in the demo should leave them shown. " + looks("In the demo"), shown() && sw.checked && sw.disabled);
 	el("tourExit").click();
 	expect("... and they go when it ends. " + looks("After"), !shown() && !sw.checked && !sw.disabled);
+	return problems;
+}
+
+// The demo never surrenders, so the Submit button's place stays empty until it has a move to submit, rather than
+// flashing up Surrender before and after each move. Played on from the demo, the game offers it again.
+async function checkDemoNoSurrender(ctx) {
+	const problems = [];
+	const expect = (what, ok) => { if (!ok) { problems.push(what); } };
+	const el = id => ctx.win.document.getElementById(id);
+	const surrenderShown = () => el("sideButton2").innerText == "Surrender" && !el("sideButton2").classList.contains("invisible");
+	el("tourButton").click();
+	let picking = 0; // the steps a move was about to be picked on (Surrender's place, in a game)
+	for (let i = 0; i < 10; i++) {
+		el("tourNext").click(); // (the move before lands at once, and this one is about to be acted out)
+		if (ctx.game.ui.state == "clear") { picking++; }
+		expect("Step " + (i + 2) + " (" + ctx.game.ui.state + ") shows Surrender", !surrenderShown());
+	}
+	expect("Some of those steps should have been about to pick a piece, " + picking + " were", picking > 0);
+	el("tourPlay").click();
+	expect("Played on from the demo, picking a piece, Surrender should be offered again (" + ctx.game.ui.state + ")",
+		ctx.game.ui.state == "clear" && surrenderShown());
 	return problems;
 }
 
