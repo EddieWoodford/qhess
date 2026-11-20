@@ -71,6 +71,9 @@ const ui = {
 	// The Settings tab's Potential Check switch. Off: no Add PC, and Black's move 0 is passed by itself.
 	// A multiplayer game always uses the rule (see pcRule), as both players must play by the same rules.
 	potentialCheck: true,
+	// The Settings tab's Hint Level (protocol.js HINT_LEVELS): how much the board shows before Submit. A
+	// multiplayer game plays at its creator's level instead, and the demo at "captures" (see hintLevel).
+	hintLevel: "captures",
 	// True while the demo play-through (tour.js) is driving the board: the player's clicks on the board and the
 	// side buttons do nothing, the game isn't saved, and potential checks are allowed whatever the switch says.
 	tour: false,
@@ -187,6 +190,24 @@ function isMultiplayer() {
 // (A potential check already declared still has to be answered either way: the engine's rules don't change.)
 function pcRule() {
 	return ui.potentialCheck || isMultiplayer() || ui.tour;
+}
+
+// The hint level the board uses now: the Settings tab's, except that a multiplayer game uses the one its creator
+// chose (sent by the server; the player's own until it arrives) and the demo shows every hint.
+function hintLevel() {
+	if (ui.tour) { return "captures"; }
+	return ui.multiplayer?.hintLevel ?? ui.hintLevel;
+}
+
+// Whether the board shows where a piece can move (dots and chevrons, and the move a dragged piece would make)
+function showsMoves() {
+	return hintLevel() == "moves" || hintLevel() == "captures";
+}
+
+// The Settings tab's Hint Level changed. Takes effect straight away.
+function setHintLevel(level) {
+	ui.hintLevel = level;
+	if (squares) { draw(); }
 }
 
 // The Settings tab's Potential Check switch changed. Takes effect straight away.
@@ -543,7 +564,9 @@ function dragMove(event) {
 	const over = squareAt(event.clientX, event.clientY);
 	if (!isequal(over ?? [], drag.over ?? [])) {
 		drag.over = over;
-		drag.hover = dragPreview(over);
+		// (Below the Moves hint level the board doesn't show the move until it is dropped: that would show
+		// where the piece can go)
+		drag.hover = showsMoves() ? dragPreview(over) : null;
 		draw();
 	}
 }
@@ -882,6 +905,9 @@ function startMultiplayer(request, options = {}) {
 		if (ui.multiplayer.phase == "playing" || ui.multiplayer.phase == "connecting") { return; }
 		session.leave();
 	}
+	if (request.create) {
+		request = { ...request, hintLevel: ui.hintLevel }; // the creator's level is the game's
+	}
 	const s = new SocketSession(options);
 	ui.replay = -1;
 	ui.multiplayer = { ...s.info(), message: "" };
@@ -1075,6 +1101,10 @@ function draw(animate = false) {
 		pcSetting: ui.potentialCheck,
 		tour: ui.tour,
 		before: ui.replay == -1 ? committed : beforeLastPly,
+		hintLevel: hintLevel(),
+		// At the None hint level, nothing a move collapses shows until it is submitted: the pieces keep the types
+		// they had at the start of the turn (not while stepping through the history, nor once it is sent)
+		hideCollapses: hintLevel() == "none" && ui.replay == -1 && !WAITING_STATES.includes(ui.state),
 		animate,
 	});
 }
@@ -1223,6 +1253,7 @@ export {
 	init,
 	newGame,
 	setPotentialCheckRule,
+	setHintLevel,
 	sideButton1Click,
 	sideButton2Click,
 	stepBackAll,

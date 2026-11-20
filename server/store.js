@@ -7,6 +7,7 @@
 //     createdAt, updatedAt:   milliseconds since 1970
 //     seats:     { w: { token } | null, b: { token } | null }   who holds each colour
 //     joinedColor: "w" | "b" | null   the seat the second player joined (rooms.js retakableSeat)
+//     hintLevel: "none" | "collapses" | "moves" | "captures"   the creator's Hint Level, for both players
 //     moves:     [ move, ... ]   every accepted move, in order (see src/shared/protocol.js)
 //   }
 // The game position is never stored: it is rebuilt by replaying the moves through the engine.

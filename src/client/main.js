@@ -32,6 +32,7 @@ setupSettings({
 	// (the demo's bubble moves to its square's new place once the board has turned round)
 	blackView: on => setFlippedBoard(on).then(() => tour.refresh()),
 	potentialCheck: on => game.setPotentialCheckRule(on),
+	hintLevel: level => game.setHintLevel(level),
 	// The file letters and rank numbers around the board (style.css 7.4)
 	showCoords: on => setCoordsShown(on),
 	// The board's colours and how the pieces are drawn (style.css 1.1), and the page around it light or dark

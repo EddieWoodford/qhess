@@ -9,7 +9,9 @@
 //   { notAKing, from, to, enPassant, promotion, castle, pcKing, pcAttackers, resign }
 //
 // Browser -> server
-//   { type: "create", color: "w" | "b" | "random" }   start a game; the server picks a join code
+//   { type: "create", color: "w" | "b" | "random", hintLevel }
+//                                                     start a game; the server picks a join code. hintLevel: one of
+//                                                     HINT_LEVELS, the hints both players get (default "captures")
 //   { type: "join", code }                            take the free seat in a game
 //   { type: "resume", code, token }                   come back to your seat after a disconnect
 //   { type: "move", seq, move }                       play a turn. seq = the number of moves played before it,
@@ -23,9 +25,10 @@
 //   { type: "ping" }                                  keep-alive; the server answers "pong"
 //
 // Server -> browser
-//   { type: "welcome", code, token, color, moves, opponent }
+//   { type: "welcome", code, token, color, moves, opponent, hintLevel }
 //                     you're in the game (after create, join or resume). token is your seat's secret: keep it
-//                     to resume. moves: every move so far. opponent: one of OPPONENT below.
+//                     to resume. moves: every move so far. opponent: one of OPPONENT below. hintLevel: the hint
+//                     level the creator chose (HINT_LEVELS), which both players play at.
 //   { type: "move", seq, move, color, hash }
 //                     move number seq was played by color. Also the answer to your own move. hash is the
 //                     server's positionHash (src/engine/position-hash.js) after it, to catch copies that differ.
@@ -65,6 +68,13 @@ const REWIND = {
 	MOVED: "moved",               // a move was played instead, so it no longer applies
 };
 
+// How much the board helps before a move is submitted (the Settings tab's Hint Level), least first:
+//   none       nothing: not even the collapses the move causes are shown until it is submitted
+//   collapses  the collapses, but not where a piece can move
+//   moves      the collapses and where a piece can move, but captures not picked out
+//   captures   everything
+const HINT_LEVELS = ["none", "collapses", "moves", "captures"];
+
 // error code
 const ERRORS = {
 	BAD_REQUEST: "bad_request",
@@ -84,4 +94,4 @@ function normalizeCode(text) {
 	return m ? m[1] + "-" + m[2] : null;
 }
 
-export { PROTOCOL_VERSION, SOCKET_PATH, OPPONENT, ENDED, REWIND, ERRORS, normalizeCode };
+export { PROTOCOL_VERSION, SOCKET_PATH, OPPONENT, ENDED, REWIND, ERRORS, HINT_LEVELS, normalizeCode };

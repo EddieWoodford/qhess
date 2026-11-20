@@ -9,7 +9,7 @@ import { createInitialState, cloneState } from "../src/engine/state.js";
 import { applyMove } from "../src/engine/game.js";
 import { isSquare } from "../src/engine/utils.js";
 import { positionHash } from "../src/engine/position-hash.js";
-import { OPPONENT, ENDED, REWIND, ERRORS, normalizeCode } from "../src/shared/protocol.js";
+import { OPPONENT, ENDED, REWIND, ERRORS, HINT_LEVELS, normalizeCode } from "../src/shared/protocol.js";
 import { randomCode } from "./codes.js";
 import { MemoryGameStore } from "./store.js";
 
@@ -119,7 +119,10 @@ class GameServer {
 	// Requests
 	////////////////////////////////
 
-	async create(conn, { color }) {
+	async create(conn, { color, hintLevel = "captures" }) {
+		if (!HINT_LEVELS.includes(hintLevel)) {
+			return this.error(conn, ERRORS.BAD_REQUEST, "hintLevel must be one of " + HINT_LEVELS.join(", "));
+		}
 		if (color == "random") {
 			color = this.random() < 0.5 ? "w" : "b";
 		}
@@ -132,7 +135,8 @@ class GameServer {
 			code = randomCode(this.random);
 		} while (this.rooms.has(code) || await this.store.has(code));
 		const now = Date.now();
-		const record = { code, createdAt: now, updatedAt: now, seats: { w: null, b: null }, joinedColor: null, moves: [] };
+		const record = { code, createdAt: now, updatedAt: now, seats: { w: null, b: null }, joinedColor: null, hintLevel,
+			moves: [] };
 		record.seats[color] = { token: randomUUID() };
 		const room = this.addRoom(record, createInitialState());
 		await this.store.save(record);
@@ -395,6 +399,7 @@ class GameServer {
 			color,
 			moves: room.record.moves,
 			opponent: this.opponentStatus(room, opp),
+			hintLevel: room.record.hintLevel ?? "captures",
 		});
 		if (room.conns[opp]) {
 			send(room.conns[opp], { type: "opponent", status: OPPONENT.CONNECTED });

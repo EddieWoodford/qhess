@@ -427,6 +427,24 @@
                             </span>
                             <input class="switch" id="settingShowCoords" type="checkbox" role="switch">
                         </label>
+                        <!-- Hint Level: how much the board shows before Submit (protocol.js HINT_LEVELS). A choice
+                             from buttons (settings.js shows which is chosen); a multiplayer game shows the creator's
+                             level here and it can't be changed (render.js drawSettings) -->
+                        <div class="setting-choice">
+                            <span class="setting-name">Hint Level</span>
+                            <span class="setting-note">How much the board shows before you press Submit. A
+                                multiplayer game uses the level of the player who created it.</span>
+                            <div class="hint-levels" id="settingHintLevel" role="group" aria-label="Hint Level">
+                                <button class="historyButton" data-value="none" aria-pressed="false"
+                                        title="No hints: where a piece can go, and what the move collapses, show only once it is submitted">None</button>
+                                <button class="historyButton" data-value="collapses" aria-pressed="false"
+                                        title="Shows what the move being made collapses, but not where a piece can go">Collapses</button>
+                                <button class="historyButton" data-value="moves" aria-pressed="false"
+                                        title="Shows the collapses and where a piece can go, but doesn't pick out captures">Moves</button>
+                                <button class="historyButton" data-value="captures" aria-pressed="false"
+                                        title="Every hint: collapses, where a piece can go, and captures in their own colour">Captures</button>
+                            </div>
+                        </div>
                         <!-- The themes: one button per file in themes/, with a light and a dark square drawn in it
                              (src/client/themes.js fills the list, settings.js shows which is chosen) -->
                         <div class="theme-section">

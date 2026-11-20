@@ -703,6 +703,44 @@ input:checked + .tabTitle {
     min-height: var(--button-height);
 }
 
+/* Hint Level, in the Settings tab: a row of four buttons, the chosen one in the
+   accent colour */
+.setting-choice {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15em;
+    padding: 0.6em 0.5em;
+    border-bottom: 1px solid var(--border-faint);
+}
+
+.hint-levels {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4em;
+    margin-top: 0.5em;
+}
+
+.hint-levels > button {
+    min-width: 0;
+    padding-inline: 0.2em;
+}
+
+.hint-levels > button[aria-pressed="true"] {
+    background-color: var(--accent);
+    color: var(--text-strong);
+}
+
+/* A multiplayer game's level, or the demo's: shown, but it can't be changed */
+.hint-levels > button:disabled {
+    cursor: default;
+    opacity: 0.5;
+    transform: none;
+}
+
+.hint-levels > button[aria-pressed="true"]:disabled {
+    opacity: 1;
+}
+
 /* The themes, in the Settings tab under the switches: a row per theme
    (themes.js): its button, and a light and a dark square drawn in that theme */
 .theme-section {

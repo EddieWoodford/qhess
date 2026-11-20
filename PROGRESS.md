@@ -4,6 +4,23 @@ Compact notes for whoever works on this next. Tests: `npm test` (node), and the 
 (start_test.bat, or the `qhess` preview in `.claude/launch.json` at /tests/test.html, then Run tests: replays the
 example games against tests/snapshots.json, plus multiplayer and page-feature checks).
 
+## Hint Level (2026-11-20)
+- Settings tab "Hint Level", four buttons (settings.js `hintLevel`, a remembered choice; values protocol.js
+  `HINT_LEVELS`): **none** (no markers; pieces keep their start-of-turn types until Submit, and the staged move is
+  written without its "(...)" types), **collapses** (collapses shown, no markers), **moves** (markers, no capture
+  colour), **captures** (everything, the default = the old behaviour).
+- controller `hintLevel()`: the demo always "captures"; a multiplayer game uses `ui.multiplayer.hintLevel` (the
+  server's), else `ui.hintLevel`. draw passes `hintLevel` and `hideCollapses` (none, live, not a waiting state).
+  board-view gates `.destination` / `.destinationCapture` on it and, with hideCollapses, draws each piece with
+  `typesBefore` (its waves in view.before, unless the move gave it a new type: promotion). Below "moves" a dragged
+  piece shows no move while hovered (that would show where it can go); dropping still stages it. A click on a
+  square it can't reach just puts it back, as before.
+- Multiplayer: `create {color, hintLevel}` (default captures; bad value -> bad_request), kept on the record,
+  sent in every `welcome`; SocketSession info().hintLevel. render.js drawSettings shows the level in use and
+  disables the buttons in a multiplayer game or the demo; the player's own level is back after.
+- Tests: server.test.js / socket-session.test.js; tests/test.html "hint level: what each level shows before
+  Submit" and "hint level: a multiplayer game plays at its creator's".
+
 ## Move arrow (2026-11-20)
 - A light line arrow over the board (the user wanted a single line, not a wide arrow): a 2px white line with a
   two-stroke head on a 4px black one (`.arrow-line` over `.arrow-edge`, the same path). It shows the move being made once it has a

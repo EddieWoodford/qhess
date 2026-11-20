@@ -219,7 +219,9 @@ function drawStatus(view) {
 	dom.sideButton2.classList.toggle("submitOnClick", buttons === step && dom.sideButton2.innerText == "Submit");
 	dom.sideButton2.classList.toggle("cancelOnClick", buttons === step && dom.sideButton2.innerText == "Cancel");
 
-	dom.stagedMove.textContent = game.thisMove + pcMoveText(game);
+	// (At the None hint level without the types in brackets, which would say what the move collapses)
+	const moveText = game.thisMove + pcMoveText(game);
+	dom.stagedMove.textContent = view.hideCollapses ? moveText.replace(/\([A-Z]*\)/g, "") : moveText;
 
 	drawGameOver(view);
 }

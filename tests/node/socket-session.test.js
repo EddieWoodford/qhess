@@ -46,9 +46,9 @@ async function waitFor(what, check, ms = 4000) {
 	}
 }
 
-async function newGame(color = "w") {
+async function newGame(color = "w", hintLevel) {
 	const creator = session();
-	creator.start({ create: color });
+	creator.start({ create: color, hintLevel });
 	await waitFor("game created", () => creator.info().phase == "playing");
 	const joiner = session();
 	joiner.start({ join: creator.info().code.toLowerCase() });
@@ -86,6 +86,13 @@ for (const { name, lines } of [games[1], games[3]]) {
 		assert.deepEqual(players.w.errors, []);
 	});
 }
+
+test("both players get the creator's hint level", async () => {
+	const players = await newGame("b", "moves");
+	assert.equal(players.creator.info().hintLevel, "moves");
+	assert.equal(players.joiner.info().hintLevel, "moves");
+	players.creator.leave();
+});
 
 test("the seat is remembered for a page reload, and forgotten on leaving", async () => {
 	const { creator } = await newGame("w");

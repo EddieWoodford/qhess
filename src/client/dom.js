@@ -62,6 +62,7 @@ const dom = {
 		blackView: $("settingBlackView"),
 		potentialCheck: $("settingPotentialCheck"),
 		showCoords: $("settingShowCoords"),
+		hintLevel: $("settingHintLevel"), // the Hint Level buttons (data-value: protocol.js HINT_LEVELS)
 		theme: $("themeList"), // the Settings tab's theme buttons, one per theme (themes.js buildThemeList)
 	},
 

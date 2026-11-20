@@ -12,6 +12,7 @@
 
 import { dom } from "./dom.js";
 import { THEMES, defaultTheme } from "./themes.js";
+import { HINT_LEVELS } from "../shared/protocol.js";
 
 // The device's own light / dark setting
 const lightQuery = window.matchMedia?.("(prefers-color-scheme: light)");
@@ -28,6 +29,8 @@ const SETTINGS = {
 	blackView: { default: false, remember: false }, // multiplayer sets it to your own side, so it isn't kept
 	potentialCheck: { default: true, remember: true }, // render.js drawSettings locks it on in a multiplayer game
 	showCoords: { default: false, remember: true },
+	// How much the board shows before Submit. render.js drawSettings shows a multiplayer game's level instead.
+	hintLevel: { default: "captures", remember: true, choices: () => HINT_LEVELS },
 	// The themes are read from themes/ (themes.js loadThemes) before setupSettings runs
 	theme: { default: () => defaultTheme(devicePrefersLight()), remember: true,
 		choices: () => THEMES.map(theme => theme.id) },

@@ -37,6 +37,10 @@ import { dom } from "./dom.js";
 //   before:      the game state at the start of the turn: the board shows the types the move being made has ruled
 //                out, faded, until it is submitted. While stepping through the history, the state before the ply
 //                shown (so the types that ply ruled out are faded), or null at the start.
+//   hintLevel:   how much the board shows before Submit (protocol.js HINT_LEVELS; controller.js hintLevel): below
+//                "moves" no move markers, below "captures" captures not in their own colour
+//   hideCollapses: the None hint level, during a turn: pieces show the types they had at its start (view.before),
+//                and the staged move is written without its types
 //   animate:     slide the pieces that moved since the last draw (board-view.js); only for a move in live play
 // }
 function render(view) {
@@ -50,12 +54,20 @@ function render(view) {
 
 // The Settings tab's Potential Check switch: a multiplayer game always uses the rule, so the switch shows it on
 // and can't be changed until the game is over. It shows the player's own choice again afterwards.
+// The Hint Level buttons likewise show a multiplayer game's level (or the demo's), locked.
 // The Black's view switch: a multiplayer game shows the player's own side at the bottom, so it can't be changed either.
 function drawSettings(view) {
 	const input = dom.settings.potentialCheck;
 	input.disabled = view.multiplayer !== null;
 	input.checked = view.multiplayer !== null ? true : view.pcSetting;
 	dom.settings.blackView.disabled = view.multiplayer !== null;
+	// Hint Level: the level in use, which in a multiplayer game is its creator's (and the demo's is every hint),
+	// and then it can't be changed. Otherwise the player's own (settings.js has already shown it).
+	const locked = view.multiplayer !== null || view.tour;
+	for (const button of dom.settings.hintLevel.querySelectorAll("[data-value]")) {
+		button.disabled = locked;
+		button.setAttribute("aria-pressed", button.dataset.value == view.hintLevel);
+	}
 }
 
 // Show a message just above the status bar for a few seconds (style.css hides the element while it is empty)

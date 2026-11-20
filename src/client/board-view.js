@@ -26,11 +26,12 @@ class SquareView {
 		this.button.className = "boardsquare " + (this.color == "w" ? "whitesquare" : "blacksquare");
 	}
 	// lost: the types the move being made has ruled out for this piece (see lostTypes)
-	setWavetext(piece, lost = "") {
+	// waves: the types to show, if not the piece's own (the None hint level shows them as at the start of the turn)
+	setWavetext(piece, lost = "", waves = piece?.waves()) {
 		if (piece === null) {
 			this.button.innerHTML = "";
 		} else {
-			this.button.innerHTML = waveHTML(piece.waves(), piece.color, lost);
+			this.button.innerHTML = waveHTML(waves, piece.color, lost);
 		}
 	}
 }
@@ -274,6 +275,15 @@ function lostTypes(piece, before) {
 	return [...before.pieces[piece.color][piece.i].waves()].filter(t => !now.includes(t)).join("");
 }
 
+// The types a piece had at the start of the turn (before), to show at the None hint level instead of what the move
+// being made has collapsed it to. Its types now if it has one it didn't have then (a pawn promoted by the move).
+function typesBefore(piece, before) {
+	if (!before || piece === null) { return undefined; }
+	const now = piece.waves();
+	const then = before.pieces[piece.color][piece.i].waves();
+	return [...now].every(t => then.includes(t)) ? then : undefined;
+}
+
 // Draw every square: its piece, and the classes for its highlights (see style.css sections 7.2 and 7.3).
 // view: see render.js
 function drawBoard(view) {
@@ -312,7 +322,11 @@ function drawBoard(view) {
 			const classes = sqr.button.classList;
 
 			sqr.resetButtonClasses();
-			sqr.setWavetext(piece, lostTypes(piece, view.before));
+			if (view.hideCollapses) {
+				sqr.setWavetext(piece, "", typesBefore(piece, view.before));
+			} else {
+				sqr.setWavetext(piece, lostTypes(piece, view.before));
+			}
 
 			if (STATE == "clear" && view.replayNumber == -1) {
 				if (piece !== null && piece.color == game.turnColor) {
@@ -378,9 +392,11 @@ function drawBoard(view) {
 			}
 			// A marker pointing the way the piece moves (style.css 7.3), in the capture colour where it takes a piece.
 			// (Not on the square a dragged piece is shown on: it is ringed as the destination instead.)
-			if (sqr.potentialMove > 0 && !(STATE == "dragging" && isequal([r,c], view.end))) {
+			// Below the Moves hint level there are no markers, and below Captures no capture colour.
+			const showMoves = view.hintLevel == "moves" || view.hintLevel == "captures";
+			if (showMoves && sqr.potentialMove > 0 && !(STATE == "dragging" && isequal([r,c], view.end))) {
 				classes.add("destination", "destination" + sqr.potentialMove);
-				if (piece !== null && piece.color != game.turnColor) {
+				if (view.hintLevel == "captures" && piece !== null && piece.color != game.turnColor) {
 					classes.add("destinationCapture");
 				}
 			}

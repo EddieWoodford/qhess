@@ -14,7 +14,7 @@
 // The seat is remembered in sessionStorage too, so reloading the page goes back into the game.
 //
 // Besides the LocalSession interface:
-//   start({ create: "w" | "b" | "random" })  or  start({ join: code })  or  start({ resume: { code, token } })
+//   start({ create: "w" | "b" | "random", hintLevel })  or  start({ join: code })  or  start({ resume: { code, token } })
 //   leave()               leave the game (the opponent is told) and close the connection
 //   requestRewind(keep)   ask the opponent to take the game back to its first keep moves; { ok } or { ok: false, error }
 //   answerRewind(agree)   answer the opponent's rewind request
@@ -25,7 +25,8 @@
 //                           { type: "rewindAsked", keep, mine }  a rewind request was made (mine: by this player)
 //                           { type: "rewindEnded", result, mine }  ... and is over (protocol.js REWIND); on
 //                                                 "agreed" the game has already gone back (onChange)
-//   info()                { phase, code, color, opponent, connection, pending, serverStarting, rewind }
+//   info()                { phase, code, color, opponent, connection, pending, serverStarting, rewind, hintLevel }
+//                           hintLevel:  the game's hint level (protocol.js HINT_LEVELS), null until in the game
 //                           phase:      "connecting" (first connection, or creating/joining), "playing",
 //                                       "ended" (the game is over or couldn't be joined), "left"
 //                           serverStarting: still connecting after a few seconds. The hosted server sleeps
@@ -99,6 +100,7 @@ class SocketSession {
 		this.code = null;
 		this.token = null;
 		this.color = null;
+		this.hintLevel = null;   // the game's hint level, from the server
 		this.endedReason = null;
 		this.pending = null;     // { seq, move }
 		this.rewind = null;      // the open rewind request: { keep, by }
@@ -168,7 +170,7 @@ class SocketSession {
 		} else if (request.join !== undefined) {
 			this.request = { type: "join", code: request.join };
 		} else {
-			this.request = { type: "create", color: request.create };
+			this.request = { type: "create", color: request.create, hintLevel: request.hintLevel ?? "captures" };
 		}
 		this.startTimers.slow = setTimeout(() => {
 			if (this.phase != "connecting") { return; }
@@ -244,6 +246,7 @@ class SocketSession {
 			phase: this.phase,
 			code: this.code,
 			color: this.color,
+			hintLevel: this.hintLevel,
 			opponent: this.opponent,
 			connection: this.connection,
 			pending: this.pending !== null,
@@ -381,6 +384,7 @@ class SocketSession {
 		this.code = message.code;
 		this.token = message.token;
 		this.color = message.color;
+		this.hintLevel = message.hintLevel ?? "captures";
 		this.opponent = message.opponent;
 		this.phase = "playing";
 		this.connection = "connected";

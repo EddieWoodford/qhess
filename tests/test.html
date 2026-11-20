@@ -85,6 +85,8 @@ const SETTINGS_CHECKS = {
 	"move arrow: the last move, or the one being made": checkMoveArrow,
 	"demo: the coordinates always show": checkDemoShowsCoords,
 	"demo: no Surrender between its moves": checkDemoNoSurrender,
+	"hint level: what each level shows before Submit": checkHintLevels,
+	"hint level: a multiplayer game plays at its creator's": checkMultiplayerHintLevel,
 };
 
 ////////////////////////////////
@@ -608,6 +610,104 @@ async function checkMoveMarkers(ctx) {
 	g.showPartialMove([7, 6]); // g1, which could be a knight
 	expect("A knight's hop (g1 to f3) should be marked with a dot, has '" + sq(5, 5).className + "'",
 		has(5, 5, "destination") && marker(5, 5).maskImage.includes("circle"));
+	return problems;
+}
+
+// The Settings tab's Hint Level: Captures (the default) shows everything; Moves no capture colour; Collapses no move
+// markers, nor the move while a piece is dragged; None not even the collapses, until the move is submitted
+async function checkHintLevels(ctx) {
+	const problems = [];
+	const expect = (what, ok) => { if (!ok) { problems.push(what); } };
+	const g = ctx.game;
+	const doc = ctx.win.document;
+	const sq = (r, c) => doc.getElementById("square" + r + c);
+	const level = value => doc.querySelector("#settingHintLevel [data-value=" + value + "]").click();
+	const pressed = () => doc.querySelector("#settingHintLevel [aria-pressed=true]")?.dataset.value;
+	const markers = () => doc.querySelectorAll("#board .destination").length;
+	const captures = () => doc.querySelectorAll("#board .destinationCapture").length;
+	const shown = (r, c) => sq(r, c).querySelectorAll(".glyph:not(.glyph-lost)").length; // types shown (not faded)
+	const faded = (r, c) => sq(r, c).querySelectorAll(".glyph-lost").length;
+	const staged = () => doc.getElementById("thismove").textContent;
+	const pickE4 = () => {
+		g.restoreGameHistory("0b.\n1w. (KQBNRP)e2e4(QRP)\n1b. (KQBNRP)d7d5(QRP)"); // White to move
+		g.showPartialMove([4, 4]); // e4: can take d5
+	};
+
+	expect("Captures should be the level chosen at first, is " + pressed(), pressed() == "captures");
+	pickE4();
+	expect("At Captures, e4's moves should be marked and its captures (d5, d7, e7) picked out: " + markers() + " markers, "
+		+ captures() + " captures", markers() > 0 && captures() == 3);
+
+	level("moves");
+	expect("Moves should be shown chosen, is " + pressed(), pressed() == "moves");
+	pickE4();
+	expect("At Moves, e4's moves should be marked but no capture picked out: " + markers() + " markers, " + captures()
+		+ " captures", markers() > 0 && captures() == 0);
+
+	level("collapses");
+	pickE4();
+	expect("At Collapses, no move should be marked, has " + markers(), markers() == 0);
+	g.restoreGameHistory("0b.");
+	g.showPartialMove([6, 4]);
+	g.showCompleteMove([4, 4]); // e2e4 collapses e2 to Q, R or P
+	expect("At Collapses, e2e4 should show its collapse (3 types, 3 faded), shows " + shown(4, 4) + " and " + faded(4, 4)
+		+ " faded, staged '" + staged() + "'", shown(4, 4) == 3 && faded(4, 4) == 3 && staged().includes("(QRP)"));
+	g.restoreGameHistory("0b.");
+	const centre = (r, c) => { const b = sq(r, c).getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; };
+	const pointer = (type, target, [x, y]) => target.dispatchEvent(new ctx.win.PointerEvent(type,
+		{ bubbles: true, cancelable: true, pointerId: 1, pointerType: "mouse", isPrimary: true, button: 0, clientX: x, clientY: y }));
+	pointer("pointerdown", sq(6, 4), centre(6, 4));
+	pointer("pointermove", doc, centre(4, 4));
+	expect("At Collapses, e2 dragged over e4 shouldn't show the move there (that shows where it can go), e4 has "
+		+ shown(4, 4) + " types", shown(4, 4) == 0 && doc.querySelector(".piece-lifted")?.style.visibility == "visible");
+	pointer("pointerup", doc, centre(4, 4));
+	expect("... but dropped there, the move should wait for Submit, is at " + g.ui.state + " with " + shown(4, 4) + " types",
+		g.ui.state == "showCompleteMove" && shown(4, 4) == 3);
+
+	level("none");
+	g.restoreGameHistory("0b.");
+	g.showPartialMove([6, 4]);
+	expect("At None, no move should be marked, has " + markers(), markers() == 0);
+	g.showCompleteMove([4, 4]);
+	expect("At None, e2e4 should show e4 with all six types (none faded) until Submit, shows " + shown(4, 4) + " and "
+		+ faded(4, 4) + " faded", shown(4, 4) == 6 && faded(4, 4) == 0);
+	expect("... and write the staged move without its types, writes '" + staged() + "'", !staged().includes("("));
+	g.sideButton2Action();
+	expect("Submitted, the collapse should show, e4 has " + shown(4, 4) + " types, written '" + g.ui.record[1] + "'",
+		shown(4, 4) == 3 && g.ui.record[1] == "1w. (KQBNRP)e2e4(QRP)");
+	return problems;
+}
+
+// A multiplayer game plays at the hint level of the page that created it: the joining page shows that level in its
+// Settings tab, can't change it, and gets that level's hints. Leaving the game gives the player's own level back.
+async function checkMultiplayerHintLevel() {
+	const problems = [];
+	const expect = (what, ok) => { if (!ok) { problems.push(what); } };
+	const a = await loadGame("mpA");
+	a.win.document.querySelector("#settingHintLevel [data-value=moves]").click();
+	createGame(a, "b");
+	await until("the game to be created", () => multiplayerInfo(a)?.code);
+	const b = await loadGame("mpB"); // (its own level is the default, Captures)
+	joinGame(b, multiplayerInfo(a).code);
+	await until("the second page to join", () => multiplayerInfo(b)?.phase == "playing" && multiplayerInfo(a).opponent == "connected");
+	const buttons = page => [...page.win.document.querySelectorAll("#settingHintLevel [data-value]")];
+	const pressed = page => buttons(page).find(x => x.getAttribute("aria-pressed") == "true")?.dataset.value;
+	for (const [name, page] of [["creating", a], ["joining", b]]) {
+		expect("The " + name + " page should play at Moves, is at " + multiplayerInfo(page).hintLevel + ", shows " + pressed(page),
+			multiplayerInfo(page).hintLevel == "moves" && pressed(page) == "moves");
+		expect("The " + name + " page's Hint Level shouldn't be changeable", buttons(page).every(x => x.disabled));
+	}
+	await until("Black's move 0", () => turnStep(a) == "move0");
+	a.game.sideButton2Action(); // Black passes move 0
+	await until("White's turn", () => turnStep(b) == "clear");
+	b.game.showPartialMove([6, 4]);
+	expect("The joining page should mark the moves (Moves level), marks " + b.win.document.querySelectorAll("#board .destination").length,
+		b.win.document.querySelectorAll("#board .destination").length > 0);
+	leaveGame(a);
+	await until("the joining page to see the game end", () => multiplayerInfo(b)?.phase == "ended");
+	b.game.backToSinglePlayer();
+	expect("Back in single player, the joining page should show its own level again (Captures), shows " + pressed(b)
+		+ (buttons(b).some(x => x.disabled) ? ", locked" : ""), pressed(b) == "captures" && !buttons(b).some(x => x.disabled));
 	return problems;
 }
 

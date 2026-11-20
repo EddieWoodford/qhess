@@ -149,6 +149,21 @@ test("joining again before the joiner has moved takes their seat over, never the
 	assert.equal((await late.request({ type: "join", code: players.code }, "error")).code, "full");
 });
 
+test("the creator's hint level is the game's, for both players", async () => {
+	const creator = await client("hinter");
+	const created = await creator.request({ type: "create", color: "w", hintLevel: "collapses" }, "welcome");
+	assert.equal(created.hintLevel, "collapses");
+	const joiner = await client("hinted");
+	assert.equal((await joiner.request({ type: "join", code: created.code }, "welcome")).hintLevel, "collapses");
+	// Resuming says it again; a create without one gets every hint; a level that isn't one is refused
+	const again = await client("hinter again");
+	assert.equal((await again.request({ type: "resume", code: created.code, token: created.token }, "welcome")).hintLevel,
+		"collapses");
+	assert.equal((await (await client("plain")).request({ type: "create", color: "b" }, "welcome")).hintLevel, "captures");
+	assert.equal((await (await client("odd")).request({ type: "create", color: "b", hintLevel: "all" }, "error")).code,
+		"bad_request");
+});
+
 test("bad requests are refused without harm", async () => {
 	const c = await client("bad");
 	assert.equal((await c.request("not json", "error")).code, "bad_request");
