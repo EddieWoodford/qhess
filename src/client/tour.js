@@ -10,6 +10,7 @@
 // The player's own game is put back on Exit; "Play from here" keeps the position shown as the game instead.
 
 import * as game from "./controller.js";
+import { holdSetting } from "./settings.js";
 import { parseTour, pliesUpTo } from "./tour-script.js";
 import { TOUR_TEXT } from "./tour-text.js";
 import { parseMoveText } from "../engine/notation.js";
@@ -44,6 +45,7 @@ function start() {
 	if (running() || !game.setTour(true)) { return; } // not in a multiplayer game
 	savedGame = game.ui.record.join("\n");
 	steps = parseTour(TOUR_TEXT).steps;
+	holdSetting("showCoords", true); // the thought bubbles name squares
 	el.bar.hidden = false;
 	show(0, false);
 }
@@ -57,6 +59,7 @@ function stop(keep = false) {
 	index = -1;
 	el.bar.hidden = true;
 	el.bubble.hidden = true;
+	holdSetting("showCoords");
 	game.setTour(false);
 	const text = keep ? shown : savedGame;
 	if (text.trim() == "") {
@@ -236,6 +239,8 @@ function refresh() {
 	if (running()) { placeBubble(anchor); }
 }
 new ResizeObserver(refresh).observe(el.area);
+// (and once the coordinates' strip has slid in at the start, as the squares shrink to make room for it)
+$("board").addEventListener("transitionend", e => { if (e.propertyName == "--coord-strip") { refresh(); } });
 
 $("tourBack").addEventListener("click", back);
 $("tourNext").addEventListener("click", next);

@@ -107,6 +107,11 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
 - controller `ui.tour`: board clicks/hover and side-button clicks ignored, record not saved, pcRule forced on,
   jumpToPly ignored. Exit restores the game saved at start; Play from here keeps the shown position. Reset, Import,
   multiplayer Create/Join stop the tour first. Not available in multiplayer.
+- The demo always shows the coordinates (its thoughts name squares): settings.js `holdSetting("showCoords", true)` on
+  start, `holdSetting("showCoords")` on stop. A held switch shows the value, is disabled, and the player's own value
+  comes back when let go (Reset Settings meanwhile sets that to the default). tour.js re-places the bubble on the
+  board's `--coord-strip` transitionend (the squares shrink as the strip slides in). tests/test.html "demo: the
+  coordinates always show".
 - Bubble (style.css 7.7): beside the anchor square (left of it on the right half, right on the left half), white /
   black border from `--piece-wK` / `--piece-bK`; narrator notes centred unless `@sq`. Follows resize and Black's view.
 - The game's own Checkmate banner shows on the mating ply; the tour clicks it away for the notes after it.

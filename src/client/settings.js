@@ -91,6 +91,24 @@ function set(name, value) {
 	applyFns[name](value);
 }
 
+// Settings held at a value for now, whatever the player chose: { name: the player's own value }
+const held = {};
+
+// Hold a switch at a value: it shows that value and can't be changed (the demo holds Show coordinates on, as its
+// thought bubbles name squares). With no value, let it go: the player's own value comes back.
+function holdSetting(name, value) {
+	const input = dom.settings[name];
+	if (value !== undefined) {
+		if (!(name in held)) { held[name] = shown(name); }
+		input.disabled = true;
+		set(name, value);
+	} else if (name in held) {
+		input.disabled = false;
+		set(name, held[name]);
+		delete held[name];
+	}
+}
+
 // The player changed a setting
 function change(name, value) {
 	if (SETTINGS[name].remember) {
@@ -135,6 +153,7 @@ function resetSettings() {
 	for (const [name, setting] of Object.entries(SETTINGS)) {
 		const input = dom.settings[name];
 		const value = defaultValue(setting);
+		if (name in held) { held[name] = value; continue; } // (it comes back when let go)
 		if (!setting.remember && input.disabled) { continue; }
 		// Only the ones that change (Potential Check, say, restarts a game at move 0 when it is applied). A locked
 		// switch shows the game's value rather than the player's, so it is applied anyway.
@@ -143,4 +162,4 @@ function resetSettings() {
 	}
 }
 
-export { setupSettings, resetSettings };
+export { setupSettings, resetSettings, holdSetting };

@@ -83,6 +83,7 @@ const SETTINGS_CHECKS = {
 	"drag: a dropped piece waits for Submit": checkDragMove,
 	"move markers: direction, knight hops, captures": checkMoveMarkers,
 	"move arrow: the last move, or the one being made": checkMoveArrow,
+	"demo: the coordinates always show": checkDemoShowsCoords,
 };
 
 ////////////////////////////////
@@ -628,6 +629,38 @@ async function checkMoveArrow(ctx) {
 	expect("The staged move should take its place, pointing at e5, points at " + tip(), tip() == "4.500 3.500");
 	g.sideButton2Action();
 	expect("Submitted, it should stay as the last move, points at " + tip(), tip() == "4.500 3.500");
+	return problems;
+}
+
+// The demo's thought bubbles name squares, so it shows the coordinates whatever the Show coordinates switch says:
+// the switch shows them on and can't be changed until the demo ends, then the player's own choice comes back
+// (Reset Settings meanwhile makes that the default)
+async function checkDemoShowsCoords(ctx) {
+	const problems = [];
+	const expect = (what, ok) => { if (!ok) { problems.push(what); } };
+	const el = id => ctx.win.document.getElementById(id);
+	const sw = el("settingShowCoords");
+	const shown = () => el("board").classList.contains("show-coords");
+	const looks = when => when + ": coordinates " + (shown() ? "shown" : "hidden") + ", switch " + (sw.checked ? "on" : "off")
+		+ (sw.disabled ? " (locked)" : "");
+	expect("Before the demo, with the switch off: " + looks("now"), !shown() && !sw.checked && !sw.disabled);
+	el("tourButton").click();
+	expect("The demo should show them, the switch on and locked. " + looks("In the demo"), shown() && sw.checked && sw.disabled);
+	el("tourNext").click();
+	expect(looks("A step on"), shown() && sw.checked && sw.disabled);
+	el("tourExit").click();
+	expect("Exit should hide them again. " + looks("After"), !shown() && !sw.checked && !sw.disabled);
+
+	sw.click(); // on: still on after the demo
+	el("tourButton").click();
+	el("tourPlay").click();
+	expect("With the switch on, they should stay after the demo. " + looks("After"), shown() && sw.checked && !sw.disabled);
+
+	el("tourButton").click();
+	el("settingsReset").click(); // the default (off) comes back when the demo ends
+	expect("Reset Settings in the demo should leave them shown. " + looks("In the demo"), shown() && sw.checked && sw.disabled);
+	el("tourExit").click();
+	expect("... and they go when it ends. " + looks("After"), !shown() && !sw.checked && !sw.disabled);
 	return problems;
 }
 
