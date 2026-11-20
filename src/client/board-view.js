@@ -325,9 +325,13 @@ function drawBoard(view) {
 			if (sqr.highlighted) {
 				classes.add("hovered");
 			}
-			// (not on the square a dragged piece is shown on: it is ringed as the destination instead)
+			// A marker pointing the way the piece moves (style.css 7.3), in the capture colour where it takes a piece.
+			// (Not on the square a dragged piece is shown on: it is ringed as the destination instead.)
 			if (sqr.potentialMove > 0 && !(STATE == "dragging" && isequal([r,c], view.end))) {
-				classes.add("destination" + sqr.potentialMove);
+				classes.add("destination", "destination" + sqr.potentialMove);
+				if (piece !== null && piece.color != game.turnColor) {
+					classes.add("destinationCapture");
+				}
 			}
 		}
 	}

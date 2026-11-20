@@ -114,7 +114,6 @@
 
     /* ---- Around the board (the board's own colours come from the theme: 1.1) ---- */
     --board-edge-col: #111;                /* coordinate labels and corners */
-    --marker-clear: rgba(255,0,0,0);        /* transparent stop used by the move markers */
     --game-over-checkmate-col: #ff5a4f;     /* the game over banner (7.6) */
     --game-over-draw-col: #e9c46a;
 
@@ -185,6 +184,7 @@
      --piece-wK ... --piece-bP               each piece's colour (one colour per side: all six the same)
      --piece-selectedStart-col               side to move, hover, chosen piece (7.2)
      --piece-dest-col                        moves (7.3)
+     --piece-capture-col                     moves that take a piece (7.3)
      --piece-checkKing-col / --piece-checkAttacker-col   check (7.2)
    To add a theme: tools/theme-generator.html, Export, and save the file in
    themes/; or copy a theme file there and change it. */
@@ -1366,41 +1366,71 @@ input.switch:focus-visible {
 
 
 /* ---------- 7.3 Move markers ----------
-   render.js adds .destination1 to .destination16 to every square a piece can
-   move to. The number is a point on a 16-point compass, like a clock face:
-       odd numbers   knight-style hop (ring)
-       2 and 10      bishop-style, NE and SW (stripe along that diagonal)
-       4 and 12      rook-style, E and W
-       6 and 14      bishop-style, SE and NW
-       8 and 16      rook-style, S and N
-   Each gradient's direction is perpendicular to the stripe it draws.
-   ORDER MATTERS: these come after 7.2 so their ring wins over the state rings. */
-.destination1, .destination2, .destination3, .destination4,
-.destination5, .destination6, .destination7, .destination8,
-.destination9, .destination10, .destination11, .destination12,
-.destination13, .destination14, .destination15, .destination16 {
-    box-shadow: 0 0 0 3px var(--piece-dest-col) inset;
+   board-view.js marks every square the piece can move to with .destination
+   and .destination1 to .destination16: the direction of the move on a
+   16-point compass, clockwise from 16 = up the board (towards rank 8).
+       odd numbers    a knight's hop: a dot
+       even numbers   a line move: a chevron pointing the way the piece moves
+                      (turned a sixteenth of a turn per step, --bearing)
+   A move that takes a piece also has .destinationCapture: its marker and a
+   ring in --piece-capture-col (the marker covers the piece). The marker is
+   drawn twice, cut out of the square by an SVG mask: ::before a dark edge,
+   so it shows on any square or piece, ::after the marker in its colour. The
+   board turns them with it (7.1), and Black's view half a turn.
+   ORDER MATTERS: these come after 7.2 so the capture ring wins over the
+   state rings. */
+:root {
+    --marker-chevron: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M36 62 L50 40 L64 62' fill='none' stroke='black' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    --marker-chevron-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M36 62 L50 40 L64 62' fill='none' stroke='black' stroke-width='17' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    --marker-dot: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='12'/></svg>");
+    --marker-dot-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='16'/></svg>");
+}
+
+.board.flipped {
+    --marker-flip: 180deg;
+}
+
+.destination {
+    position: relative;
+    --marker: var(--marker-chevron);
+    --marker-edge: var(--marker-chevron-edge);
+    --marker-col: var(--piece-dest-col);
 }
 
 .destination1, .destination3, .destination5, .destination7,
 .destination9, .destination11, .destination13, .destination15 {
-    background-image: radial-gradient(var(--marker-clear), var(--marker-clear), var(--piece-dest-col), var(--marker-clear), var(--marker-clear), var(--marker-clear));
+    --marker: var(--marker-dot);
+    --marker-edge: var(--marker-dot-edge);
 }
 
-.destination2, .destination10 {
-    background-image: linear-gradient(to bottom right, var(--marker-clear), var(--marker-clear), var(--marker-clear), var(--piece-dest-col), var(--marker-clear), var(--marker-clear), var(--marker-clear));
+/* (16, up the board, is the chevron as drawn) */
+.destination2 { --bearing: 2; }
+.destination4 { --bearing: 4; }
+.destination6 { --bearing: 6; }
+.destination8 { --bearing: 8; }
+.destination10 { --bearing: 10; }
+.destination12 { --bearing: 12; }
+.destination14 { --bearing: 14; }
+
+.destinationCapture {
+    --marker-col: var(--piece-capture-col);
+    box-shadow: 0 0 0 3px var(--piece-capture-col) inset;
 }
 
-.destination4, .destination12 {
-    background-image: linear-gradient(to bottom, var(--marker-clear), var(--marker-clear), var(--marker-clear), var(--piece-dest-col), var(--marker-clear), var(--marker-clear), var(--marker-clear));
+.destination::before,
+.destination::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    transform: rotate(calc(var(--bearing, 0) * 22.5deg + var(--marker-flip, 0deg)));
+    mask: var(--marker-edge) center / 100% 100% no-repeat;
+    background-color: #000a;
 }
 
-.destination6, .destination14 {
-    background-image: linear-gradient(to top right, var(--marker-clear), var(--marker-clear), var(--marker-clear), var(--piece-dest-col), var(--marker-clear), var(--marker-clear), var(--marker-clear));
-}
-
-.destination8, .destination16 {
-    background-image: linear-gradient(to right, var(--marker-clear), var(--marker-clear), var(--marker-clear), var(--piece-dest-col), var(--marker-clear), var(--marker-clear), var(--marker-clear));
+.destination::after {
+    mask-image: var(--marker);
+    background-color: var(--marker-col);
 }
 
 

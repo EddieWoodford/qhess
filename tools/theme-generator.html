@@ -219,24 +219,38 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
 .checkKing { box-shadow: 0 0 0 6px var(--piece-checkKing-col) inset; }
 .checkAttacker { box-shadow: 0 0 0 6px var(--piece-checkAttacker-col) inset; }
 
-.destination1, .destination2, .destination4, .destination6, .destination8 {
-    box-shadow: 0 0 0 3px var(--piece-dest-col) inset;
+/* Move markers (style.css 7.3): a chevron the way the piece moves, a dot for a knight's hop; captures in their colour */
+:root {
+    --marker-chevron: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M36 62 L50 40 L64 62' fill='none' stroke='black' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    --marker-chevron-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M36 62 L50 40 L64 62' fill='none' stroke='black' stroke-width='17' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    --marker-dot: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='12'/></svg>");
+    --marker-dot-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='16'/></svg>");
 }
-.destination1 {
-    background-image: radial-gradient(transparent, transparent, var(--piece-dest-col), transparent, transparent, transparent);
+.destination {
+    position: relative;
+    --marker: var(--marker-chevron);
+    --marker-edge: var(--marker-chevron-edge);
+    --marker-col: var(--piece-dest-col);
 }
-.destination2 {
-    background-image: linear-gradient(to bottom right, transparent, transparent, transparent, var(--piece-dest-col), transparent, transparent, transparent);
+.destination1 { --marker: var(--marker-dot); --marker-edge: var(--marker-dot-edge); }
+.destination2 { --bearing: 2; }
+.destination4 { --bearing: 4; }
+.destination8 { --bearing: 8; }
+.destination12 { --bearing: 12; }
+.destinationCapture {
+    --marker-col: var(--piece-capture-col);
+    box-shadow: 0 0 0 3px var(--piece-capture-col) inset;
 }
-.destination4 {
-    background-image: linear-gradient(to bottom, transparent, transparent, transparent, var(--piece-dest-col), transparent, transparent, transparent);
+.destination::before, .destination::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    transform: rotate(calc(var(--bearing, 0) * 22.5deg));
+    mask: var(--marker-edge) center / 100% 100% no-repeat;
+    background-color: #000a;
 }
-.destination6 {
-    background-image: linear-gradient(to top right, transparent, transparent, transparent, var(--piece-dest-col), transparent, transparent, transparent);
-}
-.destination8 {
-    background-image: linear-gradient(to right, transparent, transparent, transparent, var(--piece-dest-col), transparent, transparent, transparent);
-}
+.destination::after { mask-image: var(--marker); background-color: var(--marker-col); }
 
 .whitepiece, .blackpiece, .whitepiececollapsed, .blackpiececollapsed {
     display: grid;
@@ -412,6 +426,7 @@ const COLOURS = [
     { group: "Highlights" },
     { key: "select", var: "--piece-selectedStart-col", name: "Side to move, chosen", def: "#3fd6e8" },
     { key: "dest", var: "--piece-dest-col", name: "Moves", def: "#4f8f5a" },
+    { key: "capture", var: "--piece-capture-col", name: "Captures", def: "#da0b9c" },
     { key: "checkKing", var: "--piece-checkKing-col", name: "King in check", def: "#7a1f1f" },
     { key: "checkAttacker", var: "--piece-checkAttacker-col", name: "Checking piece", def: "#5a8fb5" },
 ].filter(Boolean);
@@ -421,7 +436,7 @@ const ENTRIES = COLOURS.reduce((list, c) => {
     return list;
 }, []);
 const TYPES = ["K", "Q", "R", "B", "N", "P"];
-const HIGHLIGHTS = ["select", "dest", "checkKing", "checkAttacker"];
+const HIGHLIGHTS = ["select", "dest", "capture", "checkKing", "checkAttacker"];
 const STORE = "qhess.themeGenerator";
 
 const state = { colours: {}, locked: {} };
@@ -569,7 +584,7 @@ function checks(c) {
 }
 
 // Colour-blind safe only: colours that mean different things, which must still look different with each kind of
-// colour blindness: each side's six types (Distinct), and the four highlights.
+// colour blindness: each side's six types (Distinct), and the five highlights.
 // { a, b: the two colours' keys, value: how different they look, target, vision }
 function apartChecks(c) {
     if (!cvdOn()) { return []; }
@@ -704,13 +719,13 @@ function candidate() {
         pick("bSide", () => fit(bSideHue, bSat, "b", TARGET.side + 0.3, c.wSide, apart));
     }
 
-    // Highlights keep their meaning: check is red, moves green, the checking piece blue to violet; the side to
-    // move's colour is outside those three (amber to yellow, cyan, or magenta), as far from the squares' hue as it
+    // Highlights keep their meaning: check is red, moves green, captures magenta, the checking piece blue to violet;
+    // the side to move's colour is outside those four (amber to yellow, or cyan), as far from the squares' hue as it
     // can be. Each lightness is the one that stands out best from the squares and the boxes together (in Simple
     // mode just the squares).
     const against = simple ? [c.light, c.dark] : [c.light, c.dark, c.wbox, c.bbox];
     const hueGap = (a, b) => { const d = Math.abs(((a - b) % 360 + 360) % 360); return Math.min(d, 360 - d); };
-    const selectHues = [[35, 65], [172, 192], [290, 325]].flatMap(([lo, hi]) => [rnd(lo, hi), rnd(lo, hi)]);
+    const selectHues = [[35, 65], [172, 192]].flatMap(([lo, hi]) => [rnd(lo, hi), rnd(lo, hi)]);
     const selectHue = selectHues.reduce((a, b) => hueGap(b, light.h) > hueGap(a, light.h) ? b : a);
     // Colour-blind safe: of the lightnesses that stand out well enough as every kind of vision sees them, the one
     // that looks most different from the highlights already chosen (check and moves first: red and green are the
@@ -726,7 +741,8 @@ function candidate() {
     pick("checkKing", () => best(rnd(-12, 12), rnd(0.6, 0.9), 0.2 - wide, 0.7 + wide * 2));
     pick("dest", () => best(rnd(95, 150), rnd(0.45, 0.85), 0.2 - wide, 0.8 + wide));
     pick("checkAttacker", () => best(rnd(200, 270), rnd(0.45, 0.85), 0.2 - wide, 0.8 + wide));
-    // Colour-blind safe: of its hues, the one that ends up looking most different from the other three
+    pick("capture", () => best(rnd(295, 325), rnd(0.65, 0.95), 0.2 - wide, 0.8 + wide));
+    // Colour-blind safe: of its hues, the one that ends up looking most different from the other four
     pick("select", () => {
         const sat = rnd(0.6, 0.95);
         if (!cvd) { return best(selectHue, sat, 0.2, 0.85); }
@@ -924,14 +940,16 @@ function board(cells) {
 }
 
 const ALL = "KQRBNP";
-// White to move: White's pieces ringed; the chosen rook's moves marked along its file and rank; Black's king
-// in check from a known White queen.
+// The classes of a move marker (board-view.js): bearing 1-16 clockwise from 16 = up, odd = a knight's hop
+const move = (bearing, capture) => "destination destination" + bearing + (capture ? " destinationCapture" : "");
+// White to move: White's pieces ringed; the chosen rook's moves marked along its file and rank, up to a capture;
+// Black's king in check from a known White queen.
 document.getElementById("playBoard").innerHTML = board([
-    [["b", "R"], ["b", "KQRBNP"], ["b", "QB"], ["b", "K", "checkKing"], ["b", "KQRBNP"], ["b", "N"]],
-    [["b", "P"], ["b", "KP"], null, ["b", "P"], ["b", "BNP"], ["b", "P"]],
-    [null, null, [, , "destination8"], null, [, , "potAttacker"], null],
-    [[, , "destination4"], [, , "destination4"], ["w", "R", "selectedStart"], [, , "destination4"], [, , "hovered"], null],
-    [["w", "P", "selectable"], ["w", "KP", "selectable"], [, , "destination16 destination8"], ["w", "Q", "selectable checkAttacker"], ["w", "BNP", "selectable"], ["w", "P", "selectable"]],
+    [["b", "R"], ["b", "KQRBNP"], ["b", "QB", move(16, true)], ["b", "K", "checkKing"], ["b", "KQRBNP"], ["b", "N"]],
+    [["b", "P"], ["b", "KP"], [, , move(16)], ["b", "P"], ["b", "BNP"], ["b", "P"]],
+    [null, null, [, , move(16)], null, [, , "potAttacker"], null],
+    [[, , move(12)], [, , move(12)], ["w", "R", "selectedStart"], [, , move(4)], [, , "hovered"], null],
+    [["w", "P", "selectable"], ["w", "KP", "selectable"], [, , move(8)], ["w", "Q", "selectable checkAttacker"], ["w", "BNP", "selectable"], ["w", "P", "selectable"]],
     [["w", "KQRBNP", "selectable"], ["w", "N", "selectable"], ["w", "B", "selectable"], ["w", "K", "selectable"], ["w", "KQRBNP", "selectable"], ["w", "QR", "selectable"]],
 ]);
 
@@ -951,12 +969,12 @@ const STATES = [
     ["Hover", "hovered", "w", "KQRBNP"],
     ["Chosen piece", "selectedStart", "w", "Q"],
     ["Chosen destination", "selectedEnd", null, ""],
-    ["Move: rook line", "destination4", null, ""],
-    ["Move: rook line", "destination8", null, ""],
-    ["Move: bishop line", "destination2", null, ""],
-    ["Move: bishop line", "destination6", null, ""],
-    ["Move: knight hop", "destination1", null, ""],
-    ["Capture", "destination4", "b", "N"],
+    ["Move: up", move(16), null, ""],
+    ["Move: right", move(4), null, ""],
+    ["Move: diagonal", move(2), null, ""],
+    ["Move: knight hop", move(1), null, ""],
+    ["Capture", move(4, true), "b", "N"],
+    ["Knight capture", move(1, true), "b", "KQRBNP"],
     ["King in check", "checkKing", "b", "K"],
     ["Checking piece", "checkAttacker", "w", "R"],
     ["Could be the king", "potKing", "b", "KQRBNP"],
@@ -1020,6 +1038,7 @@ function exportCss() {
         "    /* Highlights */",
         line("--piece-selectedStart-col", c.select, "side to move, hover, chosen piece"),
         line("--piece-dest-col", c.dest, "moves"),
+        line("--piece-capture-col", c.capture, "moves that take a piece"),
         line("--piece-checkKing-col", c.checkKing, "king in check, could be the king"),
         line("--piece-checkAttacker-col", c.checkAttacker, "checking piece, could be attacking"),
         "}",

@@ -20,7 +20,8 @@ const REQUIRED = [
 	"--glyph-w-bg", "--glyph-b-bg", "--glyph-radius", "--glyph-padding", "--glyph-margin", "--glyph-shadow",
 	"--glyph-line-height", "--uncollapsed-size", "--collapsed-size",
 	...["w", "b"].flatMap(s => "KQRBNP".split("").map(t => "--piece-" + s + t)),
-	"--piece-selectedStart-col", "--piece-dest-col", "--piece-checkKing-col", "--piece-checkAttacker-col",
+	"--piece-selectedStart-col", "--piece-dest-col", "--piece-capture-col", "--piece-checkKing-col",
+	"--piece-checkAttacker-col",
 ];
 
 for (const file of files) {

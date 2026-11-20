@@ -81,6 +81,7 @@ const SETTINGS_CHECKS = {
 	"saved game: reloading carries on": checkReloadKeepsGame,
 	"import: a bad move leaves the game as it was": checkImportChecksFirst,
 	"drag: a dropped piece waits for Submit": checkDragMove,
+	"move markers: direction, knight hops, captures": checkMoveMarkers,
 };
 
 ////////////////////////////////
@@ -579,6 +580,31 @@ async function checkDragMove(ctx) {
 	if (asked) { el("choiceYes").click(); }
 	expect("Answered, the en passant should wait for Submit, is at " + g.ui.state + ", staged '" + el("thismove").textContent + "'",
 		g.ui.state == "showCompleteMove" && el("thismove").textContent.includes("e.p."));
+	return problems;
+}
+
+// The markers on the squares a picked piece can move to (style.css 7.3): a chevron turned to the move's direction,
+// a dot for a knight's hop, and the capture colour where the move takes a piece
+async function checkMoveMarkers(ctx) {
+	const problems = [];
+	const expect = (what, ok) => { if (!ok) { problems.push(what); } };
+	const g = ctx.game;
+	const sq = (r, c) => ctx.win.document.getElementById("square" + r + c);
+	const marker = (r, c) => ctx.win.getComputedStyle(sq(r, c), "::after");
+	g.restoreGameHistory("0b.\n1w. (KQBNRP)e2e4(QRP)\n1b. (KQBNRP)d7d5(QRP)"); // White to move
+	g.showPartialMove([4, 4]); // e4: could be a queen, rook or pawn
+	const has = (r, c, ...cls) => cls.every(x => sq(r, c).classList.contains(x));
+	expect("e5 should have an upright chevron, has '" + sq(3, 4).className + "', turned " + marker(3, 4).transform,
+		has(3, 4, "destination", "destination16") && !has(3, 4, "destinationCapture")
+		&& marker(3, 4).transform == "matrix(1, 0, 0, 1, 0, 0)" && marker(3, 4).maskImage.includes("path"));
+	expect("d5 (a black piece) should be a capture, its chevron turned up-left, has '" + sq(3, 3).className
+		+ "', turned " + marker(3, 3).transform,
+		has(3, 3, "destination", "destination14", "destinationCapture") && marker(3, 3).transform.startsWith("matrix(0.707107, -0.707107"));
+	expect("A capture's marker should be in another colour than a move's, both are " + marker(3, 4).backgroundColor,
+		marker(3, 3).backgroundColor != marker(3, 4).backgroundColor);
+	g.showPartialMove([7, 6]); // g1, which could be a knight
+	expect("A knight's hop (g1 to f3) should be marked with a dot, has '" + sq(5, 5).className + "'",
+		has(5, 5, "destination") && marker(5, 5).maskImage.includes("circle"));
 	return problems;
 }
 

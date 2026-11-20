@@ -4,6 +4,20 @@ Compact notes for whoever works on this next. Tests: `npm test` (node), and the 
 (start_test.bat, or the `qhess` preview in `.claude/launch.json` at /tests/test.html, then Run tests: replays the
 example games against tests/snapshots.json, plus multiplayer and page-feature checks).
 
+## Move markers: chevrons and dots, captures in their own colour (2026-11-20)
+- Replaced the green stripes / rings (style.css 7.3). board-view adds `.destination` + `.destination{1-16}` (the
+  controller's bearing, 16 = up the board) and `.destinationCapture` when an opponent piece is on the square (not
+  en passant). Even bearing: a chevron turned `--bearing` x 22.5deg; odd (knight hop): a dot. Drawn as ::before
+  (dark #000a edge) + ::after (colour), each an SVG mask (`--marker-*` on :root); no ring except on captures (3px
+  `--piece-capture-col`). Black's view: `.board.flipped { --marker-flip: 180deg }` (flipped is a re-layout, not a
+  turn). Shapes as in the old mockup (deleted, tools/move-markers-mockup.html).
+- New theme variable `--piece-capture-col` (in every theme, REQUIRED in themes.test.js): #da0b9c Dark Distinct and
+  eddie1, #ff4fd8 Dark Simple, #c0137a both light themes (best magenta contrast against each theme's squares/boxes).
+- Theme generator: "Captures" picker (default #da0b9c), generated hue 295-325 (magenta); the side-to-move colour no
+  longer uses magenta (amber-yellow or cyan only). Its preview CSS copies the new 7.3; its 14 square states now show
+  up / right / diagonal / knight hop / capture / knight capture.
+- tests/test.html "move markers: direction, knight hops, captures".
+
 ## Drag-and-drop moves (2026-11-20)
 - Press one of the mover's pieces and move 4px (mouse) / 8px (touch): it's dragged (state `dragging`). Over a square
   it can move to, the board shows that move (startMove on a clone of `game`, tried each time the square changes):
@@ -117,10 +131,11 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
 
 ## Theme generator (2026-11-18)
 - `tools/theme-generator.html`: standalone page (works from file:// or the server). A picker + hex field + lock per
-  board colour (squares, border, boxes, 12 piece colours, 2 side colours, 4 highlights), a preview that repeats the
+  board colour (squares, border, boxes, 12 piece colours, 2 side colours, 5 highlights), a preview that repeats the
   board CSS of style.css 7.1-7.4 (keep in step if those change), contrast numbers per colour, Generate (best of up
   to 400 random candidates scored against contrast targets; locked colours kept, others fitted to them; highlight
-  hues kept to their meanings: check red, moves green, attacker blue-violet, side-to-move elsewhere).
+  hues kept to their meanings: check red, moves green, captures magenta, attacker blue-violet, side-to-move amber or
+  cyan).
 - Export writes a theme file (named from the theme name). Part of the theme: the style toggle, **Simple** (one
   colour per side, no boxes, White in outline, as Dark/Light Simple) or **Distinct** (a colour per type, filled
   symbols on boxes) - colour by type and boxes always go together, by the user's choice - and Light page ->
@@ -142,7 +157,7 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
 - Top-bar switch **Colour-blind safe** (saved with the generator's state). When on: every contrast check also runs on
   the colours as seen with protanopia, deuteranopia and tritanopia (the number beside a colour is its worst, its
   title says which vision), plus "look apart" checks (OKLab deltaE x100): each side's six type colours >= 5
-  (Distinct only; types also differ in shape) and the four highlights pairwise >= 8. A report under the pickers
+  (Distinct only; types also differ in shape) and the five highlights pairwise >= 8. A report under the pickers
   lists what isn't met. "View as" toggles (Normal / the three) filter the preview with SVG feColorMatrix filters.
 - `tools/colour-vision.js`: classic script (file:// still works) setting globalThis.ColourVision: Machado 2009
   matrices at full severity on linear RGB (passing dichromacy covers the milder, commoner anomalies), simulate,
@@ -150,7 +165,7 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
 - Generate steering when on: fit uses worst contrast over all visions; each piece type's lightness is chosen
   (greedy, random type order) to look most different from that side's types already chosen while keeping contrast
   (apartFrom); highlights likewise, check and moves first, wider lightness range, and the side-to-move colour tries
-  all six candidate hues. Measured: ~18% of Distinct and ~46% of Simple candidates pass everything at ~25 ms each;
+  candidate hues. Measured (with four highlights, before captures): ~18% of Distinct and ~46% of Simple pass at ~25 ms each;
   Generate stops at the first pass or after 2.5 s (typically 20-150 ms). Off: unchanged.
 - Not covered: achromatopsia (total colour blindness, very rare).
 
@@ -163,17 +178,6 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
   The repo's index.html is never stamped. Needs Settings > Pages > Source = "GitHub Actions" (the user's to set).
 - Left: index.html itself can be up to 10 minutes stale (an old page may then fetch a newly changed module).
   Data (themes/*.css, index.json) is fetched with `cache: "no-store"`.
-
-## Idea, not done: arrow move markers (2026-11-19)
-- `tools/move-markers-mockup.html` (from the server) shows every theme's board with the move markers now (style.css
-  7.3: green stripes, rings for knight hops) beside a proposal: a small green `>` per square pointing the direction
-  of motion (rotated by the existing 1-16 bearing), a solid dot for a knight's landing, and captures in another
-  colour (arrow/dot plus a thin ring, as the marker covers the piece). Markers are square ::before (dark edge) and
-  ::after (colour) masked with SVG; no ring on non-captures.
-- Capture colour would be a new theme variable `--piece-capture-col` (mockup: magenta `#ff4fd8` dark, `#c0137a`
-  light; orange clashes with several themes' pieces, red means check). Needs: the theme files, REQUIRED in
-  themes.test.js, the generator, and controller/board-view marking which destinations capture.
-- The user asked to park it, not to build it yet.
 
 ## Board highlight colour (2026-11-17)
 - `--piece-selectedStart-col` (side-to-move ring, hover, chosen start) is cyan `#3fd6e8` in the dark themes and teal

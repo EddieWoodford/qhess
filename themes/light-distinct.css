@@ -41,6 +41,7 @@
     /* Highlights */
     --piece-selectedStart-col: #0b8a9e;     /* side to move, hover, chosen piece */
     --piece-dest-col: #4f8f5a;              /* moves */
+    --piece-capture-col: #c0137a;           /* moves that take a piece */
     --piece-checkKing-col: #7a1f1f;         /* king in check, could be the king */
     --piece-checkAttacker-col: #5a8fb5;     /* checking piece, could be attacking */
 }
