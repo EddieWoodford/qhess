@@ -703,8 +703,8 @@ input:checked + .tabTitle {
     min-height: var(--button-height);
 }
 
-/* Hint Level, in the Settings tab: a row of four buttons, the chosen one in the
-   accent colour */
+/* Hint Level, in the Settings tab: four buttons in two rows of two (one row
+   squeezed the labels), the chosen one in the accent colour */
 .setting-choice {
     display: flex;
     flex-direction: column;
@@ -715,7 +715,7 @@ input:checked + .tabTitle {
 
 .hint-levels {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.4em;
     margin-top: 0.5em;
 }
