@@ -218,8 +218,9 @@ function squareAt(x, y) {
 ////////////////////////////////
 // The move arrow
 ////////////////////////////////
-// An arrow over the board (style.css 7.9) from the centre of one square towards the centre of another, drawn in an
-// SVG laid over the 64 squares with a square as its unit, in White's view (the CSS turns it for Black's).
+// An arrow over the board (style.css 7.9) from the centre of one square to the centre of another: a line with a
+// two-stroke head, drawn twice (a dark edge under a light line) in an SVG laid over the 64 squares with a square as
+// its unit, in White's view (the CSS turns it for Black's).
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -231,20 +232,26 @@ function drawArrow(move) {
 		svg.setAttribute("class", "move-arrow");
 		svg.setAttribute("viewBox", "0 0 8 8");
 		svg.setAttribute("aria-hidden", "true");
-		svg.append(document.createElementNS(SVG_NS, "path"));
+		for (const part of ["arrow-edge", "arrow-line"]) {
+			const path = document.createElementNS(SVG_NS, "path");
+			path.setAttribute("class", part);
+			svg.append(path);
+		}
 		dom.board.append(svg);
 	}
-	const path = svg.firstChild;
-	if (move) {
-		path.setAttribute("d", arrowOutline(move[0], move[1]));
-	} else {
-		path.removeAttribute("d");
+	for (const path of svg.children) {
+		if (move) {
+			path.setAttribute("d", arrowPath(move[0], move[1]));
+		} else {
+			path.removeAttribute("d");
+		}
 	}
 }
 
-// The outline of an arrow from square `from` to square `to` (each [r, c]), as SVG path data in square units
-function arrowOutline(from, to) {
-	const SHAFT = 0.06, HEAD = 0.2, HEAD_LENGTH = 0.32, TAIL_GAP = 0.12; // half-widths and lengths, in squares
+// An arrow from square `from` to square `to` (each [r, c]) as SVG path data in square units: the line from the tail
+// to the tip, then the head's two strokes back from the tip
+function arrowPath(from, to) {
+	const HEAD_LENGTH = 0.22, HEAD_HALF_WIDTH = 0.13, TAIL_GAP = 0.12; // in squares
 	const [x0, y0] = [from[1] + 0.5, from[0] + 0.5];
 	const [x1, y1] = [to[1] + 0.5, to[0] + 0.5];
 	const length = Math.hypot(x1 - x0, y1 - y0);
@@ -255,8 +262,8 @@ function arrowOutline(from, to) {
 		return x.toFixed(3) + " " + y.toFixed(3);
 	};
 	const base = length - HEAD_LENGTH;
-	return "M" + [at(TAIL_GAP, SHAFT), at(base, SHAFT), at(base, HEAD), at(length, 0), at(base, -HEAD),
-		at(base, -SHAFT), at(TAIL_GAP, -SHAFT)].join(" L") + " Z";
+	return "M" + at(TAIL_GAP, 0) + " L" + at(length, 0)
+		+ " M" + at(base, HEAD_HALF_WIDTH) + " L" + at(length, 0) + " L" + at(base, -HEAD_HALF_WIDTH);
 }
 
 // The types a piece could be at the start of the turn (before: that state) that the move being made has ruled out,

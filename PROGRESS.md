@@ -5,7 +5,8 @@ Compact notes for whoever works on this next. Tests: `npm test` (node), and the 
 example games against tests/snapshots.json, plus multiplayer and page-feature checks).
 
 ## Move arrow (2026-11-20)
-- A light arrow (white, 0.85 opacity, 1px black outline) over the board: the move being made once it has a
+- A light line arrow over the board (the user wanted a single line, not a wide arrow): a 2px white line with a
+  two-stroke head on a 4px black one (`.arrow-line` over `.arrow-edge`, the same path). It shows the move being made once it has a
   destination (staged, or a dragged piece over a legal square), otherwise the last move played (`ui.lastStart` /
   `lastEnd`: the opponent's, or your own after Submit; the ply shown while replaying). None at a new game or move 0.
 - controller draw passes `arrow`; board-view drawArrow keeps one `<svg class="move-arrow">` (viewBox 8 x 8, a square

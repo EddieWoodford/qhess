@@ -616,8 +616,8 @@ async function checkMoveArrow(ctx) {
 	const expect = (what, ok) => { if (!ok) { problems.push(what); } };
 	const g = ctx.game;
 	const outline = () => ctx.win.document.querySelector("#board .move-arrow path")?.getAttribute("d") ?? null;
-	// The arrow's tip, "x y" in squares from the top left of White's view: the fourth point of its outline
-	const tip = () => outline()?.match(/[\d.]+ [\d.]+/g)[3] ?? "none";
+	// The arrow's tip, "x y" in squares from the top left of White's view: the end of its line, the second point
+	const tip = () => outline()?.match(/[\d.]+ [\d.]+/g)[1] ?? "none";
 	g.setup();
 	expect("A new game should have no arrow, has '" + outline() + "'", outline() === null);
 	g.restoreGameHistory("0b.\n1w. (KQBNRP)e2e4(QRP)\n1b. (KQBNRP)d7d5(QRP)");
