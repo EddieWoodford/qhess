@@ -210,6 +210,22 @@ function setHintLevel(level) {
 	if (squares) { draw(); }
 }
 
+// Multiplayer: a Hint Level button asks the opponent to change the game to that level. The game's own level withdraws
+// this player's request, if one is open.
+function requestHintLevel(level) {
+	if (!isMultiplayer()) { return; }
+	if (level == ui.multiplayer.hintLevel) {
+		if (ui.multiplayer.hintRequest?.mine) { session.cancelHintLevel(); }
+		return;
+	}
+	const result = session.requestHintLevel(level);
+	if (!result.ok) { debugPrint(result.error); }
+}
+
+function cancelHintLevel() {
+	if (isMultiplayer()) { session.cancelHintLevel(); }
+}
+
 // The Settings tab's Potential Check switch changed. Takes effect straight away.
 function setPotentialCheckRule(on) {
 	ui.potentialCheck = on;
@@ -255,6 +271,8 @@ function sideButton1Click() {
 		} else {
 			session.answerRewind(true);
 		}
+	} else if (ui.multiplayer?.hintRequest && !ui.multiplayer.hintRequest.mine) {
+		session.answerHintLevel(true); // 'Agree' to the opponent's hint level change
 	} else if (ui.replay > -1 && isMultiplayer()) {
 		// In a multiplayer game, 'Resume from here' asks the opponent to rewind the game to the position shown
 		const result = session.requestRewind(2 * ui.replay);
@@ -283,6 +301,10 @@ function sideButton2Click() {
 	if (ui.tour) {return}
 	if (ui.multiplayer?.rewind && !ui.multiplayer.rewind.mine) {
 		session.answerRewind(false); // 'Decline'
+		return;
+	}
+	if (!ui.multiplayer?.rewind && ui.multiplayer?.hintRequest && !ui.multiplayer.hintRequest.mine) {
+		session.answerHintLevel(false); // 'Decline' the opponent's hint level change
 		return;
 	}
 	if (ui.replay > -1 && isMultiplayer()) {
@@ -1254,6 +1276,8 @@ export {
 	newGame,
 	setPotentialCheckRule,
 	setHintLevel,
+	requestHintLevel,
+	cancelHintLevel,
 	sideButton1Click,
 	sideButton2Click,
 	stepBackAll,

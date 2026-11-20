@@ -361,6 +361,63 @@ test("a rewind request still open is shown again to a player who resumes", async
 	assert.deepEqual(await back.next("rewind"), { type: "rewind", keep: 1, by: "w" });
 });
 
+////////////////////////////////
+// Changing the hint level
+////////////////////////////////
+
+test("a hint level change the opponent agrees to is the game's from then on, for both", async () => {
+	const { lines } = games[0];
+	const players = await newGame("w");
+	await playLine(players, lines, 0);
+	for (const level of ["captures", "lots", undefined]) { // already the level, or not one
+		assert.equal((await players.w.request({ type: "hintLevel", level }, "error")).code, "bad_request");
+	}
+	players.w.send({ type: "hintLevel", level: "none" });
+	for (const p of [players.w, players.b]) {
+		assert.deepEqual(await p.next("hintLevelAsked"), { type: "hintLevelAsked", level: "none", by: "w" });
+	}
+	// A move doesn't end it (it isn't about the position)
+	await playLine(players, lines, 1);
+	players.w.send({ type: "hintLevelAnswer", agree: true }); // the asker can't answer their own
+	players.b.send({ type: "hintLevelAnswer", agree: true });
+	for (const p of [players.w, players.b]) {
+		assert.deepEqual(await p.next("hintLevelEnded"), { type: "hintLevelEnded", level: "none", by: "w", result: "agreed" });
+	}
+	assert.equal(players.w.inbox.filter(m => m.type == "hintLevelEnded").length, 0, "ended once");
+	const back = await client("white again");
+	players.w.kill();
+	assert.equal((await back.request({ type: "resume", code: players.code, token: players.w.token }, "welcome")).hintLevel, "none");
+});
+
+test("a hint level change can be declined or withdrawn, and is asked again of a player who resumes", async () => {
+	const players = await newGame("b");
+	const ended = async result => {
+		for (const p of [players.w, players.b]) { assert.equal((await p.next("hintLevelEnded")).result, result); }
+	};
+	players.b.send({ type: "hintLevel", level: "moves" });
+	players.w.send({ type: "hintLevelAnswer", agree: false });
+	await ended("declined");
+	players.b.send({ type: "hintLevel", level: "moves" });
+	players.w.send({ type: "hintLevelCancel" }); // only the asker can withdraw it
+	players.b.send({ type: "hintLevelCancel" });
+	await ended("cancelled");
+	players.b.send({ type: "hintLevel", level: "collapses" });
+	await players.w.next("hintLevelAsked");
+	players.w.kill();
+	const back = await client("white again");
+	const welcome = await back.request({ type: "resume", code: players.code, token: players.w.token }, "welcome");
+	assert.equal(welcome.hintLevel, "captures", "not changed yet");
+	assert.deepEqual(await back.next("hintLevelAsked"), { type: "hintLevelAsked", level: "collapses", by: "b" });
+});
+
+test("before anyone has joined, the creator's hint level change just applies", async () => {
+	const creator = await client("early");
+	const { code } = await creator.request({ type: "create", color: "w", hintLevel: "moves" }, "welcome");
+	creator.send({ type: "hintLevel", level: "none" });
+	assert.equal((await creator.next("hintLevelEnded")).result, "agreed");
+	assert.equal((await (await client("late")).request({ type: "join", code }, "welcome")).hintLevel, "none");
+});
+
 test("a game nobody is connected to is closed after a while", async () => {
 	const players = await newGame("w");
 	const { code, token } = players.w;

@@ -63,6 +63,9 @@ const dom = {
 		potentialCheck: $("settingPotentialCheck"),
 		showCoords: $("settingShowCoords"),
 		hintLevel: $("settingHintLevel"), // the Hint Level buttons (data-value: protocol.js HINT_LEVELS)
+		hintRequest: $("hintRequest"),    // ... and under them, an open request to change a multiplayer game's level
+		hintRequestText: $("hintRequestText"),
+		hintWithdraw: $("hintWithdraw"),
 		theme: $("themeList"), // the Settings tab's theme buttons, one per theme (themes.js buildThemeList)
 	},
 

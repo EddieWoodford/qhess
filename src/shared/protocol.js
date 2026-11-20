@@ -21,6 +21,10 @@
 //                                                     moves (0 <= keep < moves played). Replaces any request.
 //   { type: "rewindAnswer", agree }                   answer the opponent's rewind request (true / false)
 //   { type: "rewindCancel" }                          withdraw your own rewind request
+//   { type: "hintLevel", level }                      ask the opponent to play on at another hint level (HINT_LEVELS).
+//                                                     Replaces any request. Before anyone has joined it just applies.
+//   { type: "hintLevelAnswer", agree }                answer the opponent's hint level request (true / false)
+//   { type: "hintLevelCancel" }                       withdraw your own hint level request
 //   { type: "leave" }                                 leave the game (the other player is told)
 //   { type: "ping" }                                  keep-alive; the server answers "pong"
 //
@@ -37,6 +41,9 @@
 //   { type: "rewind", keep, by }       a rewind is asked for by colour `by` (to both players; sent again on resume)
 //   { type: "rewindEnded", keep, by, result }   the rewind request is over (REWIND). On "agreed" a "sync"
 //                                      with the shortened move list comes just before it.
+//   { type: "hintLevelAsked", level, by }   colour `by` asks to change the hint level (to both; sent again on resume)
+//   { type: "hintLevelEnded", level, by, result }   the hint level request is over (HINT_CHANGE). On "agreed" the
+//                                      game's hint level is now `level`.
 //   { type: "opponent", status }       the other player's connection changed (OPPONENT)
 //   { type: "ended", reason }          the game is over and closed (ENDED)
 //   { type: "error", code, message }   a request failed (ERRORS)
@@ -75,6 +82,13 @@ const REWIND = {
 //   captures   everything
 const HINT_LEVELS = ["none", "collapses", "moves", "captures"];
 
+// hintLevelEnded result
+const HINT_CHANGE = {
+	AGREED: "agreed",
+	DECLINED: "declined",
+	CANCELLED: "cancelled",       // the asker withdrew it
+};
+
 // error code
 const ERRORS = {
 	BAD_REQUEST: "bad_request",
@@ -94,4 +108,4 @@ function normalizeCode(text) {
 	return m ? m[1] + "-" + m[2] : null;
 }
 
-export { PROTOCOL_VERSION, SOCKET_PATH, OPPONENT, ENDED, REWIND, ERRORS, HINT_LEVELS, normalizeCode };
+export { PROTOCOL_VERSION, SOCKET_PATH, OPPONENT, ENDED, REWIND, ERRORS, HINT_LEVELS, HINT_CHANGE, normalizeCode };

@@ -9,7 +9,7 @@ import { createInitialState, cloneState } from "../src/engine/state.js";
 import { applyMove } from "../src/engine/game.js";
 import { isSquare } from "../src/engine/utils.js";
 import { positionHash } from "../src/engine/position-hash.js";
-import { OPPONENT, ENDED, REWIND, ERRORS, HINT_LEVELS, normalizeCode } from "../src/shared/protocol.js";
+import { OPPONENT, ENDED, REWIND, ERRORS, HINT_LEVELS, HINT_CHANGE, normalizeCode } from "../src/shared/protocol.js";
 import { randomCode } from "./codes.js";
 import { MemoryGameStore } from "./store.js";
 
@@ -57,8 +57,9 @@ class GameServer {
 		this.random = options.random ?? Math.random;
 		this.log = options.log ?? (() => {});
 		// The games being played, by code: { record (see store.js), state (engine state), conns: { w, b },
-		// emptyTimer, rewind }. The record is saved to the store after every change. rewind: the open rewind
-		// request, { keep, by }, or null (not saved: a server restart forgets it).
+		// emptyTimer, rewind, hintRequest }. The record is saved to the store after every change. rewind: the open
+		// rewind request, { keep, by }, or null; hintRequest: the open hint level request, { level, by }, or null
+		// (neither is saved: a server restart forgets them).
 		this.rooms = new Map();
 		// Which game and seat each connection is in: conn -> { room, color }
 		this.seats = new Map();
@@ -109,6 +110,9 @@ class GameServer {
 			case "rewind": return this.askRewind(conn, message);
 			case "rewindAnswer": return this.answerRewind(conn, message);
 			case "rewindCancel": return this.cancelRewind(conn);
+			case "hintLevel": return this.askHintLevel(conn, message);
+			case "hintLevelAnswer": return this.answerHintLevel(conn, message);
+			case "hintLevelCancel": return this.cancelHintLevel(conn);
 			case "leave": return this.leave(conn);
 			case "ping": return send(conn, { type: "pong" });
 			default: return this.error(conn, ERRORS.BAD_REQUEST, "unknown message type");
@@ -322,6 +326,59 @@ class GameServer {
 		this.broadcast(room, message);
 	}
 
+	////////////////////////////////
+	// Changing the hint level: one player asks, the other agrees or not (like rewinding, but moves don't end it)
+	////////////////////////////////
+
+	async askHintLevel(conn, { level }) {
+		const seat = this.seats.get(conn);
+		if (!seat) {
+			return this.error(conn, ERRORS.NOT_IN_GAME, "You're not in a game");
+		}
+		const { room, color } = seat;
+		if (!HINT_LEVELS.includes(level)) {
+			return this.error(conn, ERRORS.BAD_REQUEST, "level must be one of " + HINT_LEVELS.join(", "));
+		}
+		if (level == (room.record.hintLevel ?? "captures")) {
+			return this.error(conn, ERRORS.BAD_REQUEST, "The game is already at that hint level");
+		}
+		room.hintRequest = { level, by: color };
+		if (room.record.seats[other(color)] === null) {
+			return this.endHintLevel(room, HINT_CHANGE.AGREED); // nobody to ask yet
+		}
+		this.broadcast(room, { type: "hintLevelAsked", ...room.hintRequest });
+	}
+
+	async answerHintLevel(conn, { agree }) {
+		const seat = this.seats.get(conn);
+		if (!seat) {
+			return this.error(conn, ERRORS.NOT_IN_GAME, "You're not in a game");
+		}
+		const { room, color } = seat;
+		if (!room.hintRequest || room.hintRequest.by == color) { return; } // nothing to answer (it may just have ended)
+		await this.endHintLevel(room, agree === true ? HINT_CHANGE.AGREED : HINT_CHANGE.DECLINED);
+	}
+
+	cancelHintLevel(conn) {
+		const seat = this.seats.get(conn);
+		if (seat?.room.hintRequest?.by == seat?.color) {
+			this.endHintLevel(seat.room, HINT_CHANGE.CANCELLED);
+		}
+	}
+
+	// Close the room's hint level request, if it has one (applying it if agreed), telling both players
+	async endHintLevel(room, result) {
+		if (!room.hintRequest) { return; }
+		const message = { type: "hintLevelEnded", ...room.hintRequest, result };
+		room.hintRequest = null;
+		if (result == HINT_CHANGE.AGREED) {
+			room.record.hintLevel = message.level;
+			await this.save(room);
+			this.log("Game " + room.record.code + ": hint level now " + message.level);
+		}
+		this.broadcast(room, message);
+	}
+
 	// Leave the game conn is in, if any: the game is closed, and the other player told
 	async leave(conn) {
 		const seat = this.seats.get(conn);
@@ -340,7 +397,7 @@ class GameServer {
 	////////////////////////////////
 
 	addRoom(record, state) {
-		const room = { record, state, conns: { w: null, b: null }, emptyTimer: null, rewind: null };
+		const room = { record, state, conns: { w: null, b: null }, emptyTimer: null, rewind: null, hintRequest: null };
 		this.rooms.set(record.code, room);
 		return room;
 	}
@@ -406,6 +463,9 @@ class GameServer {
 		}
 		if (room.rewind) {
 			send(conn, { type: "rewind", ...room.rewind });
+		}
+		if (room.hintRequest) {
+			send(conn, { type: "hintLevelAsked", ...room.hintRequest });
 		}
 	}
 

@@ -10,7 +10,7 @@
 // and dom.js finds the page's elements for them.
 
 import { drawBoard } from "./board-view.js";
-import { drawStatus } from "./status-view.js";
+import { drawStatus, HINT_NAMES } from "./status-view.js";
 import { drawHistory } from "./history-view.js";
 import { drawPanels } from "./panels-view.js";
 import { drawMultiplayer } from "./multiplayer-view.js";
@@ -54,20 +54,30 @@ function render(view) {
 
 // The Settings tab's Potential Check switch: a multiplayer game always uses the rule, so the switch shows it on
 // and can't be changed until the game is over. It shows the player's own choice again afterwards.
-// The Hint Level buttons likewise show a multiplayer game's level (or the demo's), locked.
+// The Hint Level buttons likewise show a multiplayer game's level (or the demo's).
 // The Black's view switch: a multiplayer game shows the player's own side at the bottom, so it can't be changed either.
 function drawSettings(view) {
 	const input = dom.settings.potentialCheck;
 	input.disabled = view.multiplayer !== null;
 	input.checked = view.multiplayer !== null ? true : view.pcSetting;
 	dom.settings.blackView.disabled = view.multiplayer !== null;
-	// Hint Level: the level in use, which in a multiplayer game is its creator's (and the demo's is every hint),
-	// and then it can't be changed. Otherwise the player's own (settings.js has already shown it).
-	const locked = view.multiplayer !== null || view.tour;
+	// Hint Level: the level in use, which in a multiplayer game is the game's (and the demo's is every hint).
+	// Otherwise the player's own (settings.js has already shown it). The demo's can't be changed, nor a multiplayer
+	// game's while not connected to it; while connected a button asks the opponent (controller.js requestHintLevel),
+	// and the request shows under the buttons, with Withdraw for this player's own.
+	const mp = view.multiplayer;
+	const request = mp?.hintRequest ?? null;
+	const locked = view.tour || (mp !== null && (mp.phase != "playing" || mp.connection != "connected"));
 	for (const button of dom.settings.hintLevel.querySelectorAll("[data-value]")) {
 		button.disabled = locked;
 		button.setAttribute("aria-pressed", button.dataset.value == view.hintLevel);
+		button.classList.toggle("hint-asked", request?.mine === true && button.dataset.value == request.level);
 	}
+	dom.settings.hintRequest.hidden = request === null;
+	dom.settings.hintWithdraw.hidden = !request?.mine;
+	dom.settings.hintRequestText.textContent = request === null ? ""
+		: request.mine ? "Asked your opponent to change to " + HINT_NAMES[request.level] + ". Waiting for their answer."
+		: "Your opponent asks to change to " + HINT_NAMES[request.level] + ": answer under the board.";
 }
 
 // Show a message just above the status bar for a few seconds (style.css hides the element while it is empty)

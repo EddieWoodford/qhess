@@ -227,6 +227,28 @@ test("a rewind: asked by one session, shown to the other, agreed, and both go ba
 	await play(players, lines, 2);
 });
 
+test("a hint level change: asked by one session, agreed by the other, and both play at it", async () => {
+	const players = await newGame("w", "moves");
+	const ended = { w: [], b: [] };
+	players.w.onEvent(e => { if (e.type == "hintLevelEnded") { ended.w.push(e); } });
+	players.b.onEvent(e => { if (e.type == "hintLevelEnded") { ended.b.push(e); } });
+	assert.equal(players.w.requestHintLevel("moves").ok, false, "already the level");
+	assert.deepEqual(players.w.requestHintLevel("captures"), { ok: true });
+	await waitFor("the request", () => players.w.info().hintRequest && players.b.info().hintRequest);
+	assert.deepEqual(players.b.info().hintRequest, { level: "captures", mine: false });
+	assert.deepEqual(players.w.info().hintRequest, { level: "captures", mine: true });
+	players.b.answerHintLevel(false);
+	await waitFor("the answer", () => !players.w.info().hintRequest);
+	assert.ok(players.w.errors.some(e => /didn't agree/.test(e.message)));
+	assert.equal(players.w.info().hintLevel, "moves");
+	players.b.requestHintLevel("none");
+	await waitFor("the request", () => players.w.info().hintRequest);
+	players.w.answerHintLevel(true);
+	await waitFor("the change", () => players.w.info().hintLevel == "none" && players.b.info().hintLevel == "none");
+	assert.deepEqual(ended.b.at(-1), { type: "hintLevelEnded", result: "agreed", mine: true, level: "none" });
+	assert.equal(players.b.info().hintRequest, null);
+});
+
 test("a declined rewind leaves the game as it was", async () => {
 	const { lines } = games[0];
 	const players = await newGame("b");

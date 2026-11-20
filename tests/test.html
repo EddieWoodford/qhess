@@ -86,7 +86,7 @@ const SETTINGS_CHECKS = {
 	"demo: the coordinates always show": checkDemoShowsCoords,
 	"demo: no Surrender between its moves": checkDemoNoSurrender,
 	"hint level: what each level shows before Submit": checkHintLevels,
-	"hint level: a multiplayer game plays at its creator's": checkMultiplayerHintLevel,
+	"hint level: a multiplayer game plays at its creator's, changed if the opponent agrees": checkMultiplayerHintLevel,
 };
 
 ////////////////////////////////
@@ -679,7 +679,8 @@ async function checkHintLevels(ctx) {
 }
 
 // A multiplayer game plays at the hint level of the page that created it: the joining page shows that level in its
-// Settings tab, can't change it, and gets that level's hints. Leaving the game gives the player's own level back.
+// Settings tab and gets that level's hints. A Hint Level button asks the opponent, who agrees or declines from the
+// status bar; the asker can withdraw. Leaving the game gives the player's own level back.
 async function checkMultiplayerHintLevel() {
 	const problems = [];
 	const expect = (what, ok) => { if (!ok) { problems.push(what); } };
@@ -695,14 +696,40 @@ async function checkMultiplayerHintLevel() {
 	for (const [name, page] of [["creating", a], ["joining", b]]) {
 		expect("The " + name + " page should play at Moves, is at " + multiplayerInfo(page).hintLevel + ", shows " + pressed(page),
 			multiplayerInfo(page).hintLevel == "moves" && pressed(page) == "moves");
-		expect("The " + name + " page's Hint Level shouldn't be changeable", buttons(page).every(x => x.disabled));
 	}
 	await until("Black's move 0", () => turnStep(a) == "move0");
 	a.game.sideButton2Action(); // Black passes move 0
 	await until("White's turn", () => turnStep(b) == "clear");
 	b.game.showPartialMove([6, 4]);
-	expect("The joining page should mark the moves (Moves level), marks " + b.win.document.querySelectorAll("#board .destination").length,
-		b.win.document.querySelectorAll("#board .destination").length > 0);
+	const marks = () => b.win.document.querySelectorAll("#board .destination").length;
+	expect("The joining page should mark the moves (Moves level), marks " + marks(), marks() > 0);
+
+	// White (b) asks for None: Black (a) is asked under the board; White keeps its move and sees its request
+	const el = (page, id) => page.win.document.getElementById(id);
+	const button = (page, level) => page.win.document.querySelector("#settingHintLevel [data-value=" + level + "]");
+	button(b, "none").click();
+	await until("Black to be asked", () => multiplayerInfo(a).hintRequest);
+	expect("Black should be asked to Agree or Decline, prompt '" + el(a, "prompt").textContent + "', buttons "
+		+ el(a, "sideButton1").innerText + " / " + el(a, "sideButton2").innerText,
+		el(a, "prompt").textContent.includes("change the hint level to None") && el(a, "sideButton1").innerText == "Agree"
+		&& el(a, "sideButton2").innerText == "Decline");
+	expect("White should see its request (the asked level marked, Withdraw shown), still playing at Moves",
+		button(b, "none").classList.contains("hint-asked") && !el(b, "hintRequest").hidden && !el(b, "hintWithdraw").hidden
+		&& pressed(b) == "moves" && b.game.ui.state == "showPartialMove");
+	el(b, "hintWithdraw").click();
+	await until("the request to be withdrawn", () => !multiplayerInfo(a).hintRequest);
+	expect("Withdrawn, Black's buttons should be back, are " + el(a, "sideButton1").innerText, el(a, "sideButton1").innerText != "Agree");
+	button(b, "none").click();
+	await until("Black to be asked again", () => multiplayerInfo(a).hintRequest);
+	a.game.sideButton1Click(); // Agree
+	await until("both at None", () => multiplayerInfo(a).hintLevel == "none" && multiplayerInfo(b).hintLevel == "none");
+	expect("Agreed, both pages should show None and White's moves be unmarked: " + pressed(a) + " / " + pressed(b) + ", "
+		+ marks() + " marks", pressed(a) == "none" && pressed(b) == "none" && marks() == 0 && el(b, "hintRequest").hidden);
+	button(a, "captures").click();
+	await until("White to be asked", () => multiplayerInfo(b).hintRequest);
+	b.game.sideButton2Click(); // Decline
+	await until("the answer", () => !multiplayerInfo(a).hintRequest);
+	expect("Declined, the game should stay at None, is at " + multiplayerInfo(a).hintLevel, multiplayerInfo(a).hintLevel == "none");
 	leaveGame(a);
 	await until("the joining page to see the game end", () => multiplayerInfo(b)?.phase == "ended");
 	b.game.backToSinglePlayer();

@@ -19,13 +19,20 @@
 //   requestRewind(keep)   ask the opponent to take the game back to its first keep moves; { ok } or { ok: false, error }
 //   answerRewind(agree)   answer the opponent's rewind request
 //   cancelRewind()        withdraw this player's rewind request
+//   requestHintLevel(level)  ask the opponent to play on at another hint level (applies at once if nobody has
+//                         joined yet); { ok } or { ok: false, error }
+//   answerHintLevel(agree)   answer the opponent's hint level request
+//   cancelHintLevel()     withdraw this player's hint level request
 //   onEvent(listener)     listener(event) for what the page should show:
 //                           { type: "status" }    something in info() changed
 //                           { type: "error", message, fatal }  fatal: the session is over (see info().phase)
 //                           { type: "rewindAsked", keep, mine }  a rewind request was made (mine: by this player)
 //                           { type: "rewindEnded", result, mine }  ... and is over (protocol.js REWIND); on
 //                                                 "agreed" the game has already gone back (onChange)
-//   info()                { phase, code, color, opponent, connection, pending, serverStarting, rewind, hintLevel }
+//                           { type: "hintLevelEnded", result, mine, level }  a hint level request is over
+//                                                 (protocol.js HINT_CHANGE); on "agreed" info().hintLevel is level
+//   info()                { phase, code, color, opponent, connection, pending, serverStarting, rewind, hintLevel,
+//                           hintRequest }
 //                           hintLevel:  the game's hint level (protocol.js HINT_LEVELS), null until in the game
 //                           phase:      "connecting" (first connection, or creating/joining), "playing",
 //                                       "ended" (the game is over or couldn't be joined), "left"
@@ -36,12 +43,13 @@
 //                           endedReason: why phase is "ended" (protocol.js ENDED / ERRORS code)
 //                           rewind:     the open rewind request, { keep, mine, undo } (undo: how many moves it
 //                                       takes back), or null
+//                           hintRequest: the open hint level request, { level, mine }, or null
 //   pending               the move waiting for the server's answer, or null
 
 import { createInitialState, cloneState } from "../engine/state.js";
 import { applyMove } from "../engine/game.js";
 import { positionHash } from "../engine/position-hash.js";
-import { ERRORS, REWIND } from "../shared/protocol.js";
+import { ERRORS, REWIND, HINT_CHANGE } from "../shared/protocol.js";
 import { socketUrl, usesHostedServer } from "./server-address.js";
 
 const STORAGE_KEY = "qhess.multiplayer";
@@ -104,6 +112,7 @@ class SocketSession {
 		this.endedReason = null;
 		this.pending = null;     // { seq, move }
 		this.rewind = null;      // the open rewind request: { keep, by }
+		this.hintRequest = null; // the open hint level request: { level, by }
 		this.request = null;     // what to send once connected: create / join / resume
 		this.retries = 0;
 		this.timers = {};
@@ -237,6 +246,29 @@ class SocketSession {
 		this.send({ type: "rewindCancel" });
 	}
 
+	////////////////////////////////
+	// Changing the hint level
+	////////////////////////////////
+
+	requestHintLevel(level) {
+		if (this.phase != "playing" || this.connection != "connected") {
+			return { ok: false, error: "Not connected to the game" };
+		}
+		if (level == this.hintLevel) {
+			return { ok: false, error: "The game is already at that hint level" };
+		}
+		this.send({ type: "hintLevel", level });
+		return { ok: true };
+	}
+
+	answerHintLevel(agree) {
+		this.send({ type: "hintLevelAnswer", agree: agree === true });
+	}
+
+	cancelHintLevel() {
+		this.send({ type: "hintLevelCancel" });
+	}
+
 	onEvent(listener) {
 		this.eventListeners.push(listener);
 	}
@@ -257,6 +289,7 @@ class SocketSession {
 				mine: this.rewind.by == this.color,
 				undo: this.moves.length - this.rewind.keep,
 			},
+			hintRequest: this.hintRequest && { level: this.hintRequest.level, mine: this.hintRequest.by == this.color },
 		};
 	}
 
@@ -369,6 +402,8 @@ class SocketSession {
 			case "sync": return this.sync(message.moves);
 			case "rewind": return this.rewindAsked(message);
 			case "rewindEnded": return this.rewindEnded(message);
+			case "hintLevelAsked": return this.hintLevelAsked(message);
+			case "hintLevelEnded": return this.hintLevelEnded(message);
 			case "opponent":
 				this.opponent = message.status;
 				return this.emit({ type: "status" });
@@ -394,6 +429,7 @@ class SocketSession {
 		this.request = { type: "resume", code: this.code, token: this.token };
 		this.saveSeat();
 		this.rewind = null; // the server says again if one is still open
+		this.hintRequest = null; // likewise
 		this.sync(message.moves);
 		// A move sent before the connection dropped: if the server didn't get it, send it again (if it did, the
 		// server just confirms it)
@@ -456,6 +492,28 @@ class SocketSession {
 			[REWIND.DECLINED]: mine ? "Your opponent didn't agree to rewind." : null,
 			[REWIND.CANCELLED]: mine ? null : "Your opponent withdrew the rewind request.",
 			[REWIND.MOVED]: "The rewind request lapsed: a move was played.",
+		}[result];
+		if (message) {
+			this.emit({ type: "error", message, fatal: false });
+		}
+	}
+
+	hintLevelAsked({ level, by }) {
+		this.hintRequest = { level, by };
+		this.emit({ type: "status" });
+	}
+
+	hintLevelEnded({ level, by, result }) {
+		this.hintRequest = null;
+		const mine = by == this.color;
+		if (result == HINT_CHANGE.AGREED) { this.hintLevel = level; }
+		this.emit({ type: "status" });
+		this.emit({ type: "hintLevelEnded", result, mine, level });
+		const name = level[0].toUpperCase() + level.slice(1);
+		const message = {
+			[HINT_CHANGE.AGREED]: this.opponent == "waiting" ? null : "The hint level is now " + name + ".",
+			[HINT_CHANGE.DECLINED]: mine ? "Your opponent didn't agree to change the hint level." : null,
+			[HINT_CHANGE.CANCELLED]: mine ? null : "Your opponent withdrew the hint level request.",
 		}[result];
 		if (message) {
 			this.emit({ type: "error", message, fatal: false });

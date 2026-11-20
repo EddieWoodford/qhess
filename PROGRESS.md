@@ -16,10 +16,20 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
   piece shows no move while hovered (that would show where it can go); dropping still stages it. A click on a
   square it can't reach just puts it back, as before.
 - Multiplayer: `create {color, hintLevel}` (default captures; bad value -> bad_request), kept on the record,
-  sent in every `welcome`; SocketSession info().hintLevel. render.js drawSettings shows the level in use and
-  disables the buttons in a multiplayer game or the demo; the player's own level is back after.
+  sent in every `welcome`; SocketSession info().hintLevel. render.js drawSettings shows the level in use; the
+  player's own level is back after the game.
+- Changing a multiplayer game's level needs the opponent's OK (like rewind): a Hint Level button sends
+  `hintLevel {level}` (main.js catches the click before settings.js, so the player's own setting is untouched);
+  server sends `hintLevelAsked {level, by}` to both (again on resume), then `hintLevelEnded {level, by, result}`
+  (protocol.js HINT_CHANGE: agreed / declined / cancelled; agreed sets record.hintLevel). A new request replaces
+  an open one; moves don't end it; before anyone has joined it applies at once. `hintLevelAnswer {agree}`,
+  `hintLevelCancel` (asker only). SocketSession requestHintLevel / answerHintLevel / cancelHintLevel,
+  info().hintRequest `{level, mine}`.
+- The asked player gets status-view HINT_ASKED (Agree / Decline in the side buttons; a rewind request comes
+  first). The asker plays on; the Settings tab marks the asked level (`.hint-asked`) with a note and Withdraw
+  (clicking the game's current level withdraws too). Buttons are disabled only in the demo or while not connected.
 - Tests: server.test.js / socket-session.test.js; tests/test.html "hint level: what each level shows before
-  Submit" and "hint level: a multiplayer game plays at its creator's".
+  Submit" and "hint level: a multiplayer game plays at its creator's, changed if the opponent agrees".
 
 ## Move arrow (2026-11-20)
 - A light line arrow over the board (the user wanted a single line, not a wide arrow): a 2px white line with a

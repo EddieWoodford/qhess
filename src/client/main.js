@@ -129,6 +129,17 @@ onClick("importLoad", () => {
 });
 onClick("importCancel", () => hideModal("import"));
 
+// Settings tab: in a multiplayer game a Hint Level button asks the opponent instead of changing the player's own
+// setting (caught before settings.js sees the click)
+dom.settings.hintLevel.addEventListener("click", e => {
+	const button = e.target.closest("[data-value]");
+	if (button && game.isMultiplayer()) {
+		e.stopImmediatePropagation();
+		game.requestHintLevel(button.dataset.value);
+	}
+}, true);
+onClick("hintWithdraw", () => game.cancelHintLevel());
+
 // Settings tab: every setting back to its default (the theme follows the device again)
 onClick("settingsReset", () => resetSettings());
 

@@ -128,6 +128,22 @@ const REWIND_WAITING = {
 	button2: ctx => ctx.replaying ? "Back to game" : null,
 };
 
+// The hint levels as the page names them (protocol.js HINT_LEVELS), with what each shows
+const HINT_NAMES = {
+	none: "None (no hints)",
+	collapses: "Collapses (collapses only)",
+	moves: "Moves (collapses and moves)",
+	captures: "Captures (all hints)",
+};
+
+// While the opponent asks to change the hint level (multiplayer only, and no rewind request open), the prompt and
+// buttons are about it. The asker plays on: their request shows in the Settings tab (render.js drawSettings).
+const HINT_ASKED = {
+	prompt: ctx => "Your opponent asks to change the hint level to " + HINT_NAMES[ctx.multiplayer.hintRequest.level] + ". Agree?",
+	button1: "Agree",
+	button2: "Decline",
+};
+
 // The facts about the position that the prompt and buttons depend on.
 // pcRule: whether the player can declare potential checks (the Settings tab's switch; controller.js pcRule).
 function statusContext(game, state, multiplayer, pcRule, drag) {
@@ -203,14 +219,16 @@ function drawStatus(view) {
 	prompt.className = "prompt-who";
 	prompt.textContent = heading;
 	const rewind = view.multiplayer?.rewind;
-	const rewindStep = rewind ? (rewind.mine ? REWIND_WAITING : REWIND_ASKED) : null;
+	const hintRequest = view.multiplayer?.hintRequest;
+	const requestStep = rewind ? (rewind.mine ? REWIND_WAITING : REWIND_ASKED)
+		: hintRequest && !hintRequest.mine ? HINT_ASKED : null;
 	ctx.replaying = view.replayNumber > -1;
 	ctx.tour = view.tour;
-	dom.prompt.replaceChildren(prompt, " — " + value((rewindStep ?? step).prompt));
+	dom.prompt.replaceChildren(prompt, " — " + value((requestStep ?? step).prompt));
 
 	drawMultiplayerBadge(view.multiplayer);
 
-	const buttons = rewindStep ?? (view.replayNumber > -1 ? (view.multiplayer ? REPLAY_MULTIPLAYER : REPLAY) : step);
+	const buttons = requestStep ?? (view.replayNumber > -1 ? (view.multiplayer ? REPLAY_MULTIPLAYER : REPLAY) : step);
 	setButton(dom.sideButton1, value(buttons.button1));
 	setButton(dom.sideButton2, value(buttons.button2));
 	// During the demo play-through the buttons show what the player would press, but the tour presses them
@@ -273,4 +291,4 @@ function drawMultiplayerBadge(mp) {
 	badge.classList.toggle("mp-badge-problem", problem !== "");
 }
 
-export { drawStatus };
+export { drawStatus, HINT_NAMES };
