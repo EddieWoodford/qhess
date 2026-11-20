@@ -1053,12 +1053,17 @@ function draw(animate = false) {
 	// While a piece is dragged over a square it can move to, the board shows the move made there
 	const dragging = ui.state == "dragging" && drag !== null;
 	const hover = dragging ? drag.hover : null;
+	const end = hover ? drag.over : ui.end;
+	// The arrow: the move being made once it has a destination, otherwise the last move played
+	const arrow = ui.start.length && end.length ? [ui.start, end]
+		: ui.lastStart.length && ui.lastEnd.length ? [ui.lastStart, ui.lastEnd] : null;
 	render({
 		game: hover?.state ?? game,
 		state: ui.state,
 		squares,
 		start: ui.start,
-		end: hover ? drag.over : ui.end,
+		end,
+		arrow,
 		draggable: canDrag() ? game.turnColor : null,
 		drag: dragging ? { lifted: !hover?.state, over: hover !== null, question: hover?.question ?? null, intoCheck: hover?.intoCheck ?? false } : null,
 		lastStart: ui.lastStart,

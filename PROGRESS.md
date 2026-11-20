@@ -4,10 +4,21 @@ Compact notes for whoever works on this next. Tests: `npm test` (node), and the 
 (start_test.bat, or the `qhess` preview in `.claude/launch.json` at /tests/test.html, then Run tests: replays the
 example games against tests/snapshots.json, plus multiplayer and page-feature checks).
 
+## Move arrow (2026-11-20)
+- A light arrow (white, 0.85 opacity, 1px black outline) over the board: the move being made once it has a
+  destination (staged, or a dragged piece over a legal square), otherwise the last move played (`ui.lastStart` /
+  `lastEnd`: the opponent's, or your own after Submit; the ply shown while replaying). None at a new game or move 0.
+- controller draw passes `arrow`; board-view drawArrow keeps one `<svg class="move-arrow">` (viewBox 8 x 8, a square
+  per unit) as the board's last child, outside the squares, so the view snapshots don't see it. style.css 7.9 places
+  it past the padding and coordinate strip (calc with `--coord-strip`, so it slides with the strip), and turns it
+  180deg in Black's view; `.board` is now position: relative.
+- tests/test.html "move arrow: the last move, or the one being made".
+
 ## Move markers: chevrons and dots, captures in their own colour (2026-11-20)
 - Replaced the green stripes / rings (style.css 7.3). board-view adds `.destination` + `.destination{1-16}` (the
   controller's bearing, 16 = up the board) and `.destinationCapture` when an opponent piece is on the square (not
-  en passant). Even bearing: a chevron turned `--bearing` x 22.5deg; odd (knight hop): a dot. Drawn as ::before
+  en passant). Even bearing: a chevron turned `--bearing` x 22.5deg; odd (knight hop): a dot, both drawn at
+  `--marker-size: 33%` of the square (the user found full size too big and bold). Drawn as ::before
   (dark #000a edge) + ::after (colour), each an SVG mask (`--marker-*` on :root); no ring except on captures (3px
   `--piece-capture-col`). Black's view: `.board.flipped { --marker-flip: 180deg }` (flipped is a re-layout, not a
   turn). Shapes as in the old mockup (deleted, tools/move-markers-mockup.html).

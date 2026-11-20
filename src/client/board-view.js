@@ -215,6 +215,50 @@ function squareAt(x, y) {
 	return match ? [Number(match[1]), Number(match[2])] : null;
 }
 
+////////////////////////////////
+// The move arrow
+////////////////////////////////
+// An arrow over the board (style.css 7.9) from the centre of one square towards the centre of another, drawn in an
+// SVG laid over the 64 squares with a square as its unit, in White's view (the CSS turns it for Black's).
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+// move: [[r, c], [r, c]], or null for no arrow
+function drawArrow(move) {
+	let svg = dom.board.querySelector(".move-arrow");
+	if (!svg) {
+		svg = document.createElementNS(SVG_NS, "svg");
+		svg.setAttribute("class", "move-arrow");
+		svg.setAttribute("viewBox", "0 0 8 8");
+		svg.setAttribute("aria-hidden", "true");
+		svg.append(document.createElementNS(SVG_NS, "path"));
+		dom.board.append(svg);
+	}
+	const path = svg.firstChild;
+	if (move) {
+		path.setAttribute("d", arrowOutline(move[0], move[1]));
+	} else {
+		path.removeAttribute("d");
+	}
+}
+
+// The outline of an arrow from square `from` to square `to` (each [r, c]), as SVG path data in square units
+function arrowOutline(from, to) {
+	const SHAFT = 0.06, HEAD = 0.2, HEAD_LENGTH = 0.32, TAIL_GAP = 0.12; // half-widths and lengths, in squares
+	const [x0, y0] = [from[1] + 0.5, from[0] + 0.5];
+	const [x1, y1] = [to[1] + 0.5, to[0] + 0.5];
+	const length = Math.hypot(x1 - x0, y1 - y0);
+	const [ux, uy] = [(x1 - x0) / length, (y1 - y0) / length]; // along the arrow
+	const [nx, ny] = [-uy, ux];                                   // across it
+	const at = (along, across) => {
+		const x = x0 + ux * along + nx * across, y = y0 + uy * along + ny * across;
+		return x.toFixed(3) + " " + y.toFixed(3);
+	};
+	const base = length - HEAD_LENGTH;
+	return "M" + [at(TAIL_GAP, SHAFT), at(base, SHAFT), at(base, HEAD), at(length, 0), at(base, -HEAD),
+		at(base, -SHAFT), at(TAIL_GAP, -SHAFT)].join(" L") + " Z";
+}
+
 // The types a piece could be at the start of the turn (before: that state) that the move being made has ruled out,
 // e.g. "BN"; "" if none, or no move is being made
 function lostTypes(piece, before) {
@@ -336,6 +380,7 @@ function drawBoard(view) {
 		}
 	}
 
+	drawArrow(view.arrow);
 	runAnimations(plan);
 }
 

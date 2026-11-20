@@ -26,6 +26,7 @@ import { dom } from "./dom.js";
 //                shown), over: it is over a square it can move to, question: the move there is ambiguous (asked on
 //                the drop) or null, intoCheck: the move there leaves the mover in check }
 //   lastStart, lastEnd: [r,c] of the last submitted move (highlighted during replay)
+//   arrow:       [[r,c], [r,c]]: the move the board's arrow shows (the move being made, or the last move), or null
 //   replayNumber: -1, or the replay position (see controller.js)
 //   record:      the game record for the History tab, one ply per line (array of strings)
 //   multiplayer: null in single player; in a multiplayer game, its code, your colour and the connections

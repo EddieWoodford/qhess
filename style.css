@@ -28,6 +28,7 @@
         7.6 Game over banner
         7.7 Demo play-through    (thought bubble and its bar)
         7.8 Dragging a piece
+        7.9 Move arrow
      8. Responsive overrides     (must stay last)
 
    NOTES
@@ -1384,6 +1385,7 @@ input.switch:focus-visible {
     --marker-chevron-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M36 62 L50 40 L64 62' fill='none' stroke='black' stroke-width='17' stroke-linecap='round' stroke-linejoin='round'/></svg>");
     --marker-dot: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='12'/></svg>");
     --marker-dot-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='16'/></svg>");
+    --marker-size: 33%;  /* of the square: how large the shapes above are drawn */
 }
 
 .board.flipped {
@@ -1424,7 +1426,7 @@ input.switch:focus-visible {
     inset: 0;
     pointer-events: none;
     transform: rotate(calc(var(--bearing, 0) * 22.5deg + var(--marker-flip, 0deg)));
-    mask: var(--marker-edge) center / 100% 100% no-repeat;
+    mask: var(--marker-edge) center / var(--marker-size) var(--marker-size) no-repeat;
     background-color: #000a;
 }
 
@@ -1786,6 +1788,39 @@ input.switch:focus-visible {
 
 .dragOrigin > * {
     opacity: 0.35;
+}
+
+/* ---------- 7.9 Move arrow ----------
+   board-view.js draws the move being made (once it has a destination), or
+   else the last move played, as a light arrow in an SVG over the 64 squares
+   (viewBox 8 x 8, one unit a square). It sits past the board's padding and
+   coordinate strip (7.1), so it follows the strip as it slides; it is drawn
+   in White's view, and turned half a turn in Black's, which matches the
+   squares' reversed layout. */
+.board {
+    position: relative;
+}
+
+.move-arrow {
+    position: absolute;
+    left: calc(0.5em + var(--coord-strip) * 3em);
+    top: calc(0.5em + var(--coord-strip) * 3em);
+    width: 24em;
+    height: 24em;
+    pointer-events: none;
+}
+
+.board.flipped .move-arrow {
+    transform: rotate(180deg);
+}
+
+.move-arrow path {
+    fill: #fff;
+    fill-opacity: 0.85;
+    stroke: #000;
+    stroke-width: 1px;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;  /* a thin outline whatever the board's size */
 }
 
 
