@@ -199,7 +199,7 @@ function hintLevel() {
 	return ui.multiplayer?.hintLevel ?? ui.hintLevel;
 }
 
-// Whether the board shows where a piece can move (dots and chevrons, and the move a dragged piece would make)
+// Whether the board shows where a piece can move (lines and dots, and the move a dragged piece would make)
 function showsMoves() {
 	return hintLevel() == "moves" || hintLevel() == "captures";
 }

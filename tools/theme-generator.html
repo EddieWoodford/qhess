@@ -219,24 +219,26 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
 .checkKing { box-shadow: 0 0 0 6px var(--piece-checkKing-col) inset; }
 .checkAttacker { box-shadow: 0 0 0 6px var(--piece-checkAttacker-col) inset; }
 
-/* Move markers (style.css 7.3): a chevron the way the piece moves, a dot for a knight's hop; captures in their colour */
+/* Move markers (style.css 7.3): a thin line across the square the way the piece moves, a dot for a knight's hop;
+   captures in their colour */
 :root {
-    --marker-chevron: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M36 62 L50 40 L64 62' fill='none' stroke='black' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'/></svg>");
-    --marker-chevron-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M36 62 L50 40 L64 62' fill='none' stroke='black' stroke-width='17' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    --marker-line-up: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='crispEdges'><path d='M50 0 L50 100' stroke='black' stroke-width='5' stroke-linecap='square'/></svg>");
+    --marker-line-up-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='crispEdges'><path d='M50 0 L50 100' stroke='black' stroke-width='9' stroke-linecap='square'/></svg>");
+    --marker-line-across: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='crispEdges'><path d='M0 50 L100 50' stroke='black' stroke-width='5' stroke-linecap='square'/></svg>");
+    --marker-line-across-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='crispEdges'><path d='M0 50 L100 50' stroke='black' stroke-width='9' stroke-linecap='square'/></svg>");
+    --marker-line-ne: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='crispEdges'><path d='M0 100 L100 0' stroke='black' stroke-width='5' stroke-linecap='square'/></svg>");
+    --marker-line-ne-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='crispEdges'><path d='M0 100 L100 0' stroke='black' stroke-width='9' stroke-linecap='square'/></svg>");
+    --marker-line-nw: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='crispEdges'><path d='M0 0 L100 100' stroke='black' stroke-width='5' stroke-linecap='square'/></svg>");
+    --marker-line-nw-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='crispEdges'><path d='M0 0 L100 100' stroke='black' stroke-width='9' stroke-linecap='square'/></svg>");
     --marker-dot: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='12'/></svg>");
     --marker-dot-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='16'/></svg>");
 }
-.destination {
-    position: relative;
-    --marker: var(--marker-chevron);
-    --marker-edge: var(--marker-chevron-edge);
-    --marker-col: var(--piece-dest-col);
-}
-.destination1 { --marker: var(--marker-dot); --marker-edge: var(--marker-dot-edge); }
-.destination2 { --bearing: 2; }
-.destination4 { --bearing: 4; }
-.destination8 { --bearing: 8; }
-.destination12 { --bearing: 12; }
+.destination { position: relative; --marker-col: var(--piece-dest-col); --marker-size: 100%; }
+.destination1 { --marker: var(--marker-dot); --marker-edge: var(--marker-dot-edge); --marker-size: 33%; }
+.destination8, .destination16 { --marker: var(--marker-line-up); --marker-edge: var(--marker-line-up-edge); }
+.destination4, .destination12 { --marker: var(--marker-line-across); --marker-edge: var(--marker-line-across-edge); }
+.destination2, .destination10 { --marker: var(--marker-line-ne); --marker-edge: var(--marker-line-ne-edge); }
+.destination6, .destination14 { --marker: var(--marker-line-nw); --marker-edge: var(--marker-line-nw-edge); }
 .destinationCapture {
     --marker-col: var(--piece-capture-col);
     box-shadow: 0 0 0 3px var(--piece-capture-col) inset;
@@ -246,8 +248,7 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
     position: absolute;
     inset: 0;
     pointer-events: none;
-    transform: rotate(calc(var(--bearing, 0) * 22.5deg));
-    mask: var(--marker-edge) center / 33% 33% no-repeat;
+    mask: var(--marker-edge) center / var(--marker-size) var(--marker-size) no-repeat;
     background-color: #000a;
 }
 .destination::after { mask-image: var(--marker); background-color: var(--marker-col); }

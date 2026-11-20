@@ -588,8 +588,8 @@ async function checkDragMove(ctx) {
 	return problems;
 }
 
-// The markers on the squares a picked piece can move to (style.css 7.3): a chevron turned to the move's direction,
-// a dot for a knight's hop, and the capture colour where the move takes a piece
+// The markers on the squares a picked piece can move to (style.css 7.3): a line across the square along the move's
+// direction, a dot for a knight's hop, and the capture colour where the move takes a piece
 async function checkMoveMarkers(ctx) {
 	const problems = [];
 	const expect = (what, ok) => { if (!ok) { problems.push(what); } };
@@ -599,12 +599,11 @@ async function checkMoveMarkers(ctx) {
 	g.restoreGameHistory("0b.\n1w. (KQBNRP)e2e4(QRP)\n1b. (KQBNRP)d7d5(QRP)"); // White to move
 	g.showPartialMove([4, 4]); // e4: could be a queen, rook or pawn
 	const has = (r, c, ...cls) => cls.every(x => sq(r, c).classList.contains(x));
-	expect("e5 should have an upright chevron, has '" + sq(3, 4).className + "', turned " + marker(3, 4).transform,
+	expect("e5 should have an upright line across the square, has '" + sq(3, 4).className + "', mask " + marker(3, 4).maskImage.slice(0, 300),
 		has(3, 4, "destination", "destination16") && !has(3, 4, "destinationCapture")
-		&& marker(3, 4).transform == "matrix(1, 0, 0, 1, 0, 0)" && marker(3, 4).maskImage.includes("path"));
-	expect("d5 (a black piece) should be a capture, its chevron turned up-left, has '" + sq(3, 3).className
-		+ "', turned " + marker(3, 3).transform,
-		has(3, 3, "destination", "destination14", "destinationCapture") && marker(3, 3).transform.startsWith("matrix(0.707107, -0.707107"));
+		&& marker(3, 4).maskImage.includes("M50 0 L50 100") && marker(3, 4).maskSize == "100% 100%");
+	expect("d5 (a black piece) should be a capture, its line on the up-left diagonal, has '" + sq(3, 3).className + "'",
+		has(3, 3, "destination", "destination14", "destinationCapture") && marker(3, 3).maskImage.includes("M0 0 L100 100"));
 	expect("A capture's marker should be in another colour than a move's, both are " + marker(3, 4).backgroundColor,
 		marker(3, 3).backgroundColor != marker(3, 4).backgroundColor);
 	g.showPartialMove([7, 6]); // g1, which could be a knight

@@ -4,6 +4,15 @@ Compact notes for whoever works on this next. Tests: `npm test` (node), and the 
 (start_test.bat, or the `qhess` preview in `.claude/launch.json` at /tests/test.html, then Run tests: replays the
 example games against tests/snapshots.json, plus multiplayer and page-feature checks).
 
+## Move markers: thin lines again (2026-11-21)
+- The chevrons are gone (the user preferred the old green stripes): a line move's square gets a thin (5 of 100),
+  hard-edged (crispEdges, square caps) line right across it along the move's axis, so a slider's moves join into
+  a ray. Four fixed masks in style.css 7.3 (`--marker-line-{up,across,ne,nw}` + `-edge`, 9 wide, under it in
+  #000a): 8/16 up, 4/12 across, 2/10 NE, 6/14 NW. Knight dots unchanged (`--marker-dot-size: 33%`); captures
+  keep their colour and ring. No rotation any more (`--bearing`, `--marker-flip` removed): a line looks the
+  same from Black's side. The theme generator's preview CSS matches. tests/test.html "move markers" checks the
+  masks.
+
 ## Hint Level (2026-11-20)
 - Settings tab "Hint Level", four buttons (settings.js `hintLevel`, a remembered choice; values protocol.js
   `HINT_LEVELS`): **none** (no markers; pieces keep their start-of-turn types until Submit, and the staged move is
@@ -42,7 +51,7 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
   180deg in Black's view; `.board` is now position: relative.
 - tests/test.html "move arrow: the last move, or the one being made".
 
-## Move markers: chevrons and dots, captures in their own colour (2026-11-20)
+## Move markers: chevrons and dots, captures in their own colour (2026-11-20; chevrons replaced 2026-11-21)
 - Replaced the green stripes / rings (style.css 7.3). board-view adds `.destination` + `.destination{1-16}` (the
   controller's bearing, 16 = up the board) and `.destinationCapture` when an opponent piece is on the square (not
   en passant). Even bearing: a chevron turned `--bearing` x 22.5deg; odd (knight hop): a dot, both drawn at

@@ -1431,48 +1431,62 @@ input.switch:focus-visible {
    and .destination1 to .destination16: the direction of the move on a
    16-point compass, clockwise from 16 = up the board (towards rank 8).
        odd numbers    a knight's hop: a dot
-       even numbers   a line move: a chevron pointing the way the piece moves
-                      (turned a sixteenth of a turn per step, --bearing)
+       even numbers   a line move: a thin, hard-edged line right across the
+                      square along the way the piece moves (up / across /
+                      either diagonal; the same both ways, so Black's view
+                      needs no turning)
    A move that takes a piece also has .destinationCapture: its marker and a
    ring in --piece-capture-col (the marker covers the piece). The marker is
    drawn twice, cut out of the square by an SVG mask: ::before a dark edge,
-   so it shows on any square or piece, ::after the marker in its colour. The
-   board turns them with it (7.1), and Black's view half a turn.
+   so it shows on any square or piece, ::after the marker in its colour.
    ORDER MATTERS: these come after 7.2 so the capture ring wins over the
    state rings. */
 :root {
-    --marker-chevron: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M36 62 L50 40 L64 62' fill='none' stroke='black' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'/></svg>");
-    --marker-chevron-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M36 62 L50 40 L64 62' fill='none' stroke='black' stroke-width='17' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    --marker-line-up: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='crispEdges'><path d='M50 0 L50 100' stroke='black' stroke-width='5' stroke-linecap='square'/></svg>");
+    --marker-line-up-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='crispEdges'><path d='M50 0 L50 100' stroke='black' stroke-width='9' stroke-linecap='square'/></svg>");
+    --marker-line-across: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='crispEdges'><path d='M0 50 L100 50' stroke='black' stroke-width='5' stroke-linecap='square'/></svg>");
+    --marker-line-across-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='crispEdges'><path d='M0 50 L100 50' stroke='black' stroke-width='9' stroke-linecap='square'/></svg>");
+    --marker-line-ne: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='crispEdges'><path d='M0 100 L100 0' stroke='black' stroke-width='5' stroke-linecap='square'/></svg>");
+    --marker-line-ne-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='crispEdges'><path d='M0 100 L100 0' stroke='black' stroke-width='9' stroke-linecap='square'/></svg>");
+    --marker-line-nw: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='crispEdges'><path d='M0 0 L100 100' stroke='black' stroke-width='5' stroke-linecap='square'/></svg>");
+    --marker-line-nw-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='crispEdges'><path d='M0 0 L100 100' stroke='black' stroke-width='9' stroke-linecap='square'/></svg>");
     --marker-dot: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='12'/></svg>");
     --marker-dot-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='16'/></svg>");
-    --marker-size: 33%;  /* of the square: how large the shapes above are drawn */
-}
-
-.board.flipped {
-    --marker-flip: 180deg;
+    --marker-dot-size: 33%;  /* of the square: how large the dot is drawn (a line crosses the whole square) */
 }
 
 .destination {
     position: relative;
-    --marker: var(--marker-chevron);
-    --marker-edge: var(--marker-chevron-edge);
     --marker-col: var(--piece-dest-col);
+    --marker-size: 100%;
 }
 
 .destination1, .destination3, .destination5, .destination7,
 .destination9, .destination11, .destination13, .destination15 {
     --marker: var(--marker-dot);
     --marker-edge: var(--marker-dot-edge);
+    --marker-size: var(--marker-dot-size);
 }
 
-/* (16, up the board, is the chevron as drawn) */
-.destination2 { --bearing: 2; }
-.destination4 { --bearing: 4; }
-.destination6 { --bearing: 6; }
-.destination8 { --bearing: 8; }
-.destination10 { --bearing: 10; }
-.destination12 { --bearing: 12; }
-.destination14 { --bearing: 14; }
+.destination8, .destination16 {   /* S and N */
+    --marker: var(--marker-line-up);
+    --marker-edge: var(--marker-line-up-edge);
+}
+
+.destination4, .destination12 {   /* E and W */
+    --marker: var(--marker-line-across);
+    --marker-edge: var(--marker-line-across-edge);
+}
+
+.destination2, .destination10 {   /* NE and SW */
+    --marker: var(--marker-line-ne);
+    --marker-edge: var(--marker-line-ne-edge);
+}
+
+.destination6, .destination14 {   /* SE and NW */
+    --marker: var(--marker-line-nw);
+    --marker-edge: var(--marker-line-nw-edge);
+}
 
 .destinationCapture {
     --marker-col: var(--piece-capture-col);
@@ -1485,7 +1499,6 @@ input.switch:focus-visible {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    transform: rotate(calc(var(--bearing, 0) * 22.5deg + var(--marker-flip, 0deg)));
     mask: var(--marker-edge) center / var(--marker-size) var(--marker-size) no-repeat;
     background-color: #000a;
 }
