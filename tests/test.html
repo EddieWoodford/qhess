@@ -759,7 +759,7 @@ async function checkMoveArrow(ctx) {
 	g.showCompleteMove([3, 4]); // e5
 	expect("The staged move should show as well as the last move, pointing at e5: " + looks(), tip("last") == "3.500 3.500" && tip("current") == "4.500 3.500");
 	const style = which => ctx.win.getComputedStyle(ctx.win.document.querySelector("#board .move-arrow .arrow-" + which + " .arrow-line"));
-	expect("The two arrows should look different", style("last").strokeDasharray != style("current").strokeDasharray);
+	expect("The two arrows should look different", style("last").stroke != style("current").stroke);
 	g.sideButton2Action();
 	expect("Submitted, it should be the last move, with no current one: " + looks(), tip("last") == "4.500 3.500" && tip("current") == "none");
 	return problems;

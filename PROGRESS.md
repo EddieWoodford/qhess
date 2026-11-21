@@ -8,7 +8,7 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
 - The last move and the move being made (once it has a destination, dragged or picked) now show together, styled
   apart: controller draw passes `arrows: {last, current}`; board-view `drawArrows` keeps `<g class="arrow-last">`
   (under) and `<g class="arrow-current">` in the one SVG, each an edge + line path. style.css 7.9: `.arrow-last`
-  is dashed (6px 5px) at 0.6 opacity, the current one solid white. tests/test.html "move arrows" checks both.
+  is grey (#999 line) at 0.6 opacity (dashed was tried first; the user preferred grey), the current one solid white. tests/test.html "move arrows" checks both.
   (Supersedes the single `arrow` in "Move arrow" below.)
 
 ## Knight markers: arcs round the knight (2026-11-21)
