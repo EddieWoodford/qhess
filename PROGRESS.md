@@ -4,6 +4,12 @@ Compact notes for whoever works on this next. Tests: `npm test` (node), and the 
 (start_test.bat, or the `qhess` preview in `.claude/launch.json` at /tests/test.html, then Run tests: replays the
 example games against tests/snapshots.json, plus multiplayer and page-feature checks).
 
+## Move pattern pulses: on branch `pulsing-move-pattern` (2026-11-21)
+- An experiment, kept off main at the user's request: instead of the static lines/arcs, the picked piece's ways of
+  moving pulse out from it to the board's edge (through pieces), and a knight's two rings of dashes turn opposite
+  ways on its hop squares. Engine `getMovePattern`, board-view `drawPattern`, style.css 7.9 (speeds in
+  `--pattern-ray-time` / `--pattern-ring-time`). main keeps the static markers (7.3).
+
 ## Two move arrows (2026-11-21)
 - The last move and the move being made (once it has a destination, dragged or picked) now show together, styled
   apart: controller draw passes `arrows: {last, current}`; board-view `drawArrows` keeps `<g class="arrow-last">`
