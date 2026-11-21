@@ -612,6 +612,17 @@ async function checkMoveMarkers(ctx) {
 		+ marker(5, 5).maskImage.slice(0, 300),
 		has(5, 5, "destination", "destination15") && /cx=.150.*cy=.250.*r=.223\.6/.test(marker(5, 5).maskImage)
 		&& marker(5, 5).maskSize == "100% 100%");
+	// How the picked piece moves (style.css 7.9): pulses along every way it could move, past any piece to the
+	// board's edge, and round a circle for a knight; nothing once a destination is chosen, or below Moves
+	const pattern = cls => [...ctx.win.document.querySelectorAll("#board .move-pattern ." + cls)].map(p => p.getAttribute("d"));
+	expect("g1 (could be anything) should pulse 8 ways and round a circle, has " + pattern("pattern-ray").length + " rays, "
+		+ pattern("pattern-circle").length + " circles", pattern("pattern-ray").length == 8 && pattern("pattern-circle").length == 1);
+	g.showPartialMove([4, 4]); // e4: a queen, rook or pawn
+	const up = pattern("pattern-ray").find(d => /^M4\.500 [\d.]+ L4\.500 -/.test(d));
+	expect("e4's pulse up the board should run past the pieces on e7 and e8 off the board, rays " + pattern("pattern-ray").join(" | "), up !== undefined);
+	expect("e4 can't hop: no circle", pattern("pattern-circle").length == 0);
+	g.showCompleteMove([3, 4]); // e5
+	expect("With a destination chosen, no pulses, has " + pattern("pattern-ray").length, pattern("pattern-ray").length == 0);
 	return problems;
 }
 

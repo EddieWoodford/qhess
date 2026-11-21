@@ -227,14 +227,17 @@ function squareAt(x, y) {
 const SVG_NS = "http://www.w3.org/2000/svg";
 const ARROWS = ["last", "current"]; // bottom to top
 
-// arrows: { last, current }, each [[r, c], [r, c]], or null for no arrow
-function drawArrows(arrows) {
+// The SVG over the board, made the first time: the move pattern's group under the arrows' groups
+function overlay() {
 	let svg = dom.board.querySelector(".move-arrow");
 	if (!svg) {
 		svg = document.createElementNS(SVG_NS, "svg");
 		svg.setAttribute("class", "move-arrow");
 		svg.setAttribute("viewBox", "0 0 8 8");
 		svg.setAttribute("aria-hidden", "true");
+		const pattern = document.createElementNS(SVG_NS, "g");
+		pattern.setAttribute("class", "move-pattern");
+		svg.append(pattern);
 		for (const which of ARROWS) {
 			const group = document.createElementNS(SVG_NS, "g");
 			group.setAttribute("class", "arrow-" + which);
@@ -247,6 +250,12 @@ function drawArrows(arrows) {
 		}
 		dom.board.append(svg);
 	}
+	return svg;
+}
+
+// arrows: { last, current }, each [[r, c], [r, c]], or null for no arrow
+function drawArrows(arrows) {
+	const svg = overlay();
 	for (const which of ARROWS) {
 		const move = arrows?.[which];
 		for (const path of svg.querySelectorAll(".arrow-" + which + " path")) {
@@ -256,6 +265,37 @@ function drawArrows(arrows) {
 				path.removeAttribute("d");
 			}
 		}
+	}
+}
+
+// How the picked piece moves (style.css 7.9): pulses running out from it along each way it could move, to the edge
+// of the board for a line move (through any piece: they show how it moves, not where it can stop), and round the
+// circle through its knight's hops. Drawn under the arrows, in their SVG (which cuts off what is past the board).
+// Redrawn only when the pattern changes, so the pulses run on smoothly through other redraws.
+function drawPattern(pattern) {
+	const group = overlay().querySelector(".move-pattern");
+	const key = JSON.stringify(pattern); // Infinity -> null, the same for every line move
+	if (key == (group.dataset.pattern ?? "null")) { return; }
+	group.dataset.pattern = key;
+	group.replaceChildren();
+	if (!pattern) { return; }
+	const [x0, y0] = [pattern.from[1] + 0.5, pattern.from[0] + 0.5];
+	const START = 0.35, FAR = 12; // in squares: out from the piece's centre; past any edge of the board
+	const add = (cls, d) => {
+		const path = document.createElementNS(SVG_NS, "path");
+		path.setAttribute("class", cls);
+		path.setAttribute("d", d);
+		group.append(path);
+	};
+	for (const { dr, dc, steps } of pattern.rays) {
+		const size = Math.hypot(dr, dc);
+		const length = Math.min(steps * size, FAR); // a step along a diagonal is longer
+		const point = along => (x0 + dc / size * along).toFixed(3) + " " + (y0 + dr / size * along).toFixed(3);
+		add("pattern-ray", "M" + point(START) + " L" + point(length));
+	}
+	if (pattern.knight) {
+		const r = Math.sqrt(5).toFixed(4);
+		add("pattern-circle", "M" + (x0 - r) + " " + y0 + " a" + r + " " + r + " 0 1 0 " + (2 * r) + " 0 a" + r + " " + r + " 0 1 0 " + (-2 * r) + " 0");
 	}
 }
 
@@ -414,6 +454,7 @@ function drawBoard(view) {
 	}
 
 	drawArrows(view.arrows);
+	drawPattern(view.pattern);
 	runAnimations(plan);
 }
 

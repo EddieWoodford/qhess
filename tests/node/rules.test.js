@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createInitialState, cloneState } from "../../src/engine/state.js";
 import { applyMove, startMove, declareNotAKing, hasLegalTurn } from "../../src/engine/game.js";
-import { getPotentialMoves } from "../../src/engine/moves.js";
+import { getPotentialMoves, getMovePattern } from "../../src/engine/moves.js";
 import { updateOptionsFromEntanglement } from "../../src/engine/entanglement.js";
 import { ismember } from "../../src/engine/utils.js";
 import { move, play, at, sq, exampleGames, moveFromLine } from "./helpers.js";
@@ -160,4 +160,26 @@ test("applyMove refuses a move that needs an answer it wasn't given", () => {
 	const result = applyMove(cloneState(state), { from: sq("e4"), to: sq("d3") });
 	assert.equal(result.ok, false);
 	assert.match(result.error, /En passant\?/);
+});
+
+////////////////////////////////
+// Move pattern (how a piece moves, whatever is in the way)
+////////////////////////////////
+
+test("a piece's move pattern comes from its types, not from what is in its way", () => {
+	const ray = (pattern, dr, dc) => pattern.rays.find(r => r.dr == dr && r.dc == dc)?.steps;
+	// At the start, e2 could be anything: every direction, a line move each way, and a knight's hop,
+	// though its own pieces surround it
+	const start = getMovePattern(createInitialState(), sq("e2"));
+	assert.equal(start.rays.length, 8);
+	assert.equal(ray(start, -1, 0), Infinity);
+	assert.equal(start.knight, true);
+	// After e2-e4 it is a queen, rook or pawn: line moves every way, no hop
+	const state = play(["e2", "e4"]);
+	assert.equal(at(state, "e4").waves(), "QRP");
+	const e4 = getMovePattern(state, sq("e4"));
+	assert.equal(e4.rays.length, 8);
+	assert.ok(e4.rays.every(r => r.steps == Infinity));
+	assert.equal(e4.knight, false);
+	assert.deepEqual(getMovePattern(state, sq("e3")), { rays: [], knight: false });
 });

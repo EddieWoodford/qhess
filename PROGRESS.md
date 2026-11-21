@@ -4,6 +4,20 @@ Compact notes for whoever works on this next. Tests: `npm test` (node), and the 
 (start_test.bat, or the `qhess` preview in `.claude/launch.json` at /tests/test.html, then Run tests: replays the
 example games against tests/snapshots.json, plus multiplayer and page-feature checks).
 
+## Move pattern pulses (2026-11-21, trying out)
+- Instead of the per-square lines/arcs, the picked (or hovered) piece's way of moving pulses out from it: engine
+  moves.js `getMovePattern(state, coords)` gives `{rays: [{dr, dc, steps}], knight}` from its types alone, ignoring
+  the board (line moves Infinity, king 1, pawn forward 1/2 + its capture diagonals). controller draw passes
+  `pattern: {from, ...}` while a piece is picked/hovered with no destination and `showsMoves()`; board-view
+  `drawPattern` fills `<g class="move-pattern">` (first child of the `.move-arrow` SVG, under the arrows) with
+  `.pattern-ray` paths (out to 12 squares; the SVG clips at the board edge, so pulses pass through pieces) and a
+  `.pattern-circle` (r √5 round the piece) for a knight; rebuilt only when the pattern changes (key in
+  `data-pattern`) so redraws don't restart the animation. style.css 7.9: dashes animated by stroke-dashoffset
+  (rays 2.4s, circle 2.8s, two dashes), static faint under prefers-reduced-motion.
+- The 7.3 markers are hidden (`display: none` on `.destination::before/::after`) but their CSS is kept while this
+  is tried; the capture ring still shows at Captures. The point: a marker stopping at a piece hinted at captures.
+- tests: rules.test.js move pattern; test.html "move markers" checks the rays/circle.
+
 ## Two move arrows (2026-11-21)
 - The last move and the move being made (once it has a destination, dragged or picked) now show together, styled
   apart: controller draw passes `arrows: {last, current}`; board-view `drawArrows` keeps `<g class="arrow-last">`

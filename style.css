@@ -1534,6 +1534,14 @@ input.switch:focus-visible {
     background-color: var(--marker-col);
 }
 
+/* Trying out (2026-11-21): the pulses of 7.9 show how the piece moves
+   instead of these markers, which stop at the first piece in the way and so
+   hint at what it could take. The capture ring above still shows. */
+.destination::before,
+.destination::after {
+    display: none;
+}
+
 
 /* ---------- 7.4 Coordinates and piece text ---------- */
 /* The labels around the board: rank numbers down the sides, file letters
@@ -1940,6 +1948,51 @@ input.switch:focus-visible {
 
 .move-arrow .arrow-last .arrow-line {
     stroke: #999;
+}
+
+/* How the picked piece moves (board-view.js drawPattern), under the arrows:
+   a short dash runs out from the piece along each way it moves, to the edge
+   of the board for a line move (the SVG cuts it off there), through any
+   piece; for a knight two dashes run round the circle through its hops
+   (radius √5 squares, circumference 14.05). In squares, not pixels. */
+.move-arrow .move-pattern {
+    filter: drop-shadow(0 0 0.04em #000c);
+}
+
+.move-arrow .move-pattern path {
+    vector-effect: none;
+    stroke: var(--piece-dest-col);
+    stroke-width: 0.07;
+    stroke-linecap: round;
+    opacity: 0.85;
+}
+
+.move-arrow .pattern-ray {
+    stroke-dasharray: 0.6 20;
+    animation: pattern-out 2.4s linear infinite;
+}
+
+.move-arrow .pattern-circle {
+    stroke-dasharray: 0.9 6.1248;   /* twice round: 2 x (0.9 + 6.1248) = 14.05 */
+    animation: pattern-round 2.8s linear infinite;
+}
+
+@keyframes pattern-out {
+    from { stroke-dashoffset: 0.6; }    /* just behind the start */
+    to { stroke-dashoffset: -12; }      /* past the far edge of the board */
+}
+
+@keyframes pattern-round {
+    from { stroke-dashoffset: 0; }
+    to { stroke-dashoffset: -7.0248; }  /* half round: the other dash takes over */
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .move-arrow .move-pattern path {
+        animation: none;
+        stroke-dasharray: none;
+        opacity: 0.4;
+    }
 }
 
 

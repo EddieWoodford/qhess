@@ -27,6 +27,7 @@ import { dom } from "./dom.js";
 //                the drop) or null, intoCheck: the move there leaves the mover in check }
 //   lastStart, lastEnd: [r,c] of the last submitted move (highlighted during replay)
 //   arrows:      { last, current }: each [[r,c], [r,c]] or null: the last move played, and the move being made
+//   pattern:     { from, rays, knight } (engine moves.js getMovePattern): how the picked piece moves, or null
 //   replayNumber: -1, or the replay position (see controller.js)
 //   record:      the game record for the History tab, one ply per line (array of strings)
 //   multiplayer: null in single player; in a multiplayer game, its code, your colour and the connections

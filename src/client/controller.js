@@ -32,7 +32,7 @@
 
 import { isequal, ismember } from "../engine/utils.js";
 import { createInitialState, cloneState, getPieces } from "../engine/state.js";
-import { getPotentialMoves } from "../engine/moves.js";
+import { getPotentialMoves, getMovePattern } from "../engine/moves.js";
 import { getMoveDestinations } from "../engine/castling.js";
 import { findPotentialKings, findPCAttackers } from "../engine/check.js";
 import { declareNotAKing as engineDeclareNotAKing, startMove, choosePCKing, addPCAttacker, applyMove } from "../engine/game.js";
@@ -1094,6 +1094,13 @@ function setState(stateIn, animate = false) {
 	draw(animate);
 }
 
+// The [r, c] of every square whose square record passes test
+function squaresWhere(test) {
+	const found = [];
+	squares.forEach((row, r) => row.forEach((sqr, c) => { if (test(sqr)) { found.push([r, c]); } }));
+	return found;
+}
+
 // Redraw the page as it is. animate: slide the pieces that moved since the last draw to their new squares
 // (board-view.js), for a move in live play.
 function draw(animate = false) {
@@ -1107,6 +1114,10 @@ function draw(animate = false) {
 		last: ui.lastStart.length && ui.lastEnd.length ? [ui.lastStart, ui.lastEnd] : null,
 		current: ui.start.length && end.length ? [ui.start, end] : null,
 	};
+	// How the picked (or hovered) piece moves, pulsing out from it, until a destination is chosen
+	const from = ui.start.length ? ui.start
+		: ui.state == "highlightPotentialMoves" ? squaresWhere(sqr => sqr.highlighted)[0] : undefined;
+	const pattern = showsMoves() && from && !end.length ? { from, ...getMovePattern(game, from) } : null;
 	render({
 		game: hover?.state ?? game,
 		state: ui.state,
@@ -1114,6 +1125,7 @@ function draw(animate = false) {
 		start: ui.start,
 		end,
 		arrows,
+		pattern,
 		draggable: canDrag() ? game.turnColor : null,
 		drag: dragging ? { lifted: !hover?.state, over: hover !== null, question: hover?.question ?? null, intoCheck: hover?.intoCheck ?? false } : null,
 		lastStart: ui.lastStart,
