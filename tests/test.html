@@ -82,7 +82,7 @@ const SETTINGS_CHECKS = {
 	"import: a bad move leaves the game as it was": checkImportChecksFirst,
 	"drag: a dropped piece waits for Submit": checkDragMove,
 	"move markers: direction, knight hops, captures": checkMoveMarkers,
-	"move arrow: the last move, or the one being made": checkMoveArrow,
+	"move arrows: the last move, and the one being made": checkMoveArrow,
 	"demo: the coordinates always show": checkDemoShowsCoords,
 	"demo: no Surrender between its moves": checkDemoNoSurrender,
 	"hint level: what each level shows before Submit": checkHintLevels,
@@ -740,25 +740,28 @@ async function checkMultiplayerHintLevel() {
 	return problems;
 }
 
-// The arrow over the board (style.css 7.9): none in a new game, then the last move played, the move being made once
-// it has a destination, and after Submit that move as the last one
+// The arrows over the board (style.css 7.9): none in a new game; the last move played; with it, the move being made
+// once it has a destination (dragged or picked); after Submit that move as the last one and no current one
 async function checkMoveArrow(ctx) {
 	const problems = [];
 	const expect = (what, ok) => { if (!ok) { problems.push(what); } };
 	const g = ctx.game;
-	const outline = () => ctx.win.document.querySelector("#board .move-arrow path")?.getAttribute("d") ?? null;
-	// The arrow's tip, "x y" in squares from the top left of White's view: the end of its line, the second point
-	const tip = () => outline()?.match(/[\d.]+ [\d.]+/g)[1] ?? "none";
+	const outline = which => ctx.win.document.querySelector("#board .move-arrow .arrow-" + which + " path")?.getAttribute("d") ?? null;
+	// An arrow's tip, "x y" in squares from the top left of White's view: the end of its line, the second point
+	const tip = which => outline(which)?.match(/[\d.]+ [\d.]+/g)[1] ?? "none";
+	const looks = () => "last points at " + tip("last") + ", current at " + tip("current");
 	g.setup();
-	expect("A new game should have no arrow, has '" + outline() + "'", outline() === null);
+	expect("A new game should have no arrows: " + looks(), outline("last") === null && outline("current") === null);
 	g.restoreGameHistory("0b.\n1w. (KQBNRP)e2e4(QRP)\n1b. (KQBNRP)d7d5(QRP)");
-	expect("The arrow should point at the last move's square, d5, points at " + tip(), tip() == "3.500 3.500");
+	expect("The last-move arrow should point at d5, and no current one: " + looks(), tip("last") == "3.500 3.500" && tip("current") == "none");
 	g.showPartialMove([4, 4]); // e4
-	expect("With a piece picked but no destination, it should still show the last move, points at " + tip(), tip() == "3.500 3.500");
+	expect("With a piece picked but no destination, just the last move: " + looks(), tip("last") == "3.500 3.500" && tip("current") == "none");
 	g.showCompleteMove([3, 4]); // e5
-	expect("The staged move should take its place, pointing at e5, points at " + tip(), tip() == "4.500 3.500");
+	expect("The staged move should show as well as the last move, pointing at e5: " + looks(), tip("last") == "3.500 3.500" && tip("current") == "4.500 3.500");
+	const style = which => ctx.win.getComputedStyle(ctx.win.document.querySelector("#board .move-arrow .arrow-" + which + " .arrow-line"));
+	expect("The two arrows should look different", style("last").strokeDasharray != style("current").strokeDasharray);
 	g.sideButton2Action();
-	expect("Submitted, it should stay as the last move, points at " + tip(), tip() == "4.500 3.500");
+	expect("Submitted, it should be the last move, with no current one: " + looks(), tip("last") == "4.500 3.500" && tip("current") == "none");
 	return problems;
 }
 

@@ -217,34 +217,44 @@ function squareAt(x, y) {
 }
 
 ////////////////////////////////
-// The move arrow
+// The move arrows
 ////////////////////////////////
-// An arrow over the board (style.css 7.9) from the centre of one square to the centre of another: a line with a
-// two-stroke head, drawn twice (a dark edge under a light line) in an SVG laid over the 64 squares with a square as
-// its unit, in White's view (the CSS turns it for Black's).
+// Arrows over the board (style.css 7.9), each from the centre of one square to the centre of another: a line with a
+// two-stroke head, drawn twice (a dark edge under a line) in an SVG laid over the 64 squares with a square as its
+// unit, in White's view (the CSS turns it for Black's). Two at once, styled apart: the last move played (under) and
+// the move being made (over).
 
 const SVG_NS = "http://www.w3.org/2000/svg";
+const ARROWS = ["last", "current"]; // bottom to top
 
-// move: [[r, c], [r, c]], or null for no arrow
-function drawArrow(move) {
+// arrows: { last, current }, each [[r, c], [r, c]], or null for no arrow
+function drawArrows(arrows) {
 	let svg = dom.board.querySelector(".move-arrow");
 	if (!svg) {
 		svg = document.createElementNS(SVG_NS, "svg");
 		svg.setAttribute("class", "move-arrow");
 		svg.setAttribute("viewBox", "0 0 8 8");
 		svg.setAttribute("aria-hidden", "true");
-		for (const part of ["arrow-edge", "arrow-line"]) {
-			const path = document.createElementNS(SVG_NS, "path");
-			path.setAttribute("class", part);
-			svg.append(path);
+		for (const which of ARROWS) {
+			const group = document.createElementNS(SVG_NS, "g");
+			group.setAttribute("class", "arrow-" + which);
+			for (const part of ["arrow-edge", "arrow-line"]) {
+				const path = document.createElementNS(SVG_NS, "path");
+				path.setAttribute("class", part);
+				group.append(path);
+			}
+			svg.append(group);
 		}
 		dom.board.append(svg);
 	}
-	for (const path of svg.children) {
-		if (move) {
-			path.setAttribute("d", arrowPath(move[0], move[1]));
-		} else {
-			path.removeAttribute("d");
+	for (const which of ARROWS) {
+		const move = arrows?.[which];
+		for (const path of svg.querySelectorAll(".arrow-" + which + " path")) {
+			if (move) {
+				path.setAttribute("d", arrowPath(move[0], move[1]));
+			} else {
+				path.removeAttribute("d");
+			}
 		}
 	}
 }
@@ -403,7 +413,7 @@ function drawBoard(view) {
 		}
 	}
 
-	drawArrow(view.arrow);
+	drawArrows(view.arrows);
 	runAnimations(plan);
 }
 

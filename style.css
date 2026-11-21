@@ -1889,9 +1889,11 @@ input.switch:focus-visible {
     opacity: 0.35;
 }
 
-/* ---------- 7.9 Move arrow ----------
-   board-view.js draws the move being made (once it has a destination), or
-   else the last move played, as a light line arrow in an SVG over the 64 squares
+/* ---------- 7.9 Move arrows ----------
+   board-view.js draws two line arrows in an SVG over the 64 squares: the last
+   move played (.arrow-last, dashed and faint, underneath) and the move being
+   made once it has a destination, dragged or picked (.arrow-current, solid
+   white, on top)
    (viewBox 8 x 8, one unit a square). It sits past the board's padding and
    coordinate strip (7.1), so it follows the strip as it slides; it is drawn
    in White's view, and turned half a turn in Black's, which matches the
@@ -1930,6 +1932,14 @@ input.switch:focus-visible {
 .move-arrow .arrow-line {
     stroke: #fff;
     stroke-width: 2px;
+}
+
+.move-arrow .arrow-last {
+    opacity: 0.6;
+}
+
+.move-arrow .arrow-last path {
+    stroke-dasharray: 6px 5px;
 }
 
 

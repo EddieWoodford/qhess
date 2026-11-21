@@ -4,6 +4,13 @@ Compact notes for whoever works on this next. Tests: `npm test` (node), and the 
 (start_test.bat, or the `qhess` preview in `.claude/launch.json` at /tests/test.html, then Run tests: replays the
 example games against tests/snapshots.json, plus multiplayer and page-feature checks).
 
+## Two move arrows (2026-11-21)
+- The last move and the move being made (once it has a destination, dragged or picked) now show together, styled
+  apart: controller draw passes `arrows: {last, current}`; board-view `drawArrows` keeps `<g class="arrow-last">`
+  (under) and `<g class="arrow-current">` in the one SVG, each an edge + line path. style.css 7.9: `.arrow-last`
+  is dashed (6px 5px) at 0.6 opacity, the current one solid white. tests/test.html "move arrows" checks both.
+  (Supersedes the single `arrow` in "Move arrow" below.)
+
 ## Knight markers: arcs round the knight (2026-11-21)
 - A knight's hop (odd classes) is now a thin arc, not a dot: part of the circle centred on the knight through the
   destination's centre (r = 223.6 of a 100 square, the knight's distance), to show knights move by distance, not
