@@ -269,8 +269,8 @@ function drawArrows(arrows) {
 }
 
 // How the picked piece moves (style.css 7.9): pulses running out from it along each way it could move, to the edge
-// of the board for a line move (through any piece: they show how it moves, not where it can stop), and round the
-// circle through its knight's hops. Drawn under the arrows, in their SVG (which cuts off what is past the board).
+// of the board for a line move (through any piece: they show how it moves, not where it can stop), and both ways round
+// the circle through its knight's hops. Drawn under the arrows, in their SVG (which cuts off what is past the board).
 // Redrawn only when the pattern changes, so the pulses run on smoothly through other redraws.
 function drawPattern(pattern) {
 	const group = overlay().querySelector(".move-pattern");
@@ -295,7 +295,9 @@ function drawPattern(pattern) {
 	}
 	if (pattern.knight) {
 		const r = Math.sqrt(5).toFixed(4);
-		add("pattern-circle", "M" + (x0 - r) + " " + y0 + " a" + r + " " + r + " 0 1 0 " + (2 * r) + " 0 a" + r + " " + r + " 0 1 0 " + (-2 * r) + " 0");
+		const circle = "M" + (x0 - r) + " " + y0 + " a" + r + " " + r + " 0 1 0 " + (2 * r) + " 0 a" + r + " " + r + " 0 1 0 " + (-2 * r) + " 0";
+		add("pattern-circle", circle);
+		add("pattern-circle pattern-circle-back", circle); // the same circle, its pulses going the other way
 	}
 }
 

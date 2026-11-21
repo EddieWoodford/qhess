@@ -1950,41 +1950,47 @@ input.switch:focus-visible {
     stroke: #999;
 }
 
-/* How the picked piece moves (board-view.js drawPattern), under the arrows:
-   a short dash runs out from the piece along each way it moves, to the edge
-   of the board for a line move (the SVG cuts it off there), through any
-   piece; for a knight two dashes run round the circle through its hops
-   (radius √5 squares, circumference 14.05). In squares, not pixels. */
+/* How the picked piece moves (board-view.js drawPattern), under the arrows,
+   in a glowing radar green: short dashes stream out from the piece along each
+   way it moves, to the edge of the board for a line move (the SVG cuts them
+   off there), through any piece; for a knight two rings of dashes turn
+   opposite ways round the circle through its hops (radius √5 squares,
+   circumference 14.05). In squares, not pixels. Each animation moves the
+   dashes on by exactly one dash-and-gap, so it loops seamlessly. */
 .move-arrow .move-pattern {
-    filter: drop-shadow(0 0 0.04em #000c);
+    --pattern-col: #5f5;
+    filter: drop-shadow(0 0 0.08em #3f3) drop-shadow(0 0 0.03em #000);
 }
 
 .move-arrow .move-pattern path {
     vector-effect: none;
-    stroke: var(--piece-dest-col);
-    stroke-width: 0.07;
+    stroke: var(--pattern-col);
+    stroke-width: 0.06;
     stroke-linecap: round;
-    opacity: 0.85;
 }
 
 .move-arrow .pattern-ray {
-    stroke-dasharray: 0.6 20;
-    animation: pattern-out 2.4s linear infinite;
+    stroke-dasharray: 0.22 0.78;
+    animation: pattern-out 0.16s linear infinite;
 }
 
 .move-arrow .pattern-circle {
-    stroke-dasharray: 0.9 6.1248;   /* twice round: 2 x (0.9 + 6.1248) = 14.05 */
-    animation: pattern-round 2.8s linear infinite;
+    stroke-dasharray: 0.3 1.4562;   /* 8 to a ring: 8 x (0.3 + 1.4562) = 14.05 */
+    animation: pattern-round 0.4s linear infinite;
+}
+
+.move-arrow .pattern-circle-back {
+    animation-direction: reverse;
 }
 
 @keyframes pattern-out {
-    from { stroke-dashoffset: 0.6; }    /* just behind the start */
-    to { stroke-dashoffset: -12; }      /* past the far edge of the board */
+    from { stroke-dashoffset: 0; }
+    to { stroke-dashoffset: -1; }       /* outwards by one dash and gap */
 }
 
 @keyframes pattern-round {
     from { stroke-dashoffset: 0; }
-    to { stroke-dashoffset: -7.0248; }  /* half round: the other dash takes over */
+    to { stroke-dashoffset: -1.7562; }
 }
 
 @media (prefers-reduced-motion: reduce) {
