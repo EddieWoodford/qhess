@@ -607,8 +607,11 @@ async function checkMoveMarkers(ctx) {
 	expect("A capture's marker should be in another colour than a move's, both are " + marker(3, 4).backgroundColor,
 		marker(3, 3).backgroundColor != marker(3, 4).backgroundColor);
 	g.showPartialMove([7, 6]); // g1, which could be a knight
-	expect("A knight's hop (g1 to f3) should be marked with a dot, has '" + sq(5, 5).className + "'",
-		has(5, 5, "destination") && marker(5, 5).maskImage.includes("circle"));
+	// An arc of the circle round the knight through the square's centre: f3 is one left, two up from g1
+	expect("A knight's hop (g1 to f3) should be marked with an arc round g1, has '" + sq(5, 5).className + "', mask "
+		+ marker(5, 5).maskImage.slice(0, 300),
+		has(5, 5, "destination", "destination15") && /cx=.150.*cy=.250.*r=.223\.6/.test(marker(5, 5).maskImage)
+		&& marker(5, 5).maskSize == "100% 100%");
 	return problems;
 }
 

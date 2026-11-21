@@ -1430,7 +1430,11 @@ input.switch:focus-visible {
    board-view.js marks every square the piece can move to with .destination
    and .destination1 to .destination16: the direction of the move on a
    16-point compass, clockwise from 16 = up the board (towards rank 8).
-       odd numbers    a knight's hop: a dot
+       odd numbers    a knight's hop: a thin arc across the square, part of
+                      the circle round the knight through the square's
+                      centre (a knight moves a distance, not a direction).
+                      Black's view turns it half round, as the rows and
+                      files are reversed but the squares are not
        even numbers   a line move: a thin, hard-edged line right across the
                       square along the way the piece moves (up / across /
                       either diagonal; the same both ways, so Black's view
@@ -1450,9 +1454,22 @@ input.switch:focus-visible {
     --marker-line-ne-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='crispEdges'><path d='M0 100 L100 0' stroke='black' stroke-width='9' stroke-linecap='square'/></svg>");
     --marker-line-nw: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='crispEdges'><path d='M0 0 L100 100' stroke='black' stroke-width='5' stroke-linecap='square'/></svg>");
     --marker-line-nw-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='crispEdges'><path d='M0 0 L100 100' stroke='black' stroke-width='9' stroke-linecap='square'/></svg>");
-    --marker-dot: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='12'/></svg>");
-    --marker-dot-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='16'/></svg>");
-    --marker-dot-size: 33%;  /* of the square: how large the dot is drawn (a line crosses the whole square) */
+    --marker-arc1: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='-50' cy='250' r='223.6' fill='none' stroke='black' stroke-width='5'/></svg>");
+    --marker-arc1-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='-50' cy='250' r='223.6' fill='none' stroke='black' stroke-width='9'/></svg>");
+    --marker-arc3: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='-150' cy='150' r='223.6' fill='none' stroke='black' stroke-width='5'/></svg>");
+    --marker-arc3-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='-150' cy='150' r='223.6' fill='none' stroke='black' stroke-width='9'/></svg>");
+    --marker-arc5: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='-150' cy='-50' r='223.6' fill='none' stroke='black' stroke-width='5'/></svg>");
+    --marker-arc5-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='-150' cy='-50' r='223.6' fill='none' stroke='black' stroke-width='9'/></svg>");
+    --marker-arc7: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='-50' cy='-150' r='223.6' fill='none' stroke='black' stroke-width='5'/></svg>");
+    --marker-arc7-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='-50' cy='-150' r='223.6' fill='none' stroke='black' stroke-width='9'/></svg>");
+    --marker-arc9: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='150' cy='-150' r='223.6' fill='none' stroke='black' stroke-width='5'/></svg>");
+    --marker-arc9-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='150' cy='-150' r='223.6' fill='none' stroke='black' stroke-width='9'/></svg>");
+    --marker-arc11: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='250' cy='-50' r='223.6' fill='none' stroke='black' stroke-width='5'/></svg>");
+    --marker-arc11-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='250' cy='-50' r='223.6' fill='none' stroke='black' stroke-width='9'/></svg>");
+    --marker-arc13: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='250' cy='150' r='223.6' fill='none' stroke='black' stroke-width='5'/></svg>");
+    --marker-arc13-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='250' cy='150' r='223.6' fill='none' stroke='black' stroke-width='9'/></svg>");
+    --marker-arc15: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='150' cy='250' r='223.6' fill='none' stroke='black' stroke-width='5'/></svg>");
+    --marker-arc15-edge: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='150' cy='250' r='223.6' fill='none' stroke='black' stroke-width='9'/></svg>");
 }
 
 .destination {
@@ -1461,11 +1478,20 @@ input.switch:focus-visible {
     --marker-size: 100%;
 }
 
-.destination1, .destination3, .destination5, .destination7,
-.destination9, .destination11, .destination13, .destination15 {
-    --marker: var(--marker-dot);
-    --marker-edge: var(--marker-dot-edge);
-    --marker-size: var(--marker-dot-size);
+.destination1 { --marker: var(--marker-arc1); --marker-edge: var(--marker-arc1-edge); }
+.destination3 { --marker: var(--marker-arc3); --marker-edge: var(--marker-arc3-edge); }
+.destination5 { --marker: var(--marker-arc5); --marker-edge: var(--marker-arc5-edge); }
+.destination7 { --marker: var(--marker-arc7); --marker-edge: var(--marker-arc7-edge); }
+.destination9 { --marker: var(--marker-arc9); --marker-edge: var(--marker-arc9-edge); }
+.destination11 { --marker: var(--marker-arc11); --marker-edge: var(--marker-arc11-edge); }
+.destination13 { --marker: var(--marker-arc13); --marker-edge: var(--marker-arc13-edge); }
+.destination15 { --marker: var(--marker-arc15); --marker-edge: var(--marker-arc15-edge); }
+
+.board.flipped :is(.destination1, .destination3, .destination5, .destination7,
+.destination9, .destination11, .destination13, .destination15)::before,
+.board.flipped :is(.destination1, .destination3, .destination5, .destination7,
+.destination9, .destination11, .destination13, .destination15)::after {
+    transform: rotate(180deg);
 }
 
 .destination8, .destination16 {   /* S and N */

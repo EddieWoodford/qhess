@@ -4,11 +4,19 @@ Compact notes for whoever works on this next. Tests: `npm test` (node), and the 
 (start_test.bat, or the `qhess` preview in `.claude/launch.json` at /tests/test.html, then Run tests: replays the
 example games against tests/snapshots.json, plus multiplayer and page-feature checks).
 
+## Knight markers: arcs round the knight (2026-11-21)
+- A knight's hop (odd classes) is now a thin arc, not a dot: part of the circle centred on the knight through the
+  destination's centre (r = 223.6 of a 100 square, the knight's distance), to show knights move by distance, not
+  direction. One mask per class (`--marker-arc1`..`15` + `-edge`, style.css 7.3), circle centre = the source
+  square relative to the destination; the 8 arcs together nearly close the circle. Rows/files reverse in Black's
+  view but squares don't, so `.board.flipped` turns the knight markers' ::before/::after 180deg. Theme generator
+  matches; tests/test.html checks g1->f3's arc.
+
 ## Move markers: thin lines again (2026-11-21)
 - The chevrons are gone (the user preferred the old green stripes): a line move's square gets a thin (5 of 100),
   hard-edged (crispEdges, square caps) line right across it along the move's axis, so a slider's moves join into
   a ray. Four fixed masks in style.css 7.3 (`--marker-line-{up,across,ne,nw}` + `-edge`, 9 wide, under it in
-  #000a): 8/16 up, 4/12 across, 2/10 NE, 6/14 NW. Knight dots unchanged (`--marker-dot-size: 33%`); captures
+  #000a): 8/16 up, 4/12 across, 2/10 NE, 6/14 NW. Knight dots unchanged (since replaced by arcs, above); captures
   keep their colour and ring. No rotation any more (`--bearing`, `--marker-flip` removed): a line looks the
   same from Black's side. The theme generator's preview CSS matches. tests/test.html "move markers" checks the
   masks.
