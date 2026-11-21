@@ -617,6 +617,8 @@ async function checkMoveMarkers(ctx) {
 	const pattern = cls => [...ctx.win.document.querySelectorAll("#board .move-pattern ." + cls)].map(p => p.getAttribute("d"));
 	expect("g1 (could be anything) should pulse 8 ways and both ways round a circle, has " + pattern("pattern-ray").length + " rays, "
 		+ pattern("pattern-circle").length + " circles", pattern("pattern-ray").length == 8 && pattern("pattern-circle").length == 2);
+	const hops = ctx.win.document.querySelectorAll("#board .move-pattern clipPath rect").length;
+	expect("g1's rings should show only on the 3 squares it could hop to (e2, f3, h3), clipped to " + hops, hops == 3);
 	g.showPartialMove([4, 4]); // e4: a queen, rook or pawn
 	const up = pattern("pattern-ray").find(d => /^M4\.500 [\d.]+ L4\.500 -/.test(d));
 	expect("e4's pulse up the board should run past the pieces on e7 and e8 off the board, rays " + pattern("pattern-ray").join(" | "), up !== undefined);

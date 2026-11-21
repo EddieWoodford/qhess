@@ -7,7 +7,8 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
 ## Move pattern pulses (2026-11-21, trying out)
 - Instead of the per-square lines/arcs, the picked (or hovered) piece's way of moving pulses out from it: engine
   moves.js `getMovePattern(state, coords)` gives `{rays: [{dr, dc, steps}], knight}` from its types alone, ignoring
-  the board (line moves Infinity, king 1, pawn forward 1/2 + its capture diagonals). controller draw passes
+  the board for rays (knight: its actual hop squares, getPotentialMoves "N"; the rings are clipped to them with a
+  `<clipPath id="knight-hops">`, at the user's request) (line moves Infinity, king 1, pawn forward 1/2 + its capture diagonals). controller draw passes
   `pattern: {from, ...}` while a piece is picked/hovered with no destination and `showsMoves()`; board-view
   `drawPattern` fills `<g class="move-pattern">` (first child of the `.move-arrow` SVG, under the arrows) with
   `.pattern-ray` paths (out to 12 squares; the SVG clips at the board edge, so pulses pass through pieces) and a

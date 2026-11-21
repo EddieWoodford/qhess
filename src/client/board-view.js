@@ -270,7 +270,7 @@ function drawArrows(arrows) {
 
 // How the picked piece moves (style.css 7.9): pulses running out from it along each way it could move, to the edge
 // of the board for a line move (through any piece: they show how it moves, not where it can stop), and both ways round
-// the circle through its knight's hops. Drawn under the arrows, in their SVG (which cuts off what is past the board).
+// the circle through its knight's hops, on just the squares it could hop to. Drawn under the arrows, in their SVG (which cuts off what is past the board).
 // Redrawn only when the pattern changes, so the pulses run on smoothly through other redraws.
 function drawPattern(pattern) {
 	const group = overlay().querySelector(".move-pattern");
@@ -281,10 +281,11 @@ function drawPattern(pattern) {
 	if (!pattern) { return; }
 	const [x0, y0] = [pattern.from[1] + 0.5, pattern.from[0] + 0.5];
 	const START = 0.35, FAR = 12; // in squares: out from the piece's centre; past any edge of the board
-	const add = (cls, d) => {
+	const add = (cls, d, clipId) => {
 		const path = document.createElementNS(SVG_NS, "path");
 		path.setAttribute("class", cls);
 		path.setAttribute("d", d);
+		if (clipId) { path.setAttribute("clip-path", "url(#" + clipId + ")"); }
 		group.append(path);
 	};
 	for (const { dr, dc, steps } of pattern.rays) {
@@ -293,11 +294,22 @@ function drawPattern(pattern) {
 		const point = along => (x0 + dc / size * along).toFixed(3) + " " + (y0 + dr / size * along).toFixed(3);
 		add("pattern-ray", "M" + point(START) + " L" + point(length));
 	}
-	if (pattern.knight) {
+	if (pattern.knight.length) {
+		// Only on the squares it could hop to: the rings are clipped to them
+		const clip = document.createElementNS(SVG_NS, "clipPath");
+		clip.id = "knight-hops";
+		for (const [row, col] of pattern.knight) {
+			const rect = document.createElementNS(SVG_NS, "rect");
+			for (const [name, value] of [["x", col], ["y", row], ["width", 1], ["height", 1]]) {
+				rect.setAttribute(name, value);
+			}
+			clip.append(rect);
+		}
+		group.append(clip);
 		const r = Math.sqrt(5).toFixed(4);
 		const circle = "M" + (x0 - r) + " " + y0 + " a" + r + " " + r + " 0 1 0 " + (2 * r) + " 0 a" + r + " " + r + " 0 1 0 " + (-2 * r) + " 0";
-		add("pattern-circle", circle);
-		add("pattern-circle pattern-circle-back", circle); // the same circle, its pulses going the other way
+		add("pattern-circle", circle, clip.id);
+		add("pattern-circle pattern-circle-back", circle, clip.id); // the same circle, its pulses going the other way
 	}
 }
 

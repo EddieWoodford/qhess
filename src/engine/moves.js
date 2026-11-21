@@ -108,11 +108,12 @@ function enPassantVictim(state, coords, color) {
 
 // How the piece on `coords` moves as any of its waves, whatever else is on the board (for showing how it moves,
 // not where it can go): { rays, knight }. rays: [{ dr, dc, steps }], one per direction, steps the most squares it
-// could go that way (Infinity for a line move; a pawn's diagonals are its captures). knight: whether it could hop.
+// could go that way (Infinity for a line move; a pawn's diagonals are its captures). knight: the squares it could
+// hop to as a knight ([] if it can't be one).
 function getMovePattern(state, coords) {
 	const piece = state.board[coords[0]][coords[1]];
 	if (piece === null || piece.captured > -1) {
-		return { rays: [], knight: false };
+		return { rays: [], knight: [] };
 	}
 	const waves = piece.waves();
 	const reach = new Map(); // "dr,dc" -> steps
@@ -139,7 +140,7 @@ function getMovePattern(state, coords) {
 		const [dr, dc] = key.split(",").map(Number);
 		return { dr, dc, steps };
 	});
-	return { rays, knight: waves.includes("N") };
+	return { rays, knight: waves.includes("N") ? getPotentialMoves(state, coords, "N") : [] };
 }
 
 export { getPotentialMoves, getCertainMoves, enPassantVictim, getMovePattern };

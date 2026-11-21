@@ -168,18 +168,18 @@ test("applyMove refuses a move that needs an answer it wasn't given", () => {
 
 test("a piece's move pattern comes from its types, not from what is in its way", () => {
 	const ray = (pattern, dr, dc) => pattern.rays.find(r => r.dr == dr && r.dc == dc)?.steps;
-	// At the start, e2 could be anything: every direction, a line move each way, and a knight's hop,
-	// though its own pieces surround it
+	// At the start, e2 could be anything: every direction, a line move each way, though its own pieces surround
+	// it, and a knight's hops (but not onto its own pieces on c1 and g1)
 	const start = getMovePattern(createInitialState(), sq("e2"));
 	assert.equal(start.rays.length, 8);
 	assert.equal(ray(start, -1, 0), Infinity);
-	assert.equal(start.knight, true);
+	assert.deepEqual(start.knight.map(([r, c]) => "abcdefgh"[c] + (8 - r)).sort(), ["c3", "d4", "f4", "g3"]);
 	// After e2-e4 it is a queen, rook or pawn: line moves every way, no hop
 	const state = play(["e2", "e4"]);
 	assert.equal(at(state, "e4").waves(), "QRP");
 	const e4 = getMovePattern(state, sq("e4"));
 	assert.equal(e4.rays.length, 8);
 	assert.ok(e4.rays.every(r => r.steps == Infinity));
-	assert.equal(e4.knight, false);
-	assert.deepEqual(getMovePattern(state, sq("e3")), { rays: [], knight: false });
+	assert.deepEqual(e4.knight, []);
+	assert.deepEqual(getMovePattern(state, sq("e3")), { rays: [], knight: [] });
 });
