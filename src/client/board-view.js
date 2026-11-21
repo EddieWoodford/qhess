@@ -355,11 +355,14 @@ function drawBoard(view) {
 				classes.add("dragOrigin"); // the dragged piece's place, while its copy follows the pointer
 			}
 			// While a move is staged, show what a click will do (see controller.js squareClick): the staged
-			// destination submits it, any other square cancels it. A move into check can only be cancelled.
+			// destination submits it, another square the piece could go to (or its own square) moves it there
+			// (an ordinary pointer), any other square cancels it. A move into check can't be submitted.
 			// While declaring a potential check, only the highlighted candidates can be chosen: any other square
 			// cancels the move too.
 			if (STATE == "showCompleteMove" && isequal([r,c], view.end)) {
 				classes.add("submitOnClick");
+			} else if (ismember([r,c], view.restage ?? [])) {
+				// moves the staged piece here
 			} else if (STATE == "showCompleteMove" || STATE == "invalidMoveIntoCheck"
 					|| (STATE == "selectPCKing" && sqr.highlightPotKing != 1)
 					|| (STATE == "selectPCAttackers" && sqr.highlightPotAttacker != 1)) {

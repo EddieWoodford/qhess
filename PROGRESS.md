@@ -4,6 +4,19 @@ Compact notes for whoever works on this next. Tests: `npm test` (node), and the 
 (start_test.bat, or the `qhess` preview in `.claude/launch.json` at /tests/test.html, then Run tests: replays the
 example games against tests/snapshots.json, plus multiplayer and page-feature checks).
 
+## Re-staging a move before Submit (2026-11-21)
+- While a move is staged (`STAGED_STATES`: showCompleteMove, invalidMoveIntoCheck) its piece can still go
+  elsewhere. controller `restageSquares()` = the start square + the piece's other destinations in `committed`.
+  Click: one of those squares -> cancelTurn, then showCompleteMove there (slides), or for the start square
+  showPartialMove (picked up again). The staged square still submits (the user's tick); anything else cancels.
+  Board-view gives restage squares no cancel cursor (view.restage).
+- Drag: DRAG_STATES includes the staged states. On activating, the staged move is saved in `drag.staged`
+  ({game, turnMove, start, end, state}); a press on the staged square drags from the piece's own start
+  (`drag.pressed` is where the ghost is copied from, before the redraw); cancelTurn. A drop on a destination stages
+  it; on the start square, picked; elsewhere or Esc, `putBack(staged)` restores the staged move. Pressing another of
+  the mover's pieces drags that one (the staged move comes back on a miss).
+- tests/test.html "restage: a move not yet submitted can go elsewhere".
+
 ## Move pattern pulses: on branch `pulsing-move-pattern` (2026-11-21)
 - An experiment, kept off main at the user's request: instead of the static lines/arcs, the picked piece's ways of
   moving pulse out from it to the board's edge (through pieces), and a knight's two rings of dashes turn opposite
