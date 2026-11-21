@@ -17,7 +17,8 @@
 //   "showCompleteMove"         the move is made; Submit, or Add PC (potential check)
 //   "invalidMoveIntoCheck"     the move leaves the player in check; it can only be cancelled
 //   "selectPCKing"             choosing which opponent piece to declare potential check on
-//   "selectPCAttackers"        choosing which pieces attack it; then Submit
+//   "showPotentialCheck"       the potential check declared, every piece that could attack the king attacking it;
+//                              then Submit
 //   "gameOver"                 checkmate or stalemate (the game state's result): nobody can move
 // and in a multiplayer game, while the player can't move:
 //   "waitJoin"                 the game is made, and waiting for the friend to join with the code
@@ -31,10 +32,10 @@
 // the real game is never rewound; stepping forward to the end returns to it.
 
 import { isequal, ismember } from "../engine/utils.js";
-import { createInitialState, cloneState, getPieces } from "../engine/state.js";
+import { createInitialState, cloneState, oppColor } from "../engine/state.js";
 import { getPotentialMoves } from "../engine/moves.js";
 import { getMoveDestinations } from "../engine/castling.js";
-import { findPotentialKings, findPCAttackers } from "../engine/check.js";
+import { findChecks, findPotentialKings } from "../engine/check.js";
 import { declareNotAKing as engineDeclareNotAKing, startMove, choosePCKing, addPCAttacker, applyMove } from "../engine/game.js";
 import { getHistoryLines, parseMoveText } from "../engine/notation.js";
 import { SquareView, buildBoard, setFlippedBoard, squareAt, liftPiece, moveLifted, dropLifted } from "./board-view.js";
@@ -321,7 +322,7 @@ function sideButton2Click() {
 }
 
 function sideButton2Action() {
-	if (ui.state == "showCompleteMove" || ui.state == "selectPCAttackers" || ui.state == "move0") {
+	if (ui.state == "showCompleteMove" || ui.state == "showPotentialCheck" || ui.state == "move0") {
 		submitMove();
 		setState("clear");
 	} else if (ui.state == "invalidMoveIntoCheck") {
@@ -407,8 +408,6 @@ function squareClick(coords) {
 		chooseDestination(coords);
 	} else if (ui.state == "selectPCKing") {
 		selectPCKing(coords);
-	} else if (ui.state == "selectPCAttackers") {
-		selectPCAttackers(coords);
 	} else if (ui.state == "move0") {
 		setState("move0");
 	} else if (ui.state == "showCompleteMove" && isequal(coords, ui.end)) {
@@ -708,64 +707,38 @@ function highlightPotentialKings() {
 	return kings.length;
 }
 
-// Highlight the side to move's pieces that could attack the chosen potential-check king, and
-// un-highlight the rest. Returns their coordinates.
-function highlightPCAttackers() {
-	const attackers = findPCAttackers(game);
-	for (const piece of getPieces(game, game.turnColor)) {
-		if (piece.captured > -1) {continue}
-		squares[piece.r][piece.c].highlightPotAttacker = ismember([piece.r, piece.c], attackers) ? 1 : 0;
-	}
-	return attackers;
-}
-
 function clearFindPotentialCheckPieces() {
-	for (let r=0; r<8; r++) {
-		for (let c=0; c<8; c++) {
-			squares[r][c].highlightPotKing = 0;
-			squares[r][c].highlightPotAttacker = 0;
+	for (const row of squares) {
+		for (const sqr of row) {
+			sqr.highlightPotKing = 0;
 		}
 	}
 }
 
-function selectPCKing(kingCoords) {
-	// Get here after clicking on a square in "selectPCKing" state
+// Get here after clicking on a square in "selectPCKing" state. Every piece of the mover's that could attack the
+// chosen king attacks it (attackers: just these instead, for the demo and tests/generate.html, which replay a
+// recorded set).
+function selectPCKing(kingCoords, attackers) {
 	const result = choosePCKing(game, kingCoords);
 	if (!result.ok) {
 		cancelTurn();
 		setState("clear");
-		return
+		return;
 	}
 	turnMove.pcKing = kingCoords;
 	clearFindPotentialCheckPieces(); // stop highlighting the potential kings
-	let potAttackerCoords = highlightPCAttackers();
-	if (potAttackerCoords.length == 1) {
-		selectPCAttackers(potAttackerCoords[0]);
-	} else {
-		setState("selectPCAttackers");
+	for (const attacker of attackers ?? result.attackers) {
+		// (One attacker's collapse can rule another out: that one is left out)
+		const added = addPCAttacker(game, attacker);
+		if (!added.ok) { continue; }
+		if (!ismember(attacker, turnMove.pcAttackers)) { turnMove.pcAttackers.push(attacker); }
+		if (added.movedIntoCheck) {
+			// By setting a potential check an attacker collapsed down to a true king and put themselves in check
+			setState("invalidMoveIntoCheck");
+			return;
+		}
 	}
-}
-
-function selectPCAttackers(attackerCoords) {
-	// Get here when a PC attacker is selected by clicking on its square
-	const result = addPCAttacker(game, attackerCoords);
-	if (!result.ok) {
-		// clicked on an empty square, or a piece which doesn't attack the PC king
-		cancelTurn();
-		setState("clear");
-		return
-	}
-	if (!ismember(attackerCoords, turnMove.pcAttackers)) { // (clicking one twice adds it once)
-		turnMove.pcAttackers.push(attackerCoords);
-	}
-	clearFindPotentialCheckPieces();
-	if (result.movedIntoCheck) {
-		// By setting a potential check the attacker collapsed down to a true king and put themselves in check
-		setState("invalidMoveIntoCheck");
-		return;
-	}
-	highlightPCAttackers();
-	setState("selectPCAttackers");
+	setState("showPotentialCheck");
 }
 
 ////////////////////////////////
@@ -1107,7 +1080,7 @@ function setState(stateIn, animate = false) {
 		ui.start = [];
 		ui.end = [];
 	}
-	if (ui.state != "selectPCAttackers" && ui.state != "selectPCKing" && ui.state != "highlightPotentialMoves" && ui.state != "clear") {
+	if (ui.state != "selectPCKing" && ui.state != "highlightPotentialMoves" && ui.state != "clear") {
 		clearFindPotentialCheckPieces();
 	}
 	for (const row of squares) {
@@ -1118,7 +1091,6 @@ function setState(stateIn, animate = false) {
 				sqr.highlighted = 0;
 				sqr.potentialMove = 0;
 				sqr.highlightPotKing = 0;
-				sqr.highlightPotAttacker = 0;
 			}
 			if (ui.state == "showPartialMove" || ui.state == "dragging") {
 				sqr.highlighted = 0;
@@ -1126,9 +1098,6 @@ function setState(stateIn, animate = false) {
 			if (ui.state == "showCompleteMove" || ui.state == "invalidMoveIntoCheck") {
 				sqr.highlighted = 0;
 				sqr.potentialMove = 0;
-			}
-			if (ui.state == "selectPCAttackers") {
-				sqr.highlightPotKing = 0;
 			}
 		}
 	}
@@ -1143,10 +1112,13 @@ function draw(animate = false) {
 	const dragging = ui.state == "dragging" && drag !== null;
 	const hover = dragging ? drag.hover : null;
 	const end = hover ? drag.over : ui.end;
-	// The arrows: the last move played, and the move being made once it has a destination
+	// The arrows: the last move played, the move being made once it has a destination, and at the Captures hint
+	// level, one from each attacker of the potential check being declared to its king
+	const declared = ui.state == "showPotentialCheck" && hintLevel() == "captures" ? findChecks(game, oppColor(game.turnColor)) : null;
 	const arrows = {
 		last: ui.lastStart.length && ui.lastEnd.length ? [ui.lastStart, ui.lastEnd] : null,
 		current: ui.start.length && end.length ? [ui.start, end] : null,
+		attacks: declared ? declared.attackerCoords.map(from => [from, declared.kingCoords]) : [],
 	};
 	render({
 		game: hover?.state ?? game,
@@ -1354,7 +1326,6 @@ export {
 	showPartialMove,
 	showCompleteMove,
 	selectPCKing,
-	selectPCAttackers,
 	getPotentialMoves,
 	setChoiceHandler,   // answer en passant / promotion questions without the dialog
 	dropConnection,     // multiplayer: drop the connection, as a network blip would (it reconnects by itself)

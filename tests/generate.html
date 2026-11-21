@@ -81,6 +81,9 @@ async function playGame(seed, maxPlies, pawnBias = 1) {
 	const rng = mulberry32(seed);
 	const pick = arr => arr[Math.floor(rng() * arr.length)];
 	const { win, game: g } = await loadFrame();
+	// Engine functions, to pick potential-check attackers on a copy of the position (see attempt)
+	const engine = Object.assign({}, ...await Promise.all(
+		["state", "game", "check", "utils"].map(m => import("../src/engine/" + m + ".js"))));
 	const E = name => g[name]; // read the game's exported page variables (SQUARES); g.ui.state is the step of the turn
 	const S = () => g.game; // the current game state object (replaced on every reset)
 	const sideButtonVisible = n => win.getComputedStyle(win.document.getElementById("sideButton" + n)).visibility === "visible";
@@ -142,20 +145,31 @@ async function playGame(seed, maxPlies, pawnBias = 1) {
 						if (b[r][c].highlightPotKing === 1) { kings.push([r, c]); }
 					}
 					if (kings.length === 0) { return false; }
-					g.selectPCKing(pick(kings));
-					let extra = 0;
-					while (g.ui.state === "selectPCAttackers" && extra < 3) {
-						const attackers = [];
-						const b2 = E("SQUARES");
-						for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
-							if (b2[r][c].highlightPotAttacker === 1) { attackers.push([r, c]); }
-						}
-						if (sideButtonVisible(2) && (attackers.length === 0 || rng() < 0.6)) { break; }
-						if (attackers.length === 0) { return false; }
-						g.selectPCAttackers(pick(attackers));
-						extra++;
+					// The page makes every piece that could attack the king attack it. These games were recorded when
+					// the player picked the attackers one at a time, so pick them the same way here, on a copy of the
+					// position (the same random choices, so the same games), and give the page that set.
+					const king = pick(kings);
+					const trial = engine.cloneState(S());
+					if (!engine.choosePCKing(trial, king).ok) { return false; }
+					const declared = () => engine.findChecks(trial, engine.oppColor(trial.turnColor)).attackerCoords.length > 0;
+					const chosen = [];
+					const add = attacker => {
+						const result = engine.addPCAttacker(trial, attacker);
+						if (result.ok && !engine.ismember(attacker, chosen)) { chosen.push(attacker); }
+						return result.ok && !result.movedIntoCheck;
+					};
+					// (In board order, as the page's highlighted squares were read)
+					const attackersNow = () => engine.findPCAttackers(trial).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+					const first = attackersNow();
+					if (first.length === 1 && !add(first[0])) { return false; } // the only one was picked by itself
+					for (let extra = 0; extra < 3; extra++) {
+						const attackers = attackersNow();
+						if (declared() && (attackers.length === 0 || rng() < 0.6)) { break; }
+						if (attackers.length === 0 || !add(pick(attackers))) { return false; }
 					}
-					if (g.ui.state !== "selectPCAttackers" || !sideButtonVisible(2)) { return false; }
+					if (!declared()) { return false; }
+					g.selectPCKing(king, chosen);
+					if (g.ui.state !== "showPotentialCheck" || !sideButtonVisible(2)) { return false; }
 				}
 
 				g.sideButton2Action(); // Submit

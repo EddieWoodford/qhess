@@ -14,7 +14,7 @@ import { holdSetting } from "./settings.js";
 import { parseTour, pliesUpTo } from "./tour-script.js";
 import { TOUR_TEXT } from "./tour-text.js";
 import { parseMoveText } from "../engine/notation.js";
-import { coordstext2coords, ismember } from "../engine/utils.js";
+import { coordstext2coords } from "../engine/utils.js";
 
 const STAGE_MS = 1200; // the pause between the stages of a move being acted out
 const PRESS_MS = 500;  // how long a side button shows as pressed
@@ -119,13 +119,7 @@ function actOut(step) {
 	}
 	if (move.pcKing) {
 		stages.push(() => press(1, () => game.sideButton1Action())); // Add PC
-		stages.push(() => game.selectPCKing(move.pcKing));
-		for (const attacker of move.pcAttackers) {
-			// The only possible attacker is picked by itself
-			stages.push(() => {
-				if (!ismember(attacker, game.currentTurn().pcAttackers)) { game.selectPCAttackers(attacker); }
-			});
-		}
+		stages.push(() => game.selectPCKing(move.pcKing, move.pcAttackers)); // the attackers the script names
 	}
 	stages.push(() => press(2, () => game.sideButton2Action())); // Submit (or Pass to white)
 	stages.push(() => {

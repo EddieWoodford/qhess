@@ -215,7 +215,6 @@ button.primary { background: var(--ui-accent); border-color: var(--ui-accent); c
 .selectedStart { box-shadow: 0 0 0 6px var(--piece-selectedStart-col) inset; }
 .selectedEnd { box-shadow: 0 0 0 6px var(--piece-dest-col) inset; }
 .potKing { background-color: color-mix(in srgb, var(--piece-checkKing-col) 55%, transparent); }
-.potAttacker { background-color: color-mix(in srgb, var(--piece-checkAttacker-col) 55%, transparent); }
 .checkKing { box-shadow: 0 0 0 6px var(--piece-checkKing-col) inset; }
 .checkAttacker { box-shadow: 0 0 0 6px var(--piece-checkAttacker-col) inset; }
 
@@ -969,7 +968,7 @@ const move = (bearing, capture) => "destination destination" + bearing + (captur
 document.getElementById("playBoard").innerHTML = board([
     [["b", "R"], ["b", "KQRBNP"], ["b", "QB", move(16, true)], ["b", "K", "checkKing"], ["b", "KQRBNP"], ["b", "N"]],
     [["b", "P"], ["b", "KP"], [, , move(16)], ["b", "P"], ["b", "BNP"], ["b", "P"]],
-    [null, null, [, , move(16)], null, [, , "potAttacker"], null],
+    [null, null, [, , move(16)], null, null, null],
     [[, , move(12)], [, , move(12)], ["w", "R", "selectedStart"], [, , move(4)], [, , "hovered"], null],
     [["w", "P", "selectable"], ["w", "KP", "selectable"], [, , move(8)], ["w", "Q", "selectable checkAttacker"], ["w", "BNP", "selectable"], ["w", "P", "selectable"]],
     [["w", "KQRBNP", "selectable"], ["w", "N", "selectable"], ["w", "B", "selectable"], ["w", "K", "selectable"], ["w", "KQRBNP", "selectable"], ["w", "QR", "selectable"]],
@@ -1000,7 +999,6 @@ const STATES = [
     ["King in check", "checkKing", "b", "K"],
     ["Checking piece", "checkAttacker", "w", "R"],
     ["Could be the king", "potKing", "b", "KQRBNP"],
-    ["Could be attacking", "potAttacker", "w", "KQRBNP"],
 ];
 document.getElementById("stateExamples").innerHTML = STATES.map(([label, cls, side, waves]) =>
     '<div class="example">' + board([[side ? [side, waves, cls] : [, , cls], side ? [side, waves, cls] : [, , cls]]])
@@ -1062,7 +1060,7 @@ function exportCss() {
         line("--piece-dest-col", c.dest, "moves"),
         line("--piece-capture-col", c.capture, "moves that take a piece"),
         line("--piece-checkKing-col", c.checkKing, "king in check, could be the king"),
-        line("--piece-checkAttacker-col", c.checkAttacker, "checking piece, could be attacking"),
+        line("--piece-checkAttacker-col", c.checkAttacker, "checking piece"),
         "}",
         "",
     ].join("\n");

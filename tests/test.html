@@ -82,6 +82,7 @@ const SETTINGS_CHECKS = {
 	"import: a bad move leaves the game as it was": checkImportChecksFirst,
 	"drag: a dropped piece waits for Submit": checkDragMove,
 	"restage: a move not yet submitted can go elsewhere": checkRestage,
+	"potential check: every possible attacker attacks, with arrows at Captures": checkPotentialCheck,
 	"move markers: direction, knight hops, captures": checkMoveMarkers,
 	"move arrows: the last move, and the one being made": checkMoveArrow,
 	"demo: the coordinates always show": checkDemoShowsCoords,
@@ -783,6 +784,46 @@ async function checkRestage(ctx) {
 	expect("Dropped where it can't go, the staged move should stay, is " + looks(), staged([6, 4], [5, 4]));
 	g.sideButton2Action();
 	expect("Submitted, the move should be e2-e3, is '" + g.ui.record[1] + "'", g.ui.record[1]?.startsWith("1w. (KQBNRP)e2e3"));
+	return problems;
+}
+
+// Add PC, then the king: every piece of the mover's that could attack it attacks it, with no step to pick them. At
+// the Captures hint level a red arrow runs from each attacker to the king (no outline on the attackers), and the
+// possible kings are highlighted to choose from; below Captures, neither (nor the cancel cursor round them).
+async function checkPotentialCheck(ctx) {
+	const problems = [];
+	const expect = (what, ok) => { if (!ok) { problems.push(what); } };
+	const g = ctx.game;
+	const doc = ctx.win.document;
+	const level = value => doc.querySelector("#settingHintLevel [data-value=" + value + "]").click();
+	const count = sel => doc.querySelectorAll("#board " + sel).length;
+	const declare = king => {
+		g.restoreGameHistory("0b.\n1w. (KQBNRP)e2e4(QRP)");
+		g.showPartialMove([1, 3]); g.showCompleteMove([3, 3]); // d7-d5
+		g.sideButton1Action(); // Add PC
+		const candidates = count(".potKing"), cancels = count(".cancelOnClick");
+		if (king) { g.selectPCKing(king); }
+		return { candidates, cancels };
+	};
+
+	const shown = declare([6, 0]); // a2: a7 and d5 could both attack it
+	expect("At Captures the possible kings should be highlighted, " + shown.candidates + " are", shown.candidates > 0);
+	expect("Both attackers should be chosen at once, state " + g.ui.state + ", attackers " + JSON.stringify(g.currentTurn().pcAttackers),
+		g.ui.state == "showPotentialCheck" && JSON.stringify(g.currentTurn().pcAttackers) == "[[1,0],[3,3]]");
+	expect("... with a red arrow from each to the king, has " + count(".arrow-attacks .arrow-line"), count(".arrow-attacks .arrow-line") == 2);
+	expect("... and no outline on the attackers, has " + count(".checkAttacker"), count(".checkAttacker") == 0);
+	g.sideButton2Action();
+	expect("Submitted, it should be written with both, is '" + g.ui.record.at(-1) + "'", g.ui.record.at(-1)?.endsWith("<a2+ a7 d5>"));
+	expect("... and the arrows go", count(".arrow-attacks .arrow-line") == 0);
+
+	level("moves");
+	const hidden = declare(null);
+	expect("Below Captures, no possible kings should be highlighted (" + hidden.candidates + ") nor cancel cursors (" + hidden.cancels + ")",
+		g.ui.state == "selectPCKing" && hidden.candidates == 0 && hidden.cancels == 0);
+	g.selectPCKing([6, 0]);
+	expect("... and the declared check no arrows, has " + count(".arrow-attacks .arrow-line"),
+		g.ui.state == "showPotentialCheck" && count(".arrow-attacks .arrow-line") == 0);
+	level("captures");
 	return problems;
 }
 

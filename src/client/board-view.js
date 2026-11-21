@@ -19,7 +19,6 @@ class SquareView {
 		// 0 = not a potential move; 1-16 = bearing of potential move where 1=NNE, 2=NE, 3=ENE, 4=E, 5=ESE, etc.
 		this.potentialMove = 0;
 		this.highlightPotKing = 0; // 0 = not a PK; 1 = candidate for PK;
-		this.highlightPotAttacker = 0; // 0 = not a PA; 1 = candidate for PA;
 		this.color = (r + c) % 2 == 0 ? "w" : "b"; // square colour
 	}
 	resetButtonClasses() {
@@ -225,9 +224,10 @@ function squareAt(x, y) {
 // the move being made (over).
 
 const SVG_NS = "http://www.w3.org/2000/svg";
-const ARROWS = ["last", "current"]; // bottom to top
+const ARROWS = ["last", "attacks", "current"]; // bottom to top
 
-// arrows: { last, current }, each [[r, c], [r, c]], or null for no arrow
+// arrows: { last, current }, each [[r, c], [r, c]], or null for no arrow; attacks: a list of them (the potential
+// check being declared: each attacker to the king), redrawn each time
 function drawArrows(arrows) {
 	let svg = dom.board.querySelector(".move-arrow");
 	if (!svg) {
@@ -238,16 +238,17 @@ function drawArrows(arrows) {
 		for (const which of ARROWS) {
 			const group = document.createElementNS(SVG_NS, "g");
 			group.setAttribute("class", "arrow-" + which);
-			for (const part of ["arrow-edge", "arrow-line"]) {
-				const path = document.createElementNS(SVG_NS, "path");
-				path.setAttribute("class", part);
-				group.append(path);
-			}
+			if (which != "attacks") { group.append(...arrowParts()); }
 			svg.append(group);
 		}
 		dom.board.append(svg);
 	}
-	for (const which of ARROWS) {
+	svg.querySelector(".arrow-attacks").replaceChildren(...(arrows?.attacks ?? []).flatMap(([from, to]) => {
+		const parts = arrowParts();
+		for (const path of parts) { path.setAttribute("d", arrowPath(from, to)); }
+		return parts;
+	}));
+	for (const which of ["last", "current"]) {
 		const move = arrows?.[which];
 		for (const path of svg.querySelectorAll(".arrow-" + which + " path")) {
 			if (move) {
@@ -257,6 +258,15 @@ function drawArrows(arrows) {
 			}
 		}
 	}
+}
+
+// An arrow's two paths, a dark edge under its line (style.css 7.9)
+function arrowParts() {
+	return ["arrow-edge", "arrow-line"].map(part => {
+		const path = document.createElementNS(SVG_NS, "path");
+		path.setAttribute("class", part);
+		return path;
+	});
 }
 
 // An arrow from square `from` to square `to` (each [r, c]) as SVG path data in square units: the line from the tail
@@ -311,11 +321,11 @@ function drawBoard(view) {
 	// Check to show on the board: on the side to move, or while choosing potential-check attackers, on the
 	// king being checked
 	let checks = findChecks(game, game.turnColor);
-	if (STATE == "selectPCAttackers") {
+	if (STATE == "showPotentialCheck") {
 		// Can only get here if player is not in check. Now we want to show the PCKing selected.
 		checks = findChecks(game, oppColor(game.turnColor));
 	}
-	const showChecks = checks.autoCheck || checks.potCheck || STATE == "selectPCAttackers";
+	const showChecks = checks.autoCheck || checks.potCheck || STATE == "showPotentialCheck";
 
 	// Whose pieces a press can drag (style.css 7.8), and the dragged piece's copy: shown unless the board shows its move
 	if (view.draggable) {
@@ -357,15 +367,16 @@ function drawBoard(view) {
 			// While a move is staged, show what a click will do (see controller.js squareClick): the staged
 			// destination submits it, another square the piece could go to (or its own square) moves it there
 			// (an ordinary pointer), any other square cancels it. A move into check can't be submitted.
-			// While declaring a potential check, only the highlighted candidates can be chosen: any other square
-			// cancels the move too.
+			// While choosing the king for a potential check, any square but a candidate cancels the move too (shown
+			// only at the Captures hint level: below it the cursor would give the candidates away). Once declared,
+			// any square cancels it.
 			if (STATE == "showCompleteMove" && isequal([r,c], view.end)) {
 				classes.add("submitOnClick");
 			} else if (ismember([r,c], view.restage ?? [])) {
 				// moves the staged piece here
 			} else if (STATE == "showCompleteMove" || STATE == "invalidMoveIntoCheck"
-					|| (STATE == "selectPCKing" && sqr.highlightPotKing != 1)
-					|| (STATE == "selectPCAttackers" && sqr.highlightPotAttacker != 1)) {
+					|| (STATE == "selectPCKing" && sqr.highlightPotKing != 1 && view.hintLevel == "captures")
+					|| STATE == "showPotentialCheck") {
 				classes.add("cancelOnClick");
 			}
 			if (view.replayNumber > -1 || (view.multiplayer && STATE != "showPartialMove" && STATE != "showCompleteMove")) {
@@ -378,23 +389,20 @@ function drawBoard(view) {
 				}
 			}
 
-			// Potential-check candidates
-			if (sqr.highlightPotKing == 1) {
+			// The pieces that could be the king, to declare a potential check on: shown at the Captures hint level only
+			if (sqr.highlightPotKing == 1 && view.hintLevel == "captures") {
 				classes.add("potKing");
-			}
-			if (sqr.highlightPotAttacker == 1) {
-				classes.add("potAttacker");
 			}
 
 			// A check (or the potential check being declared): the king and its attackers. Once chosen, these
-			// replace the candidate backgrounds.
+			// replace the candidate backgrounds. A potential check being declared marks its attackers with arrows
+			// instead (at the Captures hint level: controller.js draw).
 			if (showChecks) {
 				if (isequal([r,c], checks.kingCoords)) {
 					classes.remove("potKing");
 					classes.add("checkKing");
 				}
-				if (ismember([r,c], checks.attackerCoords)) {
-					classes.remove("potAttacker");
+				if (ismember([r,c], checks.attackerCoords) && STATE != "showPotentialCheck") {
 					classes.add("checkAttacker");
 				}
 			}

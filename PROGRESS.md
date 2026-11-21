@@ -4,6 +4,21 @@ Compact notes for whoever works on this next. Tests: `npm test` (node), and the 
 (start_test.bat, or the `qhess` preview in `.claude/launch.json` at /tests/test.html, then Run tests: replays the
 example games against tests/snapshots.json, plus multiplayer and page-feature checks).
 
+## Potential check: attackers automatic, arrows (2026-11-21)
+- Add PC -> choose the king -> **every** piece of the mover's that could attack it attacks it (controller
+  `selectPCKing(king, attackers = choosePCKing's list)`: addPCAttacker each, skipping any an earlier collapse ruled
+  out; into check -> invalidMoveIntoCheck). The state after is `showPotentialCheck` (was `selectPCAttackers`, the
+  one-at-a-time step, now gone with `highlightPCAttackers`, `highlightPotAttacker`, `.potAttacker`); any click
+  cancels, Submit submits.
+- At Captures: a red arrow from each attacker to the king (`arrows.attacks` from controller draw ->
+  board-view `.arrow-attacks` group, rebuilt each draw; style.css 7.9 `#f44`); attackers get no `.checkAttacker`
+  outline in that state (real checks still do). Below Captures: no arrows, and choosing the king shows no `.potKing`
+  highlights nor cancel cursors (they'd give the candidates away); the flags are still set (generate.html reads them).
+- The demo passes its scripted attackers (`selectPCKing(move.pcKing, move.pcAttackers)`). tests/generate.html picks
+  attackers the old random way on an engine copy (board order, same rng use) so seed 5 still makes
+  01_short_opening.txt, then passes that set.
+- tests/test.html "potential check: every possible attacker attacks, with arrows at Captures".
+
 ## Re-staging a move before Submit (2026-11-21)
 - While a move is staged (`STAGED_STATES`: showCompleteMove, invalidMoveIntoCheck) its piece can still go
   elsewhere. controller `restageSquares()` = the start square + the piece's other destinations in `committed`.
