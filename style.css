@@ -1951,15 +1951,20 @@ input.switch:focus-visible {
 }
 
 /* How the picked piece moves (board-view.js drawPattern), under the arrows,
-   in a glowing radar green: short dashes stream out from the piece along each
+   in the move colour: short dashes stream out from the piece along each
    way it moves, to the edge of the board for a line move (the SVG cuts them
    off there), through any piece; for a knight two rings of dashes turn
    opposite ways round the circle through its hops (radius √5 squares,
    circumference 14.05). In squares, not pixels. Each animation moves the
    dashes on by exactly one dash-and-gap, so it loops seamlessly. */
 .move-arrow .move-pattern {
-    --pattern-col: #5f5;
-    filter: drop-shadow(0 0 0.08em #3f3) drop-shadow(0 0 0.03em #000);
+    --pattern-col: var(--piece-dest-col);
+    /* The speeds: the time for a ray's dashes to move one square out, and for
+       a knight's ring to move on by one dash (an eighth of the way round).
+       Longer is slower. */
+    --pattern-ray-time: 0.45s;
+    --pattern-ring-time: 1.2s;
+    filter: drop-shadow(0 0 0.04em #000c);
 }
 
 .move-arrow .move-pattern path {
@@ -1971,12 +1976,12 @@ input.switch:focus-visible {
 
 .move-arrow .pattern-ray {
     stroke-dasharray: 0.22 0.78;
-    animation: pattern-out 0.16s linear infinite;
+    animation: pattern-out var(--pattern-ray-time) linear infinite;
 }
 
 .move-arrow .pattern-circle {
     stroke-dasharray: 0.3 1.4562;   /* 8 to a ring: 8 x (0.3 + 1.4562) = 14.05 */
-    animation: pattern-round 0.4s linear infinite;
+    animation: pattern-round var(--pattern-ring-time) linear infinite;
 }
 
 .move-arrow .pattern-circle-back {

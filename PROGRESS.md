@@ -13,9 +13,11 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
   `.pattern-ray` paths (out to 12 squares; the SVG clips at the board edge, so pulses pass through pieces) and a
   `.pattern-circle` (r √5 round the piece) for a knight; rebuilt only when the pattern changes (key in
   `data-pattern`) so redraws don't restart the animation. style.css 7.9: a stream of short dashes animated by
-  stroke-dashoffset over exactly one dash+gap so it loops (rays 0.22/0.78 every 0.16s; knight: two
+  stroke-dashoffset over exactly one dash+gap so it loops (rays 0.22/0.78; knight: two
   `.pattern-circle` paths, 8 dashes each, the second `.pattern-circle-back` reversed so the rings turn opposite
-  ways), radar green `--pattern-col: #5f5` with a green glow; static faint under prefers-reduced-motion.
+  ways), in the theme's move colour (`--pattern-col: var(--piece-dest-col)`; a radar
+  green #5f5 was tried and dropped, as too busy along with the speed); speeds in `--pattern-ray-time` (0.45s per
+  square) and `--pattern-ring-time` (1.2s per eighth of a ring); static faint under prefers-reduced-motion.
 - The user chose to keep it with no static markers at Moves level. The 7.3 markers are hidden (`display: none` on `.destination::before/::after`) but their CSS is kept while this
   is tried; the capture ring still shows at Captures. The point: a marker stopping at a piece hinted at captures.
 - tests: rules.test.js move pattern; test.html "move markers" checks the rays/circle.
