@@ -20,6 +20,13 @@ function exampleGames() {
 	}));
 }
 
+// One example game by its file name, e.g. "06_checkmate.txt"
+function exampleGame(name) {
+	const game = exampleGames().find(g => g.name == name);
+	if (!game) { throw new Error("no example game " + name); }
+	return game;
+}
+
 // tests/snapshots.json (recorded by tests/test.html)
 function snapshots() {
 	return JSON.parse(readFileSync(path.join(ROOT, "tests", "snapshots.json"), "utf8"));
@@ -60,4 +67,4 @@ function at(state, square) {
 	return state.board[r][c];
 }
 
-export { ROOT, exampleGames, snapshots, moveFromLine, historyAsLines, move, play, at, sq };
+export { ROOT, exampleGames, exampleGame, snapshots, moveFromLine, historyAsLines, move, play, at, sq };

@@ -7,7 +7,7 @@ import { applyMove, startMove, declareNotAKing, hasLegalTurn } from "../../src/e
 import { getPotentialMoves } from "../../src/engine/moves.js";
 import { updateOptionsFromEntanglement } from "../../src/engine/entanglement.js";
 import { ismember } from "../../src/engine/utils.js";
-import { move, play, at, sq, exampleGames, moveFromLine } from "./helpers.js";
+import { move, play, at, sq, exampleGame, moveFromLine } from "./helpers.js";
 
 ////////////////////////////////
 // En passant
@@ -65,7 +65,7 @@ test("a pawn can't take its own side's piece en passant", () => {
 
 // The example promotion game, up to (not including) the first ply that contains `text`
 function promotionGameBefore(text) {
-	const { lines } = exampleGames().find(g => g.name == "05_promotion.txt");
+	const { lines } = exampleGame("05_promotion.txt");
 	const state = createInitialState();
 	for (const line of lines) {
 		if (line.includes(text)) { return state; }
@@ -159,5 +159,5 @@ test("applyMove refuses a move that needs an answer it wasn't given", () => {
 	const state = play(...blackOnE4, ["d2", "d4"]);
 	const result = applyMove(cloneState(state), { from: sq("e4"), to: sq("d3") });
 	assert.equal(result.ok, false);
-	assert.match(result.error, /En passant\?/);
+	assert.match(result.error ?? "", /En passant\?/);
 });

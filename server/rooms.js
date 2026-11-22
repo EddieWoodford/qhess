@@ -35,13 +35,13 @@ function cleanMove(move) {
 		promotion: move.promotion === true,
 		castle: move.castle === true,
 		pcKing: coordOrNull(move.pcKing),
-		pcAttackers: [],
+		pcAttackers: /** @type {number[][]} */ ([]),
 		resign: move.resign === true,
 	};
 	if (Object.values(clean).includes(undefined)) { return null; }
 	const attackers = move.pcAttackers ?? [];
 	if (!Array.isArray(attackers) || attackers.length > 16 || !attackers.every(isSquare)) { return null; }
-	clean.pcAttackers = attackers.map(a => [a[0], a[1]]);
+	clean.pcAttackers = attackers.map((/** @type {number[]} */ a) => [a[0], a[1]]);
 	return clean;
 }
 
@@ -156,13 +156,11 @@ class GameServer {
 		if (this.seats.get(conn)?.room === room) {
 			return this.error(conn, ERRORS.BAD_REQUEST, "You're already in that game");
 		}
-		let color = COLORS.find(c => room.record.seats[c] === null);
-		const retaking = !color;
-		if (retaking) {
-			color = this.retakableSeat(room);
-			if (!color) {
-				return this.error(conn, ERRORS.FULL, "That game already has two players");
-			}
+		const free = COLORS.find(c => room.record.seats[c] === null);
+		const retaking = !free;
+		const color = free ?? this.retakableSeat(room);
+		if (!color) {
+			return this.error(conn, ERRORS.FULL, "That game already has two players");
 		}
 		await this.leave(conn);
 		if (retaking) {
@@ -252,7 +250,7 @@ class GameServer {
 		const next = cloneState(room.state);
 		const result = applyMove(next, clean);
 		if (!result.ok) {
-			return send(conn, { type: "rejected", seq, error: result.error });
+			return send(conn, { type: "rejected", seq, error: result.error ?? "That move can't be played" });
 		}
 		room.state = next;
 		moves.push(clean);

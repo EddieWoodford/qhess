@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { createInitialState } from "../../src/engine/state.js";
 import { applyMove, refreshChecks, gameResult, hasLegalTurn } from "../../src/engine/game.js";
 import { coordstext2coords as sq } from "../../src/engine/utils.js";
-import { exampleGames, moveFromLine, move, historyAsLines } from "./helpers.js";
+import { exampleGames, exampleGame, moveFromLine, move, historyAsLines, at } from "./helpers.js";
 
 // Option indexes for each type (see constants.js)
 const IDS = { P: [0, 1, 2, 3, 4, 5, 6, 7], R: [8, 9], N: [10, 11], B: [12, 13], Q: [14], K: [15] };
@@ -104,7 +104,7 @@ test("Black's move 0 always has a legal turn", () => {
 });
 
 test("the example checkmate game ends in checkmate on its last move, and no move can follow", () => {
-	const { lines } = exampleGames().find(g => g.name == "06_checkmate.txt");
+	const { lines } = exampleGame("06_checkmate.txt");
 	const state = createInitialState();
 	lines.forEach((line, i) => {
 		assert.deepEqual(applyMove(state, moveFromLine(line)), { ok: true }, line);
@@ -114,7 +114,7 @@ test("the example checkmate game ends in checkmate on its last move, and no move
 });
 
 test("the example stalemate game ends in stalemate on its last move", () => {
-	const { lines } = exampleGames().find(g => g.name == "08_stalemate.txt");
+	const { lines } = exampleGame("08_stalemate.txt");
 	const state = createInitialState();
 	lines.forEach((line, i) => {
 		assert.deepEqual(applyMove(state, moveFromLine(line)), { ok: true }, line);
@@ -136,14 +136,14 @@ test("no other example game ends", () => {
 });
 
 test("the example castling game castles on both sides", () => {
-	const { lines } = exampleGames().find(g => g.name == "07_castling.txt");
+	const { lines } = exampleGame("07_castling.txt");
 	const state = createInitialState();
 	for (const line of lines) {
 		assert.deepEqual(applyMove(state, moveFromLine(line)), { ok: true }, line);
 	}
 	// White castled e1-g1 with h1 (rook to f1); Black e8-c8 with b8 next to c8 (rook to d8). Both kings moved on.
-	assert.equal(state.board[7][5].waves(), "R"); // f1
-	assert.equal(state.board[0][3].waves(), "R"); // d8
-	assert.equal(state.board[7][7].waves(), "K"); // h1
-	assert.equal(state.board[0][1].waves(), "K"); // b8
+	assert.equal(at(state, "f1").waves(), "R");
+	assert.equal(at(state, "d8").waves(), "R");
+	assert.equal(at(state, "h1").waves(), "K");
+	assert.equal(at(state, "b8").waves(), "K");
 });

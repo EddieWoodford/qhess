@@ -14,10 +14,11 @@
 // attack" for check.js, and testing for check here calls check.js, so the two would call each other.
 
 import { isValidCoord, ismember } from "./utils.js";
-import { cloneState } from "./state.js";
+import { cloneState, pieceAt } from "./state.js";
 import { getPotentialMoves } from "./moves.js";
 import { findChecks } from "./check.js";
 import { updateOptionsFromEntanglement } from "./entanglement.js";
+/** @typedef {import("./state.js").GameState} GameState */
 
 // Can this piece take part in a castle as `wave` ("K" or "R")?
 function unmovedCandidate(piece, color, wave) {
@@ -27,10 +28,11 @@ function unmovedCandidate(piece, color, wave) {
 
 // The castles the board layout allows for the piece on `from`, before any check is considered.
 // Returns a list of { kingTo, rookFrom, rookTo }.
+/** @param {GameState} state */
 function castlingLayouts(state, from) {
 	const [r, c] = from;
 	const king = state.board[r][c];
-	if (!unmovedCandidate(king, king?.color, "K")) { return []; }
+	if (king === null || !unmovedCandidate(king, king.color, "K")) { return []; }
 	const at = col => state.board[r][col];
 	const layouts = [];
 	for (const d of [1, -1]) {
@@ -38,6 +40,7 @@ function castlingLayouts(state, from) {
 		const land = [r, c + 2 * d];
 		if (!isValidCoord(land) || at(pass[1]) !== null || at(land[1]) !== null) { continue; }
 		// The nearest piece beyond the landing square, if it is one or two squares away
+		/** @type {number[] | null} */
 		let rookFrom = null;
 		for (const dist of [3, 4]) {
 			const sq = [r, c + dist * d];
@@ -51,13 +54,15 @@ function castlingLayouts(state, from) {
 }
 
 // Is `color` in automatic check in this state?
+/** @param {GameState} state */
 function inAutoCheck(state, color) {
 	return findChecks(state, color).autoCheck;
 }
 
 // Move a piece on the board of a (throwaway) state
+/** @param {GameState} state */
 function placePiece(state, from, to) {
-	const piece = state.board[from[0]][from[1]];
+	const piece = pieceAt(state, from);
 	state.board[from[0]][from[1]] = null;
 	state.board[to[0]][to[1]] = piece;
 	piece.r = to[0];
@@ -66,9 +71,10 @@ function placePiece(state, from, to) {
 
 // Collapse the castling pieces of `state` (changed in place): the king piece to K and the rook piece to R.
 // Returns false if no complete army allows it.
+/** @param {GameState} state */
 function collapseForCastle(state, from, rookFrom) {
-	const king = state.board[from[0]][from[1]];
-	const rook = state.board[rookFrom[0]][rookFrom[1]];
+	const king = pieceAt(state, from);
+	const rook = pieceAt(state, rookFrom);
 	king.removewaves("QBNRP");
 	rook.removewaves("KQBNP");
 	try {
@@ -81,10 +87,11 @@ function collapseForCastle(state, from, rookFrom) {
 
 // The castles the piece on `from` can make now, check rules included. Returns a list of
 // { kingTo, rookFrom, rookTo }. Doesn't change the state.
+/** @param {GameState} state */
 function getCastlingMoves(state, from) {
 	const layouts = castlingLayouts(state, from);
 	if (layouts.length == 0) { return []; }
-	const color = state.board[from[0]][from[1]].color;
+	const color = pieceAt(state, from).color;
 	const legal = [];
 	for (const layout of layouts) {
 		const collapsed = cloneState(state);
@@ -106,6 +113,7 @@ function getCastlingMoves(state, from) {
 }
 
 // Every square the piece on `coords` could move to: its ordinary moves and any castle. Doesn't change the state.
+/** @param {GameState} state */
 function getMoveDestinations(state, coords) {
 	const moves = getPotentialMoves(state, coords);
 	for (const castle of getCastlingMoves(state, coords)) {

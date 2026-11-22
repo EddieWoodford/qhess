@@ -117,7 +117,11 @@ class SocketSession {
 		this.request = null;     // what to send once connected: create / join / resume
 		this.retries = 0;
 		this.timers = {};
-		this.useMoves([]);
+		// The game so far, played from the server's moves (see useMoves)
+		/** @type {import("../engine/state.js").GameState} */
+		this.state = createInitialState();
+		/** @type {import("../shared/protocol.js").Move[]} */
+		this.moves = [];
 		// When the browser says the network is back, reconnect now rather than at the next retry
 		this.onOnline = () => {
 			if (this.timers.retry) {
@@ -311,7 +315,7 @@ class SocketSession {
 		ws.onopen = () => {
 			if (this.ws !== ws) { return; }
 			this.heard();
-			this.send(this.request);
+			this.send(/** @type {import("../shared/protocol.js").ClientMessage} */ (this.request)); // (start set it)
 			this.timers.ping = setInterval(() => this.send({ type: "ping" }), PING_MS);
 		};
 		ws.onmessage = event => {

@@ -5,14 +5,20 @@ Compact notes for whoever works on this next. Tests: `npm test` (node), and the 
 example games against tests/snapshots.json, plus multiplayer and page-feature checks). Types: `npm run typecheck`.
 
 ## Type checking, no build step (2026-11-22)
-- Still plain JS served as-is; `npm run typecheck` runs `tsc -p jsconfig.json` (checkJs, noEmit, strict off) over
-  src/, server/, deploy/, tools/ and tests/node/. Keep it at 0 errors. vendor/qrcode.js is `@ts-nocheck`.
+- Still plain JS served as-is; `npm run typecheck` runs `tsc -p jsconfig.json` (checkJs, noEmit, **strict on except
+  noImplicitAny**) over src/, server/, deploy/, tools/ and tests/node/. Keep it at 0 errors. vendor/qrcode.js is
+  `@ts-nocheck`. noImplicitAny stays off: it would mean a JSDoc type on every parameter (~500).
+- `GameState` (state.js typedef) is on every engine function taking `state`; `pieceAt(state, coords)` (state.js) is
+  the board lookup where there must be a piece (throws if empty). controller.js: `UiState` (the ui.state names: a
+  typo in setState is an error), `MultiplayerView`, `Drag`; `committed` / `game` are GameState.
+- Null rules: variables that start null say their type (`/** @type {X | null} */`); the page's elements are cast to
+  HTMLElement where looked up (dom.js / tour.js / modals.js `$`). tour.js `steps` is [] when not running (was null).
+  Fields of a class are set in its constructor (SocketSession, TestClient state/moves), not only in a method.
 - Types are JSDoc. protocol.js has `Move`, `ClientMessage`, `ServerMessage` (and Square, Color, HintLevel):
   socket-session.js `send` / `request` and rooms.js `send` / `broadcast` / `moveMessage` only take those.
   game.js startMove's result is one flat type (ok, error?, movedIntoCheck?, ...). dom.js casts the elements whose
   properties are used (inputs, buttons, the link, the textarea); event targets are cast to Element where `closest`
   is used. server.js tracks heartbeat answers in a WeakSet `alive` (was `ws.isAlive`).
-- Next places worth typing, if wanted: the controller's `ui` state and the engine `state`; then `strict: true`.
 
 ## Potential check: attackers automatic, arrows (2026-11-21)
 - Add PC -> choose the king -> **every** piece of the mover's that could attack it attacks it (controller

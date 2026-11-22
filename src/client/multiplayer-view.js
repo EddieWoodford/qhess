@@ -19,6 +19,7 @@ function setNetworkHost(host) {
 }
 
 // The link the QR code was last drawn for, so it is only drawn again when the link changes
+/** @type {string | null} */
 let drawnLink = null;
 
 // The join link of the game being shown, or null before it has a code

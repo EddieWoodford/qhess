@@ -6,20 +6,23 @@
 
 const MODALS = ["import", "rules"];
 
+// (the page always has these elements)
+const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
+
 function showModal(name) {
-	document.getElementById(name + "Wrapper").style.display = "block";
+	$(name + "Wrapper").style.display = "block";
 }
 
 function hideModal(name) {
-	document.getElementById(name + "Wrapper").style.display = "none";
+	$(name + "Wrapper").style.display = "none";
 }
 
 function setupModals() {
 	for (const name of MODALS) {
-		document.getElementById(name + "Button").addEventListener("click", () => showModal(name));
-		document.getElementById(name + "Wrapper").addEventListener("click", () => hideModal(name));
+		$(name + "Button").addEventListener("click", () => showModal(name));
+		$(name + "Wrapper").addEventListener("click", () => hideModal(name));
 		// Clicks inside the content box shouldn't reach the wrapper and close the modal
-		document.getElementById(name + "Div").addEventListener("click", e => e.stopPropagation());
+		$(name + "Div").addEventListener("click", e => e.stopPropagation());
 	}
 }
 
@@ -28,7 +31,7 @@ function setupModals() {
 // does the same as clicking outside the box.
 // Calls onAnswer(true) or onAnswer(false), or onAnswer(null) if it's cancelled or closed by clicking outside the box.
 function showChoice(choice, onAnswer) {
-	const $ = id => document.getElementById(id);
+	const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 	$("choiceText").textContent = choice.text;
 	$("choiceYes").textContent = choice.yes;
 	$("choiceNo").textContent = choice.no;

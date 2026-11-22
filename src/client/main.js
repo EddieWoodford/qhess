@@ -19,7 +19,7 @@ import { setNetworkHost } from "./multiplayer-view.js";
 wakeServer();
 
 function onClick(id, handler) {
-	document.getElementById(id).addEventListener("click", handler);
+	/** @type {HTMLElement} */ (document.getElementById(id)).addEventListener("click", handler);
 }
 
 setupModals();
@@ -49,12 +49,12 @@ setupSettings({
 // style.css shows it when <body> has .panel-open: beside the board on wide screens, over it on tall ones.
 function setPanelOpen(open) {
 	document.body.classList.toggle("panel-open", open);
-	document.getElementById("panelButton").setAttribute("aria-expanded", open);
+	/** @type {HTMLElement} */ (document.getElementById("panelButton")).setAttribute("aria-expanded", String(open));
 }
 onClick("panelButton", () => setPanelOpen(!document.body.classList.contains("panel-open")));
 onClick("panelClose", () => setPanelOpen(false));
 // On tall screens the panel is over a dimmed backdrop: tapping the backdrop closes it
-document.getElementById("sidePanel").addEventListener("click", e => {
+/** @type {HTMLElement} */ (document.getElementById("sidePanel")).addEventListener("click", e => {
 	if (e.target === e.currentTarget) {setPanelOpen(false);}
 });
 document.addEventListener("keydown", e => {

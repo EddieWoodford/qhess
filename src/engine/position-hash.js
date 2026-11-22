@@ -1,4 +1,5 @@
 "use strict";
+/** @typedef {import("./state.js").GameState} GameState */
 
 // A compact fingerprint of a game position, for checking that two copies of a game agree.
 // Used by the tests (tests/node, and the same scheme as tests/test.html's snapshots) and by multiplayer
@@ -37,6 +38,7 @@ function hash(str) {
 }
 
 // The fingerprint of a position: the same value tests/snapshots.json records as a "plyHash"
+/** @param {GameState} state */
 function positionHash(state) {
 	return hash(JSON.stringify(positionSummary(state)));
 }

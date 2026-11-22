@@ -168,6 +168,6 @@ test("a castle is written in the history and replays from it", () => {
 
 test("the server keeps the castle flag on a move from the network", async () => {
 	const { cleanMove } = await import("../../server/rooms.js");
-	assert.equal(cleanMove(move("e1", "g1", { castle: true })).castle, true);
-	assert.equal(cleanMove(move("e1", "g1", { castle: "yes" })).castle, false);
+	assert.equal(cleanMove(move("e1", "g1", { castle: true }))?.castle, true);
+	assert.equal(cleanMove(move("e1", "g1", { castle: "yes" }))?.castle, false);
 });

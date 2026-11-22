@@ -229,7 +229,7 @@ async function startOnFreePort(firstPort, options = {}, onSkip = () => {}, tries
 	for (let port = firstPort; port < firstPort + tries; port++) {
 		try {
 			return await startServer({ ...options, port });
-		} catch (err) {
+		} catch (/** @type {any} */ err) {
 			if (err.code != "EADDRINUSE" && err.code != "EACCES") { throw err; }
 			onSkip(port);
 		}
@@ -240,8 +240,8 @@ async function startOnFreePort(firstPort, options = {}, onSkip = () => {}, tries
 // The addresses another computer on this network could use to reach this one
 function lanAddresses() {
 	return Object.values(networkInterfaces()).flat()
-		.filter(a => a && a.family == "IPv4" && !a.internal)
-		.map(a => a.address);
+		.filter(a => a !== undefined && a.family == "IPv4" && !a.internal)
+		.map(a => /** @type {import("node:os").NetworkInterfaceInfo} */ (a).address);
 }
 
 async function main() {
@@ -258,7 +258,7 @@ async function main() {
 		server = await startOnFreePort(firstPort, { log }, port => {
 			console.log("Port " + port + " is in use or reserved by Windows; trying " + (port + 1));
 		});
-	} catch (err) {
+	} catch (/** @type {any} */ err) {
 		console.error(err.message);
 		process.exit(1);
 	}

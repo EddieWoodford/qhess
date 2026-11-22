@@ -19,7 +19,8 @@ import { coordstext2coords } from "../engine/utils.js";
 const STAGE_MS = 1200; // the pause between the stages of a move being acted out
 const PRESS_MS = 500;  // how long a side button shows as pressed
 
-const $ = id => document.getElementById(id);
+// (the page always has these elements)
+const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 const el = {
 	area: $("gameArea"),
 	bubble: $("tourBubble"),
@@ -31,14 +32,15 @@ const el = {
 	next: /** @type {HTMLButtonElement} */ ($("tourNext")),
 };
 
-let steps = null;    // the tour's steps (tour-script.js parseTour) while it runs, else null
+/** @type {ReturnType<typeof parseTour>["steps"]} */
+let steps = [];      // the tour's steps (tour-script.js parseTour) while it runs, else none
 let index = -1;      // the step being shown
 let savedGame = "";  // the player's own game, to put back on Exit
 let timers = [];     // the stages of the move being acted out, still to come
 let anchor = null;   // [r,c] of the square the bubble points at, or null (over the middle of the board)
 
 function running() {
-	return steps !== null;
+	return steps.length > 0;
 }
 
 function start() {
@@ -55,7 +57,7 @@ function stop(keep = false) {
 	if (!running()) { return; }
 	settle();
 	const shown = game.ui.record.join("\n");
-	steps = null;
+	steps = [];
 	index = -1;
 	el.bar.hidden = true;
 	el.bubble.hidden = true;
@@ -93,7 +95,7 @@ function show(i, act) {
 		// A note after the last move looks at the board: put the game over banner away, as a click on it does
 		if (step.kind == "note" && !$("gameOver").hidden) { $("gameOver").click(); }
 		const move = step.kind == "ply" ? parseMoveText(step.text) : null;
-		showBubble(step, step.kind == "note" ? square(step.at) : move.to ?? move.pcKing);
+		showBubble(step, step.kind == "note" ? square(step.at) : move?.to ?? move?.pcKing);
 	}
 	drawBar();
 }

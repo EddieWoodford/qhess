@@ -51,7 +51,7 @@ function defaultValue(setting) {
 // The remembered settings, as { name: value }. Empty if there are none, or the browser won't keep them.
 function loadRemembered() {
 	try {
-		return JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? {};
+		return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}") ?? {};
 	} catch {
 		return {};
 	}

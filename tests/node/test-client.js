@@ -16,7 +16,11 @@ class TestClient {
 		this.inbox = [];   // messages received and not yet taken by next()
 		this.waiters = [];
 		this.closed = false;
-		this.resetGame();
+		this.ws = /** @type {WebSocket} */ (/** @type {unknown} */ (null)); // (open makes it)
+		/** @type {import("../../src/engine/state.js").GameState} */
+		this.state = createInitialState(); // the copy of the game (see resetGame)
+		/** @type {object[]} */
+		this.moves = [];
 	}
 
 	resetGame() {

@@ -52,7 +52,7 @@
 // The same, as types for the type checker (npm run typecheck): socket-session.js send and rooms.js send take
 // only these. Messages that arrive are still checked by hand, since they come off the network.
 /**
- * @typedef {[number, number]} Square [row, column], row 0 = rank 8
+ * @typedef {number[]} Square [row, column], row 0 = rank 8
  * @typedef {"none" | "collapses" | "moves" | "captures"} HintLevel
  * @typedef {"w" | "b"} Color
  * @typedef {{ notAKing: Square | null, from: Square | null, to: Square | null, enPassant: boolean,

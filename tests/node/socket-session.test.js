@@ -209,6 +209,7 @@ test("a rewind: asked by one session, shown to the other, agreed, and both go ba
 	const { lines } = games[0];
 	const players = await newGame("w");
 	for (let seq = 0; seq < 5; seq++) { await play(players, lines, seq); }
+	/** @type {{ w: any[], b: any[] }} */
 	const events = { w: [], b: [] };
 	players.w.onEvent(e => { if (e.type.startsWith("rewind")) { events.w.push(e); } });
 	players.b.onEvent(e => { if (e.type.startsWith("rewind")) { events.b.push(e); } });
@@ -229,6 +230,7 @@ test("a rewind: asked by one session, shown to the other, agreed, and both go ba
 
 test("a hint level change: asked by one session, agreed by the other, and both play at it", async () => {
 	const players = await newGame("w", "moves");
+	/** @type {{ w: any[], b: any[] }} */
 	const ended = { w: [], b: [] };
 	players.w.onEvent(e => { if (e.type == "hintLevelEnded") { ended.w.push(e); } });
 	players.b.onEvent(e => { if (e.type == "hintLevelEnded") { ended.b.push(e); } });

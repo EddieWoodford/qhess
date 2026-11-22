@@ -45,35 +45,55 @@ import { showChoice } from "./modals.js";
 import { LocalSession } from "./session.js";
 import { SocketSession, savedSeat } from "./socket-session.js";
 
+/**
+ * @typedef {import("../engine/state.js").GameState} GameState
+ * @typedef {"move0" | "clear" | "highlightPotentialMoves" | "showPartialMove" | "dragging" | "showCompleteMove"
+ *   | "invalidMoveIntoCheck" | "selectPCKing" | "showPotentialCheck" | "gameOver"
+ *   | "waitJoin" | "waitOpponent" | "sendingMove" | "multiplayerOver"} UiState
+ * @typedef {ReturnType<SocketSession["info"]> & { message: string }} MultiplayerView
+ */
+
 let session;            // the official game: a LocalSession, or a SocketSession in a multiplayer game
+/** @type {LocalSession | null} */
 let viewSession = null; // multiplayer only: a LocalSession for stepping through the history (see boardSession)
+/** @type {GameState} */
 let committed; // the session's game state at the start of the current turn: see src/engine/state.js
+/** @type {GameState} */
 let game;      // the game state being shown and changed by clicks: a working copy of `committed`
 let turnMove;  // the turn being made, as a move for session.submitMove (see newTurnMove)
+/** @type {GameState | null} */
 let beforeLastPly = null; // the game state before the last ply replayed (replayPly): while stepping through the
                           // history, the board fades the types that ply ruled out, as it does before Submit
 
 // Page state: everything about what the page is showing, apart from the game itself
 const ui = {
+	/** @type {UiState} */
 	state: "move0",  // the step of the turn (see the list above)
+	/** @type {number[]} */
 	start: [],       // [r,c] of the move being made, or [] if none
+	/** @type {number[]} */
 	end: [],
+	/** @type {number[]} */
 	lastStart: [],   // start square of the last submitted move, for replay highlighting
+	/** @type {number[]} */
 	lastEnd: [],     // end square of the last submitted move
 	// The game record shown in the History tab, one ply per line. It follows the game as moves are made, and
 	// stays as it is while replaying (so the later moves can be stepped forward through).
+	/** @type {string[]} */
 	record: [],
 	// -1 when not replaying. While stepping through the history, the position being shown, in moves:
 	// 0.5 = after Black's move 0, 1 = after White's move 1, 1.5 = after Black's move 1, ...
 	replay: -1,
 	// null in a single-player game. In a multiplayer game, what the page shows about it: SocketSession info()
 	// ({ phase, code, color, opponent, connection, pending, endedReason }) and message (why it ended, or "").
+	/** @type {MultiplayerView | null} */
 	multiplayer: null,
 	// The Settings tab's Potential Check switch. Off: no Add PC, and Black's move 0 is passed by itself.
 	// A multiplayer game always uses the rule (see pcRule), as both players must play by the same rules.
 	potentialCheck: true,
 	// The Settings tab's Hint Level (protocol.js HINT_LEVELS): how much the board shows before Submit. A
 	// multiplayer game plays at its creator's level instead, and the demo at "captures" (see hintLevel).
+	/** @type {import("../shared/protocol.js").HintLevel} */
 	hintLevel: "captures",
 	// True while the demo play-through (tour.js) is driving the board: the player's clicks on the board and the
 	// side buttons do nothing, the game isn't saved, and potential checks are allowed whatever the switch says.
@@ -134,6 +154,7 @@ function askChoice(question, onAnswer) {
 
 // For tests and automation: answer the questions straight away with handler(question) => true / false, instead
 // of asking in the page. null puts the dialog back.
+/** @type {((question: string) => boolean) | null} */
 let choiceHandler = null;
 function setChoiceHandler(handler) {
 	choiceHandler = handler;
@@ -214,9 +235,10 @@ function setHintLevel(level) {
 // Multiplayer: a Hint Level button asks the opponent to change the game to that level. The game's own level withdraws
 // this player's request, if one is open.
 function requestHintLevel(level) {
-	if (!isMultiplayer()) { return; }
-	if (level == ui.multiplayer.hintLevel) {
-		if (ui.multiplayer.hintRequest?.mine) { session.cancelHintLevel(); }
+	const mp = ui.multiplayer;
+	if (mp === null) { return; }
+	if (level == mp.hintLevel) {
+		if (mp.hintRequest?.mine) { session.cancelHintLevel(); }
 		return;
 	}
 	const result = session.requestHintLevel(level);
@@ -513,7 +535,7 @@ function showCompleteMove(endCoords,doEP,doPromotion,doCastle) {
 		if (!(err instanceof ChoiceNeeded)) {
 			// A fault in the engine: drop the move rather than leave the board stuck part-way through it
 			console.error(err);
-			debugPrint("That move couldn't be made: " + err.message);
+			debugPrint("That move couldn't be made: " + /** @type {Error} */ (err).message);
 			setState("clear");
 			return;
 		}
@@ -572,6 +594,14 @@ const DRAG_PX = { mouse: 4, touch: 8 }; // how far the pointer moves before a pr
 // The press on a piece: { pointerId, start: [r,c] (where the piece moves from), pressed: [r,c] (where it was
 // pressed: the staged destination for a staged piece), x, y, touch, active (dragging), destinations, over: [r,c] or
 // null, hover: the move tried there (dragPreview), staged: the staged move to put back if the drag comes to nothing }
+/**
+ * @typedef {{ state?: GameState, intoCheck?: boolean, question?: string }} DragHover
+ * @typedef {{ game: GameState, turnMove: object, start: number[], end: number[], state: UiState }} StagedMove
+ * @typedef {{ pointerId: number, start: number[], pressed: number[], x: number, y: number, touch: boolean,
+ *   active: boolean, destinations: number[][], over: number[] | null, hover: DragHover | null,
+ *   staged: StagedMove | null }} Drag
+ */
+/** @type {Drag | null} */
 let drag = null;
 let ignoreClick = false; // a drag has just ended: the click the release may make isn't one (cleared by the next press)
 
@@ -593,7 +623,7 @@ function squarePointerDown(coords, event) {
 }
 
 function dragMove(event) {
-	if (event.pointerId != drag.pointerId) {return}
+	if (!drag || event.pointerId != drag.pointerId) {return}
 	if (!drag.active) {
 		if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < DRAG_PX[drag.touch ? "touch" : "mouse"]) {return}
 		if (!canDrag()) { endDrag(); return; } // the game moved on since the press
@@ -624,7 +654,7 @@ function dragMove(event) {
 }
 
 function dragUp(event) {
-	if (event.pointerId != drag.pointerId) {return}
+	if (!drag || event.pointerId != drag.pointerId) {return}
 	if (!drag.active) { endDrag(); return; } // a press without dragging: the click that follows does the rest
 	const start = drag.start, staged = drag.staged;
 	const target = squareAt(event.clientX, event.clientY);
@@ -653,7 +683,7 @@ function putBack(staged) {
 }
 
 function dragCancel(event) {
-	if (event.pointerId == drag.pointerId) { cancelDrag(); }
+	if (event.pointerId == drag?.pointerId) { cancelDrag(); }
 }
 
 function dragKey(event) {
@@ -661,6 +691,7 @@ function dragKey(event) {
 }
 
 function cancelDrag() {
+	if (!drag) {return}
 	const wasActive = drag.active, staged = drag.staged;
 	endDrag();
 	if (wasActive) { putBack(staged); }
@@ -681,7 +712,7 @@ function endDrag() {
 // The dragged piece's move to coords, tried on a copy of the working state: { state, intoCheck }, or { question }
 // when the move is ambiguous (asked on the drop, see showCompleteMove), or null if the piece can't move there
 function dragPreview(coords) {
-	if (!coords || !ismember(coords, drag.destinations)) {return null}
+	if (!drag || !coords || !ismember(coords, drag.destinations)) {return null}
 	const trial = cloneState(game);
 	try {
 		const result = startMove(trial, drag.start, coords, { ask: choiceHandler ?? askInPage });
@@ -937,7 +968,7 @@ function exitReplay() {
 // Start a multiplayer game. request: { create: "w" | "b" | "random" }, { join: code } or
 // { resume: { code, token } } (see SocketSession start)
 function startMultiplayer(request, options = {}) {
-	if (isMultiplayer()) {
+	if (ui.multiplayer !== null) {
 		if (ui.multiplayer.phase == "playing" || ui.multiplayer.phase == "connecting") { return; }
 		session.leave();
 	}
@@ -978,12 +1009,12 @@ function backToSinglePlayer() {
 // The session's connection or game changed: update what the page shows
 function multiplayerEvent(s, event) {
 	if (session !== s) { return; }
-	let message = ui.multiplayer.message;
+	let message = ui.multiplayer?.message ?? "";
 	if (event.type == "error") {
 		debugPrint(event.message);
 		if (event.fatal) { message = event.message; }
 	}
-	const wasColor = ui.multiplayer.color;
+	const wasColor = ui.multiplayer?.color;
 	ui.multiplayer = { ...s.info(), message };
 	if (s.color && s.color != wasColor) {
 		// Your own side at the bottom of the board
@@ -1000,7 +1031,7 @@ function multiplayerEvent(s, event) {
 		exitReplay();
 		return;
 	}
-	if (ui.replay == -1 && (WAITING_STATES.includes(ui.state) || ui.state == "clear" || ui.state == "move0" || ui.multiplayer.phase != "playing")) {
+	if (ui.replay == -1 && (WAITING_STATES.includes(ui.state) || ui.state == "clear" || ui.state == "move0" || ui.multiplayer?.phase != "playing")) {
 		setState("clear"); // works out again whether the player can move
 	} else {
 		draw();
@@ -1026,7 +1057,7 @@ function liveChanged(state) {
 	const before = parseRecord(committed.history);
 	const after = parseRecord(state.history);
 	const opponentMoved = after.length == before.length + 1 && before.every((ply, i) => ply == after[i])
-		&& state.turnColor == ui.multiplayer.color;
+		&& state.turnColor == ui.multiplayer?.color;
 	adopt(state);
 	ui.record = after;
 	showLastMove();
@@ -1049,8 +1080,8 @@ function showLastMove() {
 // In a multiplayer game, the step to show instead of letting the player move (see the list at the top), or
 // null if they can move
 function multiplayerWait() {
-	if (!isMultiplayer() || ui.replay > -1) { return null; }
 	const mp = ui.multiplayer;
+	if (mp === null || ui.replay > -1) { return null; }
 	if (mp.phase == "ended" || mp.phase == "left") { return "multiplayerOver"; }
 	if (mp.phase != "playing") { return "waitJoin"; }
 	if (mp.pending) { return "sendingMove"; }
@@ -1065,6 +1096,7 @@ function multiplayerWait() {
 
 // Move to a new step of the turn: reset the highlights that don't belong to it, then redraw.
 // animate: slide the pieces that moved since the last draw (see draw)
+/** @param {UiState} stateIn @param {boolean} [animate] */
 function setState(stateIn, animate = false) {
 	if (stateIn != "dragging" && drag?.active) {
 		endDrag(); // the game moved on under a dragged piece (e.g. a multiplayer catch-up)
@@ -1110,8 +1142,8 @@ function draw(animate = false) {
 	saveRecord();
 	// While a piece is dragged over a square it can move to, the board shows the move made there
 	const dragging = ui.state == "dragging" && drag !== null;
-	const hover = dragging ? drag.hover : null;
-	const end = hover ? drag.over : ui.end;
+	const hover = dragging && drag ? drag.hover : null;
+	const end = (hover && drag?.over) ?? ui.end; // (a hover means it is over a square)
 	// The arrows: the last move played, the move being made once it has a destination, and at the Captures hint
 	// level, one from each attacker of the potential check being declared to its king
 	const declared = ui.state == "showPotentialCheck" && hintLevel() == "captures" ? findChecks(game, oppColor(game.turnColor)) : null;
@@ -1155,6 +1187,7 @@ function draw(animate = false) {
 // it. A multiplayer game isn't saved here: it has its own way back in after a reload (socket-session.js savedSeat),
 // and leaving it returns to the saved game.
 const GAME_STORAGE_KEY = "qhess.game";
+/** @type {string | null} */
 let savedRecord = null; // the record as last saved, so it is only written when it changes
 
 function saveRecord() {
@@ -1232,6 +1265,7 @@ const ready = new Promise(resolve => { markReady = resolve; });
 
 // Called once when the page loads: make the board and its squares, then start a game.
 // joinCode: the code of a game to join, when the page was opened from its join link (join-link.js)
+/** @param {string | null} [joinCode] */
 function init(joinCode = null) {
 	buildBoard();
 	squares = [];

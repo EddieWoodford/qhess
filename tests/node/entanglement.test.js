@@ -4,6 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { filterOptionMatrix, updateOptionsFromEntanglement } from "../../src/engine/entanglement.js";
 import { createInitialState } from "../../src/engine/state.js";
+import { at } from "./helpers.js";
 
 const full = n => Array.from({ length: n }, () => Array(n).fill(1));
 
@@ -95,10 +96,10 @@ test("a whole side is collapsed in place, and an impossible side throws", () => 
 		if (piece.r != 7 || piece.c != 4) { piece.removewaves("K"); }
 	}
 	updateOptionsFromEntanglement(state, "w");
-	assert.equal(state.board[7][4].waves(), "K");
+	assert.equal(at(state, "e1").waves(), "K");
 	// Black is untouched
 	assert.ok(state.pieces.b.every(p => p.waves().includes("K")));
 	// Ruling e1 out as well leaves White with no king at all
-	state.board[7][4].removewaves("K");
+	at(state, "e1").removewaves("K");
 	assert.throws(() => updateOptionsFromEntanglement(state, "w"), /no complete army fits the White pieces/);
 });

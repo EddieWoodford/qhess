@@ -10,6 +10,7 @@ import { getPotentialMoves } from "./moves.js";
 const ALL_WAVES = "KQBNRP";
 
 class Piece {
+	/** @param {number} i @param {number} r @param {number} c @param {"w" | "b"} color */
 	constructor(i, r, c, color) {
 		this.i = i; // 0-15: the piece's place in its side's list (state.pieces[color]), from its starting square
 		this.r = r; // row

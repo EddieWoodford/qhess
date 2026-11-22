@@ -184,7 +184,8 @@ function runAnimations(plan) {
 // While a piece is dragged (controller.js), a copy of it follows the pointer (style.css 7.8), above a finger so the
 // finger doesn't hide it. It is hidden while the board shows the move to the square under the pointer instead.
 
-let lifted = null; // { ghost, w, h, up }
+/** @type {{ ghost: HTMLElement, w: number, h: number, up: number } | null} */
+let lifted = null;
 
 function liftPiece(button, touch) {
 	dropLifted();
@@ -243,7 +244,7 @@ function drawArrows(arrows) {
 		}
 		dom.board.append(svg);
 	}
-	svg.querySelector(".arrow-attacks").replaceChildren(...(arrows?.attacks ?? []).flatMap(([from, to]) => {
+	/** @type {Element} */ (svg.querySelector(".arrow-attacks")).replaceChildren(...(arrows?.attacks ?? []).flatMap(([from, to]) => {
 		const parts = arrowParts();
 		for (const path of parts) { path.setAttribute("d", arrowPath(from, to)); }
 		return parts;

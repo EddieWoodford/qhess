@@ -1,6 +1,7 @@
 "use strict";
 
 import { getPieces } from "./state.js";
+/** @typedef {import("./state.js").GameState} GameState */
 
 // Piece collapse: which identities each piece can still have, given that the whole army must
 // still be assignable. Pure functions on 16x16 option matrices; no game state, no page code.
@@ -45,7 +46,7 @@ function filterOptionMatrix(OM) {
 	// Matched edges point row -> column, unmatched edges point column -> row.
 	// A cycle in this graph is an alternating cycle, so an unmatched edge lies on one
 	// exactly when its endpoints are in the same strongly connected component.
-	const adj = Array.from({ length: 2 * n }, () => []);
+	const adj = Array.from({ length: 2 * n }, () => /** @type {number[]} */ ([]));
 	for (let r = 0; r < n; r++) {
 		for (let c = 0; c < n; c++) {
 			if (OM[r][c] !== 1) { continue; }
@@ -115,6 +116,7 @@ function getOM(pieces) {
 
 // Collapse each colour's pieces (colors: "w", "b", "wb" or an array; default both) so that every
 // remaining identity is part of some complete army
+/** @param {GameState} state @param {string | string[]} [colors] */
 function updateOptionsFromEntanglement(state, colors) {
 	if (colors == undefined) {
 		colors = ["w", "b"];

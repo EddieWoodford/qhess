@@ -20,7 +20,19 @@
 
 import { Piece } from "./piece.js";
 
+/**
+ * @typedef {"w" | "b"} Color
+ * @typedef {{
+ *   turnNumber: number, turnColor: Color, board: (Piece | null)[][], pieces: { w: Piece[], b: Piece[] },
+ *   history: string, thisMove: string, epCoords: number[], epColor: Color | "", pcKing: number, pcColor: Color | "",
+ *   takenPiece: Piece | null, autoCheck: boolean, potCheck: boolean,
+ *   result: null | "checkmate" | "stalemate" | "resigned",
+ * }} GameState
+ */
+
+/** @returns {GameState} */
 function createInitialState() {
+	/** @type {GameState} */
 	const state = {
 		turnNumber: 0,
 		turnColor: "b",
@@ -60,6 +72,7 @@ function createInitialState() {
 }
 
 // An independent copy of the game state: changing the copy (making a move on it) leaves the original as it was
+/** @param {GameState} state @returns {GameState} */
 function cloneState(state) {
 	const pieces = {
 		w: state.pieces.w.map(p => p.clone()),
@@ -83,6 +96,7 @@ function oppColor(color) {
 	return "w";
 }
 
+/** @param {GameState} state */
 function getPieces(state, color) {
 	if (color == "w") {
 		return state.pieces.w;
@@ -91,14 +105,24 @@ function getPieces(state, color) {
 	}
 }
 
+// The piece on `coords`, where there must be one (such as the piece making a move). Throws if the square is empty.
+/** @param {GameState} state @param {number[]} coords @returns {Piece} */
+function pieceAt(state, [r, c]) {
+	const piece = state.board[r][c];
+	if (piece === null) { throw new Error("no piece on [" + r + ", " + c + "]"); }
+	return piece;
+}
+
 // Piece i of the side not to move (the defender)
+/** @param {GameState} state */
 function defPiece(state, i) {
 	return getPieces(state, oppColor(state.turnColor))[i];
 }
 
 // Piece i of the side to move (the attacker)
+/** @param {GameState} state */
 function attPiece(state, i) {
 	return getPieces(state, state.turnColor)[i];
 }
 
-export { createInitialState, cloneState, oppColor, getPieces, defPiece, attPiece };
+export { createInitialState, cloneState, oppColor, getPieces, pieceAt, defPiece, attPiece };

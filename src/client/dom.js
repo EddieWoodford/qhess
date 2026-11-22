@@ -4,7 +4,8 @@
 // board-view.js buildBoard, which keeps its own references to them.)
 // Modules load after the page has been parsed, so the elements exist when this runs.
 
-const $ = id => document.getElementById(id);
+// (the page always has these elements)
+const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
 
 const dom = {
 	board: $("board"),

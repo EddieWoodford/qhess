@@ -56,6 +56,7 @@ function parseMoveText(moveText) {
 	const turn = moveText.slice(0, dotIdx).trim();
 	let rest = moveText.slice(dotIdx + 1);
 
+	/** @type {import("../shared/protocol.js").Move & { turn: string }} */
 	const move = {
 		turn,
 		notAKing: null,

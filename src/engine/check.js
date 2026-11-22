@@ -5,6 +5,7 @@
 import { ismember } from "./utils.js";
 import { getPieces, oppColor, defPiece } from "./state.js";
 import { getPotentialMoves, getCertainMoves } from "./moves.js";
+/** @typedef {import("./state.js").GameState} GameState */
 
 // Is the king of `color` in check?
 // Returns { autoCheck, potCheck, kingCoords, attackerCoords }:
@@ -13,6 +14,7 @@ import { getPotentialMoves, getCertainMoves } from "./moves.js";
 //   potCheck:  true if there is no collapsed king, but a potential check was declared on `color` and its
 //              potential king is still attacked by a piece that could make that capture in every one of its waves.
 //              kingCoords is then the potential king (returned even with no attackers).
+/** @param {GameState} state */
 function findChecks(state, color) {
 	// First look for Auto Check:
 	let autoCheck = false;
@@ -83,6 +85,7 @@ function findChecks(state, color) {
 
 // The opponent's pieces that could still be the king and that at least one of the side to move's
 // pieces could reach: the candidates for declaring a potential check. Returns a list of [r,c].
+/** @param {GameState} state */
 function findPotentialKings(state) {
 	let pieces = getPieces(state, state.turnColor);
 	let kings = [];
@@ -106,6 +109,7 @@ function findPotentialKings(state) {
 
 // Once a potential-check king has been chosen (state.pcKing), the side to move's pieces that could
 // attack it. Returns a list of [r,c].
+/** @param {GameState} state */
 function findPCAttackers(state) {
 	let defKing = defPiece(state, state.pcKing);
 	let attackers = [];

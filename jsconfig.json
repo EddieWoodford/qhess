@@ -2,7 +2,8 @@
 	"compilerOptions": {
 		"checkJs": true,
 		"noEmit": true,
-		"strict": false,
+		"strict": true,
+		"noImplicitAny": false,
 		"target": "es2022",
 		"module": "nodenext",
 		"moduleResolution": "nodenext",

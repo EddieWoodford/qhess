@@ -50,7 +50,7 @@ function parseTour(scriptText) {
 		if (PLY.test(line)) {
 			steps.push({ kind: "ply", text: line, side: line.match(/^\d+([bw])/)[1], thought: "", checks: [], place: null });
 		} else if (line.startsWith("#")) {
-			const m = /^#\s*(?:@([a-h][1-8])\s+)?(.*)$/.exec(line);
+			const m = /** @type {RegExpExecArray} */ (/^#\s*(?:@([a-h][1-8])\s+)?(.*)$/.exec(line)); // (always matches)
 			const { place, text } = readPlace(m[2].trim(), where);
 			steps.push({ kind: "note", text, at: m[1] ?? null, place });
 		} else if (line.startsWith(">")) {

@@ -39,7 +39,7 @@ test("stamps a copy of the real site: every script under src/, each version chan
 		const scripts = readdirSync(path.join(dir, "src"), { recursive: true, encoding: "utf8" })
 			.filter(f => f.endsWith(".js")).map(f => "src/" + f.split(path.sep).join("/"));
 		const html = readFileSync(path.join(dir, "index.html"), "utf8");
-		const map = JSON.parse(html.match(/<script type="importmap">([\s\S]*?)<\/script>/)[1]);
+		const map = JSON.parse(/** @type {RegExpMatchArray} */ (html.match(/<script type="importmap">([\s\S]*?)<\/script>/))[1]);
 		assert.deepEqual(Object.keys(map.imports).sort(), scripts.map(f => "./" + f).sort());
 		assert.match(html, new RegExp('src="src/client/main\\.js\\?v=' + versions["src/client/main.js"] + '"'));
 

@@ -15,14 +15,16 @@
 // stays the one that surrendered, so as with checkmate, the side to move is the side that lost.
 
 import { isequal, ismember, coords2text, isSquare } from "./utils.js";
-import { cloneState, oppColor, getPieces, defPiece, attPiece } from "./state.js";
+import { cloneState, oppColor, getPieces, pieceAt, defPiece, attPiece } from "./state.js";
 import { getPotentialMoves, enPassantVictim } from "./moves.js";
 import { findChecks, findPotentialKings, findPCAttackers } from "./check.js";
 import { updateOptionsFromEntanglement } from "./entanglement.js";
 import { getCastlingMoves, getMoveDestinations } from "./castling.js";
+/** @typedef {import("./state.js").GameState} GameState */
 
 // Search for check against `color` and store the result in state.autoCheck / state.potCheck.
 // Returns the full result from findChecks.
+/** @param {GameState} state */
 function refreshChecks(state, color) {
 	const result = findChecks(state, color);
 	state.autoCheck = result.autoCheck;
@@ -33,6 +35,7 @@ function refreshChecks(state, color) {
 // Declare that the side to move's potential-check king is not a king.
 // Returns { ok: true, square } (where that piece is), or { ok: false, error } if no potential check is
 // declared on the side to move, or the piece must be the king.
+/** @param {GameState} state */
 function declareNotAKing(state) {
 	if (state.result) {
 		return { ok: false, error: "the game is over" };
@@ -68,7 +71,7 @@ function declareNotAKing(state) {
 //                                       so it must not be submitted. enPassant / promotion / castle say whether
 //                                       the move was played as an en passant / a promotion / a castle (whether
 //                                       given or asked).
-/** @returns {{ ok: boolean, error?: string, movedIntoCheck?: boolean, enPassant?: boolean, promotion?: boolean, castle?: boolean }} */
+/** @returns {{ ok: boolean, error?: string, movedIntoCheck?: boolean, enPassant?: boolean, promotion?: boolean, castle?: boolean }} @param {GameState} state */
 function startMove(state, from, to, choices = {}) {
 	if (state.result) {
 		return { ok: false, error: "the game is over" };
@@ -107,7 +110,7 @@ function startMove(state, from, to, choices = {}) {
 
 	if (doCastle) {
 		// The king piece collapses to a king, the rook piece to a rook, and the rook jumps over the king
-		const rook = state.board[castle.rookFrom[0]][castle.rookFrom[1]];
+		const rook = pieceAt(state, castle.rookFrom);
 		movingPiece.removewaves("QBNRP");
 		rook.removewaves("KQBNP");
 		rook.hasmoved = 1;
@@ -227,11 +230,12 @@ function startMove(state, from, to, choices = {}) {
 // Declare potential check on the opponent piece at kingCoords, which must be one of findPotentialKings(state).
 // Returns { ok: false, error } or { ok: true, attackers }, where attackers are the side to move's pieces
 // that could attack it (one or more of them must then be added with addPCAttacker).
+/** @param {GameState} state */
 function choosePCKing(state, kingCoords) {
 	if (!ismember(kingCoords, findPotentialKings(state))) {
 		return { ok: false, error: coords2text(kingCoords) + " isn't a possible king under attack" };
 	}
-	let king = state.board[kingCoords[0]][kingCoords[1]];
+	const king = pieceAt(state, kingCoords);
 	state.pcKing = king.i;
 	state.pcColor = king.color;
 	return { ok: true, attackers: findPCAttackers(state) };
@@ -241,6 +245,7 @@ function choosePCKing(state, kingCoords) {
 // that could make that capture.
 // Returns { ok: false, error } or { ok: true, movedIntoCheck }: the collapse can turn the attacker into a
 // true king and so put the mover in check, which makes the move invalid.
+/** @param {GameState} state */
 function addPCAttacker(state, attackerCoords) {
 	let attackerPiece = state.board[attackerCoords[0]][attackerCoords[1]];
 	if (attackerPiece === null || attackerPiece.color != state.turnColor) {
@@ -258,6 +263,7 @@ function addPCAttacker(state, attackerCoords) {
 
 // The "<king+ attacker attacker>" notation for a potential check declared by the side to move, or "".
 // Doesn't change the state.
+/** @param {GameState} state */
 function pcMoveText(state) {
 	let txt = "";
 	if (state.pcKing >= 0 && state.pcColor == oppColor(state.turnColor)) {
@@ -273,6 +279,7 @@ function pcMoveText(state) {
 }
 
 // Finish the turn: add it to the history and pass to the other side
+/** @param {GameState} state */
 function endTurn(state) {
 	if (state.pcColor == state.turnColor) {
 		// Must have gotten out of potential check
@@ -323,10 +330,12 @@ function checkmateText(moveText, pcText, state) {
 
 // Could the piece on `from` move to `to` without leaving its side in check, for some answer to any question
 // the move asks (en passant, promotion, castle)? Tries each answer on a copy of the state.
+/** @param {GameState} state */
 function canMoveLegally(state, from, to) {
+	/** @type {Record<string, boolean>[]} */
 	const untried = [{}];
 	while (untried.length > 0) {
-		const answers = untried.pop();
+		const answers = /** @type {Record<string, boolean>} */ (untried.pop());
 		// Answer each new question "no", and keep "yes" to try next
 		const ask = question => {
 			if (!(question in answers)) {
@@ -344,6 +353,7 @@ function canMoveLegally(state, from, to) {
 }
 
 // Does the side to move have any move that doesn't leave it in check?
+/** @param {GameState} state */
 function anyLegalMove(state) {
 	for (const piece of getPieces(state, state.turnColor)) {
 		if (piece.captured > -1) { continue; }
@@ -358,6 +368,7 @@ function anyLegalMove(state) {
 
 // Does the side to move have a legal turn? A move, or (in potential check) declaring "Not a King" and then a
 // move. Declaring a potential check of its own is optional, so it never matters here. Doesn't change the state.
+/** @param {GameState} state */
 function hasLegalTurn(state) {
 	if (state.turnNumber == 0) {
 		return true; // Black's move 0 can always pass
@@ -378,6 +389,7 @@ function hasLegalTurn(state) {
 // How the game stands for the side to move: "checkmate" (in check, automatic or potential, with no legal
 // turn), "stalemate" (not in check, with no legal turn), or null (the game goes on). Uses state.autoCheck /
 // state.potCheck, so refreshChecks for the side to move first. Doesn't change the state.
+/** @param {GameState} state */
 function gameResult(state) {
 	if (hasLegalTurn(state)) {
 		return null;
@@ -389,12 +401,13 @@ function gameResult(state) {
 // choices.ask is only needed if the move leaves an en passant, promotion or castling choice unanswered.
 // Returns { ok: true } or { ok: false, error }, and never throws: a move from a network or a pasted history
 // can be anything. On failure the state may be part-way through the turn, so play it on a copy (cloneState).
+/** @param {GameState} state */
 function applyMove(state, move, choices = {}) {
 	try {
 		return playTurn(state, move, choices);
 	} catch (err) {
 		// A move too malformed to play, or a fault in the engine: refuse the move rather than break the caller
-		return { ok: false, error: "the move couldn't be played (" + (err?.message ?? err) + ")" };
+		return { ok: false, error: "the move couldn't be played (" + (err instanceof Error ? err.message : err) + ")" };
 	}
 }
 
@@ -415,6 +428,7 @@ function malformed(move) {
 	return null;
 }
 
+/** @param {GameState} state */
 function playTurn(state, move, choices) {
 	if (state.result) {
 		return { ok: false, error: "the game is over" };

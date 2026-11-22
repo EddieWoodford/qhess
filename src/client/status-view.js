@@ -244,6 +244,7 @@ function drawStatus(view) {
 
 // The banner over the board when the game has ended (style.css 7.6). It isn't shown while stepping through the
 // history, and once clicked away it stays away until the game changes.
+/** @type {string | null | undefined} */
 let gameOverDismissed = null; // the history of the game whose banner was clicked away
 dom.gameOver.addEventListener("click", () => {
 	gameOverDismissed = dom.gameOver.dataset.history;

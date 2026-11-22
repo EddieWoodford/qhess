@@ -488,7 +488,7 @@ test("serves the game's files and nothing it shouldn't", async () => {
 	assert.equal(home.status, 200);
 	assert.match(await home.text(), /<title>Qhess<\/title>/);
 	const js = await fetch(url("/src/shared/protocol.js"));
-	assert.match(js.headers.get("content-type"), /javascript/);
+	assert.match(js.headers.get("content-type") ?? "", /javascript/);
 	for (const path of ["/style.css", "/favicon.svg", "/tests/test.html", "/tests/snapshots.json", "/example_games/01_short_opening.txt"]) {
 		assert.equal(await rawStatus(path), 200, path);
 	}

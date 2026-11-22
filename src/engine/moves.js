@@ -4,6 +4,7 @@
 // Coordinates are [row, column], with row 0 = rank 8: White's pieces move towards row 0.
 
 import { isequal, isValidCoord, ismember } from "./utils.js";
+/** @typedef {import("./state.js").GameState} GameState */
 
 // [row, column] steps for each kind of move. The order matters: it is the order of the lists below, which
 // tests/generate.html's seeded games depend on.
@@ -14,6 +15,7 @@ const KNIGHT_JUMPS = [[2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [1, -2], [-1, 
 
 // The destinations the piece on `coords` could move to as every one of its waves (types): the squares it is
 // certain to be able to reach, whichever it turns out to be.
+/** @param {GameState} state */
 function getCertainMoves(state, coords) {
 	const piece = state.board[coords[0]][coords[1]];
 	if (piece === null) {
@@ -26,6 +28,7 @@ function getCertainMoves(state, coords) {
 // Every square the piece on `coords` could move to (not counting castling: see castling.js) as at least one of
 // `waves` (default: all its waves), e.g. getPotentialMoves(state, [6, 4], "P") for its pawn moves only.
 // A square reachable as more than one wave can appear more than once.
+/** @param {GameState} state @param {number[]} coords @param {string} [waves] */
 function getPotentialMoves(state, coords, waves) {
 	const piece = state.board[coords[0]][coords[1]];
 	if (piece === null || piece.captured > -1) {
@@ -39,14 +42,14 @@ function getPotentialMoves(state, coords, waves) {
 	const moves = [];
 
 	// One step or jump: onto any square that isn't one of its own pieces
-	const step = ([dr, dc]) => {
+	const step = (/** @type {number[]} */ [dr, dc]) => {
 		const to = [r + dr, c + dc];
 		if (isValidCoord(to) && at(to)?.color != piece.color) {
 			moves.push(to);
 		}
 	};
 	// Along a line: up to the first piece in the way, taking it if it's the opponent's
-	const slide = ([dr, dc]) => {
+	const slide = (/** @type {number[]} */ [dr, dc]) => {
 		for (let to = [r + dr, c + dc]; isValidCoord(to); to = [to[0] + dr, to[1] + dc]) {
 			const target = at(to);
 			if (target?.color == piece.color) {
@@ -76,7 +79,8 @@ function getPotentialMoves(state, coords, waves) {
 		// Diagonally forward to take: an opponent's piece, or en passant
 		for (const dc of [-1, 1]) {
 			const to = [r + forward, c + dc];
-			if (isValidCoord(to) && (enPassantVictim(state, to, piece.color) !== null || (at(to) !== null && at(to).color != piece.color))) {
+			const target = isValidCoord(to) ? at(to) : null;
+			if (isValidCoord(to) && (enPassantVictim(state, to, piece.color) !== null || (target !== null && target.color != piece.color))) {
 				moves.push(to);
 			}
 		}
@@ -96,6 +100,7 @@ function getPotentialMoves(state, coords, waves) {
 // The piece a pawn of `color` would take en passant by landing on `coords`, or null if there isn't one.
 // That is the opponent's piece that has just stepped two squares forward over `coords`, as long as it could
 // still be a pawn: a potential check declared on the same move can rule its pawn out.
+/** @param {GameState} state */
 function enPassantVictim(state, coords, color) {
 	if (state.epColor == "" || state.epColor == color || !isequal(coords, state.epCoords)) {
 		return null;
