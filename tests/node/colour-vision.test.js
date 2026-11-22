@@ -18,7 +18,7 @@ test("the colours each kind confuses look alike, and the ones it doesn't stay ap
 	const red = "#d03030", green = "#3a8a30", blue = "#3050d0";
 	assert.ok(deltaE(red, green) > 20, "apart with normal vision");
 	// (protanopia less so, as it also darkens the red)
-	for (const [kind, factor] of [["protanopia", 2], ["deuteranopia", 5]]) {
+	for (const [kind, factor] of /** @type {[string, number][]} */ ([["protanopia", 2], ["deuteranopia", 5]])) {
 		assert.ok(deltaE(simulate(red, kind), simulate(green, kind)) < deltaE(red, green) / factor, kind + ": red and green");
 		assert.ok(deltaE(simulate(red, kind), simulate(blue, kind)) > 20, kind + ": red and blue");
 	}

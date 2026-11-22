@@ -113,6 +113,7 @@ class SocketSession {
 		this.pending = null;     // { seq, move }
 		this.rewind = null;      // the open rewind request: { keep, by }
 		this.hintRequest = null; // the open hint level request: { level, by }
+		/** @type {import("../shared/protocol.js").ClientMessage | null} */
 		this.request = null;     // what to send once connected: create / join / resume
 		this.retries = 0;
 		this.timers = {};
@@ -355,6 +356,7 @@ class SocketSession {
 		this.timers.retry = setTimeout(() => this.connect(), delay);
 	}
 
+	/** @param {import("../shared/protocol.js").ClientMessage} message */
 	send(message) {
 		if (this.ws && this.ws.readyState == 1) { // OPEN
 			this.ws.send(JSON.stringify(message));

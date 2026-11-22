@@ -73,7 +73,7 @@ onClick("forward1", () => tour.running() ? tour.next() : game.stepForwardMove())
 onClick("forward2", () => tour.running() || game.stepForwardAll());
 // A click on a line of the move history shows the position after that ply (history-view.js numbers the lines)
 dom.history.addEventListener("click", e => {
-	const line = e.target.closest(".historyLine");
+	const line = /** @type {HTMLElement | null} */ (/** @type {Element} */ (e.target).closest(".historyLine"));
 	if (line) {game.jumpToPly(Number(line.dataset.ply));}
 });
 
@@ -132,7 +132,7 @@ onClick("importCancel", () => hideModal("import"));
 // Settings tab: in a multiplayer game a Hint Level button asks the opponent instead of changing the player's own
 // setting (caught before settings.js sees the click)
 dom.settings.hintLevel.addEventListener("click", e => {
-	const button = e.target.closest("[data-value]");
+	const button = /** @type {HTMLElement | null} */ (/** @type {Element} */ (e.target).closest("[data-value]"));
 	if (button && game.isMultiplayer()) {
 		e.stopImmediatePropagation();
 		game.requestHintLevel(button.dataset.value);
@@ -149,12 +149,12 @@ onClick("rulesClose", () => hideModal("rules"));
 // Multiplayer tab
 onClick("mpCreate", () => {
 	tour.stop();
-	const color = document.querySelector("input[name=mpColor]:checked")?.value ?? "random";
+	const color = /** @type {HTMLInputElement | null} */ (document.querySelector("input[name=mpColor]:checked"))?.value ?? "random";
 	game.startMultiplayer({ create: color });
 });
 function joinFromInput() {
-	const input = document.getElementById("mpCodeInput");
-	const error = document.getElementById("mpJoinError");
+	const input = dom.mp.codeInput;
+	const error = dom.mp.joinError;
 	const code = normalizeCode(input.value);
 	if (code === null) {
 		error.textContent = "Codes look like TIGER-42";
@@ -167,7 +167,7 @@ function joinFromInput() {
 	game.startMultiplayer({ join: code });
 }
 onClick("mpJoin", joinFromInput);
-document.getElementById("mpCodeInput").addEventListener("keydown", e => {
+dom.mp.codeInput.addEventListener("keydown", e => {
 	if (e.key == "Enter") {joinFromInput();}
 });
 // Copy buttons say "Copied ✓" for a moment

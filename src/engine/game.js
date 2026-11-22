@@ -68,6 +68,7 @@ function declareNotAKing(state) {
 //                                       so it must not be submitted. enPassant / promotion / castle say whether
 //                                       the move was played as an en passant / a promotion / a castle (whether
 //                                       given or asked).
+/** @returns {{ ok: boolean, error?: string, movedIntoCheck?: boolean, enPassant?: boolean, promotion?: boolean, castle?: boolean }} */
 function startMove(state, from, to, choices = {}) {
 	if (state.result) {
 		return { ok: false, error: "the game is over" };

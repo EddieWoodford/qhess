@@ -36,7 +36,7 @@ test("stamps a copy of the real site: every script under src/, each version chan
 		cpSync(path.join(root, "src"), path.join(dir, "src"), { recursive: true });
 		for (const f of ["index.html", "style.css"]) { cpSync(path.join(root, f), path.join(dir, f)); }
 		const versions = stampSite(dir);
-		const scripts = readdirSync(path.join(dir, "src"), { recursive: true })
+		const scripts = readdirSync(path.join(dir, "src"), { recursive: true, encoding: "utf8" })
 			.filter(f => f.endsWith(".js")).map(f => "src/" + f.split(path.sep).join("/"));
 		const html = readFileSync(path.join(dir, "index.html"), "utf8");
 		const map = JSON.parse(html.match(/<script type="importmap">([\s\S]*?)<\/script>/)[1]);

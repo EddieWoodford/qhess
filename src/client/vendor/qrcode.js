@@ -1,3 +1,4 @@
+// @ts-nocheck (not our code)
 // qrcode-generator 1.4.4 by Kazuhiko Arase (MIT licence), https://github.com/kazuhikoarase/qrcode-generator
 // Copied from the npm package as it is, except the last lines: it is exported as an ES module here instead.
 

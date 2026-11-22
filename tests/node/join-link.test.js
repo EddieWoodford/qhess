@@ -3,7 +3,8 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import jsQR from "jsqr";
+import jsQRModule from "jsqr";
+const jsQR = /** @type {any} */ (jsQRModule); // (its types don't match how Node loads it)
 import { codeFromUrl, urlWithoutJoin, joinLink, qrMatrix, qrSvg } from "../../src/client/join-link.js";
 import { startServer } from "../../server/server.js";
 

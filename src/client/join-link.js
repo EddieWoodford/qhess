@@ -15,23 +15,31 @@ const JOIN_PARAM = "join";
 const LOCAL_HOSTNAMES = ["localhost", "127.0.0.1", "[::1]"];
 
 // The game code in the page's address, or null when there isn't one
+/** @param {URL | Location} [loc] */
+/** @param {URL | Location} [loc] */
 function codeFromUrl(loc = globalThis.location) {
 	return normalizeCode(new URL(loc.href).searchParams.get(JOIN_PARAM));
 }
 
 // The page's address without the join code, so a reload resumes the game rather than trying to join it again
+/** @param {URL | Location} [loc] */
+/** @param {URL | Location} [loc] */
 function urlWithoutJoin(loc = globalThis.location) {
 	const url = new URL(loc.href);
 	url.searchParams.delete(JOIN_PARAM);
 	return url.href;
 }
 
+/** @param {URL | Location} [loc] */
+/** @param {URL | Location} [loc] */
 function isLocalHost(loc = globalThis.location) {
 	return LOCAL_HOSTNAMES.includes(loc.hostname);
 }
 
 // The link a friend opens to join the game with this code. networkHost ("192.168.1.20") replaces a localhost
 // address; without one, a localhost link is still made (it works for another tab on this computer).
+/** @param {string} code @param {URL | Location} [loc] @param {string | null} [networkHost] */
+/** @param {string} code @param {URL | Location} [loc] @param {string | null} [networkHost] */
 function joinLink(code, loc = globalThis.location, networkHost = null) {
 	const url = new URL(loc.href);
 	url.search = "";
@@ -45,6 +53,8 @@ function joinLink(code, loc = globalThis.location, networkHost = null) {
 
 // This computer's address on the network, from the server, when the page is opened as localhost. null otherwise,
 // or when the server doesn't know one.
+/** @param {URL | Location} [loc] */
+/** @param {URL | Location} [loc] */
 async function networkHost(loc = globalThis.location) {
 	if (!isLocalHost(loc)) { return null; }
 	try {

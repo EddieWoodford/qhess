@@ -15,11 +15,13 @@ const HOSTED_SERVER = "qhess.onrender.com";
 const STATIC_HOST_ENDINGS = [".github.io"];
 
 // true when the page has no server of its own and uses the hosted one
+/** @param {URL | Location} [loc] */
 function usesHostedServer(loc = globalThis.location) {
 	return !!loc && STATIC_HOST_ENDINGS.some(ending => loc.hostname.endsWith(ending));
 }
 
 // The websocket address of the multiplayer server
+/** @param {URL | Location} [loc] */
 function socketUrl(loc = globalThis.location) {
 	if (usesHostedServer(loc)) {
 		return "wss://" + HOSTED_SERVER + SOCKET_PATH;
@@ -29,6 +31,7 @@ function socketUrl(loc = globalThis.location) {
 
 // Start the hosted server waking up, if the page uses it. Any request wakes it; the answer isn't needed
 // ("no-cors": the browser doesn't let the page read it, but it is still sent).
+/** @param {URL | Location} [loc] */
 function wakeServer(loc = globalThis.location) {
 	if (!usesHostedServer(loc)) { return; }
 	fetch("https://" + HOSTED_SERVER + "/", { mode: "no-cors", cache: "no-store" }).catch(() => {});

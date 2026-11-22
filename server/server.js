@@ -161,6 +161,8 @@ function startServer(options = {}) {
 	});
 
 	const wss = new WebSocketServer({ server: httpServer, path: SOCKET_PATH, maxPayload: 64 * 1024 });
+	// The sockets that have answered since the last heartbeat (below)
+	const alive = new WeakSet();
 	// The websocket server repeats the HTTP server's errors (such as a port that can't be used); those are
 	// handled where the HTTP server starts listening, below
 	wss.on("error", () => {});
@@ -173,10 +175,10 @@ function startServer(options = {}) {
 				ws.close(4000, "replaced");
 			},
 		};
-		ws.isAlive = true;
-		ws.on("pong", () => { ws.isAlive = true; });
+		alive.add(ws);
+		ws.on("pong", () => { alive.add(ws); });
 		ws.on("message", (data, isBinary) => {
-			ws.isAlive = true;
+			alive.add(ws);
 			gameServer.handle(conn, isBinary ? "" : data.toString());
 		});
 		ws.on("close", () => gameServer.disconnect(conn));
@@ -186,11 +188,11 @@ function startServer(options = {}) {
 	// Drop connections that have stopped answering (a laptop lid closed, a network gone)
 	const heartbeat = setInterval(() => {
 		for (const ws of wss.clients) {
-			if (!ws.isAlive) {
+			if (!alive.has(ws)) {
 				ws.terminate();
 				continue;
 			}
-			ws.isAlive = false;
+			alive.delete(ws);
 			ws.ping();
 		}
 	}, options.heartbeatMs ?? HEARTBEAT_MS);
@@ -205,14 +207,14 @@ function startServer(options = {}) {
 		});
 		httpServer.listen(options.port ?? 8000, options.host, () => {
 			resolve({
-				port: httpServer.address().port,
+				port: /** @type {import("node:net").AddressInfo} */ (httpServer.address()).port,
 				gameServer,
 				close() {
 					clearInterval(heartbeat);
 					gameServer.close();
 					for (const ws of wss.clients) { ws.terminate(); }
 					wss.close();
-					return new Promise(done => httpServer.close(() => done()));
+					return new Promise(done => httpServer.close(() => done(undefined)));
 				},
 			});
 		});
@@ -222,6 +224,7 @@ function startServer(options = {}) {
 // Start the server on the first port from firstPort that can be used. A port is skipped if another program
 // has it (EADDRINUSE) or the system won't allow it (EACCES: Windows reserves some ports, often including 8000).
 // onSkip(port) is called for each port skipped.
+/** @param {number} firstPort @param {object} [options] @param {(port: number) => void} [onSkip] */
 async function startOnFreePort(firstPort, options = {}, onSkip = () => {}, tries = 20) {
 	for (let port = firstPort; port < firstPort + tries; port++) {
 		try {

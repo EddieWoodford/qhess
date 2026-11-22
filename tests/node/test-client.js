@@ -84,6 +84,7 @@ class TestClient {
 	}
 
 	// The next message of this type (and matching where(message), if given), waiting for it if need be
+	/** @param {string} type @param {(message: any) => boolean} [where] */
 	next(type, where = () => true) {
 		const match = m => m.type == type && where(m);
 		const i = this.inbox.findIndex(match);

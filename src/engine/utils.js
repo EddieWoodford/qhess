@@ -27,6 +27,8 @@ function coords2text(coords) {
 	return String.fromCharCode(coords[1] + 97) + (8 - coords[0]);
 }
 
+/** @param {number[]} coords */
+/** @param {number[]} coords */
 function isValidCoord(coords) {
 	return coords[0] >= 0 && coords[0] <= 7 && coords[1] >= 0 && coords[1] <= 7;
 }

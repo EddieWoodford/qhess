@@ -35,7 +35,7 @@ function getPotentialMoves(state, coords, waves) {
 		waves = piece.waves();
 	}
 	const [r, c] = coords;
-	const at = ([row, col]) => state.board[row][col];
+	const at = (/** @type {number[]} */ [row, col]) => state.board[row][col];
 	const moves = [];
 
 	// One step or jump: onto any square that isn't one of its own pieces

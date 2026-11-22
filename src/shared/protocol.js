@@ -49,6 +49,39 @@
 //   { type: "error", code, message }   a request failed (ERRORS)
 //   { type: "pong" }
 
+// The same, as types for the type checker (npm run typecheck): socket-session.js send and rooms.js send take
+// only these. Messages that arrive are still checked by hand, since they come off the network.
+/**
+ * @typedef {[number, number]} Square [row, column], row 0 = rank 8
+ * @typedef {"none" | "collapses" | "moves" | "captures"} HintLevel
+ * @typedef {"w" | "b"} Color
+ * @typedef {{ notAKing: Square | null, from: Square | null, to: Square | null, enPassant: boolean,
+ *   promotion: boolean, castle: boolean, pcKing: Square | null, pcAttackers: Square[], resign: boolean }} Move
+ *
+ * @typedef {{ type: "create", color: Color | "random", hintLevel: HintLevel }
+ *   | { type: "join", code: string }
+ *   | { type: "resume", code: string, token: string }
+ *   | { type: "move", seq: number, move: Move }
+ *   | { type: "sync" | "rewindCancel" | "hintLevelCancel" | "leave" | "ping" }
+ *   | { type: "rewind", keep: number }
+ *   | { type: "rewindAnswer" | "hintLevelAnswer", agree: boolean }
+ *   | { type: "hintLevel", level: HintLevel }} ClientMessage
+ *
+ * @typedef {{ type: "welcome", code: string, token: string, color: Color, moves: Move[], opponent: string,
+ *     hintLevel: HintLevel }
+ *   | { type: "move", seq: number, move: Move, color: Color, hash: string }
+ *   | { type: "rejected", seq: number, error: string }
+ *   | { type: "sync", moves: Move[] }
+ *   | { type: "rewind", keep: number, by: Color }
+ *   | { type: "rewindEnded", keep: number, by: Color, result: string }
+ *   | { type: "hintLevelAsked", level: HintLevel, by: Color }
+ *   | { type: "hintLevelEnded", level: HintLevel, by: Color, result: string }
+ *   | { type: "opponent", status: string }
+ *   | { type: "ended", reason: string }
+ *   | { type: "error", code: string, message: string }
+ *   | { type: "pong" }} ServerMessage
+ */
+
 const PROTOCOL_VERSION = 1;
 
 // Where the websocket lives on the server

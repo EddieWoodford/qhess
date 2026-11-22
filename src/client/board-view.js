@@ -474,7 +474,7 @@ function drawTurn(angle) {
 	// turn, so it doesn't swell back to full size at a quarter turn
 	const scale = Math.min(1 / (Math.abs(Math.cos(rad)) + sin), 1 - 0.28 * Math.sqrt(sin));
 	board.style.setProperty("--turn", angle + "deg");
-	board.style.setProperty("--turn-scale", scale);
+	board.style.setProperty("--turn-scale", String(scale));
 }
 
 // Draw the board turned by from degrees, then turn it to rest (taking a time in proportion to how far that is)

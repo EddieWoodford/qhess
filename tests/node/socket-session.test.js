@@ -31,7 +31,7 @@ function memoryStorage() {
 }
 
 function session(url = "ws://127.0.0.1:" + server.port + "/ws") {
-	const s = new SocketSession({ url, storage: memoryStorage() });
+	const s = /** @type {SocketSession & { errors: any[] }} */ (new SocketSession({ url, storage: memoryStorage() }));
 	s.errors = [];
 	s.onEvent(e => { if (e.type == "error") { s.errors.push(e); } });
 	sessions.push(s);

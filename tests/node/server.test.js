@@ -453,6 +453,7 @@ test("leaving closes the game for both players", async () => {
 // The status for a request sent exactly as written (fetch would tidy up ".." first). A body is sent with its
 // Content-Length, unless the headers say otherwise: a Content-Length and no body (for the server to refuse
 // before reading), or chunked.
+/** @param {string} path @param {{ method?: string, headers?: Record<string, string>, body?: string }} [options] */
 function rawStatus(path, { method = "GET", headers = {}, body } = {}) {
 	if (body !== undefined && headers["content-length"] === undefined && headers["transfer-encoding"] === undefined) {
 		headers = { ...headers, "content-length": String(Buffer.byteLength(body)) };
@@ -463,7 +464,7 @@ function rawStatus(path, { method = "GET", headers = {}, body } = {}) {
 			resolve(res.statusCode);
 			req.destroy();
 		});
-		req.on("error", err => (err.code == "ECONNRESET" ? undefined : reject(err)));
+		req.on("error", (/** @type {NodeJS.ErrnoException} */ err) => (err.code == "ECONNRESET" ? undefined : reject(err)));
 		if (body !== undefined || headers["content-length"] === undefined) {
 			req.end(body);
 		} else {

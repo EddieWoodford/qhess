@@ -11,8 +11,8 @@ const dom = {
 
 	// Status bar, under the board
 	prompt: $("prompt"),
-	sideButton1: $("sideButton1"),
-	sideButton2: $("sideButton2"),
+	sideButton1: /** @type {HTMLButtonElement} */ ($("sideButton1")),
+	sideButton2: /** @type {HTMLButtonElement} */ ($("sideButton2")),
 	stagedMove: $("thismove"),
 
 	// The banner over the board when the game ends
@@ -23,11 +23,11 @@ const dom = {
 	// History tab
 	history: $("movehistory"),
 	stepButtons: { back2: $("back2"), back1: $("back1"), forward1: $("forward1"), forward2: $("forward2") },
-	historyButtons: [...document.querySelectorAll("#gameMetaTab .historyButton")],
+	historyButtons: /** @type {HTMLElement[]} */ ([...document.querySelectorAll("#gameMetaTab .historyButton")]),
 	// the history buttons that would change the game: hidden in a multiplayer game
 	localOnlyButtons: ["reset", "importButton"].map($),
 	exportButton: $("exportButton"),
-	importText: $("importText"), // the Edit / Import dialog's text box
+	importText: /** @type {HTMLTextAreaElement} */ ($("importText")), // the Edit / Import dialog's text box
 	importError: $("importError"), // ... and why its moves couldn't be loaded
 
 	// History tab: the captured pieces
@@ -42,12 +42,12 @@ const dom = {
 		ended: $("mpEnded"),
 		code: $("mpCode"),
 		invite: $("mpInvite"),
-		link: $("mpLink"),
+		link: /** @type {HTMLAnchorElement} */ ($("mpLink")),
 		qr: $("mpQr"),
 		copyCode: $("mpCopyCode"),
 		copyLink: $("mpCopyLink"),
 		shareLink: $("mpShareLink"),
-		codeInput: $("mpCodeInput"),
+		codeInput: /** @type {HTMLInputElement} */ ($("mpCodeInput")),
 		joinError: $("mpJoinError"),
 		message: $("mpMessage"),
 		color: $("mpColor"),
@@ -59,8 +59,8 @@ const dom = {
 
 	// Settings tab: one switch (checkbox) per setting
 	settings: {
-		blackView: $("settingBlackView"),
-		potentialCheck: $("settingPotentialCheck"),
+		blackView: /** @type {HTMLInputElement} */ ($("settingBlackView")),
+		potentialCheck: /** @type {HTMLInputElement} */ ($("settingPotentialCheck")),
 		showCoords: $("settingShowCoords"),
 		hintLevel: $("settingHintLevel"), // the Hint Level buttons (data-value: protocol.js HINT_LEVELS)
 		hintRequest: $("hintRequest"),    // ... and under them, an open request to change a multiplayer game's level

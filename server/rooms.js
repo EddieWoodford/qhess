@@ -502,6 +502,7 @@ class GameServer {
 		return room.conns[color] ? OPPONENT.CONNECTED : OPPONENT.DISCONNECTED;
 	}
 
+	/** @returns {import("../src/shared/protocol.js").ServerMessage} */
 	moveMessage(room, seq) {
 		// The position after move seq: the current one when it's the latest move (the usual case)
 		let state = room.state;
@@ -512,6 +513,7 @@ class GameServer {
 		return { type: "move", seq, move: room.record.moves[seq], color: colorOfMove(seq), hash: positionHash(state) };
 	}
 
+	/** @param {import("../src/shared/protocol.js").ServerMessage} message */
 	broadcast(room, message) {
 		for (const color of COLORS) {
 			if (room.conns[color]) { send(room.conns[color], message); }
@@ -523,6 +525,7 @@ class GameServer {
 	}
 }
 
+/** @param {import("../src/shared/protocol.js").ServerMessage} message */
 function send(conn, message) {
 	try {
 		conn.send(message);

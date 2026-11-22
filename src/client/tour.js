@@ -27,8 +27,8 @@ const el = {
 	text: $("tourText"),
 	bar: $("tourBar"),
 	count: $("tourCount"),
-	back: $("tourBack"),
-	next: $("tourNext"),
+	back: /** @type {HTMLButtonElement} */ ($("tourBack")),
+	next: /** @type {HTMLButtonElement} */ ($("tourNext")),
 };
 
 let steps = null;    // the tour's steps (tour-script.js parseTour) while it runs, else null
@@ -241,7 +241,7 @@ $("tourNext").addEventListener("click", next);
 $("tourPlay").addEventListener("click", () => stop(true));
 $("tourExit").addEventListener("click", () => stop(false));
 document.addEventListener("keydown", e => {
-	if (!running() || e.target.closest?.("input, textarea") || [...document.querySelectorAll(".modalWrapper")].some(m => m.style.display == "block")) { return; }
+	if (!running() || /** @type {Element} */ (e.target).closest?.("input, textarea") || [.../** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll(".modalWrapper"))].some(m => m.style.display == "block")) { return; }
 	if (e.key == "ArrowRight") { next(); }
 	else if (e.key == "ArrowLeft") { back(); }
 	else if (e.key == "Escape" && !document.body.classList.contains("panel-open")) { stop(false); }

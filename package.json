@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node server/server.js",
-    "test": "node --test --test-reporter=spec \"tests/node/*.test.js\""
+    "test": "node --test --test-reporter=spec \"tests/node/*.test.js\"",
+    "typecheck": "tsc -p jsconfig.json"
   },
   "engines": {
     "node": ">=20"
@@ -15,6 +16,9 @@
     "ws": "^8.22.2"
   },
   "devDependencies": {
-    "jsqr": "^1.4.0"
+    "@types/node": "^26.6.6",
+    "@types/ws": "^8.18.2",
+    "jsqr": "^1.4.0",
+    "typescript": "^7.0.2"
   }
 }

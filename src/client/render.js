@@ -69,9 +69,9 @@ function drawSettings(view) {
 	const mp = view.multiplayer;
 	const request = mp?.hintRequest ?? null;
 	const locked = view.tour || (mp !== null && (mp.phase != "playing" || mp.connection != "connected"));
-	for (const button of dom.settings.hintLevel.querySelectorAll("[data-value]")) {
+	for (const button of /** @type {NodeListOf<HTMLButtonElement>} */ (dom.settings.hintLevel.querySelectorAll("[data-value]"))) {
 		button.disabled = locked;
-		button.setAttribute("aria-pressed", button.dataset.value == view.hintLevel);
+		button.setAttribute("aria-pressed", String(button.dataset.value == view.hintLevel));
 		button.classList.toggle("hint-asked", request?.mine === true && button.dataset.value == request.level);
 	}
 	dom.settings.hintRequest.hidden = request === null;
