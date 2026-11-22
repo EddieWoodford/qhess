@@ -38,6 +38,10 @@ jobs:
       - run: npm run typecheck
       - run: npm test
 
+      # The browser tests (tests/test.html), headless: the page, the example games and multiplayer
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+
       # The site is the repo as it was served from the branch, less what a browser never needs
       - name: Copy the site
         run: rsync -a --exclude .git --exclude .github --exclude node_modules --exclude _site ./ _site/

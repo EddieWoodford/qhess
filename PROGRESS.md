@@ -2,7 +2,24 @@
 
 Compact notes for whoever works on this next. Tests: `npm test` (node), and the browser page `tests/test.html`
 (start_test.bat, or the `qhess` preview in `.claude/launch.json` at /tests/test.html, then Run tests: replays the
-example games against tests/snapshots.json, plus multiplayer and page-feature checks). Types: `npm run typecheck`.
+example games against tests/snapshots.json, plus multiplayer and page-feature checks), or headless with
+`npm run test:browser`. Types: `npm run typecheck`. CI (pages.yml) runs all three before deploying.
+
+## Robustness: CI checks, random-game tests (2026-11-22)
+- pages.yml runs typecheck, `npm test`, then `npm run test:browser` (tests/browser/run.js: starts the server on a
+  free port, Playwright Chromium opens tests/test.html, presses Run tests, waits for `window.testResults`; prints
+  the rows that didn't pass, exit 1 on any failure or page error). Locally it needs `npx playwright install chromium`
+  once. Not yet seen running on GitHub (nothing pushed); Linux fonts could matter to the page-feature checks.
+- jsconfig also has noUnusedLocals/Parameters, noImplicitReturns, noFallthroughCasesInSwitch.
+- tests/node/random-games.test.js: 100 seeded random games (mulberry32, as generate.html) of up to 80 plies straight
+  through the engine. Each turn is picked from every move x every en passant/promotion/castle answer (with Not a King
+  when it can be declared), sometimes with a potential check on a random king and random attackers. Every ply
+  checks: board and piece lists agree, no piece is nothing, each army completable and already fully collapsed
+  (filterOptionMatrix changes nothing), trying moves never changes the original, replaying the written line gives
+  the same position and line, no "couldn't be played" faults; the game goes on exactly while a legal turn exists.
+- It found a bug, fixed: pcMoveText wrote findChecks' attackers, which for an already-collapsed king are every piece
+  that *might* attack it; replaying the line then collapsed them (a different position). Now it always writes the
+  pieces certain to capture the king (getCertainMoves). The UI never hit it (it adds every possible attacker).
 
 ## Type checking, no build step (2026-11-22)
 - Still plain JS served as-is; `npm run typecheck` runs `tsc -p jsconfig.json` (checkJs, noEmit, **strict on except

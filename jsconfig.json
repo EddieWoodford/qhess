@@ -15,6 +15,6 @@
 		"types": ["node"],
 		"skipLibCheck": true
 	},
-	"include": ["src/**/*.js", "server/**/*.js", "deploy/**/*.js", "tools/**/*.js", "tests/node/**/*.js"],
+	"include": ["src/**/*.js", "server/**/*.js", "deploy/**/*.js", "tools/**/*.js", "tests/node/**/*.js", "tests/browser/**/*.js"],
 	"exclude": ["src/client/vendor/**", "node_modules"]
 }
