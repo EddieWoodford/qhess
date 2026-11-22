@@ -213,10 +213,10 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
   `tour-script.js` (`parseTour`): plies exactly as the engine writes them, `# [@sq] note` steps, `> thought` per ply
   (required), `? sq TYPES` / `? pc sq` checks. tests/node/tour.test.js plays every ply, checks it's written back
   identically, runs the checks, and that a collapse, PC, Not a King, a capture, castling and mate appear.
-- The game (16 plies, 29 steps): PCs and Not a King, knight collapses, army adds up (two known knights), captures;
-  then Black castles h8->f8 with d8 (collapses K and R: the king is known), White pins e7 with c5, Black takes e4 as
-  its only queen (so e7/g7 lose Q), 8w. c4xf7# - mate because a2 (unmoved, could be Q/B) guards f7 under the strict
-  check rule. Found with a small helpmate search over getMoveDestinations + applyMove (not kept in the repo).
+- The game (10 plies, 28 steps; the user's own) teaches one idea at a time: collapses first (1w. Nf3 -> N, 1b. f7xa2
+  -> QB, 2w. a1b3 the second knight so no other White piece is N), then potential check (2b. g8xb3 <b2+ b3 g7>
+  makes b3 Q and g7/a2 B; 3w. Not a King on b2; 3b. f8xf2 rook <f1+>; 4w. f1g1 steps out instead, KQR), then mate
+  (4b. O-O makes the king known; 5w. g2xg7# : g1 guards g7 up the file). Move 0 is passed, PC explained later.
 - `src/client/tour.js` never draws the board: Next acts a ply out through the controller's own calls (showPartialMove,
   showCompleteMove, sideButton1Action for Add PC / Not a King, selectPCKing/Attackers, sideButton2Action), 1.2s per
   stage, flashing the side button it "presses" (.tour-press); so theme, highlights, prompts and slide animation are
