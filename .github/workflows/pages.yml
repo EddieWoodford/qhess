@@ -35,6 +35,7 @@ jobs:
           cache: npm
 
       - run: npm ci
+      - run: npm run typecheck
       - run: npm test
 
       # The site is the repo as it was served from the branch, less what a browser never needs

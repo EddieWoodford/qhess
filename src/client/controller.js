@@ -413,7 +413,7 @@ function squareEnter(coords, event) {
 	}
 }
 
-function squareLeave(coords, event) {
+function squareLeave(event) {
 	if (event.pointerType == "touch") {return}
 	if (ui.state == "highlightPotentialMoves") {
 		setState("clear");
@@ -1275,7 +1275,7 @@ function init(joinCode = null) {
 			const sqr = new SquareView(r, c, document.getElementById("square" + r + c));
 			const coords = [r, c];
 			sqr.button.addEventListener("pointerenter", event => squareEnter(coords, event));
-			sqr.button.addEventListener("pointerleave", event => squareLeave(coords, event));
+			sqr.button.addEventListener("pointerleave", squareLeave);
 			sqr.button.addEventListener("click", () => squareClick(coords));
 			sqr.button.addEventListener("pointerdown", event => squarePointerDown(coords, event));
 			viewRow.push(sqr);
