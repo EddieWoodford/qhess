@@ -16,7 +16,7 @@
 
 import { isequal, ismember, coords2text, isSquare } from "./utils.js";
 import { cloneState, oppColor, getPieces, pieceAt, defPiece, attPiece } from "./state.js";
-import { getPotentialMoves, enPassantVictim } from "./moves.js";
+import { getPotentialMoves, getCertainMoves, enPassantVictim } from "./moves.js";
 import { findChecks, findPotentialKings, findPCAttackers } from "./check.js";
 import { updateOptionsFromEntanglement } from "./entanglement.js";
 import { getCastlingMoves, getMoveDestinations } from "./castling.js";
@@ -261,7 +261,9 @@ function addPCAttacker(state, attackerCoords) {
 	return { ok: true, movedIntoCheck: state.autoCheck };
 }
 
-// The "<king+ attacker attacker>" notation for a potential check declared by the side to move, or "".
+// The "<king+ attacker attacker>" notation for a potential check declared by the side to move, or "". The
+// attackers are the pieces certain to capture the king (in every wave), so replaying it changes nothing more:
+// also when the king is already collapsed, where findChecks would list every piece that might.
 // Doesn't change the state.
 /** @param {GameState} state */
 function pcMoveText(state) {
@@ -269,9 +271,10 @@ function pcMoveText(state) {
 	if (state.pcKing >= 0 && state.pcColor == oppColor(state.turnColor)) {
 		let piece = defPiece(state, state.pcKing);
 		txt = "<" + coords2text([piece.r, piece.c]) + "+";
-		let attackerCoords = findChecks(state, state.pcColor).attackerCoords;
-		for (let ai = 0; ai < attackerCoords.length; ai++) {
-			txt = txt + " " + coords2text(attackerCoords[ai]);
+		for (const attacker of getPieces(state, state.turnColor)) {
+			if (attacker.captured == -1 && ismember(piece.coords(), getCertainMoves(state, attacker.coords()))) {
+				txt = txt + " " + coords2text(attacker.coords());
+			}
 		}
 		txt = txt + ">";
 	}
