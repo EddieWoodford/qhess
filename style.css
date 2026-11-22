@@ -1763,7 +1763,7 @@ input.switch:focus-visible {
    disabled (the tour presses them, showing .tour-press as it does). */
 .tour-bubble {
     --speaker-col: var(--accent);
-    --bubble-opacity: 60%;
+    --bubble-opacity: 90%;
     --bubble-fill: color-mix(in srgb, var(--bg-raised) var(--bubble-opacity), transparent);
     position: absolute;
     z-index: 2;
