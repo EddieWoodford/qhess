@@ -74,6 +74,9 @@ The page is hosted on GitHub Pages, and the multiplayer server on Render
   script's and the stylesheet's version (`deploy/stamp-versions.js`): Pages lets browsers keep files for 10 minutes,
   and without the versions a new page could run with an old cached script.
 - `.nojekyll` tells GitHub Pages to serve the files as they are.
+- Render runs the `Dockerfile`'s image, as `render.yaml` describes (set up once in the Render dashboard with
+  New > Blueprint). It deploys a push to `main` only once its GitHub checks pass; the workflow also builds the
+  image and checks that it serves the page.
 
 ## How it fits together
 

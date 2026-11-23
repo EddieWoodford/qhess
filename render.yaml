@@ -1,0 +1,15 @@
+# The hosted Qhess server on Render (https://render.com/docs/blueprint-spec): the Dockerfile's image, at
+# qhess.onrender.com, the address the GitHub Pages copy of the game uses for multiplayer (src/client/server-address.js).
+# Set up once in the Render dashboard: New > Blueprint, pick this repo. After that every push to main deploys,
+# but only once its GitHub checks (.github/workflows/pages.yml) pass.
+#
+# Free plan: it sleeps after about 15 minutes with no visitors and takes up to a minute to wake, and games are
+# kept only in memory (server/store.js), so a sleep or a deploy loses the games in progress.
+services:
+  - type: web
+    name: qhess
+    runtime: docker
+    plan: free
+    region: frankfurt # can't be changed once created
+    healthCheckPath: /
+    autoDeployTrigger: checksPass

@@ -7,8 +7,11 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
 
 ## Docker (2026-11-24)
 - Dockerfile (node:22-alpine, `npm ci --omit=dev`, runs as `node`, which can't write the files: the themes list
-  write already fails quietly), .dockerignore, compose.yaml (port 8000). Next step planned: Render (render.yaml,
-  Docker web service `qhess` so it is qhess.onrender.com as server-address.js expects, deploy on CI checks passing).
+  write already fails quietly), .dockerignore, compose.yaml (port 8000).
+- render.yaml (Blueprint): Docker web service `qhess` (so qhess.onrender.com, as server-address.js expects), free,
+  frankfurt (fixed at creation), healthCheckPath /, `autoDeployTrigger: checksPass` (waits for pages.yml; Render
+  deploys nothing if no checks are found). Not yet applied in the dashboard (nothing pushed). pages.yml builds the
+  image and curls / from it (`--retry-all-errors`: Docker's port proxy gives an empty reply until the server listens).
 - server.js: env `QHESS_NO_BROWSER` (= --no-browser, set in the image); `QHESS_LAN_ADDRESS` (comma list) replaces
   `lanAddresses()` (in a container they're the container's 172.x ones, so join links were wrong); SIGTERM/SIGINT
   close the server and exit (Node as PID 1 ignored them: docker stop took 10 s, now 1 s).
