@@ -23,6 +23,10 @@ npm start
 Either way, this starts the Qhess server and opens the game at http://localhost:8000/. The window
 also prints an "On your network" address that other devices on the same network can open.
 
+Or in Docker: `docker compose up --build`, then open http://localhost:8000/. The container can't see
+this computer's network address, so for a friend's join link set `QHESS_LAN_ADDRESS` (e.g. in a
+`.env` file: `QHESS_LAN_ADDRESS=192.168.1.20`); see compose.yaml.
+
 Single player (both sides on one screen) is the default and needs nothing else.
 
 ## Playing a friend (multiplayer)

@@ -3,6 +3,9 @@
 //   npm start                      (or double-click start.bat)
 //   node server/server.js --port 8000 --no-browser --open tests/test.html
 //
+// Environment: PORT (the first port to try, as hosts such as Render set it), QHESS_NO_BROWSER=1 (as --no-browser,
+// for a container), QHESS_LAN_ADDRESS (see lanAddresses).
+//
 // It listens on every network interface, so a friend on the same network can open the address it prints.
 // Single player needs nothing from the server beyond the files.
 
@@ -237,8 +240,11 @@ async function startOnFreePort(firstPort, options = {}, onSkip = () => {}, tries
 	throw new Error("No usable port between " + firstPort + " and " + (firstPort + tries - 1));
 }
 
-// The addresses another computer on this network could use to reach this one
+// The addresses another computer on this network could use to reach this one. In a container the network cards
+// are the container's own, so QHESS_LAN_ADDRESS (e.g. "192.168.1.20", or several split by commas) gives the host's.
 function lanAddresses() {
+	const given = process.env.QHESS_LAN_ADDRESS?.split(",").map(a => a.trim()).filter(a => a);
+	if (given?.length) { return given; }
 	return Object.values(networkInterfaces()).flat()
 		.filter(a => a !== undefined && a.family == "IPv4" && !a.internal)
 		.map(a => /** @type {import("node:os").NetworkInterfaceInfo} */ (a).address);
@@ -270,7 +276,17 @@ async function main() {
 	}
 	console.log("Press Ctrl+C to stop. Games in progress are lost when it stops.");
 
-	if (!args.includes("--no-browser")) {
+	// Stop cleanly when asked (docker stop and Render send SIGTERM; as a container's first process, Node would
+	// otherwise ignore it and be killed 10 seconds later)
+	for (const signal of ["SIGTERM", "SIGINT"]) {
+		process.once(signal, async () => {
+			console.log("Stopping (" + signal + ").");
+			await server.close();
+			process.exit(0);
+		});
+	}
+
+	if (!args.includes("--no-browser") && !process.env.QHESS_NO_BROWSER) {
 		const page = url + (arg("--open") ?? "").replace(/^\/+/, "");
 		const opener = process.platform == "win32" ? 'start "" ' : process.platform == "darwin" ? "open " : "xdg-open ";
 		exec(opener + '"' + page + '"');

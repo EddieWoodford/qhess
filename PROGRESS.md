@@ -5,6 +5,16 @@ Compact notes for whoever works on this next. Tests: `npm test` (node), and the 
 example games against tests/snapshots.json, plus multiplayer and page-feature checks), or headless with
 `npm run test:browser`. Types: `npm run typecheck`. CI (pages.yml) runs all three before deploying.
 
+## Docker (2026-11-24)
+- Dockerfile (node:22-alpine, `npm ci --omit=dev`, runs as `node`, which can't write the files: the themes list
+  write already fails quietly), .dockerignore, compose.yaml (port 8000). Next step planned: Render (render.yaml,
+  Docker web service `qhess` so it is qhess.onrender.com as server-address.js expects, deploy on CI checks passing).
+- server.js: env `QHESS_NO_BROWSER` (= --no-browser, set in the image); `QHESS_LAN_ADDRESS` (comma list) replaces
+  `lanAddresses()` (in a container they're the container's 172.x ones, so join links were wrong); SIGTERM/SIGINT
+  close the server and exit (Node as PID 1 ignored them: docker stop took 10 s, now 1 s).
+- Checked by hand: image builds, page 200, server/ 403, tests/test.html 22/22 (multiplayer included) in the container.
+  The image serves no-store like the local server, so it doesn't need deploy/stamp-versions.js.
+
 ## Robustness: CI checks, random-game tests (2026-11-22)
 - pages.yml runs typecheck, `npm test`, then `npm run test:browser` (tests/browser/run.js: starts the server on a
   free port, Playwright Chromium opens tests/test.html, presses Run tests, waits for `window.testResults`; prints

@@ -1,0 +1,14 @@
+# Run the Qhess server in Docker on this computer:   docker compose up --build
+# Then open http://localhost:8000/. Stop with Ctrl+C (or docker compose down).
+#
+# For a friend on your network, the join link needs this computer's address, which the container can't see:
+# set QHESS_LAN_ADDRESS (e.g. in a .env file next to this one: QHESS_LAN_ADDRESS=192.168.1.20). Windows may also
+# need port 8000 allowed through its firewall.
+services:
+  qhess:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      QHESS_LAN_ADDRESS: ${QHESS_LAN_ADDRESS:-}
+    restart: unless-stopped

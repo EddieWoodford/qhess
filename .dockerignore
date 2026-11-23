@@ -1,0 +1,13 @@
+# What the image doesn't need (see Dockerfile)
+.git
+.github
+.claude
+node_modules
+_site
+test-results
+Dockerfile
+.dockerignore
+compose.yaml
+*.bat
+*.ps1
+TODO*.md
