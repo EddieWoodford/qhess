@@ -3,8 +3,6 @@
 // The board: making its squares, and drawing the pieces and highlights on them.
 
 import { isequal, ismember } from "../engine/utils.js";
-import { oppColor } from "../engine/state.js";
-import { findChecks } from "../engine/check.js";
 import { waveHTML } from "./glyphs.js";
 import { dom } from "./dom.js";
 
@@ -319,15 +317,6 @@ function drawBoard(view) {
 		? planAnimations(view.squares, drawnPositions, positions) : [];
 	drawnPositions = positions;
 
-	// Check to show on the board: on the side to move, or while choosing potential-check attackers, on the
-	// king being checked
-	let checks = findChecks(game, game.turnColor);
-	if (STATE == "showPotentialCheck") {
-		// Can only get here if player is not in check. Now we want to show the PCKing selected.
-		checks = findChecks(game, oppColor(game.turnColor));
-	}
-	const showChecks = checks.autoCheck || checks.potCheck || STATE == "showPotentialCheck";
-
 	// Whose pieces a press can drag (style.css 7.8), and the dragged piece's copy: shown unless the board shows its move
 	if (view.draggable) {
 		dom.board.dataset.drag = view.draggable;
@@ -390,18 +379,7 @@ function drawBoard(view) {
 				classes.add("potKing");
 			}
 
-			// A check (or the potential check being declared): the king and its attackers. Once chosen, these
-			// replace the candidate backgrounds. A potential check being declared marks its attackers with arrows
-			// instead (at the Captures hint level: controller.js draw).
-			if (showChecks) {
-				if (isequal([r,c], checks.kingCoords)) {
-					classes.remove("potKing");
-					classes.add("checkKing");
-				}
-				if (ismember([r,c], checks.attackerCoords) && STATE != "showPotentialCheck") {
-					classes.add("checkAttacker");
-				}
-			}
+			// (A check is shown by red arrows from its attackers to the king: controller.js draw)
 
 			// Hovering over a piece, and where it can move
 			if (sqr.highlighted) {

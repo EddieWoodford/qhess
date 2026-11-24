@@ -821,7 +821,10 @@ async function checkPotentialCheck(ctx) {
 	expect("... and no outline on the attackers, has " + count(".checkAttacker"), count(".checkAttacker") == 0);
 	g.sideButton2Action();
 	expect("Submitted, it should be written with both, is '" + g.ui.record.at(-1) + "'", g.ui.record.at(-1)?.endsWith("<a2+ a7 d5>"));
-	expect("... and the arrows go", count(".arrow-attacks .arrow-line") == 0);
+	expect("... and the arrows stay into White's move, has " + count(".arrow-attacks .arrow-line"), count(".arrow-attacks .arrow-line") == 2);
+	expect("... the only sign of the check: no outlines, has " + count(".checkKing, .checkAttacker"), count(".checkKing, .checkAttacker") == 0);
+	g.sideButton1Action(); // Not a King on a2
+	expect("Once answered (a2 Not a King) the arrows go, has " + count(".arrow-attacks .arrow-line"), count(".arrow-attacks .arrow-line") == 0);
 
 	level("moves");
 	const hidden = declare(null);

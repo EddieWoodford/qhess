@@ -1144,9 +1144,11 @@ function draw(animate = false) {
 	const dragging = ui.state == "dragging" && drag !== null;
 	const hover = dragging && drag ? drag.hover : null;
 	const end = (hover && drag?.over) ?? ui.end; // (a hover means it is over a square)
-	// The arrows: the last move played, the move being made once it has a destination, and at the Captures hint
-	// level, one from each attacker of the potential check being declared to its king
-	const declared = ui.state == "showPotentialCheck" && hintLevel() == "captures" ? findChecks(game, oppColor(game.turnColor)) : null;
+	// The arrows: the last move played, the move being made once it has a destination, and a red one from each
+	// attacker to the king of a check, the only sign of it on the board: the check (or potential check) on the side
+	// to move until it is answered, or the potential check being declared (at the Captures hint level only)
+	const declared = ui.state != "showPotentialCheck" ? findChecks(game, game.turnColor)
+		: hintLevel() == "captures" ? findChecks(game, oppColor(game.turnColor)) : null;
 	const arrows = {
 		last: ui.lastStart.length && ui.lastEnd.length ? [ui.lastStart, ui.lastEnd] : null,
 		current: ui.start.length && end.length ? [ui.start, end] : null,

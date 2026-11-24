@@ -1365,7 +1365,7 @@ input.switch:focus-visible {
 /* ---------- 7.2 Square states ----------
    ORDER MATTERS. Several of these set the same property (background-color or
    box-shadow) at equal specificity, so later rules win. Combined selectors
-   like .selectable.checkKing are more specific and win regardless of order. */
+   like .selectedStart.potKing would be more specific and win regardless of order. */
 .hovered { /* mouse is over it */
     background-color: color-mix(in srgb, var(--piece-selectedStart-col) 60%, transparent);
 }
@@ -1378,18 +1378,8 @@ input.switch:focus-visible {
     box-shadow: 0 0 0 3px var(--piece-selectedStart-col) inset;
 }
 
-.selectable.checkKing {
-    box-shadow: 0 0 0 6px var(--piece-checkKing-col) inset,
-                0 0 0 9px var(--piece-selectedStart-col) inset;
-}
-
 .selectedStart { /* player has clicked it as the start square */
     box-shadow: 0 0 0 var(--chosen-ring) var(--piece-selectedStart-col) inset;
-}
-
-.selectedStart.checkKing { /* player has clicked a potential king as the start */
-    box-shadow: 0 0 0 6px var(--piece-checkKing-col) inset,
-                0 0 0 calc(6px + var(--chosen-ring)) var(--piece-selectedStart-col) inset;
 }
 
 .selectedEnd { /* player has clicked it as the destination */
@@ -1410,18 +1400,6 @@ input.switch:focus-visible {
 }
 
 
-.checkKing { /* a king in check or potential check */
-    box-shadow: 0 0 0 6px var(--piece-checkKing-col) inset;
-}
-
-.checkAttacker { /* a piece attacking a checked king */
-    box-shadow: 0 0 0 6px var(--piece-checkAttacker-col) inset;
-}
-
-.selectedEnd.checkAttacker { /* both of the above */
-    box-shadow: 0 0 0 6px var(--piece-checkAttacker-col) inset,
-                0 0 0 calc(6px + var(--chosen-ring)) var(--piece-dest-col) inset;
-}
 
 
 /* ---------- 7.3 Move markers ----------
