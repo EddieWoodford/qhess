@@ -795,8 +795,8 @@ async function checkRestage(ctx) {
 }
 
 // Add PC, then the king: every piece of the mover's that could attack it attacks it, with no step to pick them. At
-// the Captures hint level a red arrow runs from each attacker to the king (no outline on the attackers), and the
-// possible kings are highlighted to choose from; below Captures, neither (nor the cancel cursor round them).
+// every hint level a red arrow runs from each attacker to the king (no outline on the attackers). At Captures the
+// possible kings are highlighted to choose from; below it, not (nor the cancel cursor round them).
 async function checkPotentialCheck(ctx) {
 	const problems = [];
 	const expect = (what, ok) => { if (!ok) { problems.push(what); } };
@@ -831,8 +831,8 @@ async function checkPotentialCheck(ctx) {
 	expect("Below Captures, no possible kings should be highlighted (" + hidden.candidates + ") nor cancel cursors (" + hidden.cancels + ")",
 		g.ui.state == "selectPCKing" && hidden.candidates == 0 && hidden.cancels == 0);
 	g.selectPCKing([6, 0]);
-	expect("... and the declared check no arrows, has " + count(".arrow-attacks .arrow-line"),
-		g.ui.state == "showPotentialCheck" && count(".arrow-attacks .arrow-line") == 0);
+	expect("... but once declared, its arrows show at every level, has " + count(".arrow-attacks .arrow-line"),
+		g.ui.state == "showPotentialCheck" && count(".arrow-attacks .arrow-line") == 2);
 	level("captures");
 	return problems;
 }

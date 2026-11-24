@@ -8,7 +8,7 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
 ## Checks shown by red arrows only (2026-11-24)
 - controller draw `arrows.attacks`: from each attacker to the king of the check / potential check on the side to
   move (findChecks(game, turnColor)), at every hint level, until answered (moved away, blocked, taken, Not a King);
-  while declaring (showPotentialCheck) the declared one, at Captures only (as before). board-view no longer sets
+  while declaring (showPotentialCheck) the declared one, also at every level (was Captures only). board-view no longer sets
   `.checkKing` / `.checkAttacker`; their CSS is gone (the theme vars `--piece-checkKing-col` stays for `.potKing`;
   `--piece-checkAttacker-col` and the theme generator's previews of both are now unused). Snapshots re-recorded
   (6 games changed: the outline classes). tests/test.html potential-check test checks the arrows stay, then go.
