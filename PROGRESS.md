@@ -5,6 +5,12 @@ Compact notes for whoever works on this next. Tests: `npm test` (node), and the 
 example games against tests/snapshots.json, plus multiplayer and page-feature checks), or headless with
 `npm run test:browser`. Types: `npm run typecheck`. CI (pages.yml) runs all three before deploying.
 
+## Cross over squares a picked piece can't reach (2026-11-24)
+- Rule: the cross shows wherever a click would cancel, the tick wherever it would submit. In showPartialMove,
+  board-view now gives `.cancelOnClick` to squares with no `potentialMove` (a click there puts the piece back),
+  only from the Moves hint level (below it the crosses would give the destinations away, as with the PC kings).
+  Over the mover's own pieces grab still wins (7.8). tests/test.html restage test checks a3's cross / e4's none.
+
 ## Last move: arrow only; tick on the draggable staged square (2026-11-24)
 - The last move (in replay, and in multiplayer) no longer outlines its squares (board-view gave them selectedStart /
   selectedEnd); the grey last-move arrow shows it, in replay too (replayPly sets ui.lastStart/lastEnd). draw no longer

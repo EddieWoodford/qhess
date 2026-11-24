@@ -776,6 +776,10 @@ async function checkRestage(ctx) {
 	sq(6, 4).click();
 	expect("A click on e2 should pick it up again, is " + looks(),
 		g.ui.state == "showPartialMove" && g.ui.start.join() == "6,4" && sq(6, 4).innerHTML != "" && sq(5, 4).innerHTML == "");
+	// Picked: a square it can't go to cancels (the cross), one it can go to doesn't
+	expect("a3 should show the cancel cursor while e2 is picked", sq(5, 0).classList.contains("cancelOnClick")
+		&& ctx.win.getComputedStyle(sq(5, 0)).cursor.includes("ff4444"));
+	expect("e4 should not show the cancel cursor while e2 is picked", !sq(4, 4).classList.contains("cancelOnClick"));
 	sq(4, 4).click();
 	sq(5, 0).click(); // a3: e2 can't go there
 	expect("A click where it couldn't go should still cancel, is " + looks(), g.ui.state == "clear" && sq(6, 4).innerHTML != "");
