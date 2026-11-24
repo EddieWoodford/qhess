@@ -16,10 +16,21 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
 
 ## Docker (2026-11-24)
 - Dockerfile (node:22-alpine, `npm ci --omit=dev`, runs as `node`, which can't write the files: the themes list
-  write already fails quietly), .dockerignore, compose.yaml (port 8000).
+  write already fails quietly), .dockerignore, compose.yaml (port `${QHESS_PORT:-8000}`, no restart policy).
+- start.bat: no arguments and docker on PATH -> Docker: if `docker info` fails, `docker desktop start --detach`
+  (also wakes an engine stopped with the app open) else the exe, polls ~3 min (ping as the delay: timeout needs a
+  keyboard), then falls back to Node. LAN address from PowerShell Get-NetIPConfiguration (default-route IPv4) ->
+  QHESS_LAN_ADDRESS; `docker compose up --build --detach`; `curl.exe -fs --retry-all-errors` until it answers;
+  opens the page; `pause`, then `docker compose down`. With arguments or no Docker: the old Node route.
+  start_test.bat passes arguments so stays on Node: "Record new snapshots" PUTs only from localhost and the image's
+  files are a copy. Keep start.bat CRLF (`grep -c $'\r'` in Git Bash reports 0 regardless; check with od -c).
+- This PC (Docker Desktop 4.72, Windows Insider 26300): quitting Docker Desktop, even with `docker desktop stop`,
+  leaves AF_UNIX socket files (Docker\run\dockerInference, docker-secrets-engine\engine.sock) that Windows can't
+  open (error 1920), and the next start crashes ("Inference manager"/"Secrets Engine": remove ... cannot be accessed).
+  Renaming both folders aside with Docker fully quit lets it start (15 s). start.bat then falls back to Node.
 - render.yaml (Blueprint): Docker web service `qhess` (so qhess.onrender.com, as server-address.js expects), free,
   frankfurt (fixed at creation), healthCheckPath /, `autoDeployTrigger: checksPass` (waits for pages.yml; Render
-  deploys nothing if no checks are found). Not yet applied in the dashboard (nothing pushed). pages.yml builds the
+  deploys nothing if no checks are found). Set up by the user in the dashboard. pages.yml builds the
   image and curls / from it (`--retry-all-errors`: Docker's port proxy gives an empty reply until the server listens).
 - server.js: env `QHESS_NO_BROWSER` (= --no-browser, set in the image); `QHESS_LAN_ADDRESS` (comma list) replaces
   `lanAddresses()` (in a container they're the container's 172.x ones, so join links were wrong); SIGTERM/SIGINT
