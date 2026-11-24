@@ -5,6 +5,15 @@ Compact notes for whoever works on this next. Tests: `npm test` (node), and the 
 example games against tests/snapshots.json, plus multiplayer and page-feature checks), or headless with
 `npm run test:browser`. Types: `npm run typecheck`. CI (pages.yml) runs all three before deploying.
 
+## Last move: arrow only; tick on the draggable staged square (2026-11-24)
+- The last move (in replay, and in multiplayer) no longer outlines its squares (board-view gave them selectedStart /
+  selectedEnd); the grey last-move arrow shows it, in replay too (replayPly sets ui.lastStart/lastEnd). draw no longer
+  passes lastStart/lastEnd to the view.
+- The staged destination's tick cursor was hidden by the drag rule (7.8 `cursor: grab`, more specific) once staged
+  pieces became draggable. `.submitOnClick` keeps the cursor in `--submit-cursor`; 7.8 puts it back on
+  `.board[data-drag] .boardsquare.submitOnClick`. Crosses still show on empty / opponent squares; over the mover's
+  own pieces grab wins (a press there drags). tests/test.html restage test checks e4's tick.
+
 ## Docker (2026-11-24)
 - Dockerfile (node:22-alpine, `npm ci --omit=dev`, runs as `node`, which can't write the files: the themes list
   write already fails quietly), .dockerignore, compose.yaml (port 8000).

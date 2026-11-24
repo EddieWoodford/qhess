@@ -25,7 +25,6 @@ import { dom } from "./dom.js";
 //   drag:        null, or while a piece is dragged (controller.js): { lifted: its copy follows the pointer (no move
 //                shown), over: it is over a square it can move to, question: the move there is ambiguous (asked on
 //                the drop) or null, intoCheck: the move there leaves the mover in check }
-//   lastStart, lastEnd: [r,c] of the last submitted move (highlighted during replay)
 //   restage:     [[r,c]...]: while a move is staged, the squares a click moves its piece to instead of cancelling
 //   arrows:      { last, current }: each [[r,c], [r,c]] or null: the last move played, and the move being made
 //   replayNumber: -1, or the replay position (see controller.js)

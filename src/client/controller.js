@@ -74,7 +74,7 @@ const ui = {
 	/** @type {number[]} */
 	end: [],
 	/** @type {number[]} */
-	lastStart: [],   // start square of the last submitted move, for replay highlighting
+	lastStart: [],   // start square of the last submitted move (its arrow; the ply shown, in replay)
 	/** @type {number[]} */
 	lastEnd: [],     // end square of the last submitted move
 	// The game record shown in the History tab, one ply per line. It follows the game as moves are made, and
@@ -1162,8 +1162,6 @@ function draw(animate = false) {
 		restage: restageSquares(),
 		draggable: canDrag() ? game.turnColor : null,
 		drag: dragging ? { lifted: !hover?.state, over: hover !== null, question: hover?.question ?? null, intoCheck: hover?.intoCheck ?? false } : null,
-		lastStart: ui.lastStart,
-		lastEnd: ui.lastEnd,
 		replayNumber: ui.replay,
 		record: ui.record,
 		multiplayer: ui.multiplayer,

@@ -1396,8 +1396,9 @@ input.switch:focus-visible {
     box-shadow: 0 0 0 var(--chosen-ring) var(--piece-dest-col) inset;
 }
 
-.submitOnClick { /* the staged destination: clicking it again submits the move */
-    cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><path d='M5 17 L13 25 L27 8' fill='none' stroke='%23000' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/><path d='M5 17 L13 25 L27 8' fill='none' stroke='%2366ff66' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/></svg>") 13 25, pointer;
+.submitOnClick { /* the staged destination: clicking it again submits the move (a tick) */
+    --submit-cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><path d='M5 17 L13 25 L27 8' fill='none' stroke='%23000' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/><path d='M5 17 L13 25 L27 8' fill='none' stroke='%2366ff66' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/></svg>") 13 25, pointer;
+    cursor: var(--submit-cursor);
 }
 
 .cancelOnClick { /* while a move is staged, clicking any other square cancels it */
@@ -1869,6 +1870,11 @@ input.switch:focus-visible {
 .board[data-drag="b"] .boardsquare:has(> .blackpiece, > .blackpiececollapsed) {
     cursor: grab;
     touch-action: none;
+}
+
+/* ...but the staged destination keeps its tick (7.2): a click there still submits */
+.board[data-drag] .boardsquare.submitOnClick {
+    cursor: var(--submit-cursor);
 }
 
 .piece-dragging,

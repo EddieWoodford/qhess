@@ -768,6 +768,9 @@ async function checkRestage(ctx) {
 	sq(6, 4).click(); sq(4, 4).click(); // e2-e4, staged
 	expect("e2-e4 should be staged, is " + looks(), staged([6, 4], [4, 4]));
 	expect("e3 should not show the cancel cursor while e2-e4 is staged", !sq(5, 4).classList.contains("cancelOnClick"));
+	// The staged piece can be dragged, but a click on it still submits: the tick, not the grab cursor
+	expect("e4 should show the tick cursor while e2-e4 is staged, shows " + ctx.win.getComputedStyle(sq(4, 4)).cursor.slice(0, 20),
+		ctx.win.getComputedStyle(sq(4, 4)).cursor.includes("66ff66"));
 	sq(5, 4).click();
 	expect("A click on e3 should move the staged piece there, is " + looks(), staged([6, 4], [5, 4]) && sq(4, 4).innerHTML == "");
 	sq(6, 4).click();

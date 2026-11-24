@@ -380,15 +380,6 @@ function drawBoard(view) {
 					|| STATE == "showPotentialCheck") {
 				classes.add("cancelOnClick");
 			}
-			if (view.replayNumber > -1 || (view.multiplayer && STATE != "showPartialMove" && STATE != "showCompleteMove")) {
-				// In replay, show the move that led to this position (and in multiplayer, the last move played)
-				if (isequal([r,c], view.lastStart)) {
-					classes.add("selectedStart");
-				}
-				if (isequal([r,c], view.lastEnd)) {
-					classes.add("selectedEnd");
-				}
-			}
 
 			// The pieces that could be the king, to declare a potential check on: shown at the Captures hint level only
 			if (sqr.highlightPotKing == 1 && view.hintLevel == "captures") {
