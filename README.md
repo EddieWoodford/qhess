@@ -9,30 +9,28 @@ The rules are in [Chess Variant Rules and How to Play.md](Chess%20Variant%20Rule
 
 ## Running it
 
-On Windows, double-click `start.bat`. With [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-installed, it runs the server in a container: it starts Docker Desktop if needed, builds and starts
-the container, and opens the game. Press a key in its window to stop it (closing the window leaves
-the container running: `docker compose down` stops it). `QHESS_PORT` changes the port.
-
-Without Docker (or if Docker Desktop doesn't start within about three minutes), or when given
-arguments (`start.bat --port 8100 --no-browser`; `start_test.bat` passes some), it runs the server on
-Node.js instead. That is all: the first time, it installs what is missing (Node.js 20 or later, with
-winget, which Windows asks you to allow; then the npm packages). After a `git pull` that changes the
-packages, it installs them again.
-
-Elsewhere, with [Node.js](https://nodejs.org/) 20 or later, run:
+For development, run the server with [Node.js](https://nodejs.org/) on this computer:
 
 ```
 npm install
 npm start
 ```
 
-Either way, this starts the Qhess server and opens the game at http://localhost:8000/. The window
-also prints an "On your network" address that other devices on the same network can open.
+On Windows, double-clicking `start.bat` does the same, and the first time it installs what is missing
+(Node.js with winget, which Windows asks you to allow; then the npm packages). After a `git pull` that
+changes the packages, it installs them again.
 
-Docker by hand: `docker compose up --build`, then open http://localhost:8000/. The container can't
-see this computer's network address, so for a friend's join link set `QHESS_LAN_ADDRESS` (e.g. in a
-`.env` file: `QHESS_LAN_ADDRESS=192.168.1.20`; start.bat finds it for you); see compose.yaml.
+This starts the Qhess server and opens the game at http://localhost:8000/. The window also prints an
+"On your network" address that other devices on the same network can open.
+
+Versions: the Node.js major version is in `.nvmrc` (24), and `package.json` "engines" with
+`engine-strict` in `.npmrc` makes `npm install` refuse any other. CI and the Docker image use the same
+one, and `package-lock.json` pins every package, so this computer, CI and Render run the same Node.js and packages.
+
+To check the image the hosted server runs (CI also builds it on every push): `docker compose up --build`,
+then open http://localhost:8000/. The container can't see this computer's network address, so for a
+friend's join link set `QHESS_LAN_ADDRESS` (e.g. in a `.env` file: `QHESS_LAN_ADDRESS=192.168.1.20`);
+see compose.yaml.
 
 Single player (both sides on one screen) is the default and needs nothing else.
 

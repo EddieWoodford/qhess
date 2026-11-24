@@ -15,19 +15,18 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
   own pieces grab wins (a press there drags). tests/test.html restage test checks e4's tick.
 
 ## Docker (2026-11-24)
-- Dockerfile (node:22-alpine, `npm ci --omit=dev`, runs as `node`, which can't write the files: the themes list
-  write already fails quietly), .dockerignore, compose.yaml (port `${QHESS_PORT:-8000}`, no restart policy).
-- start.bat: no arguments and docker on PATH -> Docker: if `docker info` fails, `docker desktop start --detach`
-  (also wakes an engine stopped with the app open) else the exe, polls ~3 min (ping as the delay: timeout needs a
-  keyboard), then falls back to Node. LAN address from PowerShell Get-NetIPConfiguration (default-route IPv4) ->
-  QHESS_LAN_ADDRESS; `docker compose up --build --detach`; `curl.exe -fs --retry-all-errors` until it answers;
-  opens the page; `pause`, then `docker compose down`. With arguments or no Docker: the old Node route.
-  start_test.bat passes arguments so stays on Node: "Record new snapshots" PUTs only from localhost and the image's
-  files are a copy. Keep start.bat CRLF (`grep -c $'\r'` in Git Bash reports 0 regardless; check with od -c).
-- This PC (Docker Desktop 4.72, Windows Insider 26300): quitting Docker Desktop, even with `docker desktop stop`,
-  leaves AF_UNIX socket files (Docker\run\dockerInference, docker-secrets-engine\engine.sock) that Windows can't
-  open (error 1920), and the next start crashes ("Inference manager"/"Secrets Engine": remove ... cannot be accessed).
-  Renaming both folders aside with Docker fully quit lets it start (15 s). start.bat then falls back to Node.
+- Node 24 everywhere: `.nvmrc` (24) is the one place; package.json engines "24.x" + `.npmrc` engine-strict (npm
+  install/ci fail EBADENGINE on another major; checked), CI `node-version-file: .nvmrc`, Dockerfile node:24-alpine,
+  @types/node ^24. winget LTS is 26 now, so start.bat installs `OpenJS.NodeJS.<.nvmrc>`. To move: change all four.
+- Dockerfile (`npm ci --omit=dev`, runs as `node`, which can't write the files: the themes list write already fails
+  quietly), .dockerignore, compose.yaml (port `${QHESS_PORT:-8000}`, no restart policy). For checking the image by
+  hand; development runs on Node (npm start / start.bat).
+- start.bat briefly ran Docker (start Docker Desktop, compose up, fall back to Node); reverted to the Node route
+  only, with its version check reading .nvmrc. Why: on this PC (Docker Desktop 4.72 and 4.100, Windows Insider
+  26300) Docker Desktop crashes on every start after it has been quit: its AF_UNIX socket files
+  (Docker\run\dockerInference, docker-secrets-engine\engine.sock) can't be removed or renamed (error 1920); a reboot
+  doesn't help. Renaming both folders aside with Docker fully quit lets one start (15 s). Keep start.bat CRLF
+  (`grep -c $'\r'` in Git Bash reports 0 regardless; check with od -c).
 - render.yaml (Blueprint): Docker web service `qhess` (so qhess.onrender.com, as server-address.js expects), free,
   frankfurt (fixed at creation), healthCheckPath /, `autoDeployTrigger: checksPass` (waits for pages.yml; Render
   deploys nothing if no checks are found). Set up by the user in the dashboard. pages.yml builds the
@@ -200,7 +199,7 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
   (the hover preview redraws the square first; older than this feature). Hover first, then drag, when testing there.
 
 ## start.bat sets everything up (2026-11-20)
-- A fresh clone needs only start.bat. Node.js 20+: the one on PATH, else `%ProgramFiles%\nodejs` (installed, but the
+- A fresh clone needs only start.bat. Node.js (the .nvmrc major; was 20+): the one on PATH, else `%ProgramFiles%\nodejs` (installed, but the
   window's PATH predates it, or an older node comes first), else `winget install OpenJS.NodeJS.LTS` (machine-wide
   MSI with a UAC prompt: winget has no user-scope Node installer any more), then put first on this window's PATH.
   No winget, or the install fails: it points to nodejs.org and pauses.

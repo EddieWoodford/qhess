@@ -1,10 +1,10 @@
-# Run the Qhess server in Docker on this computer:   docker compose up --build   (start.bat does this for you)
+# Run the hosted server's image (the Dockerfile) on this computer:   docker compose up --build
 # Then open http://localhost:8000/. Stop with Ctrl+C (or docker compose down).
+# For development, npm start (or start.bat) is quicker: no image to rebuild after an edit.
 #
 # For a friend on your network, the join link needs this computer's address, which the container can't see:
-# set QHESS_LAN_ADDRESS (start.bat finds it; by hand, e.g. in a .env file next to this one:
-# QHESS_LAN_ADDRESS=192.168.1.20). Windows may also need the port allowed through its firewall.
-# QHESS_PORT changes the port on this computer (default 8000).
+# set QHESS_LAN_ADDRESS (e.g. in a .env file next to this one: QHESS_LAN_ADDRESS=192.168.1.20). Windows may also
+# need the port allowed through its firewall. QHESS_PORT changes the port on this computer (default 8000).
 services:
   qhess:
     build: .
