@@ -15,6 +15,13 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
   page, style.css 7.7) glides to the square / side button (LEAD_MS 400 + MOVE_MS 700), dips with a ring, and the
   click is made. Next/Back mid-glide settles (click made at once). Bubble anchor per click (`anchorOf`), pointer
   target `targetOf`. tests/test.html "no Surrender" also checks each step says something new.
+- The pointer looks like the page's own cursor under its hotspot (`track`, a rAF loop while the tour runs:
+  elementFromPoint -> computed `cursor`; a url() cursor (tick, cross) is used as is, "pointer" -> HAND, else ARROW;
+  side buttons -> HAND, as they're disabled in the tour). It is `.resting` (faded out) except from a click's start
+  until REST_MS after it, so it never covers the bubble or the collapsed pictures. A plain move is submitted by
+  clicking its square again (`submitsOnSquare`); a PC or the move-0 pass uses the Submit button.
+- Text for beginners: the player sees pictures, not letters (no "its N", "letters", "kNight"). 5w. thinks it sees
+  checkmate. A hidden Browser pane stalls transitions/rAF: check the pointer with screenshots, not sampling.
 
 ## Cross over squares a picked piece can't reach (2026-11-24)
 - Rule: the cross shows wherever a click would cancel, the tick wherever it would submit. In showPartialMove,

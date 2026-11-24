@@ -1822,32 +1822,26 @@ input.switch:focus-visible {
 .tour-bubble.below::after  { bottom: calc(100% + 1.1em); }
 
 /* The pointer that makes the demo's clicks (tour.js): fixed to the page, its
-   tip at the point it is translated to. It glides there (.jump: at once),
-   and on .clicking dips and sends a ring out from the tip. */
+   hotspot at the point it is translated to, looking like the page's cursor
+   there (the img, placed by tour.js so its hotspot is on the point). It
+   glides there (.jump: at once), on .clicking dips and sends a ring out, and
+   is faded out while .resting, so it never hides the pieces or the bubble. */
 .tour-cursor {
     position: fixed;
     left: 0;
     top: 0;
     z-index: 50;
     pointer-events: none;
-    transition: transform 0.7s ease-in-out;  /* (tour.js MOVE_MS) */
+    transition: transform 0.7s ease-in-out, opacity 0.3s ease;  /* (tour.js MOVE_MS) */
 }
 .tour-cursor[hidden] { display: none; }
-.tour-cursor.jump { transition: none; }
-.tour-cursor svg {
-    display: block;
-    width: 28px;
-    height: 28px;
-    margin: -2.3px 0 0 -3.5px;  /* the tip (3, 2 of 24) on the point */
-    overflow: visible;
+.tour-cursor.jump { transition: opacity 0.3s ease; }
+.tour-cursor.resting { opacity: 0; }
+.tour-cursor img {
+    position: absolute;
+    width: 32px;
+    height: 32px;
     filter: drop-shadow(0 0.1em 0.2em #0008);
-    transform-origin: 3.5px 2.3px;
-}
-.tour-cursor path {
-    fill: #fff;
-    stroke: #000;
-    stroke-width: 1.5;
-    stroke-linejoin: round;
 }
 .tour-cursor::before {
     content: "";
@@ -1861,7 +1855,7 @@ input.switch:focus-visible {
     border-radius: 50%;
     opacity: 0;
 }
-.tour-cursor.clicking svg { animation: tour-cursor-press 0.3s ease-out; }
+.tour-cursor.clicking img { animation: tour-cursor-press 0.3s ease-out; }
 .tour-cursor.clicking::before { animation: tour-cursor-ring 0.45s ease-out; }
 @keyframes tour-cursor-press {
     40% { transform: scale(0.8); }

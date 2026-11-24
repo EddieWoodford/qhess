@@ -10,7 +10,7 @@
 const TOUR_TEXT = String.raw`
 // Taught in order: collapses (1w.-2w.), then potential check (2b.-4w.), then a known king and checkmate (4b.-5w.).
 # Welcome to Qhess: chess where nobody knows which piece is which. Use Next and Back (or the arrow keys) to step through a short game, one click at a time.
-# Every piece starts as all six types at once: King, Queen, Bishop, kNight, Rook, Pawn. Each piece on the board shows the letters it could still be.
+# Every piece starts as all six types at once: king, queen, bishop, knight, rook and pawn. Each piece on the board shows a picture of every type it could still be.
 # Each time a piece moves, the types that couldn't have made that move are ruled out: the piece "collapses". That's how the army slowly takes shape.
 # Before White's first move, Black has a "move 0". It's for something we'll come to later; for now, Black passes.
 0b.
@@ -19,7 +19,7 @@ const TOUR_TEXT = String.raw`
 1w. (KQBNRP)g1f3(N)
 > pick: I'll start with the piece on g1. Like all of them, it could still be anything.
 > to: I'll jump out from behind my pawns, to f3. Only a knight can do that.
-> submit: That's the move. Submit.
+> submit: That's the move. Clicking f3 again submits it.
 ? f3 N
 # @f3 One move, and this piece has collapsed to a single type: it is a knight. Nothing else could have jumped there.
 
@@ -36,7 +36,7 @@ const TOUR_TEXT = String.raw`
 > submit: [above] Submit.
 ? b3 N
 ? b1 KQBRP
-# @b3 The army must always add up to a normal chess army, which has two knights. Both of White's are known now, so no other White piece can be a knight: every one of them has lost its N.
+# @b3 The army must always add up to a normal chess army, which has two knights. Both of White's are known now, so no other White piece can be a knight: every one of them has lost its knight picture.
 
 # Now a new idea. Nobody knows where the kings are, so you can't simply be in check. Instead, you can declare a "potential check": if that piece is your king, I'm attacking it.
 2b. (KQBNRP)g8xb3(QB)<b2+ b3 g7>
@@ -50,11 +50,11 @@ const TOUR_TEXT = String.raw`
 ? a2 B
 ? pc b2
 # @b3 Declaring the check costs the attackers: each keeps only the types that could take b2. b3 is right in front of it, on the file, so it must be the queen.
-# @g7 g7 reaches b2 down the long diagonal, so it's a bishop or queen. Black's one queen is on b3: g7 is a bishop, and so is a2. With the queen and both bishops known, every other Black piece has lost its Q and B.
+# @g7 g7 reaches b2 down the long diagonal, so it's a bishop or queen. Black's one queen is on b3: g7 is a bishop, and so is a2. With the queen and both bishops known, every other Black piece has lost its queen and bishop pictures.
 # @b2 White must answer it on the next move: move b2 out of the way, block, take an attacker, or declare b2 "Not a King".
 
 3w. [b2](N)f3d4(N)
-> nak: b2 is not my king, I declare, so it loses its K. That answers the check.
+> nak: b2 is not my king, I declare, so it loses its king picture. That answers the check.
 > pick: I still have to make a move. My knight on f3...
 > to: ...jumps to d4, which blocks g7's diagonal too.
 > submit: Submit.
@@ -88,9 +88,9 @@ const TOUR_TEXT = String.raw`
 # @g8 [below] Castling collapsed both pieces: g8 is Black's king and f8 a rook. With both rooks known (f2 and f8), the rest of Black's pieces can only be knights or pawns.
 
 5w. (KQBRP)g2xg7(QR)#
-> pick: My piece on g2 has the open g-file in front of it.
-> to: [below] Straight up it to take the bishop on g7, next to the king. As a rook or a queen, this piece attacks g8.
-> submit: Check. Submit!
+> pick: I can see a checkmate! My piece on g2 has the open g-file in front of it.
+> to: [below] Straight up it to take the bishop on g7, right next to the king. As a rook or a queen, it attacks g8, and the king has nowhere to go.
+> submit: [below] Checkmate. Submit!
 ? g7 QR
 # @g7 [below] Checkmate. The king can't take g7: g1, at the foot of the open file, could be a rook or queen, so it guards g7. A square is guarded if any piece could attack it as any of its types.
 # @g7 [below] The empty squares f7 and h8 are covered from g7, and nothing of Black's can take g7: f8 is a rook, and g7 is diagonal to it; h7 is only a knight or pawn. No way out.
