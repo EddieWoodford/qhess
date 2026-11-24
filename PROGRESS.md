@@ -5,6 +5,17 @@ Compact notes for whoever works on this next. Tests: `npm test` (node), and the 
 example games against tests/snapshots.json, plus multiplayer and page-feature checks), or headless with
 `npm run test:browser`. Types: `npm run typecheck`. CI (pages.yml) runs all three before deploying.
 
+## Demo: a thought per click, a pointer making the clicks (2026-11-24)
+- Script: each ply has one `> click: [place] text` thought per click a player makes for it, in order
+  (tour-script.js `plyClicks`: nak, pick, to, pc, king, submit; resign). parseTour errors on a missing/extra/
+  out-of-order one; `ply.thoughts = [{click, text, place}]` (no more `thought` / ply `place`). 51 steps now.
+- tour.js: `frames` (a note, or one click of a ply) are what Next/Back step; `reach(f)` rebuilds the position after
+  frame f (plies before, then the ply's clicks made at once via `makeClick`; a ply's last click = the whole ply),
+  `shown` = the frame on the board. Next: thought shows, the pointer (`.tour-cursor`, made in tour.js, fixed to the
+  page, style.css 7.7) glides to the square / side button (LEAD_MS 400 + MOVE_MS 700), dips with a ring, and the
+  click is made. Next/Back mid-glide settles (click made at once). Bubble anchor per click (`anchorOf`), pointer
+  target `targetOf`. tests/test.html "no Surrender" also checks each step says something new.
+
 ## Cross over squares a picked piece can't reach (2026-11-24)
 - Rule: the cross shows wherever a click would cancel, the tick wherever it would submit. In showPartialMove,
   board-view now gives `.cancelOnClick` to squares with no `potentialMove` (a click there puts the piece back),
@@ -251,7 +262,7 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
   `tour-script.js` (`parseTour`): plies exactly as the engine writes them, `# [@sq] note` steps, `> thought` per ply
   (required), `? sq TYPES` / `? pc sq` checks. tests/node/tour.test.js plays every ply, checks it's written back
   identically, runs the checks, and that a collapse, PC, Not a King, a capture, castling and mate appear.
-- The game (10 plies, 28 steps; the user's own) teaches one idea at a time: collapses first (1w. Nf3 -> N, 1b. f7xa2
+- The game (10 plies; the user's own) teaches one idea at a time: collapses first (1w. Nf3 -> N, 1b. f7xa2
   -> QB, 2w. a1b3 the second knight so no other White piece is N), then potential check (2b. g8xb3 <b2+ b3 g7>
   makes b3 Q and g7/a2 B; 3w. Not a King on b2; 3b. f8xf2 rook <f1+>; 4w. f1g1 steps out instead, KQR), then mate
   (4b. O-O makes the king known; 5w. g2xg7# : g1 guards g7 up the file). Move 0 is passed, PC explained later.

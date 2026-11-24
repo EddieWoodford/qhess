@@ -900,9 +900,14 @@ async function checkDemoNoSurrender(ctx) {
 	const surrenderShown = () => el("sideButton2").innerText == "Surrender" && !el("sideButton2").classList.contains("invisible");
 	el("tourButton").click();
 	let picking = 0; // the steps a move was about to be picked on (Surrender's place, in a game)
+	let said = el("tourText").textContent;
 	for (let i = 0; i < 10; i++) {
-		el("tourNext").click(); // (the move before lands at once, and this one is about to be acted out)
+		el("tourNext").click(); // (the click before is made at once, and this one is on its way)
 		if (ctx.game.ui.state == "clear") { picking++; }
+		// Every step, each click of a move included, has its own thought
+		expect("Step " + (i + 2) + " should say something new, says '" + el("tourText").textContent + "' again",
+			el("tourText").textContent != said);
+		said = el("tourText").textContent;
 		expect("Step " + (i + 2) + " (" + ctx.game.ui.state + ") shows Surrender", !surrenderShown());
 	}
 	expect("Some of those steps should have been about to pick a piece, " + picking + " were", picking > 0);

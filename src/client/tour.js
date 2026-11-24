@@ -1,10 +1,10 @@
 "use strict";
 
-// The demo play-through: a short game (tour-text.js) played out on the real board, step by step, with a thought
-// bubble saying why each move is made. It never draws the board itself: each move is made through the same
-// controller.js calls a player's clicks make (pick the piece, choose the square, Add PC, pick the king and the
-// attackers, Submit), so the board, its theme, highlights, prompts and animations are always the game's own.
-// Stepping back (or jumping) rebuilds the position from the plies, as the History tab's replay does.
+// The demo play-through: a short game (tour-text.js) played out on the real board, a click at a time, with a thought
+// bubble saying why each click is made. A pointer glides over the page and makes each click. It never draws the
+// board itself: each click is made through the same controller.js call a player's click makes (pick the piece,
+// choose the square, Add PC, pick the king, Submit), so the board, its theme, highlights, prompts and animations
+// are always the game's own. Stepping back (or jumping) rebuilds the position from the plies and the clicks.
 //
 // While it runs, controller.js ui.tour is set: the player's clicks on the board do nothing and the game isn't saved.
 // The player's own game is put back on Exit; "Play from here" keeps the position shown as the game instead.
@@ -16,7 +16,8 @@ import { TOUR_TEXT } from "./tour-text.js";
 import { parseMoveText } from "../engine/notation.js";
 import { coordstext2coords } from "../engine/utils.js";
 
-const STAGE_MS = 1200; // the pause between the stages of a move being acted out
+const LEAD_MS = 400;   // after the thought shows, before the pointer sets off
+const MOVE_MS = 700;   // the pointer's glide to what it clicks (style.css 7.7 .tour-cursor transition)
 const PRESS_MS = 500;  // how long a side button shows as pressed
 
 // (the page always has these elements)
@@ -30,14 +31,33 @@ const el = {
 	count: $("tourCount"),
 	back: /** @type {HTMLButtonElement} */ ($("tourBack")),
 	next: /** @type {HTMLButtonElement} */ ($("tourNext")),
+	cursor: makeCursor(),
 };
 
 /** @type {ReturnType<typeof parseTour>["steps"]} */
 let steps = [];      // the tour's steps (tour-script.js parseTour) while it runs, else none
-let index = -1;      // the step being shown
+/** @type {{step: number, click: number}[]} */
+let frames = [];     // what each Next shows: a note (click -1), or one click of a ply's (its thought's index)
+let index = -1;      // the frame being shown
+let shown = -1;      // the frame whose position is on the board (once its click is made)
 let savedGame = "";  // the player's own game, to put back on Exit
-let timers = [];     // the stages of the move being acted out, still to come
+let timers = [];     // the click still to come, while the pointer heads for it
 let anchor = null;   // [r,c] of the square the bubble points at, or null (over the middle of the board)
+/** @type {string | null} */
+let place = null;    // the side of it the script puts the bubble, or null
+/** @type {Element | null} */
+let cursorAt = null; // what the pointer is on
+
+// The pointer that makes the tour's clicks: an arrow, its tip at the point it is moved to
+function makeCursor() {
+	const cursor = document.createElement("div");
+	cursor.className = "tour-cursor";
+	cursor.hidden = true;
+	cursor.setAttribute("aria-hidden", "true");
+	cursor.innerHTML = "<svg viewBox='0 0 24 24'><path d='M3 2 L3 19 L7.5 15 L10.5 22 L13.8 20.6 L10.9 14 L17 14 Z'/></svg>";
+	document.body.append(cursor);
+	return cursor;
+}
 
 function running() {
 	return steps.length > 0;
@@ -47,8 +67,11 @@ function start() {
 	if (running() || !game.setTour(true)) { return; } // not in a multiplayer game
 	savedGame = game.ui.record.join("\n");
 	steps = parseTour(TOUR_TEXT).steps;
+	frames = steps.flatMap((step, i) => step.kind == "ply" ? step.thoughts.map((_, k) => ({ step: i, click: k })) : [{ step: i, click: -1 }]);
 	holdSetting("showCoords", true); // the thought bubbles name squares
 	el.bar.hidden = false;
+	el.cursor.hidden = false;
+	moveCursor($("board"), false);
 	show(0, false);
 }
 
@@ -56,14 +79,18 @@ function start() {
 function stop(keep = false) {
 	if (!running()) { return; }
 	settle();
-	const shown = game.ui.record.join("\n");
+	const shownGame = game.ui.record.join("\n");
 	steps = [];
+	frames = [];
 	index = -1;
+	shown = -1;
 	el.bar.hidden = true;
 	el.bubble.hidden = true;
+	el.cursor.hidden = true;
+	cursorAt = null;
 	holdSetting("showCoords");
 	game.setTour(false);
-	const text = keep ? shown : savedGame;
+	const text = keep ? shownGame : savedGame;
 	if (text.trim() == "") {
 		game.newGame();
 	} else {
@@ -72,88 +99,135 @@ function stop(keep = false) {
 }
 
 function next() {
-	if (running() && index < steps.length - 1) { show(index + 1, true); }
+	if (running() && index < frames.length - 1) { show(index + 1, true); }
 }
 
 function back() {
 	if (running() && index > 0) { show(index - 1, false); }
 }
 
-// Show step i. act: a ply is acted out from the position before it; otherwise the position after it is shown at once.
+// Show frame i: its note, or its thought and click. act: the pointer goes and makes the click, from the position
+// before it; otherwise the position after it is shown at once, the pointer already there.
 function show(i, act) {
 	settle();
 	index = i;
-	const step = steps[i];
-	if (act && step.kind == "ply") {
-		const before = pliesUpTo(steps, i - 1);
-		if (game.ui.record.join("\n") != before.text) {
-			game.restoreGameHistory(before.text);
-		}
-		actOut(step);
-	} else {
-		game.restoreGameHistory(pliesUpTo(steps, i).text);
+	const { step: s, click } = frames[i];
+	const step = steps[s];
+	if (click < 0) {
+		reach(i);
 		// A note after the last move looks at the board: put the game over banner away, as a click on it does
-		if (step.kind == "note" && !$("gameOver").hidden) { $("gameOver").click(); }
-		const move = step.kind == "ply" ? parseMoveText(step.text) : null;
-		showBubble(step, step.kind == "note" ? square(step.at) : move?.to ?? move?.pcKing);
+		if (!$("gameOver").hidden) { $("gameOver").click(); }
+		showBubble(null, step.text, step.place, square(step.at));
+	} else {
+		const thought = step.thoughts[click];
+		const move = parseMoveText(step.text);
+		if (act) {
+			if (shown != i - 1) { reach(i - 1); }
+			showBubble(step.side, thought.text, thought.place, anchorOf(move, thought.click));
+			actOut(i);
+		} else {
+			reach(i);
+			showBubble(step.side, thought.text, thought.place, anchorOf(move, thought.click));
+			moveCursor(targetOf(move, thought.click), false);
+		}
 	}
 	drawBar();
 }
 
-// A move acted out through the controller, a stage at a time, as a player would make it
-function actOut(step) {
-	const move = parseMoveText(step.text);
-	if (move.resign) { // nothing to act out (and Surrender would ask first)
-		game.restoreGameHistory(pliesUpTo(steps, index).text);
-		showBubble(step, null);
-		return;
+// Put the position after frame f on the board at once
+function reach(f) {
+	const { step: s, click } = frames[f];
+	const step = steps[s];
+	if (click < 0 || click == step.thoughts.length - 1) {
+		game.restoreGameHistory(pliesUpTo(steps, s).text); // a note, or a ply's last click: the ply is made
+	} else {
+		game.restoreGameHistory(pliesUpTo(steps, s - 1).text);
+		for (let k = 0; k <= click; k++) { makeClick(s, k, false); }
 	}
-	const stages = [];
-	if (move.notAKing) {
-		stages.push(() => press(1, () => game.sideButton1Action())); // Declare 'Not a King'
-	}
-	if (move.from) {
-		stages.push(() => game.showPartialMove(move.from));
-		stages.push(() => {
-			game.showCompleteMove(move.to, move.enPassant, move.promotion, move.castle);
-			placeBubble(move.to);
-		});
-	}
-	if (move.pcKing) {
-		stages.push(() => press(1, () => game.sideButton1Action())); // Add PC
-		stages.push(() => game.selectPCKing(move.pcKing, move.pcAttackers)); // the attackers the script names
-	}
-	stages.push(() => press(2, () => game.sideButton2Action())); // Submit (or Pass to white)
-	stages.push(() => {
-		timers = [];
-		if (game.ui.record.at(-1) != step.text) {
-			// The page made something else of it (the script and the controller disagree): show the ply as written
-			console.warn("Demo: acting out '" + step.text + "' gave '" + game.ui.record.at(-1) + "'");
-			game.restoreGameHistory(pliesUpTo(steps, index).text);
-		}
-	});
-
-	showBubble(step, move.from ?? move.pcKing);
-	stages.forEach((stage, n) => timers.push(setTimeout(stage, STAGE_MS * (n + 1))));
+	shown = f;
 }
 
-// Stop acting out a move part-way: show the position after it at once
+// The pointer glides to what frame i clicks, and clicks it
+function actOut(i) {
+	const { step: s, click } = frames[i];
+	const move = parseMoveText(steps[s].text);
+	const target = targetOf(move, steps[s].thoughts[click].click);
+	moveCursor(target, true);
+	timers.push(setTimeout(() => {
+		timers = [];
+		el.cursor.classList.remove("clicking");
+		void el.cursor.offsetWidth; // (so the click shows again on the same thing)
+		el.cursor.classList.add("clicking");
+		makeClick(s, click, true);
+		shown = i;
+	}, target ? LEAD_MS + MOVE_MS : 0));
+}
+
+// Make click k of the ply at step s, through the controller's own calls, as a player's click would
+function makeClick(s, k, pressed) {
+	const step = steps[s];
+	const move = parseMoveText(step.text);
+	switch (step.thoughts[k].click) {
+		case "nak": press(1, () => game.sideButton1Action(), pressed); break; // Declare 'Not a King'
+		case "pick": game.showPartialMove(move.from); break;
+		case "to": game.showCompleteMove(move.to, move.enPassant, move.promotion, move.castle); break;
+		case "pc": press(1, () => game.sideButton1Action(), pressed); break; // Add PC
+		case "king": game.selectPCKing(move.pcKing, move.pcAttackers); break; // the attackers the script names
+		case "submit": press(2, () => game.sideButton2Action(), pressed); break; // Submit (or Pass to white)
+		case "resign": break; // (Surrender would ask first)
+	}
+	if (k == step.thoughts.length - 1 && game.ui.record.at(-1) != step.text) {
+		// The page made something else of it (the script and the controller disagree): show the ply as written
+		if (!move.resign) { console.warn("Demo: acting out '" + step.text + "' gave '" + game.ui.record.at(-1) + "'"); }
+		game.restoreGameHistory(pliesUpTo(steps, s).text);
+	}
+}
+
+// What a click is on (the pointer goes there), and the square its thought points at
+function targetOf(move, click) {
+	const at = click == "nak" || click == "pc" ? "sideButton1" : click == "submit" ? "sideButton2"
+		: click == "pick" ? squareId(move.from) : click == "to" ? squareId(move.to) : click == "king" ? squareId(move.pcKing) : null;
+	return at ? $(at) : null;
+}
+
+function anchorOf(move, click) {
+	return click == "nak" ? move.notAKing : click == "pick" ? move.from : click == "king" ? move.pcKing
+		: click == "resign" ? null : move.to ?? move.pcKing;
+}
+
+function squareId(coords) {
+	return "square" + coords[0] + coords[1];
+}
+
+// Stop a click on its way: make it at once, the pointer on what it clicks
 function settle() {
 	if (timers.length == 0) { return; }
 	timers.forEach(clearTimeout);
 	timers = [];
-	game.restoreGameHistory(pliesUpTo(steps, index).text);
-	if (steps[index].kind == "ply") {
-		const move = parseMoveText(steps[index].text);
-		placeBubble(move.to ?? move.pcKing);
+	reach(index);
+	moveCursor(cursorAt, false);
+}
+
+// The pointer to the middle of the element (gliding there, or at once)
+function moveCursor(target, glide) {
+	cursorAt = target;
+	if (!target) { return; }
+	const r = target.getBoundingClientRect();
+	el.cursor.classList.toggle("jump", !glide);
+	el.cursor.style.transform = "translate(" + (r.left + r.width / 2) + "px, " + (r.top + r.height / 2) + "px)";
+	if (!glide) {
+		void el.cursor.offsetWidth; // (in place before the glide comes back)
+		el.cursor.classList.remove("jump");
 	}
 }
 
 // Show a side button pressed for a moment, as it is pressed
-function press(n, action) {
+function press(n, action, pressed) {
 	const button = n == 1 ? $("sideButton1") : $("sideButton2");
-	button.classList.add("tour-press");
-	setTimeout(() => button.classList.remove("tour-press"), PRESS_MS);
+	if (pressed) {
+		button.classList.add("tour-press");
+		setTimeout(() => button.classList.remove("tour-press"), PRESS_MS);
+	}
 	action();
 }
 
@@ -165,12 +239,13 @@ function square(text) {
 // The bubble and the bar
 ////////////////////////////////
 
-function showBubble(step, at) {
-	const side = step.kind == "ply" ? step.side : null;
+// side: "w" / "b" for a thought, null for the narrator. where: the side of the square the script puts it, or null.
+function showBubble(side, text, where, at) {
+	place = where;
 	el.bubble.dataset.speaker = side ?? "narrator";
 	el.speaker.textContent = side == "w" ? "White thinks" : side == "b" ? "Black thinks" : "";
 	el.speaker.hidden = side === null;
-	el.text.textContent = step.kind == "ply" ? step.thought : step.text;
+	el.text.textContent = text;
 	el.bubble.hidden = false;
 	placeBubble(at);
 }
@@ -191,12 +266,12 @@ function placeBubble(at) {
 	const w = b.offsetWidth;
 	const h = b.offsetHeight;
 	const within = (value, size, room) => Math.min(Math.max(0, value), Math.max(0, room - size));
-	let place = steps[index].place;
-	if (place && $("board").classList.contains("flipped")) { place = OPPOSITE[place]; }
+	let side = place;
+	if (side && $("board").classList.contains("flipped")) { side = OPPOSITE[side]; }
 	b.classList.remove("left", "right", "above", "below");
 	if (!at) {
-		const left = place == "left" ? 0 : place == "right" ? area.width : (area.width - w) / 2;
-		const top = place == "above" ? 0 : place == "below" ? area.height : (area.height - h) / 2;
+		const left = side == "left" ? 0 : side == "right" ? area.width : (area.width - w) / 2;
+		const top = side == "above" ? 0 : side == "below" ? area.height : (area.height - h) / 2;
 		b.style.left = within(left, w, area.width) + "px";
 		b.style.top = within(top, h, area.height) + "px";
 		return;
@@ -208,31 +283,34 @@ function placeBubble(at) {
 	// How much room is spare on each side of the square, once the bubble is there
 	const spare = { left: x - gap - w, right: area.width - x - gap - w, above: y - gap - h, below: area.height - y - gap - h };
 	const towardsMiddle = { across: x > area.width / 2 ? "left" : "right", down: y > area.height / 2 ? "above" : "below" };
-	place ??= towardsMiddle.across;
-	const across = place == "left" || place == "right" ? towardsMiddle.down : towardsMiddle.across;
-	const order = [place, OPPOSITE[place], across, OPPOSITE[across]];
-	place = order.find(p => spare[p] >= 0) ?? order.reduce((most, p) => spare[p] > spare[most] ? p : most);
-	const beside = place == "left" || place == "right";
-	const left = within(beside ? (place == "left" ? x - gap - w : x + gap) : x - w / 2, w, area.width);
-	const top = within(beside ? y - h / 2 : (place == "above" ? y - gap - h : y + gap), h, area.height);
+	side ??= towardsMiddle.across;
+	const across = side == "left" || side == "right" ? towardsMiddle.down : towardsMiddle.across;
+	const order = [side, OPPOSITE[side], across, OPPOSITE[across]];
+	side = order.find(p => spare[p] >= 0) ?? order.reduce((most, p) => spare[p] > spare[most] ? p : most);
+	const beside = side == "left" || side == "right";
+	const left = within(beside ? (side == "left" ? x - gap - w : x + gap) : x - w / 2, w, area.width);
+	const top = within(beside ? y - h / 2 : (side == "above" ? y - gap - h : y + gap), h, area.height);
 	b.style.left = left + "px";
 	b.style.top = top + "px";
 	// The tail points at the square, kept off the bubble's rounded corners
 	const corner = parseFloat(getComputedStyle(b).fontSize) * 1.2;
 	const tail = (pos, size) => Math.min(Math.max(pos, corner), size - corner) + "px";
 	b.style.setProperty(beside ? "--tail-y" : "--tail-x", beside ? tail(y - top, h) : tail(x - left, w));
-	b.classList.add(place);
+	b.classList.add(/** @type {string} */ (side));
 }
 
 function drawBar() {
-	el.count.textContent = "Step " + (index + 1) + " of " + steps.length;
+	el.count.textContent = "Step " + (index + 1) + " of " + frames.length;
 	el.back.disabled = index <= 0;
-	el.next.disabled = index >= steps.length - 1;
+	el.next.disabled = index >= frames.length - 1;
 }
 
-// The bubble follows its square when the board changes size or is turned round
+// The bubble and the pointer follow their squares when the board changes size or is turned round
 function refresh() {
-	if (running()) { placeBubble(anchor); }
+	if (running()) {
+		placeBubble(anchor);
+		if (timers.length == 0) { moveCursor(cursorAt, false); }
+	}
 }
 new ResizeObserver(refresh).observe(el.area);
 // (and once the coordinates' strip has slid in at the start, as the squares shrink to make room for it)
