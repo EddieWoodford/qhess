@@ -1,5 +1,5 @@
 # The Qhess server in a container: the page, and multiplayer over a websocket at /ws.
-# On this computer: docker compose up --build   (see compose.yaml). Hosted: Render builds this file.
+# On this computer: docker compose up --build   (see compose.yaml). Hosted: Railway builds this file (README, "Online").
 # The Node.js major version in .nvmrc
 FROM node:24-alpine
 

@@ -9,7 +9,7 @@
 
 import { SOCKET_PATH } from "../shared/protocol.js";
 
-const HOSTED_SERVER = "qhess.onrender.com";
+const HOSTED_SERVER = "qhess-production.up.railway.app";
 
 // Hosts that serve the page's files but have no Qhess server of their own
 const STATIC_HOST_ENDINGS = [".github.io"];

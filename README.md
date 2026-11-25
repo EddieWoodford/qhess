@@ -25,7 +25,7 @@ This starts the Qhess server and opens the game at http://localhost:8000/. The w
 
 Versions: the Node.js major version is in `.nvmrc` (24), and `package.json` "engines" with
 `engine-strict` in `.npmrc` makes `npm install` refuse any other. CI and the Docker image use the same
-one, and `package-lock.json` pins every package, so this computer, CI and Render run the same Node.js and packages.
+one, and `package-lock.json` pins every package, so this computer, CI and Railway run the same Node.js and packages.
 
 To check the image the hosted server runs (CI also builds it on every push): `docker compose up --build`,
 then open http://localhost:8000/. The container can't see this computer's network address, so for a
@@ -65,23 +65,24 @@ again in its real browser. The creator's seat is never taken.
 
 ## Online
 
-The page is hosted on GitHub Pages, and the multiplayer server on Render
-(https://qhess.onrender.com). Both update by themselves when `main` is pushed to GitHub.
+The page is hosted on GitHub Pages, and the multiplayer server on Railway
+(https://qhess-production.up.railway.app). Both update by themselves when `main` is pushed to GitHub.
 
 - Single player runs entirely in the browser, so it works straight away.
-- A page opened from GitHub Pages uses the Render server for multiplayer
-  (`src/client/server-address.js`), and wakes it as soon as the page loads. Render's free
-  server sleeps after about 15 minutes unused and takes up to a minute to start; until it
-  has, the Multiplayer tab says the server is starting. Games in progress are lost when it
-  sleeps or restarts.
+- A page opened from GitHub Pages uses the Railway server for multiplayer
+  (`src/client/server-address.js`), and wakes it as soon as the page loads, in case it is
+  asleep (Railway's app sleeping); until it has started, the Multiplayer tab says the server
+  is starting. Games are kept only in memory, so a sleep, restart or deploy ends the games in
+  progress.
 - `.github/workflows/pages.yml` deploys the page on each push to `main`, once the tests pass (the repo's
   Settings > Pages > Source must be "GitHub Actions"). The deployed copy of `index.html` is stamped with each
   script's and the stylesheet's version (`deploy/stamp-versions.js`): Pages lets browsers keep files for 10 minutes,
   and without the versions a new page could run with an old cached script.
 - `.nojekyll` tells GitHub Pages to serve the files as they are.
-- Render runs the `Dockerfile`'s image, as `render.yaml` describes (set up once in the Render dashboard with
-  New > Blueprint). It deploys a push to `main` only once its GitHub checks pass; the workflow also builds the
-  image and checks that it serves the page.
+- Railway runs the `Dockerfile`'s image. Its service (`qhess`) is set up in the Railway dashboard only, as
+  there's no config file: source this repo's `main`, region EU West (Amsterdam), healthcheck path `/`,
+  **Wait for CI** on (so it deploys a push only once `pages.yml` passes; the workflow also builds the image and
+  checks that it serves the page), and the generated domain's target port 8000 (the image's `PORT`).
 
 ## How it fits together
 

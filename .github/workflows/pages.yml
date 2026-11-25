@@ -42,7 +42,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
 
-      # The image Render runs (render.yaml): it builds, and its server serves the page
+      # The image Railway runs: it builds, and its server serves the page
       - name: Docker image
         run: |
           docker build -t qhess .
