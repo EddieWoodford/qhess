@@ -5,6 +5,14 @@ Compact notes for whoever works on this next. Tests: `npm test` (node), and the 
 example games against tests/snapshots.json, plus multiplayer and page-feature checks), or headless with
 `npm run test:browser`. Types: `npm run typecheck`. CI (pages.yml) runs all three before deploying.
 
+## Hosted server moved from Render to Railway (2026-11-25)
+- server-address.js `HOSTED_SERVER` = `qhess-production.up.railway.app` (the user's Railway service `qhess`).
+  render.yaml deleted. No Railway config file: railway.json/toml are deprecated (unread after 2026-12-01, new
+  services can't use them), and their replacement `.railway/railway.ts` can't set Wait for CI or sleeping. The
+  dashboard settings are listed in README "Online": EU West, healthcheck `/`, Wait for CI (= Render's
+  checksPass), domain target port 8000. The wake-on-load logic stays (needed if Railway app sleeping is on).
+- The Render service itself is deleted by the user in Render's dashboard, once old pages have stopped using it.
+
 ## Checks shown by red arrows only (2026-11-24)
 - controller draw `arrows.attacks`: from each attacker to the king of the check / potential check on the side to
   move (findChecks(game, turnColor)), at every hint level, until answered (moved away, blocked, taken, Not a King);
@@ -59,9 +67,7 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
   (Docker\run\dockerInference, docker-secrets-engine\engine.sock) can't be removed or renamed (error 1920); a reboot
   doesn't help. Renaming both folders aside with Docker fully quit lets one start (15 s). Keep start.bat CRLF
   (`grep -c $'\r'` in Git Bash reports 0 regardless; check with od -c).
-- render.yaml (Blueprint): Docker web service `qhess` (so qhess.onrender.com, as server-address.js expects), free,
-  frankfurt (fixed at creation), healthCheckPath /, `autoDeployTrigger: checksPass` (waits for pages.yml; Render
-  deploys nothing if no checks are found). Set up by the user in the dashboard. pages.yml builds the
+- (Hosting moved to Railway 2026-11-25, above; render.yaml is gone.) pages.yml builds the
   image and curls / from it (`--retry-all-errors`: Docker's port proxy gives an empty reply until the server listens).
 - server.js: env `QHESS_NO_BROWSER` (= --no-browser, set in the image); `QHESS_LAN_ADDRESS` (comma list) replaces
   `lanAddresses()` (in a container they're the container's 172.x ones, so join links were wrong); SIGTERM/SIGINT

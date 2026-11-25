@@ -198,7 +198,7 @@ test("the server address: the page's own server, or the hosted one from GitHub P
 	const at = href => new URL(href);
 	assert.equal(socketUrl(at("http://localhost:8000/")), "ws://localhost:8000/ws");
 	assert.equal(socketUrl(at("http://192.168.1.5:8001/")), "ws://192.168.1.5:8001/ws");
-	assert.equal(socketUrl(at("https://qhess.onrender.com/")), "wss://qhess.onrender.com/ws");
+	assert.equal(socketUrl(at("https://qhess-production.up.railway.app/")), "wss://qhess-production.up.railway.app/ws");
 	assert.equal(socketUrl(at("https://someone.github.io/qhess/")), "wss://" + HOSTED_SERVER + "/ws");
 	assert.equal(usesHostedServer(at("https://someone.github.io/qhess/")), true);
 	assert.equal(usesHostedServer(at("http://localhost:8000/")), false);

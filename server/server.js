@@ -3,7 +3,7 @@
 //   npm start                      (or double-click start.bat)
 //   node server/server.js --port 8000 --no-browser --open tests/test.html
 //
-// Environment: PORT (the first port to try, as hosts such as Render set it), QHESS_NO_BROWSER=1 (as --no-browser,
+// Environment: PORT (the first port to try, as hosts such as Railway set it), QHESS_NO_BROWSER=1 (as --no-browser,
 // for a container), QHESS_LAN_ADDRESS (see lanAddresses).
 //
 // It listens on every network interface, so a friend on the same network can open the address it prints.
@@ -276,7 +276,7 @@ async function main() {
 	}
 	console.log("Press Ctrl+C to stop. Games in progress are lost when it stops.");
 
-	// Stop cleanly when asked (docker stop and Render send SIGTERM; as a container's first process, Node would
+	// Stop cleanly when asked (docker stop and Railway send SIGTERM; as a container's first process, Node would
 	// otherwise ignore it and be killed 10 seconds later)
 	for (const signal of ["SIGTERM", "SIGINT"]) {
 		process.once(signal, async () => {
