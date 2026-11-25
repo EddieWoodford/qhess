@@ -16,8 +16,9 @@ npm install
 npm start
 ```
 
-On Windows, double-clicking `start.bat` does the same, and the first time it installs what is missing
-(Node.js with winget, which Windows asks you to allow; then the npm packages). After a `git pull` that
+On Windows, double-clicking `start.bat` does the same, and the first time it installs what is missing:
+the Node.js version in `.nvmrc`, with [fnm](https://github.com/Schniz/fnm) (installed with winget, no admin
+prompt), kept apart from any other Node.js on the computer; then the npm packages. After a `git pull` that
 changes the packages, it installs them again.
 
 This starts the Qhess server and opens the game at http://localhost:8000/. The window also prints an

@@ -5,6 +5,26 @@ Compact notes for whoever works on this next. Tests: `npm test` (node), and the 
 example games against tests/snapshots.json, plus multiplayer and page-feature checks), or headless with
 `npm run test:browser`. Types: `npm run typecheck`. CI (pages.yml) runs all three before deploying.
 
+## start.bat gets Node.js with fnm (2026-11-26)
+- A fresh clone needs only start.bat. The node on PATH, if it is the .nvmrc major; else fnm (Fast Node Manager):
+  on PATH, else found under `%LOCALAPPDATA%\Microsoft\WinGet` (this window's PATH predates a winget install), else
+  `winget install Schniz.fnm` (portable, per user: no UAC). Then `fnm install` (reads .nvmrc) only if `fnm exec --
+  node -v` fails (so no network once installed), and the folder of `fnm exec -- node -p process.execPath`
+  (`%APPDATA%\fnm\node-versions\v24.x\installation`) goes first on this window's PATH.
+- Why: the Node MSI (the old `winget install OpenJS.NodeJS.24`) can't install beside or below another Node:
+  on a PC with Node 26 it exits 1603 "A later version of Node.js is already installed". fnm leaves that one alone.
+- Not `fnm env` / `fnm use`: they put junctions in `%LOCALAPPDATA%\fnm_multishells` pointing into `%APPDATA%\fnm`,
+  and on this PC a junction in LOCALAPPDATA into APPDATA can't be followed (any process, even started by Explorer;
+  junctions in LOCALAPPDATA to Temp, or in the profile to APPDATA, work). fnm exec uses the real folder.
+- Packages: `npm ci` when package-lock.json is newer than node_modules/.package-lock.json (fresh clone, or a pull that
+  changed it); npm ci never rewrites the lock file. A failed install stops before the server.
+- node / npm / winget / fnm all run via `call`: a .cmd shim run without it never returns, and its `>nul` sticks.
+  start_test.bat = start.bat --open tests/test.html. `.gitattributes` checks *.bat out CRLF (cmd misreads labels in
+  LF files); the Write tool writes LF, so re-save it CRLF after editing.
+- Tested for real on this PC (Node 26 installed): fnm install by winget, Node 24 through fnm (also with an empty
+  FNM_DIR, the `fnm install` path), npm ci, server 200 on Node 24.
+- git on this PC is GitHub Desktop's (`%LOCALAPPDATA%\GitHubDesktop\app-*\resources\app\git\cmd\git.exe`), not on PATH.
+
 ## Hosted server moved from Render to Railway (2026-11-25)
 - server-address.js `HOSTED_SERVER` = `qhess-production.up.railway.app` (the user's Railway service `qhess`).
   render.yaml deleted. No Railway config file: railway.json/toml are deprecated (unread after 2026-12-01, new
@@ -57,7 +77,7 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
 ## Docker (2026-11-24)
 - Node 24 everywhere: `.nvmrc` (24) is the one place; package.json engines "24.x" + `.npmrc` engine-strict (npm
   install/ci fail EBADENGINE on another major; checked), CI `node-version-file: .nvmrc`, Dockerfile node:24-alpine,
-  @types/node ^24. winget LTS is 26 now, so start.bat installs `OpenJS.NodeJS.<.nvmrc>`. To move: change all four.
+  @types/node ^24. start.bat's fnm reads .nvmrc too. To move: change all four.
 - Dockerfile (`npm ci --omit=dev`, runs as `node`, which can't write the files: the themes list write already fails
   quietly), .dockerignore, compose.yaml (port `${QHESS_PORT:-8000}`, no restart policy). For checking the image by
   hand; development runs on Node (npm start / start.bat).
@@ -235,18 +255,6 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
 - tests/test.html "drag: a dropped piece waits for Submit" drives it with synthetic PointerEvents.
 - The Browser pane's click/drag tool loses a press that lands right after the mouse moves onto a piece in "clear"
   (the hover preview redraws the square first; older than this feature). Hover first, then drag, when testing there.
-
-## start.bat sets everything up (2026-11-20)
-- A fresh clone needs only start.bat. Node.js (the .nvmrc major; was 20+): the one on PATH, else `%ProgramFiles%\nodejs` (installed, but the
-  window's PATH predates it, or an older node comes first), else `winget install OpenJS.NodeJS.LTS` (machine-wide
-  MSI with a UAC prompt: winget has no user-scope Node installer any more), then put first on this window's PATH.
-  No winget, or the install fails: it points to nodejs.org and pauses.
-- Packages: `npm ci` when package-lock.json is newer than node_modules/.package-lock.json (fresh clone, or a pull that
-  changed it); npm ci never rewrites the lock file. A failed install stops before the server.
-- node / npm / winget all run via `call`: a .cmd shim run without it never returns, and its `>nul` sticks.
-  start_test.bat = start.bat --open tests/test.html. `.gitattributes` checks *.bat out CRLF (cmd misreads labels in
-  LF files).
-- Tested on a temp clone with a fake PATH / ProgramFiles / winget.cmd; the real winget install was not run.
 
 ## Ruled-out types shown faded until Submit (2026-11-19)
 - While a turn has changes not yet submitted (a staged move, Add PC attackers, Not a King), every piece also shows
