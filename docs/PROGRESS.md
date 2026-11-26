@@ -5,6 +5,17 @@ Compact notes for whoever works on this next. Tests: `npm test` (node), and the 
 example games against tests/snapshots.json, plus multiplayer and page-feature checks), or headless with
 `npm run test:browser`. Types: `npm run typecheck`. CI (pages.yml) runs all three before deploying.
 
+## Potential check: the player picks the attackers again (2026-11-27)
+- Why: adding every possible attacker in piece order wasn't neutral. One attacker's collapse can rule another out
+  (e.g. after `...2b. (KQRP)a6a5(KQRP)`, 3w. c2g6 <f7+>: a2 (diagonal, QB) and f2 (file, QR) can't both attack), so
+  the order decided the waves. Now the player decides by choosing.
+- State `selectPCAttackers` again (replaces `showPotentialCheck`): after the king, click each attacker
+  (controller `selectPCAttacker`); a square with no piece that could still attack cancels the move; the only
+  possible attacker is chosen by itself. Pieces certain to attack (every wave) count already, as before, so Submit
+  can show straight away. Formatting is the current one, not the old: red arrows from the attackers, no
+  `.potAttacker` highlight; cancel cursors on the other squares only at Captures (render view `pcAttackers`).
+- `selectPCKing(king, attackers)` still adds a given list at once (demo, tests/generate.html).
+
 ## start.bat gets Node.js with fnm (2026-11-26)
 - A fresh clone needs only start.bat. The node on PATH, if it is the .nvmrc major; else fnm (Fast Node Manager):
   on PATH, else found under `%LOCALAPPDATA%\Microsoft\WinGet` (this window's PATH predates a winget install), else
@@ -127,7 +138,7 @@ example games against tests/snapshots.json, plus multiplayer and page-feature ch
   properties are used (inputs, buttons, the link, the textarea); event targets are cast to Element where `closest`
   is used. server.js tracks heartbeat answers in a WeakSet `alive` (was `ws.isAlive`).
 
-## Potential check: attackers automatic, arrows (2026-11-21)
+## Potential check: attackers automatic, arrows (2026-11-21; picking restored 2026-11-27, above)
 - Add PC -> choose the king -> **every** piece of the mover's that could attack it attacks it (controller
   `selectPCKing(king, attackers = choosePCKing's list)`: addPCAttacker each, skipping any an earlier collapse ruled
   out; into check -> invalidMoveIntoCheck). The state after is `showPotentialCheck` (was `selectPCAttackers`, the

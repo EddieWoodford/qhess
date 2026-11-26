@@ -794,9 +794,9 @@ async function checkRestage(ctx) {
 	return problems;
 }
 
-// Add PC, then the king: every piece of the mover's that could attack it attacks it, with no step to pick them. At
-// every hint level a red arrow runs from each attacker to the king (no outline on the attackers). At Captures the
-// possible kings are highlighted to choose from; below it, not (nor the cancel cursor round them).
+// Add PC, then the king, then click each attacker: a red arrow runs from each chosen one to the king, at every hint
+// level (no outline on the attackers). The only piece that could attack is chosen by itself. At Captures the possible
+// kings are highlighted to choose from, and the squares that would cancel show it; below it, neither.
 async function checkPotentialCheck(ctx) {
 	const problems = [];
 	const expect = (what, ok) => { if (!ok) { problems.push(what); } };
@@ -804,6 +804,8 @@ async function checkPotentialCheck(ctx) {
 	const doc = ctx.win.document;
 	const level = value => doc.querySelector("#settingHintLevel [data-value=" + value + "]").click();
 	const count = sel => doc.querySelectorAll("#board " + sel).length;
+	const cancelsAt = (r, c) => doc.getElementById("square" + r + c)?.classList.contains("cancelOnClick");
+	const attackers = () => JSON.stringify(g.currentTurn().pcAttackers);
 	const declare = king => {
 		g.restoreGameHistory("0b.\n1w. (KQBNRP)e2e4(QRP)");
 		g.showPartialMove([1, 3]); g.showCompleteMove([3, 3]); // d7-d5
@@ -815,9 +817,15 @@ async function checkPotentialCheck(ctx) {
 
 	const shown = declare([6, 0]); // a2: a7 and d5 could both attack it
 	expect("At Captures the possible kings should be highlighted, " + shown.candidates + " are", shown.candidates > 0);
-	expect("Both attackers should be chosen at once, state " + g.ui.state + ", attackers " + JSON.stringify(g.currentTurn().pcAttackers),
-		g.ui.state == "showPotentialCheck" && JSON.stringify(g.currentTurn().pcAttackers) == "[[1,0],[3,3]]");
-	expect("... with a red arrow from each to the king, has " + count(".arrow-attacks .arrow-line"), count(".arrow-attacks .arrow-line") == 2);
+	expect("With two possible attackers, none should be chosen yet, state " + g.ui.state + ", attackers " + attackers(),
+		g.ui.state == "selectPCAttackers" && attackers() == "[]" && count(".arrow-attacks .arrow-line") == 0);
+	expect("... a7 can be clicked, h7 would cancel", !cancelsAt(1, 0) && cancelsAt(1, 7));
+	g.selectPCAttacker([3, 3]); // d5
+	expect("d5 chosen: one attacker and one arrow, " + attackers() + ", " + count(".arrow-attacks .arrow-line"),
+		g.ui.state == "selectPCAttackers" && attackers() == "[[3,3]]" && count(".arrow-attacks .arrow-line") == 1);
+	g.selectPCAttacker([1, 0]); // a7
+	expect("a7 added: both, with an arrow each, " + attackers() + ", " + count(".arrow-attacks .arrow-line"),
+		attackers() == "[[3,3],[1,0]]" && count(".arrow-attacks .arrow-line") == 2);
 	expect("... and no outline on the attackers, has " + count(".checkAttacker"), count(".checkAttacker") == 0);
 	g.sideButton2Action();
 	expect("Submitted, it should be written with both, is '" + g.ui.record.at(-1) + "'", g.ui.record.at(-1)?.endsWith("<a2+ a7 d5>"));
@@ -826,13 +834,22 @@ async function checkPotentialCheck(ctx) {
 	g.sideButton1Action(); // Not a King on a2
 	expect("Once answered (a2 Not a King) the arrows go, has " + count(".arrow-attacks .arrow-line"), count(".arrow-attacks .arrow-line") == 0);
 
+	declare([6, 0]);
+	g.selectPCAttacker([1, 7]); // h7 can't attack a2
+	expect("A click on a piece that can't attack should cancel the move, state " + g.ui.state, g.ui.state == "clear");
+
+	declare([6, 3]); // d2: only d5 could attack it
+	expect("The only possible attacker should be chosen by itself, " + attackers(), g.ui.state == "selectPCAttackers" && attackers() == "[[3,3]]");
+
 	level("moves");
 	const hidden = declare(null);
 	expect("Below Captures, no possible kings should be highlighted (" + hidden.candidates + ") nor cancel cursors (" + hidden.cancels + ")",
 		g.ui.state == "selectPCKing" && hidden.candidates == 0 && hidden.cancels == 0);
 	g.selectPCKing([6, 0]);
-	expect("... but once declared, its arrows show at every level, has " + count(".arrow-attacks .arrow-line"),
-		g.ui.state == "showPotentialCheck" && count(".arrow-attacks .arrow-line") == 2);
+	expect("... nor while choosing attackers, has " + count(".cancelOnClick"), count(".cancelOnClick") == 0);
+	g.selectPCAttacker([1, 0]); g.selectPCAttacker([3, 3]);
+	expect("... but the chosen attackers' arrows show at every level, has " + count(".arrow-attacks .arrow-line"),
+		g.ui.state == "selectPCAttackers" && count(".arrow-attacks .arrow-line") == 2);
 	level("captures");
 	return problems;
 }

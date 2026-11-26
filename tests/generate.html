@@ -169,7 +169,7 @@ async function playGame(seed, maxPlies, pawnBias = 1) {
 					}
 					if (!declared()) { return false; }
 					g.selectPCKing(king, chosen);
-					if (g.ui.state !== "showPotentialCheck" || !sideButtonVisible(2)) { return false; }
+					if (g.ui.state !== "selectPCAttackers" || !sideButtonVisible(2)) { return false; }
 				}
 
 				g.sideButton2Action(); // Submit

@@ -358,8 +358,8 @@ function drawBoard(view) {
 			// destination submits it, another square the piece could go to (or its own square) moves it there
 			// (an ordinary pointer), any other square cancels it. A move into check can't be submitted.
 			// While choosing the king for a potential check, any square but a candidate cancels the move too (shown
-			// only at the Captures hint level: below it the cursor would give the candidates away). Once declared,
-			// any square cancels it. While a piece is picked, a square it can't go to puts it back (cancels): shown only
+			// only at the Captures hint level: below it the cursor would give the candidates away); likewise while
+			// choosing its attackers, any square but a piece that could still attack it. While a piece is picked, a square it can't go to puts it back (cancels): shown only
 			// where its destinations are (from the Moves hint level), as the cursor would give them away otherwise.
 			// Over the mover's own pieces the drag cursor wins (style.css 7.8): a press there drags.
 			const showMoves = view.hintLevel == "moves" || view.hintLevel == "captures";
@@ -369,7 +369,7 @@ function drawBoard(view) {
 				// moves the staged piece here
 			} else if (STATE == "showCompleteMove" || STATE == "invalidMoveIntoCheck"
 					|| (STATE == "selectPCKing" && sqr.highlightPotKing != 1 && view.hintLevel == "captures")
-					|| STATE == "showPotentialCheck"
+					|| (STATE == "selectPCAttackers" && !ismember([r,c], view.pcAttackers ?? []) && view.hintLevel == "captures")
 					|| (STATE == "showPartialMove" && sqr.potentialMove == 0 && showMoves)) {
 				classes.add("cancelOnClick");
 			}

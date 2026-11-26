@@ -65,9 +65,11 @@ const STEPS = {
 		button1: null,
 		button2: null,
 	},
-	showPotentialCheck: {
-		// Names the squares, e.g. "e2, h5 attacking f1. Submit"
-		prompt: ctx => ctx.pcAttackers.join(", ") + " attacking " + ctx.pcKing + ". Submit",
+	selectPCAttackers: {
+		// Names the squares, e.g. "Select pieces attacking f1", then "e2, h5 attacking f1. Submit, or add another"
+		prompt: ctx => ctx.pcAttackers.length == 0
+			? "Select pieces attacking " + ctx.pcKing
+			: ctx.pcAttackers.join(", ") + " attacking " + ctx.pcKing + ". Submit, or add another",
 		button1: null,
 		button2: ctx => ctx.hasPCAttackers ? "Submit" : null,
 	},
@@ -152,7 +154,7 @@ function statusContext(game, state, multiplayer, pcRule, drag) {
 		checks = findChecks(game, game.pcColor);
 	}
 	// The potential check being declared: the king's square and its attackers', e.g. "f1" and ["e2"]
-	const declared = state == "showPotentialCheck" ? findChecks(game, oppColor(game.turnColor)) : null;
+	const declared = state == "selectPCAttackers" ? findChecks(game, oppColor(game.turnColor)) : null;
 	// The check the mover has walked into: their king's square and its attackers'
 	const intoCheck = state == "invalidMoveIntoCheck" ? findChecks(game, game.turnColor) : null;
 	return {
