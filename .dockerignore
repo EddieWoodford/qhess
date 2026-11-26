@@ -10,4 +10,4 @@ Dockerfile
 compose.yaml
 *.bat
 *.ps1
-TODO*.md
+docs/TODO*.md

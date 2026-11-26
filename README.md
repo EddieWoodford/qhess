@@ -5,7 +5,7 @@ become any piece - they are in superposition. As pieces are moved, their
 options collapse, so by the end of the game, each player has a normal
 demographic of pieces. Further reading: http://wiki.thorx.net/wiki/QuantumChess
 
-The rules are in [Chess Variant Rules and How to Play.md](Chess%20Variant%20Rules%20and%20How%20to%20Play.md).
+The rules are in [Chess Variant Rules and How to Play.md](docs/Chess%20Variant%20Rules%20and%20How%20to%20Play.md).
 
 ## Running it
 
